@@ -72,6 +72,10 @@ import type {
   ContractInfoPublic,
   InitiatePaymentRequest,
   ImportResultResponse,
+  // Waiting List
+  WaitingListRead,
+  WaitingListCreate,
+  WaitingListUpdate,
   // Common
   ApiResponse,
 } from '@/types/api'
@@ -179,6 +183,15 @@ export const userService = {
    */
   deleteUser: async (userId: number): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(`/users/${userId}`)
+    return response.data
+  },
+
+  /**
+   * Bulk delete users by IDs
+   * POST /users/bulk-delete
+   */
+  bulkDeleteUsers: async (userIds: number[]): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>('/users/bulk-delete', userIds)
     return response.data
   },
 }
@@ -362,6 +375,47 @@ export const studentService = {
     const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(`/students/${studentId}`)
     return response.data
   },
+
+  /**
+   * Bulk delete students by IDs
+   * POST /students/bulk-delete
+   */
+  bulkDeleteStudents: async (studentIds: number[]): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>('/students/bulk-delete', studentIds)
+    return response.data
+  },
+
+  /**
+   * Create student with contract and all documents in ONE operation
+   * POST /students/create-with-contract
+   */
+  createStudentWithContract: async (formData: FormData): Promise<Blob> => {
+    const response = await apiClient.post<Blob>('/students/create-with-contract', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      responseType: 'blob',
+      timeout: 120000, // 2 minutes for file uploads and PDF generation
+    })
+    return response.data
+  },
+
+  /**
+   * Export unpaid students data to Excel
+   * GET /students/unpaid/export
+   */
+  exportUnpaidStudents: async (params?: {
+    year?: number
+    month?: number
+    months?: string
+    group_id?: number
+  }): Promise<Blob> => {
+    const response = await apiClient.get<Blob>('/students/unpaid/export', {
+      params,
+      responseType: 'blob',
+    })
+    return response.data
+  },
 }
 
 // ============================================================================
@@ -484,6 +538,32 @@ export const groupService = {
     const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(`/groups/${groupId}`)
     return response.data
   },
+
+  /**
+   * Bulk delete groups by IDs
+   * POST /groups/bulk-delete
+   */
+  bulkDeleteGroups: async (groupIds: number[]): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>('/groups/bulk-delete', groupIds)
+    return response.data
+  },
+
+  /**
+   * Get detailed capacity information for a group
+   * GET /groups/{group_id}/capacity
+   */
+  getGroupCapacity: async (groupId: number, params?: { archive_year?: number }): Promise<ApiResponse<{
+    group_id: number
+    group_name: string
+    capacity: number
+    active_contracts: number
+    available_slots: number
+    waiting_list_count: number
+    by_birth_year: Record<string, { used: number; available: number }>
+  }>> => {
+    const response = await apiClient.get(`/groups/${groupId}/capacity`, { params })
+    return response.data
+  },
 }
 
 // ============================================================================
@@ -541,6 +621,90 @@ export const contractService = {
    */
   deleteContract: async (contractId: number): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(`/contracts/${contractId}`)
+    return response.data
+  },
+
+  /**
+   * Terminate contract with reason
+   * POST /contracts/{contract_id}/terminate
+   */
+  terminateContract: async (contractId: number, data: {
+    termination_reason: string
+    terminated_at: string
+  }): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.post<ApiResponse<ContractRead>>(`/contracts/${contractId}/terminate`, data)
+    return response.data
+  },
+
+  /**
+   * Get valid payment months for a contract
+   * GET /contracts/payment-months/{contract_number}
+   */
+  getContractPaymentMonths: async (contractNumber: string): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(`/contracts/payment-months/${contractNumber}`)
+    return response.data
+  },
+
+  /**
+   * Bulk delete contracts by IDs
+   * POST /contracts/bulk-delete
+   */
+  bulkDeleteContracts: async (contractIds: number[]): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>('/contracts/bulk-delete', contractIds)
+    return response.data
+  },
+
+  /**
+   * Create contract with file uploads
+   * POST /contracts/create-with-files
+   */
+  createContractWithFiles: async (formData: FormData): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.post<ApiResponse<ContractRead>>('/contracts/create-with-files', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
+  /**
+   * Get all available contract numbers for a group and birth year
+   * GET /contracts/available-numbers/{group_id}/{birth_year}
+   */
+  getAvailableContractNumbers: async (groupId: number, birthYear: number): Promise<ApiResponse<{
+    group_id: number
+    group_name: string
+    group_capacity: number
+    birth_year: number
+    available_numbers: number[]
+    total_available: number
+    total_used: number
+    is_full: boolean
+  }>> => {
+    const response = await apiClient.get(`/contracts/available-numbers/${groupId}/${birthYear}`)
+    return response.data
+  },
+
+  /**
+   * Get next available contract number
+   * GET /contracts/next-available/{group_id}/{birth_year}
+   */
+  getNextAvailableNumber: async (groupId: number, birthYear: number): Promise<ApiResponse<{
+    next_available: number
+    contract_number: string
+    birth_year: number
+    is_full: boolean
+  }>> => {
+    const response = await apiClient.get(`/contracts/next-available/${groupId}/${birthYear}`)
+    return response.data
+  },
+
+  /**
+   * Get contract PDF URL by year and contract number
+   * GET /contracts/{year}/{contract_number}/pdf
+   */
+  getContractPdfUrl: async (year: number, contractNumber: string): Promise<string> => {
+    const response = await apiClient.get<string>(`/contracts/${year}/${contractNumber}/pdf`)
     return response.data
   },
 }
@@ -622,6 +786,15 @@ export const transactionService = {
     const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(`/transactions/${transactionId}`)
     return response.data
   },
+
+  /**
+   * Bulk delete transactions by IDs
+   * POST /transactions/bulk-delete
+   */
+  bulkDeleteTransactions: async (transactionIds: number[]): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>('/transactions/bulk-delete', transactionIds)
+    return response.data
+  },
 }
 
 // ============================================================================
@@ -683,6 +856,51 @@ export const coachService = {
       `/coach/sessions/${data.session_id}/bulk-attendance`,
       data
     )
+    return response.data
+  },
+
+  /**
+   * Get session details with all attendance records
+   * GET /coach/sessions/{session_id}
+   */
+  getSessionDetails: async (sessionId: number): Promise<ApiResponse<SessionRead & { attendances: AttendanceRead[] }>> => {
+    const response = await apiClient.get(`/coach/sessions/${sessionId}`)
+    return response.data
+  },
+
+  /**
+   * Get group attendance statistics
+   * GET /coach/groups/{group_id}/attendance-stats
+   */
+  getGroupAttendanceStats: async (groupId: number, params?: {
+    from_date?: string
+    to_date?: string
+  }): Promise<ApiResponse<{
+    total_sessions: number
+    present_count: number
+    absent_count: number
+    late_count: number
+    attendance_rate: number
+  }>> => {
+    const response = await apiClient.get(`/coach/groups/${groupId}/attendance-stats`, { params })
+    return response.data
+  },
+
+  /**
+   * Get student attendance statistics
+   * GET /coach/students/{student_id}/attendance-stats
+   */
+  getStudentAttendanceStats: async (studentId: number, params?: {
+    from_date?: string
+    to_date?: string
+  }): Promise<ApiResponse<{
+    total_sessions: number
+    present_count: number
+    absent_count: number
+    late_count: number
+    attendance_rate: number
+  }>> => {
+    const response = await apiClient.get(`/coach/students/${studentId}/attendance-stats`, { params })
     return response.data
   },
 }
@@ -894,6 +1112,144 @@ export const importService = {
    */
   getImportResult: async (): Promise<ApiResponse<ImportResultResponse>> => {
     const response = await apiClient.get<ApiResponse<ImportResultResponse>>('/import/students/result')
+    return response.data
+  },
+
+  /**
+   * Import payments from Excel file
+   * POST /import/payments
+   */
+  importPayments: async (file: File): Promise<ApiResponse<Record<string, unknown>>> => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>('/import/payments', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+}
+
+// ============================================================================
+// WAITING LIST SERVICES
+// ============================================================================
+
+export const waitingListService = {
+  /**
+   * Get waiting list entries
+   * GET /waiting-list
+   */
+  getWaitingList: async (params?: {
+    group_id?: number
+    student_id?: number
+    page?: number
+    page_size?: number
+  }): Promise<ApiResponse<WaitingListRead[]>> => {
+    const response = await apiClient.get('/waiting-list', { params })
+    return response.data
+  },
+
+  /**
+   * Add student to waiting list
+   * POST /waiting-list
+   */
+  addToWaitingList: async (data: WaitingListCreate): Promise<ApiResponse<WaitingListRead>> => {
+    const response = await apiClient.post('/waiting-list', data)
+    return response.data
+  },
+
+  /**
+   * Get waiting list entry
+   * GET /waiting-list/{waiting_id}
+   */
+  getWaitingListEntry: async (waitingId: number): Promise<ApiResponse<WaitingListRead>> => {
+    const response = await apiClient.get(`/waiting-list/${waitingId}`)
+    return response.data
+  },
+
+  /**
+   * Update waiting list entry
+   * PATCH /waiting-list/{waiting_id}
+   */
+  updateWaitingListEntry: async (waitingId: number, data: WaitingListUpdate): Promise<ApiResponse<WaitingListRead>> => {
+    const response = await apiClient.patch(`/waiting-list/${waitingId}`, data)
+    return response.data
+  },
+
+  /**
+   * Remove from waiting list
+   * DELETE /waiting-list/{waiting_id}
+   */
+  removeFromWaitingList: async (waitingId: number): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.delete(`/waiting-list/${waitingId}`)
+    return response.data
+  },
+
+  /**
+   * Get next student in queue for a group
+   * GET /waiting-list/group/{group_id}/next
+   */
+  getNextInQueue: async (groupId: number): Promise<ApiResponse<WaitingListRead | null>> => {
+    const response = await apiClient.get(`/waiting-list/group/${groupId}/next`)
+    return response.data
+  },
+}
+
+// ============================================================================
+// ARCHIVE SERVICES
+// ============================================================================
+
+export const archiveService = {
+  /**
+   * Archive all data for a specific year
+   * POST /archive/year/{year}
+   */
+  archiveYear: async (year: number): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post(`/archive/year/${year}`)
+    return response.data
+  },
+
+  /**
+   * Unarchive all data for a specific year
+   * POST /archive/unarchive/year/{year}
+   */
+  unarchiveYear: async (year: number): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post(`/archive/unarchive/year/${year}`)
+    return response.data
+  },
+
+  /**
+   * Get archive statistics for a year
+   * GET /archive/stats/{year}
+   */
+  getArchiveStats: async (year: number): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.get(`/archive/stats/${year}`)
+    return response.data
+  },
+}
+
+// ============================================================================
+// BACKUP SERVICES
+// ============================================================================
+
+export const backupService = {
+  /**
+   * Trigger manual database backup
+   * POST /backup/manual
+   */
+  triggerManualBackup: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post('/backup/manual')
+    return response.data
+  },
+
+  /**
+   * Get backup configuration status
+   * GET /backup/status
+   */
+  getBackupStatus: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.get('/backup/status')
     return response.data
   },
 }

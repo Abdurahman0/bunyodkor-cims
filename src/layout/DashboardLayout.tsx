@@ -7,7 +7,6 @@ import {
   Users,
   CreditCard,
   Home,
-  LogOut,
   GraduationCap,
   BarChart3,
   UserCog,
@@ -21,15 +20,18 @@ import {
   ChevronDown,
   DoorOpen,
   Languages,
+  Bell,
+  AlertCircle,
+  Info,
+  Clock,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown'
 import { useEffect, useState } from 'react'
 
 const DashboardLayout = () => {
-  const { token, logout, user, permissions } = useAuthStore()
+  const { token, user, permissions } = useAuthStore()
   const { isDarkMode, toggleDarkMode } = useThemeStore()
   const { isOpen, toggle, close } = useSidebarStore()
   const { language, setLanguage, t } = useLanguageStore()
@@ -99,6 +101,12 @@ const DashboardLayout = () => {
       permission: 'gate:logs:view',
     },
     {
+      path: '/waiting-list',
+      label: t('waitingList'),
+      icon: Clock,
+      permission: 'students:view',
+    },
+    {
       path: '/reports',
       label: t('reports'),
       icon: BarChart3,
@@ -143,6 +151,43 @@ const DashboardLayout = () => {
   }
 
   const filteredMenuItems = menuItems.filter((item) => hasPermission(item.permission))
+
+  // Page-specific notifications
+  const getPageNotifications = () => {
+    const path = location.pathname
+    const notifications = []
+
+    if (path === '/') {
+      notifications.push({
+        type: 'info',
+        message: t('welcomeToDashboard') || 'Welcome to Dashboard',
+      })
+    } else if (path === '/students') {
+      notifications.push({
+        type: 'info',
+        message: t('manageStudentsHere') || 'Manage students here',
+      })
+    } else if (path === '/groups') {
+      notifications.push({
+        type: 'info',
+        message: t('manageGroupsHere') || 'Manage groups here',
+      })
+    } else if (path === '/contracts') {
+      notifications.push({
+        type: 'info',
+        message: t('manageContractsHere') || 'Manage contracts here',
+      })
+    } else if (path === '/finance') {
+      notifications.push({
+        type: 'info',
+        message: t('viewFinancialData') || 'View financial data',
+      })
+    }
+
+    return notifications
+  }
+
+  const pageNotifications = getPageNotifications()
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -226,6 +271,28 @@ const DashboardLayout = () => {
               </Link>
             )
           })}
+
+          {/* Page-specific notifications in sidebar */}
+          {pageNotifications.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-700/50">
+              <div className="px-2 mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+                <Bell className="w-3.5 h-3.5" />
+                <span>{t('pageInfo') || 'Page Info'}</span>
+              </div>
+              {pageNotifications.map((notif, idx) => (
+                <div
+                  key={idx}
+                  className="px-3 py-2 mb-2 rounded-lg bg-blue-900/30 border border-blue-700/50"
+                >
+                  <div className="flex items-start gap-2">
+                    {notif.type === 'info' && <Info className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />}
+                    {notif.type === 'warning' && <AlertCircle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />}
+                    <p className="text-xs text-slate-300 leading-relaxed">{notif.message}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </nav>
 
         {/* Footer */}
@@ -267,16 +334,6 @@ const DashboardLayout = () => {
               </div>
             )}
           </div>
-
-          {/* Logout Button */}
-          <Button
-            variant="ghost"
-            onClick={logout}
-            className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">{t('logout')}</span>
-          </Button>
         </div>
       </motion.aside>
 
@@ -302,9 +359,6 @@ const DashboardLayout = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Notifications */}
-            <NotificationsDropdown />
-
             {/* Language Selector */}
             <div className="relative">
               <Button
@@ -391,22 +445,9 @@ const DashboardLayout = () => {
                     exit={{ opacity: 0, y: 10 }}
                     className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-xl z-[9993]"
                   >
-                    <div className="p-4 border-b border-border">
+                    <div className="p-4">
                       <p className="font-medium text-foreground">{user?.full_name}</p>
                       <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    </div>
-                    <div className="p-2">
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setIsProfileOpen(false)
-                          logout()
-                        }}
-                        className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        {t('logout')}
-                      </Button>
                     </div>
                   </motion.div>
                 )}

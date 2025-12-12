@@ -1,9 +1,18 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { useLanguageStore } from "@/store/languageStore";
+import { translations, type TranslationKey } from "@/i18n/translations";
 import toast from "react-hot-toast";
 
 const getApiUrl = () => {
-  return import.meta.env.VITE_API_URL || "https://coordinated-domestic-path-broker.trycloudflare.com/";
+  // In development, use proxy to avoid CORS issues
+  return "https://reduces-test-commitments-choosing.trycloudflare.com/";
+};
+
+// Helper function to get translated message
+const getTranslation = (key: TranslationKey): string => {
+  const language = useLanguageStore.getState().language;
+  return translations[language][key];
 };
 
 // Toast ID'larini saqlash
@@ -35,7 +44,7 @@ const showLimitedToast = {
 export const apiClient = axios.create({
   baseURL: getApiUrl(),
   headers: { "Content-Type": "application/json" },
-  timeout: 10000,
+  timeout: 60000, // 60 seconds for file uploads and PDF generation
 });
 
 // Request interceptor
@@ -69,25 +78,26 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // Handle different error scenarios
-    if (error.code === "ERR_NETWORK") {
+    if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+      // Timeout error
+      showLimitedToast.error(getTranslation("errorTimeout"));
+    } else if (error.code === "ERR_NETWORK") {
       // Network error - backend might be down
       if (import.meta.env.VITE_USE_MOCK_API !== "true") {
-        showLimitedToast.error(
-          "Unable to connect to server. Please check if backend is running or enable mock API."
-        );
+        showLimitedToast.error(getTranslation("errorNetwork"));
       }
     } else if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      showLimitedToast.error("Session expired. Please login again.");
+      showLimitedToast.error(getTranslation("errorSessionExpired"));
       window.location.href = "/login";
     } else if (error.response?.status === 403) {
-      showLimitedToast.error("You do not have permission for this action");
+      showLimitedToast.error(getTranslation("errorPermissionDenied"));
     } else if (error.response?.status >= 500) {
-      showLimitedToast.error("Server error. Please try again later.");
+      showLimitedToast.error(getTranslation("errorServerError"));
     } else {
       // Handle validation errors (422) and other errors
       const detail = error.response?.data?.detail;
-      let message = "An error occurred";
+      let message = getTranslation("errorGeneric");
 
       if (Array.isArray(detail) && detail.length > 0) {
         // FastAPI validation error - extract first error message

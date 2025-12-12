@@ -21,6 +21,7 @@ import Settings from './pages/settings/Settings'
 import GateLogs from './pages/gate/GateLogs'
 import CoachPanel from './pages/coach/CoachPanel'
 import StudentDetailPage from './pages/students/StudentDetailPage'
+import WaitingList from './pages/waiting-list/WaitingList'
 
 // Dev Tools (only in development)
 import { DevTools } from './components/DevTools'
@@ -56,7 +57,7 @@ function App() {
       <ThemeInitializer />
       
       <Toaster
-        position="top-center"
+        position="top-right"
         toastOptions={{
           duration: 3000,
           style: {
@@ -104,6 +105,7 @@ function App() {
             <Route path="finance" element={<Finance />} />
             <Route path="coach" element={<CoachPanel />} />
             <Route path="gate" element={<GateLogs />} />
+            <Route path="waiting-list" element={<WaitingList />} />
             <Route path="reports" element={<Reports />} />
             <Route path="users" element={<Users />} />
             <Route path="roles" element={<Roles />} />

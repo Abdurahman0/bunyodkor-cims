@@ -49,6 +49,16 @@ export const NotificationsDropdown = () => {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 })
   const buttonRef = useRef<HTMLButtonElement>(null)
 
+  // Sort notifications: unread first, then by date (newest first)
+  const sortedNotifications = [...notifications].sort((a, b) => {
+    // Unread notifications first
+    if (a.read !== b.read) {
+      return a.read ? 1 : -1
+    }
+    // Then by date (newest first)
+    return b.createdAt.getTime() - a.createdAt.getTime()
+  })
+
   const unreadCount = notifications.filter((n) => !n.read).length
 
   useEffect(() => {
@@ -108,7 +118,12 @@ export const NotificationsDropdown = () => {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+          >
+            {unreadCount}
+          </Badge>
         )}
       </Button>
 
@@ -134,7 +149,7 @@ export const NotificationsDropdown = () => {
               className="fixed w-80 sm:w-96 max-h-[500px] overflow-hidden rounded-xl border border-border bg-card shadow-xl z-[9999] flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center justify-between p-4 border-b border-border bg-card/95 backdrop-blur sticky top-0">
                 <div>
                   <h3 className="font-semibold text-foreground">Notifications</h3>
                   {unreadCount > 0 && (
@@ -148,7 +163,7 @@ export const NotificationsDropdown = () => {
                     variant="ghost"
                     size="sm"
                     onClick={markAllAsRead}
-                    className="text-xs"
+                    className="text-xs h-8"
                   >
                     <Check className="w-3 h-3 mr-1" />
                     Mark all read
@@ -156,9 +171,9 @@ export const NotificationsDropdown = () => {
                 )}
               </div>
 
-              {/* Notifications List */}
+              {/* Notifications List - Sorted with unread first, newest first */}
               <div className="overflow-y-auto flex-1">
-                {notifications.length === 0 ? (
+                {sortedNotifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center p-8 text-center">
                     <Bell className="w-12 h-12 text-muted-foreground mb-2" />
                     <p className="text-sm font-medium text-foreground">
@@ -170,15 +185,16 @@ export const NotificationsDropdown = () => {
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
-                    {notifications.map((notification) => (
+                    {sortedNotifications.map((notification, index) => (
                       <motion.div
                         key={notification.id}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 10 }}
+                        transition={{ delay: index * 0.03 }}
                         className={cn(
-                          'p-4 hover:bg-muted/50 transition-colors cursor-pointer group',
-                          !notification.read && 'bg-primary/5'
+                          'p-4 hover:bg-muted/50 transition-colors cursor-pointer group relative',
+                          !notification.read && 'bg-primary/5 border-l-2 border-l-primary'
                         )}
                         onClick={() => markAsRead(notification.id)}
                       >
@@ -189,9 +205,14 @@ export const NotificationsDropdown = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">
-                                  {notification.title}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {notification.title}
+                                  </p>
+                                  {!notification.read && (
+                                    <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+                                  )}
+                                </div>
                                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                                   {notification.message}
                                 </p>
@@ -211,14 +232,6 @@ export const NotificationsDropdown = () => {
                                 <X className="w-3 h-3" />
                               </Button>
                             </div>
-                            {!notification.read && (
-                              <Badge
-                                variant="secondary"
-                                className="mt-2 text-xs"
-                              >
-                                New
-                              </Badge>
-                            )}
                           </div>
                         </div>
                       </motion.div>
@@ -228,12 +241,12 @@ export const NotificationsDropdown = () => {
               </div>
 
               {/* Footer */}
-              {notifications.length > 0 && (
-                <div className="p-3 border-t border-border text-center">
+              {sortedNotifications.length > 0 && (
+                <div className="p-3 border-t border-border bg-card/95 backdrop-blur sticky bottom-0">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-muted-foreground hover:text-foreground"
+                    className="w-full text-xs text-muted-foreground hover:text-foreground"
                   >
                     View all notifications
                   </Button>

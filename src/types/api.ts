@@ -517,3 +517,31 @@ export interface ImportResultResponse {
   success_count: number
   error_count: number
 }
+
+// ============================================================================
+// Waiting List Types
+// ============================================================================
+
+export interface WaitingListRead {
+  id: number
+  student_id: number
+  group_id: number
+  priority: number
+  notes: string | null
+  added_by_user_id: number
+  created_at: string
+  student: StudentRead
+  group: GroupRead
+}
+
+export interface WaitingListCreate {
+  student_id: number
+  group_id: number
+  priority?: number
+  notes?: string
+}
+
+export interface WaitingListUpdate {
+  priority?: number
+  notes?: string
+}

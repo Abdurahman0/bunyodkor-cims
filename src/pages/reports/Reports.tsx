@@ -225,9 +225,17 @@ export default function Reports() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
-              <CardHeader><CardTitle className="text-lg">{t('revenueBySource')}</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-4">
+                  <CardTitle className="text-lg">{t('revenueBySource')}</CardTitle>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-foreground">{formatCurrency(financeReport?.data?.total_revenue || 0)}</div>
+                    <div className="text-xs text-muted-foreground">Total</div>
+                  </div>
+                </div>
+              </CardHeader>
               <CardContent>
-                {paymentSourcesData.length > 0 ? <DonutChart data={paymentSourcesData} size={180} centerValue={formatCurrency(financeReport?.data?.total_revenue || 0)} centerLabel="Total" /> : <div className="h-48 flex items-center justify-center text-muted-foreground">No data available</div>}
+                {paymentSourcesData.length > 0 ? <DonutChart data={paymentSourcesData} size={180} showLegend /> : <div className="h-48 flex items-center justify-center text-muted-foreground">No data available</div>}
               </CardContent>
             </Card>
             <Card>

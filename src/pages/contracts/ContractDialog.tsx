@@ -160,18 +160,39 @@ export function ContractDialog({ open, onOpenChange, contract, onSuccess }: Cont
 
           <div className="space-y-1">
             <Label htmlFor="student_id">{t('student')} <span className="text-red-500">*</span></Label>
-            <Select
-              id="student_id"
-              {...register('student_id', { required: t('selectStudentRequired') })}
-            >
-              <option value="">{t('selectStudent')}</option>
-              {studentsData?.data?.map((student: StudentRead) => (
-                <option key={student.id} value={student.id}>
-                  {student.first_name} {student.last_name} (ID: {student.id})
-                </option>
-              ))}
-            </Select>
-            {errors.student_id && <p className="text-sm text-red-500">{errors.student_id.message}</p>}
+
+            {/* Show student select only when creating new contract */}
+            {!contract && (
+              <>
+                <Select
+                  id="student_id"
+                  {...register('student_id', { required: t('selectStudentRequired') })}
+                >
+                  <option value="">{t('selectStudent')}</option>
+                  {studentsData?.data?.map((student: StudentRead) => (
+                    <option key={student.id} value={student.id}>
+                      {student.first_name} {student.last_name} (ID: {student.id})
+                    </option>
+                  ))}
+                </Select>
+                {errors.student_id && <p className="text-sm text-red-500">{errors.student_id.message}</p>}
+              </>
+            )}
+
+            {/* Show student name only when editing existing contract */}
+            {contract && selectedStudent && (
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <User className="w-4 h-4" />
+                  <span className="text-base">
+                    {selectedStudent.first_name} {selectedStudent.last_name}
+                  </span>
+                  <Badge variant="secondary" className="text-xs ml-auto">
+                    ID: {selectedStudent.id}
+                  </Badge>
+                </div>
+              </div>
+            )}
 
             {/* Dynamic Student Info Display */}
             {selectedStudent && (

@@ -55,9 +55,22 @@ export default function Dashboard() {
   const { data: financeData } = useQuery({
     queryKey: ['dashboard-finance'],
     queryFn: () => {
+      // Check if finance report also needs datetime format or accepts date format
       const today = format(new Date(), 'yyyy-MM-dd')
       const weekAgo = format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
       return reportService.getFinanceReport({ from_date: weekAgo, to_date: today })
+    },
+  })
+
+  const { data: revenueTransactionsData } = useQuery({
+    queryKey: ['revenue-transactions'],
+    queryFn: () => {
+      // Fetch recent transactions without date filters to avoid 422 validation errors
+      // The backend seems to have strict validation on datetime parameters
+      return transactionService.getTransactions({
+        page: 1,
+        page_size: 100 // Get last 100 transactions
+      })
     },
   })
 
@@ -89,21 +102,56 @@ export default function Dashboard() {
     value: item.transaction_count,
   })) || []
 
-  // NOTE: Revenue and Attendance charts use static placeholder data as there are no backend endpoints for this yet.
-  const revenueData = [
-    { label: 'Mon', value: 2400 },
-    { label: 'Tue', value: 1800 },
-    { label: 'Wed', value: 3200 },
-    { label: 'Thu', value: 2800 },
-    { label: 'Fri', value: 4100 },
-    { label: 'Sat', value: 3500 },
-    { label: 'Sun', value: 2900 },
-  ]
-  const attendanceData = [
-    { label: 'Present', value: 85, color: 'hsl(142, 71%, 45%)' },
-    { label: 'Absent', value: 10, color: 'hsl(0, 84%, 60%)' },
-    { label: 'Late', value: 5, color: 'hsl(47, 96%, 53%)' },
-  ]
+  // Process revenue data from transactions (last 7 days)
+  const revenueData = (() => {
+    const transactions = revenueTransactionsData?.data || []
+    const dailyRevenue: { [key: string]: number } = {}
+
+    // Initialize last 7 days with 0
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+      const dateKey = format(date, 'yyyy-MM-dd')
+      dailyRevenue[dateKey] = 0
+    }
+
+    // Sum up transactions by day (only last 7 days, only success status)
+    transactions.forEach((tx: TransactionRead) => {
+      if (tx.paid_at && tx.status === 'success') {
+        const txDate = new Date(tx.paid_at)
+        // Only count if within last 7 days
+        if (txDate >= sevenDaysAgo) {
+          const dateKey = format(txDate, 'yyyy-MM-dd')
+          if (dailyRevenue.hasOwnProperty(dateKey)) {
+            dailyRevenue[dateKey] += tx.amount
+          }
+        }
+      }
+    })
+
+    // Convert to chart format
+    return Object.entries(dailyRevenue).map(([date, value]) => ({
+      label: format(new Date(date), 'EEE'),
+      value: value,
+    }))
+  })()
+
+  // Attendance data - using group attendance reports for aggregate data
+  const { data: groupAttendanceData } = useQuery({
+    queryKey: ['group-attendance-reports'],
+    queryFn: () => reportService.getGroupAttendanceReports(),
+  })
+
+  // Process attendance data from group reports
+  const attendanceChartData = (() => {
+    // For now, show placeholder data since detailed attendance by status requires backend support
+    // The backend needs an endpoint like /reports/attendance/today with present/absent/late counts
+    return [
+      { label: 'Present', value: 1, color: 'hsl(142, 71%, 45%)' },
+      { label: 'Absent', value: 0, color: 'hsl(0, 84%, 60%)' },
+      { label: 'Late', value: 0, color: 'hsl(47, 96%, 53%)' },
+    ]
+  })()
 
   return (
     <div className="space-y-8">
@@ -172,7 +220,13 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">{t('studentAttendanceStatus')}</p>
             </CardHeader>
             <CardContent>
-              <DonutChart data={attendanceData} size={160} centerValue="85%" centerLabel="Present" showLegend />
+              <DonutChart
+                data={attendanceChartData}
+                size={160}
+                centerValue={attendanceChartData.reduce((sum, item) => sum + item.value, 0).toString()}
+                centerLabel="Total"
+                showLegend
+              />
             </CardContent>
           </Card>
         </motion.div>
