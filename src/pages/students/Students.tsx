@@ -200,7 +200,7 @@ export default function Students() {
           { label: t('graduated'), value: stats.graduated, icon: UsersIcon, color: 'purple' },
           { label: t('dropped'), value: stats.dropped, icon: UsersIcon, color: 'red' },
         ].map((stat) => (
-          <Card key={stat.label}>
+          <Card key={stat.label} className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -222,7 +222,7 @@ export default function Students() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <Card>
+        <Card className="border-border/50 shadow-sm">
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="relative flex-1">
@@ -231,7 +231,7 @@ export default function Students() {
                   placeholder={t('searchByName')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 border-border/50"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
@@ -288,8 +288,8 @@ export default function Students() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        <Card>
-          <CardHeader className="border-b border-border">
+        <Card className="border-border/50 shadow-sm">
+          <CardHeader className="border-b border-border/50">
             <CardTitle className="text-lg">{t('studentsList')}</CardTitle>
           </CardHeader>
           <Table isLoading={isLoading}>

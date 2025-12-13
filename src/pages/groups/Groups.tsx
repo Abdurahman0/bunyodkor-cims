@@ -172,7 +172,7 @@ export default function Groups() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <Card>
+        <Card className="border-border/50 shadow-sm">
           <CardContent className="p-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -180,7 +180,7 @@ export default function Groups() {
                 placeholder={t("searchByGroupName")}
                 value={search}
                 onChange={handleSearchChange}
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 border-border/50"
               />
               {search && (
                 <button
@@ -215,7 +215,7 @@ export default function Groups() {
                   transition={{ duration: 0.2 }}
                 >
                   <Card
-                    className="hover:shadow-lg transition-shadow cursor-pointer group h-full"
+                    className="hover:shadow-lg transition-all duration-200 cursor-pointer group h-full border-border/50 hover:border-border"
                     onClick={() => handleOpenDetailsDialog(group)}
                   >
                     <CardHeader className="pb-3">
@@ -346,7 +346,7 @@ export default function Groups() {
             )}
           </>
         ) : (
-          <Card>
+          <Card className="border-border/50 shadow-sm">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Users className="w-16 h-16 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">

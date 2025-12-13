@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { settingsService } from '@/services/api.service'
-import type { SystemSettingsRead } from '@/types/api'
 import { useThemeStore } from '@/store/themeStore'
 import {
   Settings as SettingsIcon,
@@ -20,9 +19,6 @@ import {
   Sun,
   Loader2,
   Check,
-  RefreshCw,
-  Trash2,
-  AlertTriangle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useLanguageStore } from '@/store/languageStore'
@@ -33,8 +29,6 @@ export default function Settings() {
   const queryClient = useQueryClient()
   const [editedSettings, setEditedSettings] = useState<Record<string, string>>({})
   const [localSettings, setLocalSettings] = useState<Record<string, string>>({})
-  const [isRestarting, setIsRestarting] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   const { data: settingsData } = useQuery({
     queryKey: ['system-settings'],
@@ -52,7 +46,7 @@ export default function Settings() {
   }, [settingsData])
 
   const updateMutation = useMutation({
-    mutationFn: (data: Record<string, string>) => settingsService.updateSystemSettings({ requestBody: data }),
+    mutationFn: (data: Record<string, string>) => settingsService.updateSystemSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-settings'] })
       toast.success('Settings updated successfully')
@@ -79,46 +73,6 @@ export default function Settings() {
   }
 
   const hasChanges = Object.keys(editedSettings).length > 0
-
-  const handleRestartServer = async () => {
-    if (confirm(t('confirmRestartServer') || 'Are you sure you want to restart the server? This will disconnect all users.')) {
-      setIsRestarting(true)
-      try {
-        // Call restart endpoint if available
-        await settingsService.restartServer?.()
-        toast.success(t('serverRestartInitiated') || 'Server restart initiated')
-        setTimeout(() => {
-          window.location.reload()
-        }, 3000)
-      } catch (error) {
-        toast.error(t('failedToRestartServer') || 'Failed to restart server')
-        setIsRestarting(false)
-      }
-    }
-  }
-
-  const handleBulkDelete = async () => {
-    const confirmText = t('confirmBulkDelete') || 'WARNING: This will delete ALL data (students, contracts, transactions, etc.). Type "DELETE ALL" to confirm.'
-    const userInput = prompt(confirmText)
-
-    if (userInput === 'DELETE ALL') {
-      setIsDeleting(true)
-      try {
-        // Call bulk delete endpoint if available
-        await settingsService.bulkDeleteData?.()
-        toast.success(t('allDataDeleted') || 'All data has been deleted successfully')
-        queryClient.clear()
-        setTimeout(() => {
-          window.location.reload()
-        }, 2000)
-      } catch (error) {
-        toast.error(t('failedToDeleteData') || 'Failed to delete data')
-        setIsDeleting(false)
-      }
-    } else if (userInput !== null) {
-      toast.error(t('incorrectConfirmation') || 'Incorrect confirmation text')
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -330,94 +284,6 @@ export default function Settings() {
         </Card>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-      >
-        <Card className="border-red-200 dark:border-red-900">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <CardTitle className="text-lg text-red-600 dark:text-red-400">{t('dangerZone') || 'Danger Zone'}</CardTitle>
-                <CardDescription>{t('systemManagementActions') || 'Critical system management actions'}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <RefreshCw className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    <p className="font-semibold text-red-900 dark:text-red-100">{t('restartServer') || 'Restart Server'}</p>
-                  </div>
-                  <p className="text-sm text-red-700 dark:text-red-300">
-                    {t('restartServerDescription') || 'Restart the backend server. This will disconnect all users temporarily.'}
-                  </p>
-                </div>
-                <Button
-                  variant="destructive"
-                  onClick={handleRestartServer}
-                  disabled={isRestarting}
-                  className="gap-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 shrink-0"
-                >
-                  {isRestarting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('restarting') || 'Restarting...'}
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4" />
-                      {t('restart') || 'Restart'}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    <p className="font-semibold text-red-900 dark:text-red-100">{t('deleteAllData') || 'Delete All Data'}</p>
-                  </div>
-                  <p className="text-sm text-red-700 dark:text-red-300 mb-2">
-                    {t('deleteAllDataDescription') || 'Permanently delete ALL data including students, contracts, transactions, groups, and users.'}
-                  </p>
-                  <Badge className="bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200 border-0">
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    {t('irreversibleAction') || 'IRREVERSIBLE ACTION'}
-                  </Badge>
-                </div>
-                <Button
-                  variant="destructive"
-                  onClick={handleBulkDelete}
-                  disabled={isDeleting}
-                  className="gap-2 bg-red-700 hover:bg-red-800 dark:bg-red-800 dark:hover:bg-red-900 shrink-0"
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('deleting') || 'Deleting...'}
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4" />
-                      {t('deleteAll') || 'Delete All'}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
     </div>
   )
 }

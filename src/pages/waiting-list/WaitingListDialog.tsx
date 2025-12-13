@@ -18,6 +18,7 @@ import { waitingListService, groupService } from "@/services/api.service";
 import type {
   WaitingListRead,
   WaitingListCreate,
+  WaitingListUpdate,
   GroupRead,
 } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
@@ -30,7 +31,6 @@ interface WaitingListDialogProps {
   onSuccess?: () => void;
 }
 
-// Formdagi ma'lumotlar tuzilishi
 type WaitingListFormData = {
   student_first_name: string;
   student_last_name: string;
@@ -60,6 +60,7 @@ export function WaitingListDialog({
     formState: { errors },
   } = useForm<WaitingListFormData>();
 
+  // Get groups list
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
@@ -69,6 +70,7 @@ export function WaitingListDialog({
   useEffect(() => {
     if (open) {
       if (entry) {
+        // Edit mode
         reset({
           student_first_name: entry.student_first_name,
           student_last_name: entry.student_last_name,
@@ -82,11 +84,12 @@ export function WaitingListDialog({
           notes: entry.notes || "",
         });
       } else {
-        // Yangi qo'shish uchun formani tozalash
+        // Create mode
+        const currentYear = new Date().getFullYear();
         reset({
           student_first_name: "",
           student_last_name: "",
-          birth_year: "",
+          birth_year: currentYear - 10, // Default to 10 years ago
           father_name: "",
           father_phone: "",
           mother_name: "",
@@ -100,26 +103,25 @@ export function WaitingListDialog({
   }, [entry, open, reset]);
 
   const mutation = useMutation({
-    mutationFn: (data: WaitingListCreate) => {
+    mutationFn: (data: WaitingListCreate | WaitingListUpdate) => {
       if (entry) {
         // Update
-        return waitingListService.updateWaitingListEntry(entry.id, data);
+        return waitingListService.updateWaitingListEntry(entry.id, data as WaitingListUpdate);
       }
       // Create
-      return waitingListService.addToWaitingList(data);
+      return waitingListService.addToWaitingList(data as WaitingListCreate);
     },
     onSuccess: () => {
       toast.success(
-        entry ? t("waitingListUpdatedSuccess") : t("waitingListAddedSuccess")
+        entry ? t("waitingListUpdatedSuccess") || "Waiting list updated" : t("waitingListAddedSuccess") || "Added to waiting list"
       );
       queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
       onOpenChange(false);
       if (onSuccess) onSuccess();
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
-      let errorMessage = t("anErrorOccurred");
+      let errorMessage = t("anErrorOccurred") || "An error occurred";
 
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
@@ -132,190 +134,256 @@ export function WaitingListDialog({
   });
 
   const onSubmit = (data: WaitingListFormData) => {
-    const payload: WaitingListCreate = {
-      student_first_name: data.student_first_name,
-      student_last_name: data.student_last_name,
-      birth_year: Number(data.birth_year),
-      father_name: data.father_name,
-      father_phone: data.father_phone,
-      mother_name: data.mother_name,
-      mother_phone: data.mother_phone,
-      group_id: Number(data.group_id),
-      priority: Number(data.priority),
-      notes: data.notes || undefined,
-    };
-
-    if (!payload.group_id) {
-      toast.error(t("pleaseSelectGroup") || "Please select a group");
-      return;
+    if (entry) {
+      // Update - all fields can be updated
+      const payload: WaitingListUpdate = {
+        student_first_name: data.student_first_name,
+        student_last_name: data.student_last_name,
+        birth_year: Number(data.birth_year),
+        father_name: data.father_name,
+        father_phone: data.father_phone,
+        mother_name: data.mother_name,
+        mother_phone: data.mother_phone,
+        group_id: Number(data.group_id),
+        priority: Number(data.priority),
+        notes: data.notes || undefined,
+      };
+      mutation.mutate(payload);
+    } else {
+      // Create - all fields are required
+      const payload: WaitingListCreate = {
+        student_first_name: data.student_first_name,
+        student_last_name: data.student_last_name,
+        birth_year: Number(data.birth_year),
+        father_name: data.father_name,
+        father_phone: data.father_phone,
+        mother_name: data.mother_name,
+        mother_phone: data.mother_phone,
+        group_id: Number(data.group_id),
+        priority: Number(data.priority),
+        notes: data.notes || undefined,
+      };
+      mutation.mutate(payload);
     }
-
-    mutation.mutate(payload);
   };
+
+  const currentYear = new Date().getFullYear();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {entry ? t("editWaitingListEntry") : t("addToWaitingList")}
+            {entry ? t("editWaitingListEntry") || "Edit Waiting List Entry" : t("addToWaitingList") || "Add to Waiting List"}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
-          {/* O'quvchi ma'lumotlari */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="student_first_name">Ism (Student) *</Label>
-              <Input
-                id="student_first_name"
-                {...register("student_first_name", {
-                  required: "Ism majburiy",
-                })}
-                placeholder="Ismni kiriting"
-              />
-              {errors.student_first_name && (
-                <p className="text-xs text-red-500">
-                  {errors.student_first_name.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="student_last_name">Familiya (Student) *</Label>
-              <Input
-                id="student_last_name"
-                {...register("student_last_name", {
-                  required: "Familiya majburiy",
-                })}
-                placeholder="Familiyani kiriting"
-              />
-              {errors.student_last_name && (
-                <p className="text-xs text-red-500">
-                  {errors.student_last_name.message}
-                </p>
-              )}
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-6">
+          {/* Student Information */}
+          <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
+            <h3 className="font-semibold text-sm text-foreground">
+              Student Information
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="student_first_name">
+                  {t("firstName") || "First Name"} <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="student_first_name"
+                  {...register("student_first_name", {
+                    required: "First name is required",
+                  })}
+                  placeholder="Enter first name"
+                />
+                {errors.student_first_name && (
+                  <p className="text-sm text-red-500">{errors.student_first_name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="student_last_name">
+                  {t("lastName") || "Last Name"} <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="student_last_name"
+                  {...register("student_last_name", {
+                    required: "Last name is required",
+                  })}
+                  placeholder="Enter last name"
+                />
+                {errors.student_last_name && (
+                  <p className="text-sm text-red-500">{errors.student_last_name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="birth_year">
+                  {t("birthYear") || "Birth Year"} <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="birth_year"
+                  type="number"
+                  min="2000"
+                  max={currentYear}
+                  {...register("birth_year", {
+                    required: "Birth year is required",
+                    min: {
+                      value: 2000,
+                      message: "Birth year must be at least 2000",
+                    },
+                    max: {
+                      value: currentYear,
+                      message: `Birth year cannot be greater than ${currentYear}`,
+                    },
+                  })}
+                  placeholder="2015"
+                />
+                {errors.birth_year && (
+                  <p className="text-sm text-red-500">{errors.birth_year.message}</p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="birth_year">Tug'ilgan yil *</Label>
-            <Input
-              id="birth_year"
-              type="number"
-              {...register("birth_year", {
-                required: "Yil majburiy",
-                valueAsNumber: true,
-              })}
-              placeholder="2010"
-            />
-            {errors.birth_year && (
-              <p className="text-xs text-red-500">
-                {errors.birth_year.message}
+          {/* Parent Information */}
+          <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
+            <h3 className="font-semibold text-sm text-foreground">
+              Parent Information
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="father_name">
+                  Father's Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="father_name"
+                  {...register("father_name", {
+                    required: "Father's name is required",
+                  })}
+                  placeholder="Enter father's name"
+                />
+                {errors.father_name && (
+                  <p className="text-sm text-red-500">{errors.father_name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="father_phone">
+                  Father's Phone <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="father_phone"
+                  type="tel"
+                  {...register("father_phone", {
+                    required: "Father's phone is required",
+                  })}
+                  placeholder="+998 XX XXX XX XX"
+                />
+                {errors.father_phone && (
+                  <p className="text-sm text-red-500">{errors.father_phone.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mother_name">
+                  Mother's Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="mother_name"
+                  {...register("mother_name", {
+                    required: "Mother's name is required",
+                  })}
+                  placeholder="Enter mother's name"
+                />
+                {errors.mother_name && (
+                  <p className="text-sm text-red-500">{errors.mother_name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mother_phone">
+                  Mother's Phone <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="mother_phone"
+                  type="tel"
+                  {...register("mother_phone", {
+                    required: "Mother's phone is required",
+                  })}
+                  placeholder="+998 XX XXX XX XX"
+                />
+                {errors.mother_phone && (
+                  <p className="text-sm text-red-500">{errors.mother_phone.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Group and Priority */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="group_id">
+                {t("group") || "Group"} <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                id="group_id"
+                {...register("group_id", {
+                  required: "Group is required",
+                })}
+              >
+                <option value="">{t("selectGroup") || "Select group"}</option>
+                {groupsData?.data?.map((group: GroupRead) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </Select>
+              {errors.group_id && (
+                <p className="text-sm text-red-500">{errors.group_id.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="priority">
+                {t("priority") || "Priority"} (0-100) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="priority"
+                type="number"
+                min="0"
+                max="100"
+                {...register("priority", {
+                  required: t("priorityRequired") || "Priority is required",
+                  min: {
+                    value: 0,
+                    message: t("priorityMin") || "Priority must be at least 0",
+                  },
+                  max: {
+                    value: 100,
+                    message: t("priorityMax") || "Priority must be at most 100",
+                  },
+                })}
+                placeholder="50"
+              />
+              {errors.priority && (
+                <p className="text-sm text-red-500">{errors.priority.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {t("priorityHelp") || "Higher priority students get accepted first (0-100)"}
               </p>
-            )}
-          </div>
-
-          {/* Ota ma'lumotlari */}
-          <div className="grid grid-cols-2 gap-4 border-t pt-4">
-            <div className="space-y-1">
-              <Label htmlFor="father_name">Otasining Ismi</Label>
-              <Input
-                id="father_name"
-                {...register("father_name")}
-                placeholder="To'liq ism"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="father_phone">Otasining Telefoni</Label>
-              <Input
-                id="father_phone"
-                {...register("father_phone")}
-                placeholder="+998..."
-              />
             </div>
           </div>
 
-          {/* Ona ma'lumotlari */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="mother_name">Onasining Ismi</Label>
-              <Input
-                id="mother_name"
-                {...register("mother_name")}
-                placeholder="To'liq ism"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="mother_phone">Onasining Telefoni</Label>
-              <Input
-                id="mother_phone"
-                {...register("mother_phone")}
-                placeholder="+998..."
-              />
-            </div>
-          </div>
-
-          {/* Guruh va Prioritet */}
-          <div className="space-y-1 border-t pt-4">
-            <Label htmlFor="group_id">
-              {t("group")} <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              id="group_id"
-              {...register("group_id", { required: t("selectGroupRequired") })}
-            >
-              <option value="">{t("selectGroup")}</option>
-              {groupsData?.data?.map((group: GroupRead) => (
-                <option key={group.id} value={group.id}>
-                  {group.name} (Yil: {group.birth_year})
-                </option>
-              ))}
-            </Select>
-            {errors.group_id && (
-              <p className="text-sm text-red-500">{errors.group_id.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="priority">
-              {t("priority")} (0-100) <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="priority"
-              type="number"
-              min="0"
-              max="100"
-              {...register("priority", {
-                required: t("priorityRequired"),
-                min: {
-                  value: 0,
-                  message: t("priorityMin") || "Priority must be at least 0",
-                },
-                max: {
-                  value: 100,
-                  message: t("priorityMax") || "Priority must be at most 100",
-                },
-              })}
-              placeholder="50"
-            />
-            {errors.priority && (
-              <p className="text-sm text-red-500">{errors.priority.message}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {t("priorityHelp") ||
-                "Yuqori ustuvorlikka ega talabalar birinchi navbatda qabul qilinadi (0-100)"}
-            </p>
-          </div>
-
-          {/* Izohlar */}
-          <div className="space-y-1">
-            <Label htmlFor="notes">{t("notes")}</Label>
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="notes">{t("notes") || "Notes"}</Label>
             <Textarea
               id="notes"
               {...register("notes")}
-              placeholder={
-                t("waitingListNotesPlaceholder") || "Qo'shimcha izohlar..."
-              }
+              placeholder={t("waitingListNotesPlaceholder") || "Additional notes..."}
               rows={3}
             />
           </div>
@@ -326,16 +394,16 @@ export function WaitingListDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              {t("cancel")}
+              {t("cancel") || "Cancel"}
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {t("saving")}
+                  {t("saving") || "Saving..."}
                 </>
               ) : (
-                t("save")
+                t("save") || "Save"
               )}
             </Button>
           </div>

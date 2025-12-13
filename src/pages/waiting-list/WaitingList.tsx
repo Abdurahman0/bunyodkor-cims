@@ -16,10 +16,11 @@ import {
   Loader2,
   AlertCircle,
   User,
+  Phone,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
-import type { WaitingListRead } from "@/types/api";
+import type { WaitingListRead, GroupRead } from "@/types/api";
 import { WaitingListDialog } from "./WaitingListDialog";
 import { format } from "date-fns";
 
@@ -41,16 +42,11 @@ export default function WaitingList() {
       }),
   });
 
-  // Guruh nomini ID orqali olish uchun
+  // Get all groups for display
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
   });
-
-  const getGroupName = (groupId: number) => {
-    const group = groupsData?.data?.find((g) => g.id === groupId);
-    return group ? group.name : `Group #${groupId}`;
-  };
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => waitingListService.removeFromWaitingList(id),
@@ -83,19 +79,20 @@ export default function WaitingList() {
   const handleDelete = (entry: WaitingListRead) => {
     if (
       confirm(
-        (t("confirmRemoveWaitingList", {
-          student: `${entry.student_first_name} ${entry.student_last_name}`,
-        }) as string) ||
-          `Are you sure you want to remove ${entry.student_first_name} ${entry.student_last_name} from the waiting list?`
+        `Are you sure you want to remove ${entry.student_first_name} ${entry.student_last_name} from the waiting list?`
       )
     ) {
       deleteMutation.mutate(entry.id);
     }
   };
 
+  const getGroupName = (groupId: number) => {
+    const group = groupsData?.data?.find((g: GroupRead) => g.id === groupId);
+    return group ? group.name : `Group #${groupId}`;
+  };
+
   const totalPages = data?.meta?.total_pages || 1;
 
-  // Pagination logic... (same as before)
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
     if (totalPages <= 7)
@@ -151,8 +148,8 @@ export default function WaitingList() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="border-b">
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="border-b border-border/50">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -193,15 +190,25 @@ export default function WaitingList() {
                             <User className="w-4 h-4" />
                             {entry.student_first_name} {entry.student_last_name}
                           </h3>
-                          <div className="text-sm text-muted-foreground flex flex-col sm:flex-row sm:gap-4">
-                            <span>Yil: {entry.birth_year}</span>
-                            {entry.father_phone && (
-                              <span>Ota: {entry.father_phone}</span>
-                            )}
-                            {entry.mother_phone && (
-                              <span>Ona: {entry.mother_phone}</span>
-                            )}
+                          <div className="text-sm text-muted-foreground">
+                            {t("birthYear") || "Birth Year"}: {entry.birth_year}
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Parent Contact Info */}
+                      <div className="flex flex-wrap items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">Father:</span>
+                          <span className="font-medium">{entry.father_name}</span>
+                          <span className="text-muted-foreground">({entry.father_phone})</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">Mother:</span>
+                          <span className="font-medium">{entry.mother_name}</span>
+                          <span className="text-muted-foreground">({entry.mother_phone})</span>
                         </div>
                       </div>
 
@@ -267,11 +274,11 @@ export default function WaitingList() {
             </div>
           )}
 
-          {/* Pagination Controls... (same as before) */}
+          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between p-6 border-t">
               <p className="text-sm text-muted-foreground">
-                {t("page")} {page} {t("of")} {totalPages}
+                Page {page} of {totalPages}
               </p>
               <div className="flex items-center gap-1">
                 <Button
@@ -282,7 +289,6 @@ export default function WaitingList() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                {/* ... pagination numbers ... */}
                 {paginationItems.map((item, idx) =>
                   typeof item === "number" ? (
                     <Button

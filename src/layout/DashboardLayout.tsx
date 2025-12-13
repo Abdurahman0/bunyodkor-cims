@@ -25,6 +25,8 @@ import {
   Info,
   Clock,
   LogOut,
+  Archive,
+  Database,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -137,6 +139,18 @@ const DashboardLayout = () => {
       icon: Settings,
       permission: "settings:system:view",
     },
+    {
+      path: "/archive",
+      label: "Archive",
+      icon: Archive,
+      permission: "settings:system:view",
+    },
+    {
+      path: "/backup",
+      label: "Backup",
+      icon: Database,
+      permission: "settings:system:view",
+    },
   ];
 
   const hasPermission = (permission: string | null) => {
@@ -201,7 +215,7 @@ const DashboardLayout = () => {
           "fixed lg:static inset-y-0 left-0 z-[9985] w-72 flex flex-col",
           "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800",
           "dark:from-slate-950 dark:via-slate-950 dark:to-slate-900",
-          "shadow-2xl lg:shadow-xl",
+          "shadow-2xl lg:shadow-lg border-r border-border/40",
           "lg:translate-x-0",
           {
             "sidebar-closed": !isOpen,
@@ -209,7 +223,7 @@ const DashboardLayout = () => {
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-700/50">
+        <div className="flex items-center justify-between p-5 border-b border-border/40">
           <Link to="/" className="flex items-center gap-3">
             <div className="relative">
               <div className="w-12 h-12 flex items-center justify-center">
@@ -252,18 +266,18 @@ const DashboardLayout = () => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                     isActive
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                      : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/30"
+                      : "text-slate-300 hover:bg-slate-800/50 hover:text-white"
                   )}
                 >
                   <Icon
-                    className={cn("w-5 h-5", isActive && "animate-pulse")}
+                    className={cn("w-5 h-5 flex-shrink-0", isActive && "drop-shadow-sm")}
                   />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-sm">{item.label}</span>
                   {isActive && (
                     <motion.div
                       layoutId="activeIndicator"
-                      className="ml-auto w-2 h-2 rounded-full bg-white"
+                      className="ml-auto w-1.5 h-1.5 rounded-full bg-white shadow-sm"
                     />
                   )}
                 </motion.div>
@@ -272,7 +286,7 @@ const DashboardLayout = () => {
           })}
 
           {pageNotifications.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-700/50">
+            <div className="mt-4 pt-4">
               <div className="px-2 mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
                 <Bell className="w-3.5 h-3.5" />
                 <span>{t("pageInfo") || "Page Info"}</span>
@@ -300,7 +314,7 @@ const DashboardLayout = () => {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-700/50 space-y-3">
+        <div className="p-4 border-t border-border/40 space-y-3">
           <Button
             variant="ghost"
             onClick={toggleDarkMode}
@@ -319,9 +333,9 @@ const DashboardLayout = () => {
             )}
           </Button>
 
-          <div className="px-4 py-3 bg-slate-800/60 rounded-xl">
+          <div className="px-4 py-3 bg-slate-800/40 rounded-xl border border-border/40">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
                 {user?.full_name?.charAt(0) || "U"}
               </div>
               <div className="flex-1 min-w-0">
@@ -332,7 +346,7 @@ const DashboardLayout = () => {
               </div>
             </div>
             {user?.is_super_admin && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs">
+              <div className="mt-2 pt-2 border-t border-border/40 flex items-center gap-1.5 text-xs">
                 <Shield className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-amber-400 font-medium">Super Admin</span>
               </div>
@@ -344,7 +358,7 @@ const DashboardLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 flex items-center justify-between px-4 lg:px-8 border-b border-border bg-card/50 backdrop-blur-sm z-50">
+        <header className="h-16 flex items-center justify-between px-4 lg:px-8 border-b border-border/40 bg-card/30 backdrop-blur-md z-50 shadow-sm">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"

@@ -99,3 +99,16 @@ export function BackupSection() {
     </Card>
   );
 }
+
+// Default export for the Backup page
+export default function Backup() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Database Backup</h1>
+        <p className="text-muted-foreground mt-1">Manage database backups and restore points</p>
+      </div>
+      <BackupSection />
+    </div>
+  );
+}

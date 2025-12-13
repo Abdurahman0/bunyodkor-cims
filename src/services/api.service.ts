@@ -1295,6 +1295,39 @@ export const archiveService = {
     const response = await apiClient.get(`/archive/stats/${year}`)
     return response.data
   },
+
+  /**
+   * Get terminated contracts for a specific year
+   * Uses /contracts endpoint with status=TERMINATED filter
+   */
+  getTerminatedContracts: async (year: number): Promise<ApiResponse<ContractRead[]>> => {
+    const response = await apiClient.get<ApiResponse<ContractRead[]>>('/contracts', {
+      params: {
+        status: 'TERMINATED',
+        page: 1,
+        page_size: 100,
+        // The year filtering will be based on terminated_at field
+      }
+    })
+
+    // Filter by year on the client side if needed
+    if (response.data?.data) {
+      const filteredContracts = response.data.data.filter((contract: ContractRead) => {
+        if (contract.terminated_at) {
+          const terminatedYear = new Date(contract.terminated_at).getFullYear()
+          return terminatedYear === year
+        }
+        return false
+      })
+
+      return {
+        ...response.data,
+        data: filteredContracts
+      }
+    }
+
+    return response.data
+  },
 }
 
 // ============================================================================
