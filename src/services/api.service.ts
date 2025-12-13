@@ -583,131 +583,198 @@ export const contractService = {
    * Get all contracts with optional filters
    * GET /contracts
    */
-  getContracts: async (params?: GetContractsParams): Promise<ApiResponse<ContractRead[]>> => {
-    const response = await apiClient.get<ApiResponse<ContractRead[]>>('/contracts', { params })
-    return response.data
+  getContracts: async (
+    params?: GetContractsParams
+  ): Promise<ApiResponse<ContractRead[]>> => {
+    const response = await apiClient.get<ApiResponse<ContractRead[]>>(
+      "/contracts",
+      { params }
+    );
+    return response.data;
   },
 
   /**
    * Create new contract
    * POST /contracts
    */
-  createContract: async (data: ContractCreateRequest): Promise<ApiResponse<ContractRead>> => {
-    const response = await apiClient.post<ApiResponse<ContractRead>>('/contracts', data)
-    return response.data
+  createContract: async (
+    data: ContractCreateRequest
+  ): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.post<ApiResponse<ContractRead>>(
+      "/contracts",
+      data
+    );
+    return response.data;
   },
 
   /**
    * Get single contract
    * GET /contracts/{contract_id}
    */
-  getContract: async (contractId: number): Promise<ApiResponse<ContractRead>> => {
-    const response = await apiClient.get<ApiResponse<ContractRead>>(`/contracts/${contractId}`)
-    return response.data
+  getContract: async (
+    contractId: number
+  ): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.get<ApiResponse<ContractRead>>(
+      `/contracts/${contractId}`
+    );
+    return response.data;
   },
 
   /**
    * Update contract
    * PATCH /contracts/{contract_id}
    */
-  updateContract: async (contractId: number, data: ContractUpdateRequest): Promise<ApiResponse<ContractRead>> => {
-    const response = await apiClient.patch<ApiResponse<ContractRead>>(`/contracts/${contractId}`, data)
-    return response.data
+  updateContract: async (
+    contractId: number,
+    data: ContractUpdateRequest
+  ): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.patch<ApiResponse<ContractRead>>(
+      `/contracts/${contractId}`,
+      data
+    );
+    return response.data;
   },
 
   /**
    * Delete contract
    * DELETE /contracts/{contract_id}
    */
-  deleteContract: async (contractId: number): Promise<ApiResponse<Record<string, unknown>>> => {
-    const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(`/contracts/${contractId}`)
-    return response.data
+  deleteContract: async (
+    contractId: number
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.delete<
+      ApiResponse<Record<string, unknown>>
+    >(`/contracts/${contractId}`);
+    return response.data;
   },
 
   /**
    * Terminate contract with reason
    * POST /contracts/{contract_id}/terminate
    */
-  terminateContract: async (contractId: number, data: {
-    termination_reason: string
-    terminated_at: string
-  }): Promise<ApiResponse<ContractRead>> => {
-    const response = await apiClient.post<ApiResponse<ContractRead>>(`/contracts/${contractId}/terminate`, data)
-    return response.data
+  terminateContract: async (
+    contractId: number,
+    data: {
+      termination_reason: string;
+      terminated_at: string;
+    }
+  ): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.post<ApiResponse<ContractRead>>(
+      `/contracts/${contractId}/terminate`,
+      data
+    );
+    return response.data;
   },
 
   /**
    * Get valid payment months for a contract
    * GET /contracts/payment-months/{contract_number}
    */
-  getContractPaymentMonths: async (contractNumber: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(`/contracts/payment-months/${contractNumber}`)
-    return response.data
+  getContractPaymentMonths: async (
+    contractNumber: string
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
+      `/contracts/payment-months/${contractNumber}`
+    );
+    return response.data;
   },
 
   /**
    * Bulk delete contracts by IDs
    * POST /contracts/bulk-delete
    */
-  bulkDeleteContracts: async (contractIds: number[]): Promise<ApiResponse<Record<string, unknown>>> => {
-    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>('/contracts/bulk-delete', contractIds)
-    return response.data
+  bulkDeleteContracts: async (
+    contractIds: number[]
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
+      "/contracts/bulk-delete",
+      contractIds
+    );
+    return response.data;
   },
 
   /**
    * Create contract with file uploads
    * POST /contracts/create-with-files
    */
-  createContractWithFiles: async (formData: FormData): Promise<ApiResponse<ContractRead>> => {
-    const response = await apiClient.post<ApiResponse<ContractRead>>('/contracts/create-with-files', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-    return response.data
+  createContractWithFiles: async (
+    formData: FormData
+  ): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.post<ApiResponse<ContractRead>>(
+      "/contracts/create-with-files",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
   },
 
   /**
    * Get all available contract numbers for a group and birth year
    * GET /contracts/available-numbers/{group_id}/{birth_year}
    */
-  getAvailableContractNumbers: async (groupId: number, birthYear: number): Promise<ApiResponse<{
-    group_id: number
-    group_name: string
-    group_capacity: number
-    birth_year: number
-    available_numbers: number[]
-    total_available: number
-    total_used: number
-    is_full: boolean
-  }>> => {
-    const response = await apiClient.get(`/contracts/available-numbers/${groupId}/${birthYear}`)
-    return response.data
+  getAvailableContractNumbers: async (
+    groupId: number,
+    birthYear: number
+  ): Promise<
+    ApiResponse<{
+      group_id: number;
+      group_name: string;
+      group_capacity: number;
+      birth_year: number;
+      available_numbers: number[];
+      total_available: number;
+      total_used: number;
+      is_full: boolean;
+    }>
+  > => {
+    const response = await apiClient.get(
+      `/contracts/available-numbers/${groupId}/${birthYear}`
+    );
+    return response.data;
   },
 
   /**
    * Get next available contract number
    * GET /contracts/next-available/{group_id}/{birth_year}
    */
-  getNextAvailableNumber: async (groupId: number, birthYear: number): Promise<ApiResponse<{
-    next_available: number
-    contract_number: string
-    birth_year: number
-    is_full: boolean
-  }>> => {
-    const response = await apiClient.get(`/contracts/next-available/${groupId}/${birthYear}`)
-    return response.data
+  getNextAvailableNumber: async (
+    groupId: number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    birthYear: number
+  ): Promise<
+    ApiResponse<{
+      next_available: number;
+      contract_number: string;
+      birth_year: number;
+      is_full: boolean;
+    }>
+  > => {
+    // Tahrir: birthYear argument sifatida qolsa ham, URL faqat groupId ni oladi
+    // Chunki backend guruh ID orqali yilni o'zi aniqlaydi.
+    const response = await apiClient.get(
+      `/contracts/next-available/${groupId}`
+    );
+    return response.data;
   },
 
   /**
    * Get contract PDF URL by year and contract number
    * GET /contracts/{year}/{contract_number}/pdf
    */
-  getContractPdfUrl: async (year: number, contractNumber: string): Promise<string> => {
-    const response = await apiClient.get<string>(`/contracts/${year}/${contractNumber}/pdf`)
-    return response.data
+  getContractPdfUrl: async (
+    year: number,
+    contractNumber: string
+  ): Promise<string> => {
+    const response = await apiClient.get<string>(
+      `/contracts/${year}/${contractNumber}/pdf`
+    );
+    return response.data;
   },
-}
+};
 
 // ============================================================================
 // TRANSACTION SERVICES

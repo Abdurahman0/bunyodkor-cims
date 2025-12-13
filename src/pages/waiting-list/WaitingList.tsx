@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { waitingListService } from '@/services/api.service';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { waitingListService, groupService } from "@/services/api.service";
 import {
   Plus,
   Edit,
@@ -16,22 +16,24 @@ import {
   Loader2,
   AlertCircle,
   User,
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useLanguageStore } from '@/store/languageStore';
-import type { WaitingListRead } from '@/types/api';
-import { WaitingListDialog } from './WaitingListDialog';
-import { format } from 'date-fns';
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { useLanguageStore } from "@/store/languageStore";
+import type { WaitingListRead } from "@/types/api";
+import { WaitingListDialog } from "./WaitingListDialog";
+import { format } from "date-fns";
 
 export default function WaitingList() {
   const { t } = useLanguageStore();
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<WaitingListRead | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<WaitingListRead | null>(
+    null
+  );
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['waiting-list', page],
+    queryKey: ["waiting-list", page],
     queryFn: () =>
       waitingListService.getWaitingList({
         page,
@@ -39,19 +41,33 @@ export default function WaitingList() {
       }),
   });
 
+  // Guruh nomini ID orqali olish uchun
+  const { data: groupsData } = useQuery({
+    queryKey: ["groups-list"],
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
+  });
+
+  const getGroupName = (groupId: number) => {
+    const group = groupsData?.data?.find((g) => g.id === groupId);
+    return group ? group.name : `Group #${groupId}`;
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => waitingListService.removeFromWaitingList(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['waiting-list'] });
-      toast.success(t('waitingListRemovedSuccess') || 'Removed from waiting list successfully');
+      queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
+      toast.success(
+        t("waitingListRemovedSuccess") ||
+          "Removed from waiting list successfully"
+      );
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
-      let errorMessage = 'Failed to remove from waiting list';
+      let errorMessage = "Failed to remove from waiting list";
 
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
-      } else if (typeof detail === 'string') {
+      } else if (typeof detail === "string") {
         errorMessage = detail;
       }
 
@@ -67,10 +83,10 @@ export default function WaitingList() {
   const handleDelete = (entry: WaitingListRead) => {
     if (
       confirm(
-        t('confirmRemoveWaitingList', {
-          student: `${entry.student.first_name} ${entry.student.last_name}`,
-        }) as string ||
-          `Are you sure you want to remove ${entry.student.first_name} ${entry.student.last_name} from the waiting list?`
+        (t("confirmRemoveWaitingList", {
+          student: `${entry.student_first_name} ${entry.student_last_name}`,
+        }) as string) ||
+          `Are you sure you want to remove ${entry.student_first_name} ${entry.student_last_name} from the waiting list?`
       )
     ) {
       deleteMutation.mutate(entry.id);
@@ -79,44 +95,38 @@ export default function WaitingList() {
 
   const totalPages = data?.meta?.total_pages || 1;
 
+  // Pagination logic... (same as before)
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
-
-    if (totalPages <= 7) {
+    if (totalPages <= 7)
       return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    if (page <= 4) {
-      return [1, 2, 3, 4, 5, '...', totalPages];
-    }
-
-    if (page >= totalPages - 3) {
+    if (page <= 4) return [1, 2, 3, 4, 5, "...", totalPages];
+    if (page >= totalPages - 3)
       return [
         1,
-        '...',
+        "...",
         totalPages - 4,
         totalPages - 3,
         totalPages - 2,
         totalPages - 1,
         totalPages,
       ];
-    }
-
-    return [1, '...', page - 1, page, page + 1, '...', totalPages];
+    return [1, "...", page - 1, page, page + 1, "...", totalPages];
   };
 
   const paginationItems = getPaginationItems();
 
   const getPriorityColor = (priority: number) => {
-    if (priority >= 80) return 'bg-red-100 text-red-700 border-red-200';
-    if (priority >= 50) return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-    return 'bg-blue-100 text-blue-700 border-blue-200';
+    if (priority >= 80) return "bg-red-100 text-red-700 border-red-200";
+    if (priority >= 50)
+      return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    return "bg-blue-100 text-blue-700 border-blue-200";
   };
 
   const getPriorityLabel = (priority: number) => {
-    if (priority >= 80) return t('high') || 'High';
-    if (priority >= 50) return t('medium') || 'Medium';
-    return t('low') || 'Low';
+    if (priority >= 80) return t("high") || "High";
+    if (priority >= 50) return t("medium") || "Medium";
+    return t("low") || "Low";
   };
 
   return (
@@ -128,15 +138,16 @@ export default function WaitingList() {
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            {t('waitingList') || 'Waiting List'}
+            {t("waitingList") || "Waiting List"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {t('waitingListDescription') || 'Manage students waiting for group slots'}
+            {t("waitingListDescription") ||
+              "Manage students waiting for group slots"}
           </p>
         </div>
         <Button onClick={() => handleOpenDialog()} className="gap-2">
           <Plus className="w-4 h-4" />
-          {t('addToWaitingList') || 'Add to Waiting List'}
+          {t("addToWaitingList") || "Add to Waiting List"}
         </Button>
       </div>
 
@@ -145,11 +156,11 @@ export default function WaitingList() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              {t('waitingListEntries') || 'Waiting List Entries'}
+              {t("waitingListEntries") || "Waiting List Entries"}
             </CardTitle>
             {data?.meta && (
               <Badge variant="secondary">
-                {t('total')}: {data.meta.total}
+                {t("total")}: {data.meta.total}
               </Badge>
             )}
           </div>
@@ -174,17 +185,23 @@ export default function WaitingList() {
                       {/* Student Info */}
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                          {entry.student.first_name.charAt(0)}
-                          {entry.student.last_name.charAt(0)}
+                          {entry.student_first_name.charAt(0)}
+                          {entry.student_last_name.charAt(0)}
                         </div>
                         <div>
                           <h3 className="font-semibold text-foreground flex items-center gap-2">
                             <User className="w-4 h-4" />
-                            {entry.student.first_name} {entry.student.last_name}
+                            {entry.student_first_name} {entry.student_last_name}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {entry.student.phone}
-                          </p>
+                          <div className="text-sm text-muted-foreground flex flex-col sm:flex-row sm:gap-4">
+                            <span>Yil: {entry.birth_year}</span>
+                            {entry.father_phone && (
+                              <span>Ota: {entry.father_phone}</span>
+                            )}
+                            {entry.mother_phone && (
+                              <span>Ona: {entry.mother_phone}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -192,14 +209,15 @@ export default function WaitingList() {
                       <div className="flex flex-wrap items-center gap-3">
                         <Badge variant="outline" className="gap-1.5">
                           <Users className="w-3.5 h-3.5" />
-                          {entry.group.name}
+                          {getGroupName(entry.group_id)}
                         </Badge>
                         <Badge className={getPriorityColor(entry.priority)}>
-                          {t('priority')}: {getPriorityLabel(entry.priority)} ({entry.priority})
+                          {t("priority")}: {getPriorityLabel(entry.priority)} (
+                          {entry.priority})
                         </Badge>
                         <Badge variant="secondary" className="gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
-                          {format(new Date(entry.created_at), 'MMM d, yyyy')}
+                          {format(new Date(entry.created_at), "MMM d, yyyy")}
                         </Badge>
                       </div>
 
@@ -207,7 +225,9 @@ export default function WaitingList() {
                       {entry.notes && (
                         <div className="flex items-start gap-2 p-3 bg-muted rounded-lg">
                           <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5" />
-                          <p className="text-sm text-muted-foreground">{entry.notes}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {entry.notes}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -238,19 +258,20 @@ export default function WaitingList() {
             <div className="flex flex-col items-center justify-center py-12 px-4">
               <Users className="w-16 h-16 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold text-foreground">
-                {t('noWaitingListEntries') || 'No waiting list entries'}
+                {t("noWaitingListEntries") || "No waiting list entries"}
               </h3>
               <p className="text-sm text-muted-foreground mt-1 text-center">
-                {t('noWaitingListEntriesDescription') || 'Add students to the waiting list when groups are full'}
+                {t("noWaitingListEntriesDescription") ||
+                  "Add students to the waiting list when groups are full"}
               </p>
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination Controls... (same as before) */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between p-6 border-t">
               <p className="text-sm text-muted-foreground">
-                {t('page')} {page} {t('of')} {totalPages}
+                {t("page")} {page} {t("of")} {totalPages}
               </p>
               <div className="flex items-center gap-1">
                 <Button
@@ -261,28 +282,23 @@ export default function WaitingList() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-
-                {paginationItems.map((item, idx) => {
-                  if (item === '...') {
-                    return (
-                      <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
-                        ...
-                      </span>
-                    );
-                  }
-
-                  return (
+                {/* ... pagination numbers ... */}
+                {paginationItems.map((item, idx) =>
+                  typeof item === "number" ? (
                     <Button
-                      key={item}
-                      variant={page === item ? 'default' : 'outline'}
+                      key={idx}
+                      variant={page === item ? "default" : "outline"}
                       size="icon"
-                      onClick={() => setPage(item as number)}
+                      onClick={() => setPage(item)}
                     >
                       {item}
                     </Button>
-                  );
-                })}
-
+                  ) : (
+                    <span key={idx} className="px-2 text-muted-foreground">
+                      ...
+                    </span>
+                  )
+                )}
                 <Button
                   variant="outline"
                   size="icon"
@@ -302,7 +318,7 @@ export default function WaitingList() {
         onOpenChange={setIsDialogOpen}
         entry={selectedEntry}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['waiting-list'] });
+          queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
         }}
       />
     </motion.div>

@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { studentService } from "@/services/api.service";
+import { studentService, contractService } from "@/services/api.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,18 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { ArrowLeft, Home, Calendar, Clock, Phone } from "lucide-react";
+import {
+  ArrowLeft,
+  Home,
+  Calendar,
+  Clock,
+  Phone,
+  FileText,
+  User,
+  Users,
+} from "lucide-react";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 import type {
   StudentFullInfo,
   TransactionRead,
@@ -44,10 +54,11 @@ const getStatusBadge = (status: string) => {
   );
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatSource = (source: any) => {
-  // Remove any "Paymentsource." prefix and format properly
-  const cleanSource = source?.toString().replace(/^.*\./, '').toLowerCase() || ''
-  return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1)
+  const cleanSource =
+    source?.toString().replace(/^.*\./, "").toLowerCase() || "";
+  return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
 };
 
 export default function StudentDetailPage() {
@@ -60,25 +71,58 @@ export default function StudentDetailPage() {
     enabled: !!studentId,
   });
 
+  const handleDownloadPdf = async (contract: ContractRead) => {
+    if (contract.final_pdf_url) {
+      window.open(contract.final_pdf_url, "_blank");
+      return;
+    }
+
+    try {
+      const year = new Date(contract.start_date).getFullYear();
+      const response = await contractService.getContractPdfUrl(
+        year,
+        contract.contract_number
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const url =
+        typeof response === "object" &&
+        response !== null &&
+        "pdf_url" in response
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ? (response as any).pdf_url
+          : response;
+
+      if (url && typeof url === "string") {
+        window.open(url, "_blank");
+      } else {
+        toast.error("Shartnoma PDF fayli topilmadi");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Faylni yuklashda xatolik yuz berdi");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Clock className="animate-spin" />
+        <Clock className="animate-spin text-primary w-8 h-8" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="text-center">
+      <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-red-500">
-          Error loading student data.
+          Ma'lumotlarni yuklashda xatolik
         </h2>
         <p className="text-muted-foreground">
-          The student may not exist or an error occurred.
+          Talaba topilmadi yoki serverda xatolik yuz berdi.
         </p>
         <Button asChild variant="link" className="mt-4">
-          <Link to="/students">Go back to students</Link>
+          <Link to="/students">Talabalar ro'yxatiga qaytish</Link>
         </Button>
       </div>
     );
@@ -94,6 +138,89 @@ export default function StudentDetailPage() {
     attendances,
   } = data.data as StudentFullInfo;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getDisplayParents = (): any[] => {
+    if (parents && parents.length > 0) return parents;
+
+    if (contracts && contracts.length > 0) {
+      const sortedContracts = [...contracts].sort((a, b) => b.id - a.id);
+
+      for (const contract of sortedContracts) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let customFields: any = contract.custom_fields;
+
+        if (!customFields) continue;
+
+        if (typeof customFields === "string") {
+          try {
+            customFields = JSON.parse(customFields);
+          } catch (e) {
+            console.error("Custom fields parse error", e);
+            continue;
+          }
+        }
+
+        const inferredParents = [];
+
+        if (
+          customFields.buyurtmachi &&
+          (customFields.buyurtmachi.fio || customFields.buyurtmachi.name)
+        ) {
+          inferredParents.push({
+            id: `contract-${contract.id}-buyurtmachi`,
+            first_name:
+              customFields.buyurtmachi.fio || customFields.buyurtmachi.name,
+            last_name: "",
+            relationship_type: "Buyurtmachi (Shartnoma)",
+            phone:
+              customFields.buyurtmachi.telefon ||
+              customFields.buyurtmachi.phone ||
+              "",
+            email: "",
+            is_from_contract: true,
+          });
+        }
+
+        if (customFields.student) {
+          const st = customFields.student;
+
+          const momName = st.mom_fullname || st.mom_fio || st.mom_name;
+          if (momName && momName !== customFields.buyurtmachi?.fio) {
+            inferredParents.push({
+              id: `contract-${contract.id}-mom`,
+              first_name: momName,
+              last_name: "",
+              relationship_type: "Ona",
+              phone: st.mom_phone_number || st.mom_phone || "",
+              email: "",
+              is_from_contract: true,
+            });
+          }
+
+          const dadName = st.dad_fullname || st.dad_name || st.dad_fio;
+          if (dadName && dadName !== customFields.buyurtmachi?.fio) {
+            inferredParents.push({
+              id: `contract-${contract.id}-dad`,
+              first_name: dadName,
+              last_name: "",
+              relationship_type: "Ota",
+              phone: st.dad_phone_number || st.dad_phone || "",
+              email: "",
+              is_from_contract: true,
+            });
+          }
+        }
+
+        if (inferredParents.length > 0) {
+          return inferredParents;
+        }
+      }
+    }
+    return [];
+  };
+
+  const displayParents = getDisplayParents();
+
   return (
     <div className="space-y-6">
       <Link
@@ -101,7 +228,7 @@ export default function StudentDetailPage() {
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Students List
+        Ortga qaytish
       </Link>
 
       <Card>
@@ -115,9 +242,7 @@ export default function StudentDetailPage() {
               <CardTitle className="text-2xl">
                 {student.first_name} {student.last_name}
               </CardTitle>
-              <p className="text-muted-foreground">
-                {student.phone}
-              </p>
+              <p className="text-muted-foreground">{student.phone}</p>
             </div>
           </div>
           {getStatusBadge(student.status!)}
@@ -134,7 +259,8 @@ export default function StudentDetailPage() {
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-muted-foreground" />
             <span>
-              Born on {format(new Date(student.date_of_birth!), "MMMM d, yyyy")}
+              Tug'ilgan sana:{" "}
+              {format(new Date(student.date_of_birth!), "dd.MM.yyyy")}
             </span>
           </div>
         </CardContent>
@@ -145,11 +271,12 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Total Payments</p>
+              <p className="text-sm text-muted-foreground">Jami To'lovlar</p>
               <p className="text-2xl font-bold">
                 {new Intl.NumberFormat("en-US").format(
                   transactions?.reduce((sum, t) => sum + t.amount, 0) || 0
-                )} UZS
+                )}{" "}
+                UZS
               </p>
             </div>
           </CardContent>
@@ -157,7 +284,7 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Active Contracts</p>
+              <p className="text-sm text-muted-foreground">Faol Shartnomalar</p>
               <p className="text-2xl font-bold">
                 {contracts?.filter((c) => c.status === "active").length || 0}
               </p>
@@ -167,11 +294,12 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Attendance Rate</p>
+              <p className="text-sm text-muted-foreground">Davomat Foizi</p>
               <p className="text-2xl font-bold">
                 {attendances && attendances.length > 0
                   ? Math.round(
-                      (attendances.filter((a) => a.status === "present").length /
+                      (attendances.filter((a) => a.status === "present")
+                        .length /
                         attendances.length) *
                         100
                     )
@@ -186,61 +314,92 @@ export default function StudentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Details</CardTitle>
+            <CardTitle>Ma'lumotlar</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Group</span>
-              <span className="font-medium">{group?.name || "N/A"}</span>
+              <span className="text-muted-foreground">Guruh</span>
+              <span className="font-medium">
+                {group?.name || "Biriktirilmagan"}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Coach</span>
-              <span className="font-medium">{coach?.full_name || "N/A"}</span>
+              <span className="text-muted-foreground">Murabbiy</span>
+              <span className="font-medium">
+                {coach?.full_name || "Biriktirilmagan"}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Face ID</span>
-              <Badge variant="secondary">{student.face_id || "Not set"}</Badge>
+              <Badge variant="secondary">
+                {student.face_id || "O'rnatilmagan"}
+              </Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Joined</span>
+              <span className="text-muted-foreground">Qo'shilgan sana</span>
               <span className="font-medium">
-                {format(new Date(student.created_at!), "MMM yyyy")}
+                {format(new Date(student.created_at!), "dd.MM.yyyy")}
               </span>
             </div>
           </CardContent>
         </Card>
 
+        {/* PARENTS / GUARDIANS SECTION */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Parents/Guardians</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" /> Ota-onalar / Vasiylar
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {parents && parents.length > 0 ? (
+            {displayParents.length > 0 ? (
               <div className="space-y-3">
-                {parents.map((parent: ParentRead) => (
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {displayParents.map((parent: ParentRead | any, index) => (
                   <div
-                    key={parent.id}
-                    className="flex items-center justify-between p-2 rounded-md bg-muted/50"
+                    key={parent.id || index}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-muted/50 gap-2"
                   >
-                    <div>
-                      <p className="font-medium">
-                        {parent.first_name} {parent.last_name} (
-                        {parent.relationship_type})
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {parent.email}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-full bg-blue-100 text-blue-600 mt-1">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-lg">
+                          {parent.first_name} {parent.last_name}
+                        </p>
+                        <p className="text-sm text-blue-600 font-medium">
+                          {parent.relationship_type}
+                        </p>
+                        {parent.email && (
+                          <p className="text-sm text-muted-foreground">
+                            {parent.email}
+                          </p>
+                        )}
+                        {parent.is_from_contract && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] mt-1 h-5 ml-2"
+                          >
+                            Shartnomadan
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-sm flex items-center gap-2">
-                      <Phone className="w-4 h-4" /> {parent.phone}
+                    <div className="text-sm flex items-center gap-2 bg-white px-3 py-1.5 rounded border">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-mono">
+                        {parent.phone || "No phone"}
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                No parent information available.
-              </p>
+              <div className="text-center py-6 text-muted-foreground">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p>Ota-ona ma'lumotlari topilmadi.</p>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -248,18 +407,19 @@ export default function StudentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Contracts</CardTitle>
+          <CardTitle>Shartnomalar</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>Contract #</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Monthly Fee</TableHead>
-                <TableHead>Period</TableHead>
-                <TableHead>Duration</TableHead>
+                <TableHead>Shartnoma №</TableHead>
+                <TableHead>Holati</TableHead>
+                <TableHead>Oylik To'lov</TableHead>
+                <TableHead>Davr</TableHead>
+                <TableHead>Davomiyligi</TableHead>
+                <TableHead className="text-right">Kontrakt</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -268,7 +428,8 @@ export default function StudentDetailPage() {
                   const startDate = new Date(c.start_date!);
                   const endDate = new Date(c.end_date!);
                   const monthsDiff = Math.round(
-                    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
+                    (endDate.getTime() - startDate.getTime()) /
+                      (1000 * 60 * 60 * 24 * 30)
                   );
                   return (
                     <TableRow key={c.id}>
@@ -276,32 +437,62 @@ export default function StudentDetailPage() {
                         #{c.id}
                       </TableCell>
                       <TableCell className="font-medium">
-                        {c.contract_number}
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-muted-foreground" />
+                          {c.contract_number}
+                        </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(c.status!)}</TableCell>
                       <TableCell>
-                        {new Intl.NumberFormat("en-US").format(c.monthly_fee)} UZS
+                        {new Intl.NumberFormat("en-US").format(c.monthly_fee)}{" "}
+                        UZS
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="text-sm">
-                            {format(startDate, "MMM yyyy")}
+                            {format(startDate, "dd.MM.yyyy")}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            to {format(endDate, "MMM yyyy")}
+                            - {format(endDate, "dd.MM.yyyy")}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{monthsDiff} months</Badge>
+                        <Badge variant="outline">{monthsDiff} oy</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end">
+                          <button
+                            className="botao"
+                            onClick={() => handleDownloadPdf(c)}
+                          >
+                            <span className="texto">Yuklash</span>
+                            <span className="mysvg">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-6 h-6"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                                />
+                              </svg>
+                            </span>
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center h-24">
-                    No contracts found.
+                  <TableCell colSpan={7} className="text-center h-24">
+                    Shartnomalar mavjud emas.
                   </TableCell>
                 </TableRow>
               )}
@@ -312,19 +503,19 @@ export default function StudentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
+          <CardTitle>To'lovlar Tarixi</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Year/Month</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Comment</TableHead>
+                <TableHead>Sana</TableHead>
+                <TableHead>Yil/Oy</TableHead>
+                <TableHead>Summa</TableHead>
+                <TableHead>Manba</TableHead>
+                <TableHead>Holati</TableHead>
+                <TableHead>Izoh</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -336,9 +527,7 @@ export default function StudentDetailPage() {
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         #{t.id}
                       </TableCell>
-                      <TableCell>
-                        {format(paidDate, "MMM d, yyyy")}
-                      </TableCell>
+                      <TableCell>{format(paidDate, "dd.MM.yyyy")}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-mono">
                           {format(paidDate, "yyyy-MM")}
@@ -348,7 +537,9 @@ export default function StudentDetailPage() {
                         {new Intl.NumberFormat("en-US").format(t.amount)} UZS
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{formatSource(t.source)}</Badge>
+                        <Badge variant="secondary">
+                          {formatSource(t.source)}
+                        </Badge>
                       </TableCell>
                       <TableCell>{getStatusBadge(t.status!)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -360,7 +551,7 @@ export default function StudentDetailPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center h-24">
-                    No transactions found.
+                    To'lovlar topilmadi.
                   </TableCell>
                 </TableRow>
               )}
@@ -371,15 +562,15 @@ export default function StudentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Attendance History</CardTitle>
+          <CardTitle>Davomat Tarixi</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Comment</TableHead>
+                <TableHead>Sana</TableHead>
+                <TableHead>Holati</TableHead>
+                <TableHead>Izoh</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -387,7 +578,7 @@ export default function StudentDetailPage() {
                 attendances.map((a: AttendanceRead) => (
                   <TableRow key={a.id}>
                     <TableCell>
-                      {format(new Date(a.created_at!), "MMM d, yyyy, p")}
+                      {format(new Date(a.created_at!), "dd.MM.yyyy HH:mm")}
                     </TableCell>
                     <TableCell>{getStatusBadge(a.status!)}</TableCell>
                     <TableCell>{a.comment}</TableCell>
@@ -396,7 +587,7 @@ export default function StudentDetailPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center h-24">
-                    No attendance records found.
+                    Davomat ma'lumotlari topilmadi.
                   </TableCell>
                 </TableRow>
               )}

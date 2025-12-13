@@ -24,6 +24,7 @@ import {
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { GroupRead, UserRead } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
@@ -87,22 +88,17 @@ export default function Groups() {
   };
 
   const handleDelete = (group: GroupRead) => {
-    if (
-      confirm(
-        (t("confirmDeleteGroup", {
-          name: group.name,
-        }) as string) ||
-          `Are you sure you want to delete group "${group.name}"?`
-      )
-    ) {
+    const message =
+      t("confirmDeleteGroup") ||
+      `Are you sure you want to delete group "${group.name}"?`;
+
+    if (confirm(message.replace("{{name}}", group.name))) {
       deleteMutation.mutate(group.id);
     }
   };
 
   const getCoachName = (coachId: number) => {
-    const coach = coachesData?.data?.find(
-      (c: UserRead) => c.id === coachId
-    );
+    const coach = coachesData?.data?.find((c) => c.id === coachId);
     return coach ? coach.full_name : `ID: ${coachId}`;
   };
 
@@ -244,11 +240,15 @@ export default function Groups() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">
                           <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground">{group.schedule_days}</span>
+                          <span className="text-foreground">
+                            {group.schedule_days}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                           <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground">{group.schedule_time}</span>
+                          <span className="text-foreground">
+                            {group.schedule_time}
+                          </span>
                         </div>
                       </div>
                       {group.description && (
@@ -256,7 +256,10 @@ export default function Groups() {
                           {group.description}
                         </p>
                       )}
-                      <div className="flex items-center gap-2 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="flex items-center gap-2 pt-2 border-t border-border"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button
                           variant="ghost"
                           size="sm"
@@ -346,8 +349,12 @@ export default function Groups() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Users className="w-16 h-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">{t("noGroupsFound")}</h3>
-              <p className="text-sm text-muted-foreground mb-4">{t("getStartedGroup")}</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                {t("noGroupsFound")}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t("getStartedGroup")}
+              </p>
               <Button onClick={() => handleOpenDialog()}>
                 <Plus className="w-4 h-4 mr-2" />
                 {t("createGroup")}

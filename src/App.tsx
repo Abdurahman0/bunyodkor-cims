@@ -1,126 +1,301 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'react-hot-toast'
-import { useEffect } from 'react'
-import { useThemeStore } from '@/store/themeStore'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
+import { useEffect, type JSX } from "react";
+import { useThemeStore } from "@/store/themeStore";
+import { useAuthStore } from "@/store/authStore";
 
 // Layout
-import DashboardLayout from './layout/DashboardLayout'
+import DashboardLayout from "./layout/DashboardLayout";
 
 // Pages
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Students from './pages/students/Students'
-import Groups from './pages/groups/Groups'
-import Finance from './pages/finance/Finance'
-import Users from './pages/users/Users'
-import Roles from './pages/roles/Roles'
-import Reports from './pages/reports/Reports'
-import Contracts from './pages/contracts/Contracts'
-import Settings from './pages/settings/Settings'
-import GateLogs from './pages/gate/GateLogs'
-import CoachPanel from './pages/coach/CoachPanel'
-import StudentDetailPage from './pages/students/StudentDetailPage'
-import WaitingList from './pages/waiting-list/WaitingList'
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Students from "./pages/students/Students";
+import Groups from "./pages/groups/Groups";
+import Finance from "./pages/finance/Finance";
+import Users from "./pages/users/Users";
+import Roles from "./pages/roles/Roles";
+import Reports from "./pages/reports/Reports";
+import Contracts from "./pages/contracts/Contracts";
+import Settings from "./pages/settings/Settings";
+import GateLogs from "./pages/gate/GateLogs";
+import CoachPanel from "./pages/coach/CoachPanel";
+import StudentDetailPage from "./pages/students/StudentDetailPage";
+import WaitingList from "./pages/waiting-list/WaitingList";
+import Archive from "./pages/archive/Archive"; // Yangi qo'shilgan sahifa
+import PublicContractCheck from "./pages/public/PublicContractCheck"; // Yangi qo'shilgan
 
-// Dev Tools (only in development)
-import { DevTools } from './components/DevTools'
+// Dev Tools
+import { DevTools } from "./components/DevTools";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
     },
   },
-})
+});
 
-// Theme initializer component
 function ThemeInitializer() {
-  const { isDarkMode } = useThemeStore()
-
+  const { isDarkMode } = useThemeStore();
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.add('dark')
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.remove("dark");
     }
-  }, [isDarkMode])
+  }, [isDarkMode]);
+  return null;
+}
 
-  return null
+// Barcha route va ularning ruxsatlari ro'yxati
+const routesConfig = [
+  { path: "/", permission: "dashboard:view" },
+  { path: "/students", permission: "students:view" },
+  { path: "/groups", permission: "groups:view" },
+  { path: "/contracts", permission: "contracts:view" },
+  { path: "/finance", permission: "finance:transactions:view" },
+  { path: "/coach", permission: "attendance:coach:mark" },
+  { path: "/gate", permission: "gate:logs:view" },
+  { path: "/waiting-list", permission: "students:view" },
+  { path: "/reports", permission: "reports:dashboard:view" },
+  { path: "/users", permission: "users:manage" },
+  { path: "/roles", permission: "roles:view" },
+  { path: "/settings", permission: "settings:system:view" },
+  { path: "/archive", permission: "settings:system:view" }, // Archive uchun permission
+];
+
+// Foydalanuvchi uchun birinchi ruxsat etilgan sahifani topish
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
+  if (!user) return "/login";
+  if (user.is_super_admin) return "/"; // Super admin dashboardga kira oladi
+
+  // Foydalanuvchi ruxsati bor birinchi routeni topamiz
+  const route = routesConfig.find((r) => {
+    if (!r.permission) return true;
+    if (permissions.includes("*")) return true;
+    if (permissions.includes(r.permission)) return true;
+
+    // Wildcard check (masalan finance:*)
+    const parts = r.permission.split(":");
+    for (let i = 1; i < parts.length; i++) {
+      const wildcard = parts.slice(0, i).join(":") + ":*";
+      if (permissions.includes(wildcard)) return true;
+    }
+    return false;
+  });
+
+  return route ? route.path : "/login"; // Hech qaysiga ruxsat bo'lmasa login
+};
+
+interface ProtectedRouteProps {
+  children: JSX.Element;
+  permission?: string;
+}
+
+function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
+  const { user, permissions } = useAuthStore();
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (user.is_super_admin) return children;
+
+  // Ruxsat tekshirish
+  const hasPermission = () => {
+    if (!permission) return true; // Permission talab qilinmagan bo'lsa (lekin biz hamma joyga qo'ydik)
+    if (permissions.includes("*")) return true;
+    if (permissions.includes(permission)) return true;
+
+    const parts = permission.split(":");
+    for (let i = 1; i < parts.length; i++) {
+      const wildcard = parts.slice(0, i).join(":") + ":*";
+      if (permissions.includes(wildcard)) return true;
+    }
+    return false;
+  };
+
+  if (hasPermission()) {
+    return children;
+  }
+
+  // Ruxsat yo'q bo'lsa, foydalanuvchi kira oladigan "Home" sahifasiga yo'naltirish
+  const homeRoute = getFirstAccessibleRoute(user, permissions);
+
+  // Agar biz allaqachon homeRoute da bo'lsak va hali ham ruxsat yo'q bo'lsa (bunday bo'lmasligi kerak), login ga otamiz
+  if (window.location.pathname === homeRoute && homeRoute !== "/login") {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Navigate to={homeRoute} replace />;
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeInitializer />
-      
+
       <Toaster
         position="top-right"
         toastOptions={{
           duration: 3000,
           style: {
-            background: 'hsl(var(--card))',
-            color: 'hsl(var(--foreground))',
-            border: '1px solid hsl(var(--border))',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            duration: 4000,
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
+            background: "hsl(var(--card))",
+            color: "hsl(var(--foreground))",
+            border: "1px solid hsl(var(--border))",
           },
         }}
-        containerStyle={{
-          top: 20,
-          left: 20,
-          bottom: 20,
-          right: 20,
-        }}
-        // @ts-expect-error - limit property exists in runtime but not in type definition
-        limit={3}
       />
 
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
+          <Route
+            path="/public/check-contract"
+            element={<PublicContractCheck />}
+          />
 
           {/* Protected Routes */}
           <Route path="/" element={<DashboardLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="students" element={<Students />} />
-            <Route path="students/:id" element={<StudentDetailPage />} />
-            <Route path="groups" element={<Groups />} />
-            <Route path="contracts" element={<Contracts />} />
-            <Route path="finance" element={<Finance />} />
-            <Route path="coach" element={<CoachPanel />} />
-            <Route path="gate" element={<GateLogs />} />
-            <Route path="waiting-list" element={<WaitingList />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="users" element={<Users />} />
-            <Route path="roles" element={<Roles />} />
-            <Route path="settings" element={<Settings />} />
+            <Route
+              index
+              element={
+                <ProtectedRoute permission="dashboard:view">
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="students"
+              element={
+                <ProtectedRoute permission="students:view">
+                  <Students />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="students/:id"
+              element={
+                <ProtectedRoute permission="students:view">
+                  <StudentDetailPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="groups"
+              element={
+                <ProtectedRoute permission="groups:view">
+                  <Groups />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="contracts"
+              element={
+                <ProtectedRoute permission="contracts:view">
+                  <Contracts />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="finance"
+              element={
+                <ProtectedRoute permission="finance:transactions:view">
+                  <Finance />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="coach"
+              element={
+                <ProtectedRoute permission="attendance:coach:mark">
+                  <CoachPanel />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="gate"
+              element={
+                <ProtectedRoute permission="gate:logs:view">
+                  <GateLogs />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="waiting-list"
+              element={
+                <ProtectedRoute permission="students:view">
+                  <WaitingList />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="reports"
+              element={
+                <ProtectedRoute permission="reports:dashboard:view">
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="users"
+              element={
+                <ProtectedRoute permission="users:manage">
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="roles"
+              element={
+                <ProtectedRoute permission="roles:view">
+                  <Roles />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="settings"
+              element={
+                <ProtectedRoute permission="settings:system:view">
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="archive"
+              element={
+                <ProtectedRoute permission="settings:system:view">
+                  <Archive />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
-          {/* Catch all - redirect to dashboard */}
+          {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
 
-      {/* Developer Tools - Only visible in development */}
       <DevTools />
     </QueryClientProvider>
-  )
+  );
 }
 
-export default App
+export default App;
