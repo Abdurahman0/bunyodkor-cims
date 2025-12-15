@@ -26,7 +26,6 @@ import {
   Clock,
   LogOut,
   Archive,
-  Database,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -145,12 +144,6 @@ const DashboardLayout = () => {
       icon: Archive,
       permission: "settings:system:view",
     },
-    {
-      path: "/backup",
-      label: "Backup",
-      icon: Database,
-      permission: "settings:system:view",
-    },
   ];
 
   const hasPermission = (permission: string | null) => {
@@ -225,21 +218,21 @@ const DashboardLayout = () => {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border/40">
           <Link to="/" className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-12 h-12 flex items-center justify-center">
+            <div className="relative flex-shrink-0">
+              <div className="w-10 h-10 flex items-center justify-center">
                 <img
                   src="/logo.png"
                   alt="Bunyodkor Logo"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-slate-900" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-slate-900" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-white tracking-tight">
+            <div className="flex flex-col justify-center">
+              <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
                 Bunyodkor
               </h1>
-              <p className="text-xs text-slate-400 font-medium">Academy</p>
+              <p className="text-xs text-slate-400 font-medium leading-tight">Academy</p>
             </div>
           </Link>
           <Button

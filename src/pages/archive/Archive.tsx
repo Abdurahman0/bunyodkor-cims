@@ -11,6 +11,7 @@ import {
   Loader2,
   Calendar,
   Search,
+  Database,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useLanguageStore } from "@/store/languageStore";
+import { BackupSection } from "@/pages/settings/Backup";
 
 export default function Archive() {
   const { t } = useLanguageStore();
@@ -64,27 +66,27 @@ export default function Archive() {
     mutationFn: (year: number) => archiveService.archiveYear(year),
     onSuccess: () => {
       toast.success(
-        `${selectedYear} yil ma'lumotlari muvaffaqiyatli arxivlandi`
+        (t("yearArchivedSuccess" as any) || "{{year}} year data successfully archived").replace("{{year}}", selectedYear.toString())
       );
       queryClient.invalidateQueries({ queryKey: ["archive-stats"] });
     },
-    onError: () => toast.error("Arxivlashda xatolik yuz berdi"),
+    onError: () => toast.error(t("errorArchiving" as any) || "Error archiving data"),
   });
 
   // Arxivdan chiqarish mutatsiyasi
   const unarchiveMutation = useMutation({
     mutationFn: (year: number) => archiveService.unarchiveYear(year),
     onSuccess: () => {
-      toast.success(`${selectedYear} yil ma'lumotlari arxivdan chiqarildi`);
+      toast.success((t("yearUnarchivedSuccess" as any) || "{{year}} year data unarchived").replace("{{year}}", selectedYear.toString()));
       queryClient.invalidateQueries({ queryKey: ["archive-stats"] });
     },
-    onError: () => toast.error("Arxivdan chiqarishda xatolik yuz berdi"),
+    onError: () => toast.error(t("errorUnarchiving" as any) || "Error unarchiving data"),
   });
 
   const handleArchive = () => {
     if (
       confirm(
-        `DIQQAT! ${selectedYear} yil uchun barcha ma'lumotlar arxivlanadi. Davom etasizmi?`
+        (t("confirmArchiveYear" as any) || "WARNING! All data for {{year}} will be archived. Continue?").replace("{{year}}", selectedYear.toString())
       )
     ) {
       archiveMutation.mutate(selectedYear);
@@ -94,7 +96,7 @@ export default function Archive() {
   const handleUnarchive = () => {
     if (
       confirm(
-        `${selectedYear} yil ma'lumotlarini arxivdan qaytarishni xohlaysizmi?`
+        (t("confirmUnarchiveYear" as any) || "Do you want to restore {{year}} year data from archive?").replace("{{year}}", selectedYear.toString())
       )
     ) {
       unarchiveMutation.mutate(selectedYear);
@@ -118,10 +120,10 @@ export default function Archive() {
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            {t("Archive" as any) || "Arxiv"}
+            {t("archive" as any) || "Archive"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Yillik ma'lumotlarni arxivlash va boshqarish
+            {t("archiveManagement" as any) || "Archive and manage annual data"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -145,11 +147,15 @@ export default function Archive() {
         <TabsList>
           <TabsTrigger value="stats" className="gap-2">
             <ArchiveIcon className="w-4 h-4" />
-            Statistika va Boshqaruv
+            {t("statisticsAndManagement" as any) || "Statistics and Management"}
           </TabsTrigger>
           <TabsTrigger value="terminated" className="gap-2">
             <FileX className="w-4 h-4" />
-            Bekor qilingan shartnomalar
+            {t("terminatedContracts" as any) || "Terminated Contracts"}
+          </TabsTrigger>
+          <TabsTrigger value="backup" className="gap-2">
+            <Database className="w-4 h-4" />
+            {t("backup" as any) || "Backup"}
           </TabsTrigger>
         </TabsList>
 
@@ -158,8 +164,8 @@ export default function Archive() {
             {/* Statistika Kartalari */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Jami Ma'lumotlar</CardTitle>
-                <CardDescription>{selectedYear} yil uchun</CardDescription>
+                <CardTitle className="text-lg">{t("totalData" as any) || "Total Data"}</CardTitle>
+                <CardDescription>{(t("forYear" as any) || "For {{year}}").replace("{{year}}", selectedYear.toString())}</CardDescription>
               </CardHeader>
               <CardContent>
                 {isStatsLoading ? (
@@ -172,9 +178,9 @@ export default function Archive() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg text-green-600">
-                  Faol (Arxivlanmagan)
+                  {t("activeNotArchived" as any) || "Active (Not Archived)"}
                 </CardTitle>
-                <CardDescription>Hozirgi aktiv ma'lumotlar</CardDescription>
+                <CardDescription>{t("currentActiveData" as any) || "Current active data"}</CardDescription>
               </CardHeader>
               <CardContent>
                 {isStatsLoading ? (
@@ -189,9 +195,9 @@ export default function Archive() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg text-orange-600">
-                  Arxivlangan
+                  {t("archived" as any) || "Archived"}
                 </CardTitle>
-                <CardDescription>Arxivdagi ma'lumotlar</CardDescription>
+                <CardDescription>{t("archivedData" as any) || "Archived data"}</CardDescription>
               </CardHeader>
               <CardContent>
                 {isStatsLoading ? (
@@ -208,10 +214,9 @@ export default function Archive() {
           {/* Boshqaruv Paneli */}
           <Card className="border-2 border-primary/20">
             <CardHeader>
-              <CardTitle>Arxivlash Amallari</CardTitle>
+              <CardTitle>{t("archivingOperations" as any) || "Archiving Operations"}</CardTitle>
               <CardDescription>
-                Ushbu amallar {selectedYear} yilga tegishli barcha guruhlar,
-                talabalar va shartnomalarga ta'sir qiladi.
+                {(t("archivingOperationsDescription" as any) || "These operations affect all groups, students and contracts for {{year}}.").replace("{{year}}", selectedYear.toString())}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-4">
@@ -225,7 +230,7 @@ export default function Archive() {
                 ) : (
                   <ArchiveIcon className="w-4 h-4" />
                 )}
-                Yilni Arxivlash
+                {t("archiveYearButton" as any) || "Archive Year"}
               </Button>
 
               <Button
@@ -241,7 +246,7 @@ export default function Archive() {
                 ) : (
                   <RotateCcw className="w-4 h-4" />
                 )}
-                Arxivdan Chiqarish
+                {t("unarchiveButton" as any) || "Unarchive"}
               </Button>
             </CardContent>
           </Card>
@@ -251,22 +256,22 @@ export default function Archive() {
           <Card>
             <CardHeader>
               <CardTitle>
-                Bekor Qilingan Shartnomalar ({selectedYear})
+                {(t("terminatedContractsYear" as any) || "Terminated Contracts ({{year}})").replace("{{year}}", selectedYear.toString())}
               </CardTitle>
               <div className="relative max-w-sm mt-2">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Qidirish..." className="pl-8" />
+                <Input placeholder={t("search" as any) || "Search..."} className="pl-8" />
               </div>
             </CardHeader>
             <CardContent>
               <Table isLoading={isTerminatedLoading}>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Shartnoma №</TableHead>
-                    <TableHead>Talaba ID</TableHead>
-                    <TableHead>Bekor Qilingan Sana</TableHead>
-                    <TableHead>Sabab</TableHead>
-                    <TableHead>Kim Tomonidan</TableHead>
+                    <TableHead>{t("contractNumber" as any) || "Contract №"}</TableHead>
+                    <TableHead>{t("studentId" as any) || "Student ID"}</TableHead>
+                    <TableHead>{t("terminatedDate" as any) || "Terminated Date"}</TableHead>
+                    <TableHead>{t("reason" as any) || "Reason"}</TableHead>
+                    <TableHead>{t("byWhom" as any) || "By Whom"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -290,7 +295,7 @@ export default function Archive() {
                           title={contract.termination_reason || ""}
                         >
                           {contract.termination_reason ||
-                            "Sabab ko'rsatilmagan"}
+                            (t("reasonNotProvided" as any) || "Reason not provided")}
                         </TableCell>
                         <TableCell>
                           {contract.terminated_by?.full_name ||
@@ -303,14 +308,18 @@ export default function Archive() {
                       icon={
                         <AlertTriangle className="w-12 h-12 text-yellow-500" />
                       }
-                      title="Ma'lumot topilmadi"
-                      description={`${selectedYear} yilda bekor qilingan shartnomalar yo'q.`}
+                      title={t("noDataFound" as any) || "No data found"}
+                      description={(t("noTerminatedContracts" as any) || "No terminated contracts in {{year}}.").replace("{{year}}", selectedYear.toString())}
                     />
                   )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="backup">
+          <BackupSection />
         </TabsContent>
       </Tabs>
     </div>

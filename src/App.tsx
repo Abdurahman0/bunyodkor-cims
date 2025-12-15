@@ -24,7 +24,6 @@ import CoachPanel from "./pages/coach/CoachPanel";
 import StudentDetailPage from "./pages/students/StudentDetailPage";
 import WaitingList from "./pages/waiting-list/WaitingList";
 import Archive from "./pages/archive/Archive"; // Yangi qo'shilgan sahifa
-import Backup from "./pages/settings/Backup"; // Yangi qo'shilgan sahifa
 import PublicContractCheck from "./pages/public/PublicContractCheck"; // Yangi qo'shilgan
 
 // Dev Tools
@@ -67,7 +66,6 @@ const routesConfig = [
   { path: "/roles", permission: "roles:view" },
   { path: "/settings", permission: "settings:system:view" },
   { path: "/archive", permission: "settings:system:view" }, // Archive uchun permission
-  { path: "/backup", permission: "settings:system:view" }, // Backup uchun permission
 ];
 
 // Foydalanuvchi uchun birinchi ruxsat etilgan sahifani topish
@@ -285,15 +283,6 @@ function App() {
               element={
                 <ProtectedRoute permission="settings:system:view">
                   <Archive />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="backup"
-              element={
-                <ProtectedRoute permission="settings:system:view">
-                  <Backup />
                 </ProtectedRoute>
               }
             />

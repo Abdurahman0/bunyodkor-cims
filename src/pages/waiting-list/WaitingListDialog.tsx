@@ -182,7 +182,7 @@ export function WaitingListDialog({
           {/* Student Information */}
           <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
             <h3 className="font-semibold text-sm text-foreground">
-              Student Information
+              {t("studentInformation") || "Student Information"}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -193,9 +193,9 @@ export function WaitingListDialog({
                 <Input
                   id="student_first_name"
                   {...register("student_first_name", {
-                    required: "First name is required",
+                    required: t("firstNameRequired") || "First name is required",
                   })}
-                  placeholder="Enter first name"
+                  placeholder={t("enterFirstName") || "Enter first name"}
                 />
                 {errors.student_first_name && (
                   <p className="text-sm text-red-500">{errors.student_first_name.message}</p>
@@ -209,9 +209,9 @@ export function WaitingListDialog({
                 <Input
                   id="student_last_name"
                   {...register("student_last_name", {
-                    required: "Last name is required",
+                    required: t("lastNameRequired") || "Last name is required",
                   })}
-                  placeholder="Enter last name"
+                  placeholder={t("enterLastName") || "Enter last name"}
                 />
                 {errors.student_last_name && (
                   <p className="text-sm text-red-500">{errors.student_last_name.message}</p>
@@ -228,14 +228,14 @@ export function WaitingListDialog({
                   min="2000"
                   max={currentYear}
                   {...register("birth_year", {
-                    required: "Birth year is required",
+                    required: t("birthYearRequired") || "Birth year is required",
                     min: {
                       value: 2000,
-                      message: "Birth year must be at least 2000",
+                      message: t("birthYearMin") || "Birth year must be at least 2000",
                     },
                     max: {
                       value: currentYear,
-                      message: `Birth year cannot be greater than ${currentYear}`,
+                      message: (t("birthYearMax") || "Birth year cannot be greater than {{year}}").replace("{{year}}", currentYear.toString()),
                     },
                   })}
                   placeholder="2015"
@@ -250,20 +250,20 @@ export function WaitingListDialog({
           {/* Parent Information */}
           <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
             <h3 className="font-semibold text-sm text-foreground">
-              Parent Information
+              {t("parentInformation") || "Parent Information"}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="father_name">
-                  Father's Name <span className="text-red-500">*</span>
+                  {t("fatherName") || "Father's Name"} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="father_name"
                   {...register("father_name", {
-                    required: "Father's name is required",
+                    required: t("fatherNameRequired") || "Father's name is required",
                   })}
-                  placeholder="Enter father's name"
+                  placeholder={t("enterFatherName") || "Enter father's name"}
                 />
                 {errors.father_name && (
                   <p className="text-sm text-red-500">{errors.father_name.message}</p>
@@ -272,15 +272,15 @@ export function WaitingListDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="father_phone">
-                  Father's Phone <span className="text-red-500">*</span>
+                  {t("fatherPhone") || "Father's Phone"} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="father_phone"
                   type="tel"
                   {...register("father_phone", {
-                    required: "Father's phone is required",
+                    required: t("fatherPhoneRequired") || "Father's phone is required",
                   })}
-                  placeholder="+998 XX XXX XX XX"
+                  placeholder={t("enterFatherPhone") || "+998 XX XXX XX XX"}
                 />
                 {errors.father_phone && (
                   <p className="text-sm text-red-500">{errors.father_phone.message}</p>
@@ -289,14 +289,14 @@ export function WaitingListDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="mother_name">
-                  Mother's Name <span className="text-red-500">*</span>
+                  {t("motherName") || "Mother's Name"} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="mother_name"
                   {...register("mother_name", {
-                    required: "Mother's name is required",
+                    required: t("motherNameRequired") || "Mother's name is required",
                   })}
-                  placeholder="Enter mother's name"
+                  placeholder={t("enterMotherName") || "Enter mother's name"}
                 />
                 {errors.mother_name && (
                   <p className="text-sm text-red-500">{errors.mother_name.message}</p>
@@ -305,15 +305,15 @@ export function WaitingListDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="mother_phone">
-                  Mother's Phone <span className="text-red-500">*</span>
+                  {t("motherPhone") || "Mother's Phone"} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="mother_phone"
                   type="tel"
                   {...register("mother_phone", {
-                    required: "Mother's phone is required",
+                    required: t("motherPhoneRequired") || "Mother's phone is required",
                   })}
-                  placeholder="+998 XX XXX XX XX"
+                  placeholder={t("enterMotherPhone") || "+998 XX XXX XX XX"}
                 />
                 {errors.mother_phone && (
                   <p className="text-sm text-red-500">{errors.mother_phone.message}</p>
@@ -331,7 +331,7 @@ export function WaitingListDialog({
               <Select
                 id="group_id"
                 {...register("group_id", {
-                  required: "Group is required",
+                  required: t("groupRequired") || "Group is required",
                 })}
               >
                 <option value="">{t("selectGroup") || "Select group"}</option>
