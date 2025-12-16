@@ -84,6 +84,7 @@ export const translations = {
     guardianPhone: 'Guardian Phone',
     enrollmentDate: 'Enrollment Date',
     noStudentsFound: 'No students found',
+    noStudentsInGroup: 'There are no students enrolled in this group yet.',
     getStartedByCreating: 'Create your first student to get started.',
     createStudent: 'Create Student',
     editStudent: 'Edit Student',
@@ -134,6 +135,7 @@ export const translations = {
     allContracts: 'All Contracts',
     manageContracts: 'Manage student contracts and fees',
     getStartedContract: 'Create your first contract to get started.',
+    contractsCreatedWithStudents: 'Contracts are created together with students.',
     enterStudentId: 'Enter student ID',
     saveContract: 'Save Contract',
 
@@ -420,6 +422,9 @@ export const translations = {
     startDateRequired: 'Start date is required',
     endDateRequired: 'End date is required',
     monthlyFeeRequired: 'Monthly fee is required',
+    fileNotUploaded: 'File not uploaded',
+    pdfNotFound: 'PDF not found!',
+    successfullySaved: 'Successfully saved!',
 
     // Transaction form
     transactionCreatedSuccess: 'Transaction created successfully',
@@ -436,6 +441,7 @@ export const translations = {
     comment: 'Comment',
     optional: 'Optional',
     monthlyPayment: 'Monthly payment',
+    paymentMonth: 'Payment Month',
 
     // Month names
     january: 'January',
@@ -654,6 +660,7 @@ export const translations = {
     guardianPhone: 'Vasiy telefoni',
     enrollmentDate: 'Ro\'yxatga olingan sana',
     noStudentsFound: 'Talabalar topilmadi',
+    noStudentsInGroup: 'Ushbu guruhda hali talabalar yo\'q.',
     getStartedByCreating: 'Birinchi talabangizni yaratish orqali boshlang',
     createStudent: 'Talaba yaratish',
     editStudent: 'Talabani tahrirlash',
@@ -704,6 +711,7 @@ export const translations = {
     allContracts: 'Barcha shartnomalar',
     manageContracts: 'Talaba shartnomalarini va to\'lovlarni boshqarish',
     getStartedContract: 'Birinchi shartnomangizni yaratish orqali boshlang',
+    contractsCreatedWithStudents: 'Shartnomalar talabalar bilan birga yaratiladi.',
     enterStudentId: 'Talaba ID kiriting',
     saveContract: 'Shartnomani saqlash',
 
@@ -990,6 +998,9 @@ export const translations = {
     startDateRequired: 'Boshlanish sanasi talab qilinadi',
     endDateRequired: 'Tugash sanasi talab qilinadi',
     monthlyFeeRequired: 'Oylik to\'lov talab qilinadi',
+    fileNotUploaded: 'Fayl yuklanmagan',
+    pdfNotFound: 'PDF topilmadi!',
+    successfullySaved: 'Muvaffaqiyatli saqlandi!',
 
     // Transaction form
     transactionCreatedSuccess: 'Tranzaksiya muvaffaqiyatli yaratildi',
@@ -1006,6 +1017,7 @@ export const translations = {
     comment: 'Izoh',
     optional: 'Ixtiyoriy',
     monthlyPayment: 'Oylik to\'lov',
+    paymentMonth: 'To\'lov oyi',
 
     // Month names
     january: 'Yanvar',
@@ -1224,6 +1236,7 @@ export const translations = {
     guardianPhone: 'Телефон опекуна',
     enrollmentDate: 'Дата зачисления',
     noStudentsFound: 'Студенты не найдены',
+    noStudentsInGroup: 'В этой группе пока нет студентов.',
     getStartedByCreating: 'Начните с создания первого студента',
     createStudent: 'Создать студента',
     editStudent: 'Редактировать студента',
@@ -1274,6 +1287,7 @@ export const translations = {
     allContracts: 'Все контракты',
     manageContracts: 'Управление студенческими контрактами и оплатой',
     getStartedContract: 'Начните с создания первого контракта',
+    contractsCreatedWithStudents: 'Контракты создаются вместе со студентами.',
     enterStudentId: 'Введите ID студента',
     saveContract: 'Сохранить контракт',
 
@@ -1560,6 +1574,9 @@ export const translations = {
     startDateRequired: 'Дата начала обязательна',
     endDateRequired: 'Дата окончания обязательна',
     monthlyFeeRequired: 'Ежемесячная плата обязательна',
+    fileNotUploaded: 'Файл не загружен',
+    pdfNotFound: 'PDF не найден!',
+    successfullySaved: 'Успешно сохранено!',
 
     // Transaction form
     transactionCreatedSuccess: 'Транзакция успешно создана',
@@ -1576,6 +1593,7 @@ export const translations = {
     comment: 'Комментарий',
     optional: 'Необязательно',
     monthlyPayment: 'Ежемесячный платеж',
+    paymentMonth: 'Месяц оплаты',
 
     // Month names
     january: 'Январь',

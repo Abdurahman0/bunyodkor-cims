@@ -57,8 +57,12 @@ export function WaitingListDialog({
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<WaitingListFormData>();
+
+  const selectedGroupId = watch("group_id");
 
   // Get groups list
   const { data: groupsData } = useQuery({
@@ -66,6 +70,20 @@ export function WaitingListDialog({
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
     enabled: open,
   });
+
+  // Auto-calculate priority based on group capacity
+  useEffect(() => {
+    if (selectedGroupId && groupsData?.data && !entry) {
+      const selectedGroup = groupsData.data.find((g: any) => g.id === Number(selectedGroupId));
+      if (selectedGroup && selectedGroup.capacity) {
+        const currentCount = selectedGroup.current_student_count || 0;
+        const capacity = selectedGroup.capacity;
+        // Formula: Full group (100%) = priority 1 (highest), Empty group (0%) = priority 100 (lowest)
+        const calculatedPriority = Math.max(1, Math.min(100, Math.floor(100 - ((currentCount / capacity) * 99))));
+        setValue("priority", calculatedPriority);
+      }
+    }
+  }, [selectedGroupId, groupsData, entry, setValue]);
 
   useEffect(() => {
     if (open) {

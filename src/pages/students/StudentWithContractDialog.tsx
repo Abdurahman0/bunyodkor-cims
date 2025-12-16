@@ -130,14 +130,19 @@ export function StudentWithContractDialog({
     enabled: open,
   });
 
-  // Guruh va yil tanlanganda shartnoma raqamini taklif qilish
+  // Guruh tanlanganda shartnoma raqamini taklif qilish
   useEffect(() => {
     const fetchContractNumber = async () => {
-      if (selectedGroupId && birthYear && birthYear.length === 4) {
+      if (selectedGroupId) {
         try {
+          // Agar yil kiritilgan bo'lsa, yildan foydalanish, aks holda joriy yil
+          const year = birthYear && birthYear.length === 4
+            ? Number(birthYear)
+            : new Date().getFullYear();
+
           const response = await contractService.getNextAvailableNumber(
             Number(selectedGroupId),
-            Number(birthYear)
+            year
           );
           if (response.data.contract_number) {
             setSuggestedContractNumber(response.data.contract_number);
@@ -210,7 +215,7 @@ export function StudentWithContractDialog({
 
       // Sana validatsiyasi
       if (!data.contract_start_date) {
-        toast.error("Boshlanish sanasi majburiy!");
+        toast.error(t("startDateRequired") || "Boshlanish sanasi majburiy!");
         setIsSubmitting(false);
         return;
       }
@@ -308,7 +313,7 @@ export function StudentWithContractDialog({
           formData.append(field, data[field][0]);
         } else {
           filesMissing = true;
-          toast.error(`${field} yuklanmagan!`);
+          toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
         }
       }
       if (filesMissing) {
@@ -321,19 +326,19 @@ export function StudentWithContractDialog({
      const pdfUrl = response.data?.pdf_url;
 
      if (pdfUrl) {
-       window.open(pdfUrl, "_blank"); // PDF ni to‘g‘ri ochadi
+       window.open(pdfUrl, "_blank"); // PDF ni to'g'ri ochadi
      } else {
-       toast.error("PDF topilmadi!");
+       toast.error(t("pdfNotFound") || "PDF topilmadi!");
      }
 
-      toast.success("Muvaffaqiyatli saqlandi!");
+      toast.success(t("successfullySaved") || "Muvaffaqiyatli saqlandi!");
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       onOpenChange(false);
       if (onSuccess) onSuccess();
     } catch (error: any) {
       console.error("Xatolik:", error);
-      let errorMessage = "Xatolik yuz berdi";
+      let errorMessage = t("anErrorOccurred") || "Xatolik yuz berdi";
 
       if (error.response?.data instanceof Blob) {
         try {
@@ -453,15 +458,15 @@ export function StudentWithContractDialog({
 
               <div className="space-y-1">
                 <Label>O'quvchi F.I.O (To'liq) *</Label>
-                <Input {...register("student_fio", { required: true })} />
+                <Input {...register("student_fio", { required: true })} placeholder="Ism Familiya Otasining ismi" />
               </div>
               <div className="space-y-1">
                 <Label>Tug'ilgan yili *</Label>
-                <Input {...register("birth_year", { required: true })} />
+                <Input {...register("birth_year", { required: true })} placeholder="2015" />
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1">
                 <Label>O'quvchi Manzili *</Label>
-                <Input {...register("student_address", { required: true })} />
+                <Input {...register("student_address", { required: true })} placeholder="Shahar, tuman, ko'cha, uy" />
               </div>
               <div className="space-y-1">
                 <Label>Boshlanish Sanasi *</Label>
@@ -484,6 +489,7 @@ export function StudentWithContractDialog({
                 <Input
                   type="number"
                   {...register("tolov_monthly_fee", { required: true })}
+                  placeholder="600000"
                 />
               </div>
               <div className="space-y-1">
@@ -508,11 +514,11 @@ export function StudentWithContractDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Ish Joyi</Label>
-                  <Input {...register("dad_occupation")} />
+                  <Input {...register("dad_occupation")} placeholder="Korxona/tashkilot nomi" />
                 </div>
                 <div className="space-y-2">
                   <Label>Telefon</Label>
-                  <Input {...register("dad_phone")} />
+                  <Input {...register("dad_phone")} placeholder="+998 XX XXX XX XX" />
                 </div>
               </div>
 
@@ -527,11 +533,11 @@ export function StudentWithContractDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Ish Joyi</Label>
-                  <Input {...register("mom_occupation")} />
+                  <Input {...register("mom_occupation")} placeholder="Korxona/tashkilot nomi" />
                 </div>
                 <div className="space-y-2">
                   <Label>Telefon</Label>
-                  <Input {...register("mom_phone")} />
+                  <Input {...register("mom_phone")} placeholder="+998 XX XXX XX XX" />
                 </div>
               </div>
             </div>
@@ -547,6 +553,7 @@ export function StudentWithContractDialog({
                     <Label>F.I.O *</Label>
                     <Input
                       {...register("buyurtmachi_fio", { required: true })}
+                      placeholder="Ism Familiya Otasining ismi"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -556,18 +563,20 @@ export function StudentWithContractDialog({
                         {...register("buyurtmachi_passport_series_number", {
                           required: true,
                         })}
+                        placeholder="AA1234567"
                       />
                     </div>
                     <div>
                       <Label>Telefon *</Label>
                       <Input
                         {...register("buyurtmachi_phone", { required: true })}
+                        placeholder="+998 XX XXX XX XX"
                       />
                     </div>
                   </div>
                   <div>
                     <Label>Kim Bergan</Label>
-                    <Input {...register("buyurtmachi_who_give")} />
+                    <Input {...register("buyurtmachi_who_give")} placeholder="IIB nomi" />
                   </div>
                   <div>
                     <Label>Qachon Berilgan</Label>
@@ -575,7 +584,7 @@ export function StudentWithContractDialog({
                   </div>
                   <div>
                     <Label>Manzil</Label>
-                    <Input {...register("buyurtmachi_address")} />
+                    <Input {...register("buyurtmachi_address")} placeholder="Shahar, tuman, ko'cha, uy" />
                   </div>
                 </div>
               </div>
@@ -590,6 +599,7 @@ export function StudentWithContractDialog({
                       <Label>Guvohnoma Seriyasi</Label>
                       <Input
                         {...register("tarbiyalanuvchi_birth_series_number")}
+                        placeholder="I-AA 1234567"
                       />
                     </div>
                     <div>
@@ -602,7 +612,7 @@ export function StudentWithContractDialog({
                   </div>
                   <div>
                     <Label>Kim Bergan</Label>
-                    <Input {...register("tarbiyalanuvchi_who_give")} />
+                    <Input {...register("tarbiyalanuvchi_who_give")} placeholder="FHDY nomi" />
                   </div>
                   <div>
                     <Label>Qachon Berilgan</Label>

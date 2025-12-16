@@ -60,8 +60,6 @@ export function StudentDialog({ open, onOpenChange, student, onSuccess }: Studen
           address: '',
           status: 'active',
           group_id: '',
-          photo_url: '',
-          face_id: '',
         })
       }
     }
@@ -183,16 +181,6 @@ export function StudentDialog({ open, onOpenChange, student, onSuccess }: Studen
                 ))}
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="photo_url">Photo URL (Optional)</Label>
-            <Input id="photo_url" {...register('photo_url')} placeholder="https://example.com/photo.jpg" />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="face_id">Face ID (Optional)</Label>
-            <Input id="face_id" {...register('face_id')} placeholder="Face recognition identifier" />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 mt-6 border-t">

@@ -216,10 +216,6 @@ export default function Contracts() {
           </h1>
           <p className="text-muted-foreground mt-1">{t("manageContracts")}</p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="gap-2">
-          <Plus className="w-4 h-4" />
-          {t("newContract")}
-        </Button>
       </motion.div>
 
       <motion.div
@@ -346,22 +342,24 @@ export default function Contracts() {
                         </TableCell>
                         <TableCell>{getStatusBadge(contract.status)}</TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenDialog(contract)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(contract)}
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenDialog(contract)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(contract)}
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -369,13 +367,7 @@ export default function Contracts() {
                     <TableEmpty
                       icon={<FileText className="w-12 h-12" />}
                       title={t("noContractsFound")}
-                      description={t("getStartedContract")}
-                      action={
-                        <Button onClick={() => handleOpenDialog()}>
-                          <Plus className="w-4 h-4 mr-2" />
-                          {t("createContract")}
-                        </Button>
-                      }
+                      description={t("contractsCreatedWithStudents")}
                     />
                   )}
                 </TableBody>

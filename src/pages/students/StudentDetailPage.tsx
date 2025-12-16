@@ -386,9 +386,9 @@ export default function StudentDetailPage() {
                         )}
                       </div>
                     </div>
-                    <div className="text-sm flex items-center gap-2 bg-white px-3 py-1.5 rounded border">
+                    <div className="text-sm flex items-center gap-2 bg-background dark:bg-muted/30 px-3 py-1.5 rounded border">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-mono">
+                      <span className="font-mono text-foreground">
                         {parent.phone || "No phone"}
                       </span>
                     </div>

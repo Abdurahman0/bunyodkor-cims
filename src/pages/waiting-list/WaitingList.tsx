@@ -177,7 +177,7 @@ export default function WaitingList() {
                   transition={{ delay: index * 0.05 }}
                   className="p-6 hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 space-y-3">
                       {/* Student Info */}
                       <div className="flex items-center gap-3">

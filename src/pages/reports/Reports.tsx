@@ -16,8 +16,8 @@ import {
   TableEmpty,
 } from '@/components/ui/table'
 import { BarChart, DonutChart, StatsCard } from '@/components/ui/charts'
-import { reportService } from '@/services/api.service'
-import type { FinanceReport, DebtorItem, GroupAttendanceReport } from '@/types/api'
+import { reportService, groupService } from '@/services/api.service'
+import type { FinanceReport, DebtorItem, GroupAttendanceReport, GroupRead } from '@/types/api'
 import {
   BarChart3,
   TrendingUp,
@@ -40,6 +40,7 @@ export default function Reports() {
     to: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
   })
   const [debtorsPage, setDebtorsPage] = useState(1)
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
 
   const { data: financeReport, isLoading: financeLoading } = useQuery({
     queryKey: ['finance-report', dateRange],
@@ -54,10 +55,20 @@ export default function Reports() {
     enabled: activeTab === 'attendance',
   })
 
+  const { data: groupsData } = useQuery({
+    queryKey: ['groups-list'],
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
+    enabled: activeTab === 'debtors',
+  })
+
   const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
-    queryKey: ['debtors-report', debtorsPage],
+    queryKey: ['debtors-report', debtorsPage, selectedGroupId],
     queryFn: () =>
-      reportService.getDebtorsReport({ page: debtorsPage, page_size: 10 }),
+      reportService.getDebtorsReport({
+        page: debtorsPage,
+        page_size: 10,
+        group_id: selectedGroupId || undefined,
+      }),
     enabled: activeTab === 'debtors',
   })
 
@@ -311,6 +322,30 @@ export default function Reports() {
 
       {activeTab === 'debtors' && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="w-64">
+                  <label className="text-sm font-medium text-foreground mb-1 block">{t('filterByGroup')}</label>
+                  <select
+                    value={selectedGroupId || ''}
+                    onChange={(e) => {
+                      setSelectedGroupId(e.target.value ? Number(e.target.value) : null)
+                      setDebtorsPage(1) // Reset to first page when filter changes
+                    }}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3"
+                  >
+                    <option value="">{t('allGroups') || 'Barcha guruhlar'}</option>
+                    {groupsData?.data?.map((group: GroupRead) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <StatsCard title={t('totalDebtors')} value={debtorsData?.meta?.total || 0} icon={<AlertTriangle className="w-6 h-6" />} />
             <StatsCard title={t('totalDebtAmount')} value={formatCurrency(debtorsData?.data?.reduce((acc, item) => acc + item.debt_amount, 0) || 0)} icon={<CreditCard className="w-6 h-6" />} />

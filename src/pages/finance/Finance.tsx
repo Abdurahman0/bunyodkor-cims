@@ -82,10 +82,44 @@ export default function Finance() {
       transactionService.getUnassignedTransactions({ page: 1, page_size: 5 }),
   });
 
+  // Separate query for all transactions to calculate accurate statistics
+  const { data: allTransactionsData } = useQuery({
+    queryKey: ["all-transactions-stats"],
+    queryFn: async () => {
+      // Fetch all transactions by making multiple requests if needed
+      let allTransactions: any[] = [];
+      let currentPage = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await transactionService.getTransactions({
+          page: currentPage,
+          page_size: 100, // Backend maximum is 100
+        });
+
+        if (response.data && response.data.length > 0) {
+          allTransactions = [...allTransactions, ...response.data];
+
+          // Check if there are more pages
+          if (response.meta && currentPage < response.meta.total_pages) {
+            currentPage++;
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return { data: allTransactions, meta: { total: allTransactions.length } };
+    },
+  });
+
   const cancelMutation = useMutation({
     mutationFn: (id: number) => transactionService.cancelTransaction(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
       toast.success("Transaction cancelled");
     },
     onError: () => toast.error("Failed to cancel transaction"),
@@ -95,6 +129,7 @@ export default function Finance() {
     mutationFn: (id: number) => transactionService.deleteTransaction(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
       toast.success("Transaction deleted successfully");
     },
     onError: () => toast.error("Failed to delete transaction"),
@@ -199,16 +234,39 @@ export default function Finance() {
     );
   };
 
+  const formatPaymentMonths = (months: number[] | null | undefined) => {
+    if (!months || months.length === 0) return "-";
+    const monthNames = [
+      t("january") || "Jan",
+      t("february") || "Feb",
+      t("march") || "Mar",
+      t("april") || "Apr",
+      t("may") || "May",
+      t("june") || "Jun",
+      t("july") || "Jul",
+      t("august") || "Aug",
+      t("september") || "Sep",
+      t("october") || "Oct",
+      t("november") || "Nov",
+      t("december") || "Dec",
+    ];
+    return months
+      .sort((a, b) => a - b)
+      .map((m) => monthNames[m - 1] || m)
+      .join(", ");
+  };
+
+  // Calculate statistics from ALL transactions, not just current page
   const totalRevenue =
-    data?.data
+    allTransactionsData?.data
       ?.filter((t) => t.status === "success")
       .reduce((acc, t) => acc + t.amount, 0) || 0;
   const pendingAmount =
-    data?.data
+    allTransactionsData?.data
       ?.filter((t) => t.status === "pending")
       .reduce((acc, t) => acc + t.amount, 0) || 0;
   const successCount =
-    data?.data?.filter((t) => t.status === "success").length || 0;
+    allTransactionsData?.data?.filter((t) => t.status === "success").length || 0;
   const unassignedCount = unassignedData?.meta?.total || 0;
 
   return (
@@ -344,6 +402,9 @@ export default function Finance() {
                   {t("student")}
                 </TableHead>
                 <TableHead>{t("amount")}</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  {t("paymentMonth") || "Payment Month"}
+                </TableHead>
                 <TableHead>{t("status")}</TableHead>
                 <TableHead className="hidden lg:table-cell">
                   {t("date")}
@@ -391,6 +452,11 @@ export default function Finance() {
                     <TableCell>
                       <span className="font-semibold text-foreground">
                         {formatCurrency(transaction.amount)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-sm text-muted-foreground">
+                        {formatPaymentMonths(transaction.payment_months)}
                       </span>
                     </TableCell>
                     <TableCell>{getStatusBadge(transaction.status)}</TableCell>

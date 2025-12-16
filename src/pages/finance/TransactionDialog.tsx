@@ -232,6 +232,18 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
               </p>
             )}
 
+            {/* Selected Contract Info */}
+            {selectedContract && (
+              <div className="mt-2 p-3 bg-muted rounded-lg border border-border">
+                <p className="text-sm font-medium text-foreground">{selectedContract.contract_number}</p>
+                {selectedContract.student && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedContract.student.first_name} {selectedContract.student.last_name}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Autocomplete Dropdown */}
             {showContractDropdown && contractsData?.data && contractsData.data.length > 0 && (
               <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
@@ -246,7 +258,7 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
                       <div className="flex-1">
                         <p className="font-medium text-foreground">{contract.contract_number}</p>
                         <p className="text-sm text-muted-foreground">
-                          {contract.student_id ? `Student ID: ${contract.student_id}` : 'No student'}
+                          {contract.student ? `${contract.student.first_name} ${contract.student.last_name}` : '-'}
                         </p>
                       </div>
                       <div className="text-right">
