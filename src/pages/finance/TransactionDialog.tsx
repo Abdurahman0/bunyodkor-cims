@@ -1,60 +1,96 @@
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
-import { transactionService, contractService } from '@/services/api.service'
-import type { TransactionSource } from '@/types'
+import { useState, useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import {
+  transactionService,
+  contractService,
+  studentService,
+} from "@/services/api.service";
+import type { TransactionSource } from "@/types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Calendar, X, Check } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { useLanguageStore } from '@/store/languageStore'
-import { useDebounce } from '@/hooks/useDebounce'
-import type { ContractRead } from '@/types/api'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, X, Check, User } from "lucide-react";
+import toast from "react-hot-toast";
+import { useLanguageStore } from "@/store/languageStore";
+import { useDebounce } from "@/hooks/useDebounce";
+import type { ContractRead, StudentRead } from "@/types/api";
 
 interface TransactionDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-// This interface is for the form state
 interface TransactionFormData {
-  amount: number
-  source: TransactionSource
-  contract_number: string
-  payment_year: number
-  payment_months: string // Input as comma-separated string
-  comment?: string
+  amount: number;
+  source: TransactionSource;
+  contract_number: string;
+  payment_year: number;
+  payment_months: string;
+  comment?: string;
 }
 
-export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps) {
-  const { t } = useLanguageStore()
-  const queryClient = useQueryClient()
-  const [selectedMonths, setSelectedMonths] = useState<number[]>([])
-  const [contractSearch, setContractSearch] = useState('')
-  const [showContractDropdown, setShowContractDropdown] = useState(false)
-  const [selectedContract, setSelectedContract] = useState<ContractRead | null>(null)
+// Backenddan keladigan ContractRead turini kengaytiramiz
+type ContractWithStudent = ContractRead & { student?: StudentRead };
 
-  const debouncedContractSearch = useDebounce(contractSearch, 300)
+export function TransactionDialog({
+  open,
+  onOpenChange,
+}: TransactionDialogProps) {
+  const { t } = useLanguageStore();
+  const queryClient = useQueryClient();
+
+  // States
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  const [contractSearch, setContractSearch] = useState("");
+  const [showContractDropdown, setShowContractDropdown] = useState(false);
+  const [selectedContract, setSelectedContract] =
+    useState<ContractWithStudent | null>(null);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const debouncedContractSearch = useDebounce(contractSearch, 300);
 
   const monthNames = [
-    t('january'), t('february'), t('march'), t('april'), t('may'), t('june'),
-    t('july'), t('august'), t('september'), t('october'), t('november'), t('december')
-  ]
+    t("january"),
+    t("february"),
+    t("march"),
+    t("april"),
+    t("may"),
+    t("june"),
+    t("july"),
+    t("august"),
+    t("september"),
+    t("october"),
+    t("november"),
+    t("december"),
+  ];
 
-  const monthShortNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthShortNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
-  // Fetch contracts for autocomplete
+  // 1. Shartnomalarni qidirish (Autocomplete uchun)
   const { data: contractsData } = useQuery({
-    queryKey: ['contracts-search', debouncedContractSearch],
+    queryKey: ["contracts-search", debouncedContractSearch],
     queryFn: () =>
       contractService.getContracts({
         page: 1,
@@ -62,7 +98,14 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
         contract_number: debouncedContractSearch || undefined,
       }),
     enabled: debouncedContractSearch.length > 0,
-  })
+  });
+
+  // 2. Barcha talabalarni yuklash (Agar shartnoma ichida student kelmasa)
+  const { data: studentsData } = useQuery({
+    queryKey: ["students-list-full"],
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }),
+    enabled: open,
+  });
 
   const {
     register,
@@ -73,89 +116,153 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
   } = useForm<TransactionFormData>({
     defaultValues: {
       amount: 0,
-      source: 'cash',
-      contract_number: '',
+      source: "cash",
+      contract_number: "",
       payment_year: new Date().getFullYear(),
-      payment_months: '',
+      payment_months: "",
     },
-  })
+  });
+
+  // Yordamchi funksiya: Talaba ma'lumotini topish
+  const getStudentInfo = (contract: ContractRead): StudentRead | undefined => {
+    const c = contract as ContractWithStudent;
+    if (c.student) return c.student;
+    return studentsData?.data?.find(
+      (s: StudentRead) => s.id === contract.student_id
+    );
+  };
+
+  // Yordamchi funksiya: Talaba ismini string ko'rinishida olish
+  const getStudentNameString = (contract: ContractRead) => {
+    const student = getStudentInfo(contract);
+    return student
+      ? `${student.first_name} ${student.last_name}`
+      : t("noStudentAttached") || "O'quvchi biriktirilmagan";
+  };
+
+  // Yoshni hisoblash
+  const calculateAge = (dateOfBirth: string) => {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age;
+  };
 
   const toggleMonth = (monthNumber: number) => {
     const newSelectedMonths = selectedMonths.includes(monthNumber)
-      ? selectedMonths.filter(m => m !== monthNumber)
-      : [...selectedMonths, monthNumber].sort((a, b) => a - b)
+      ? selectedMonths.filter((m) => m !== monthNumber)
+      : [...selectedMonths, monthNumber].sort((a, b) => a - b);
 
-    setSelectedMonths(newSelectedMonths)
-    setValue('payment_months', newSelectedMonths.join(', '))
-  }
+    setSelectedMonths(newSelectedMonths);
+    setValue("payment_months", newSelectedMonths.join(", "));
+  };
 
   const handleContractSelect = (contract: ContractRead) => {
-    setSelectedContract(contract)
-    setContractSearch(contract.contract_number)
-    setValue('contract_number', contract.contract_number)
-    setValue('amount', contract.monthly_fee)
-    setShowContractDropdown(false)
-  }
+    setSelectedContract(contract as ContractWithStudent);
+    setContractSearch(contract.contract_number);
+    setValue("contract_number", contract.contract_number);
+    setValue("amount", contract.monthly_fee);
+    setShowContractDropdown(false);
+  };
 
   useEffect(() => {
     if (contractSearch !== selectedContract?.contract_number) {
-      setSelectedContract(null)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedContract(null);
     }
-  }, [contractSearch, selectedContract])
+  }, [contractSearch, selectedContract]);
 
   useEffect(() => {
     if (!open) {
-      setContractSearch('')
-      setSelectedContract(null)
-      setSelectedMonths([])
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setContractSearch("");
+      setSelectedContract(null);
+      setSelectedMonths([]);
     }
-  }, [open])
+  }, [open]);
 
-  // Close dropdown when clicking outside
+  // Dropdowndan tashqariga bosilganda yopish
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (showContractDropdown && !target.closest('.contract-autocomplete')) {
-        setShowContractDropdown(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowContractDropdown(false);
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showContractDropdown])
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const mutation = useMutation({
     mutationFn: transactionService.createManualTransaction,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] })
-      toast.success(t('transactionCreatedSuccess'))
-      reset()
-      setSelectedMonths([])
-      onOpenChange(false)
+      // Invalidate finance section queries
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["finance-report"] });
+
+      // Invalidate dashboard queries
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
+
+      // Invalidate student detail page queries (all students)
+      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+
+      toast.success(
+        t("transactionCreatedSuccess") || "Tranzaksiya muvaffaqiyatli yaratildi"
+      );
+      reset();
+      setSelectedMonths([]);
+      onOpenChange(false);
     },
+    // --- ERROR QISMI O'ZGARTIRILDI ---
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
-      const detail = error?.response?.data?.detail
-      let errorMessage = t('failedToCreateTransaction')
+      const detail = error?.response?.data?.detail;
+      let errorMessage =
+        t("failedToCreateTransaction") ||
+        "Tranzaksiya yaratishda xatolik yuz berdi";
 
       if (Array.isArray(detail) && detail.length > 0) {
-        errorMessage = detail[0].msg || detail[0].message || errorMessage
-      } else if (typeof detail === 'string') {
-        errorMessage = detail
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        // Backend xabarlarini o'zbekchaga o'girish
+        if (detail.includes("Contract not found")) {
+          errorMessage = "Bunday raqamli shartnoma topilmadi";
+        } else if (detail.includes("Student not found")) {
+          errorMessage = "O'quvchi topilmadi";
+        } else if (detail.includes("Transaction already exists")) {
+          errorMessage = "Bunday tranzaksiya allaqachon mavjud";
+        } else if (detail.toLowerCase().includes("permission")) {
+          errorMessage = "Sizda bu amalni bajarish uchun huquq yo'q";
+        } else {
+          errorMessage = detail;
+        }
       }
 
-      toast.error(errorMessage)
+      toast.error(errorMessage);
     },
-  })
+    // ---------------------------------
+  });
 
   const onSubmit = (data: TransactionFormData) => {
     const paymentMonthsArray = data.payment_months
-      .split(',')
-      .map(m => parseInt(m.trim()))
-      .filter(m => !isNaN(m) && m >= 1 && m <= 12)
+      .split(",")
+      .map((m) => parseInt(m.trim()))
+      .filter((m) => !isNaN(m) && m >= 1 && m <= 12);
 
     if (paymentMonthsArray.length === 0) {
-      toast.error(t('selectAtLeastOneMonth'))
-      return
+      toast.error(t("selectAtLeastOneMonth") || "Kamida bitta oy tanlang");
+      return;
     }
 
     mutation.mutate({
@@ -166,27 +273,35 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
       payment_months: paymentMonthsArray,
       comment: data.comment,
       paid_at: new Date().toISOString(),
-    })
-  }
+    });
+  };
+
+  // Tanlangan shartnoma uchun talaba ma'lumotini olish
+  const currentStudent = selectedContract
+    ? getStudentInfo(selectedContract)
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[500px] max-w-[95vw]" onClose={() => onOpenChange(false)}>
+      <DialogContent
+        className="w-[500px] max-w-[95vw]"
+        onClose={() => onOpenChange(false)}
+      >
         <DialogHeader>
-          <DialogTitle>{t('addTransaction')}</DialogTitle>
+          <DialogTitle>{t("addTransaction")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="amount">{t('amount')} (UZS)</Label>
+            <Label htmlFor="amount">{t("amount")} (UZS)</Label>
             <Input
               id="amount"
               type="number"
               placeholder="0"
-              {...register('amount', {
-                required: t('amountRequired'),
+              {...register("amount", {
+                required: t("amountRequired"),
                 valueAsNumber: true,
-                min: { value: 1, message: t('amountMustBeGreaterThanZero') },
+                min: { value: 1, message: t("amountMustBeGreaterThanZero") },
               })}
             />
             {errors.amount && (
@@ -195,27 +310,31 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="source">{t('paymentSource')}</Label>
-            <Select id="source" {...register('source')}>
-              <option value="cash">{t('cash')}</option>
-              <option value="bank">{t('bankTransfer')}</option>
+            <Label htmlFor="source">{t("paymentSource")}</Label>
+            <Select id="source" {...register("source")}>
+              <option value="cash">{t("cash")}</option>
+              <option value="bank">{t("bankTransfer")}</option>
               <option value="payme">Payme</option>
               <option value="click">Click</option>
-              <option value="manual">{t('manual')}</option>
+              <option value="manual">{t("manual")}</option>
             </Select>
           </div>
 
-          <div className="space-y-1 relative contract-autocomplete">
-            <Label htmlFor="contract_number">{t('contractNumber')}</Label>
+          {/* Shartnoma raqami (Autocomplete) */}
+          <div
+            className="space-y-1 relative contract-autocomplete"
+            ref={dropdownRef}
+          >
+            <Label htmlFor="contract_number">{t("contractNumber")}</Label>
             <div className="relative">
               <Input
                 id="contract_number"
-                placeholder={t('enterContractNumber')}
+                placeholder={t("enterContractNumber")}
                 value={contractSearch}
                 onChange={(e) => {
-                  setContractSearch(e.target.value)
-                  setValue('contract_number', e.target.value)
-                  setShowContractDropdown(true)
+                  setContractSearch(e.target.value);
+                  setValue("contract_number", e.target.value);
+                  setShowContractDropdown(true);
                 }}
                 onFocus={() => setShowContractDropdown(true)}
                 autoComplete="off"
@@ -232,62 +351,119 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
               </p>
             )}
 
-            {/* Selected Contract Info */}
-            {selectedContract && (
-              <div className="mt-2 p-3 bg-muted rounded-lg border border-border">
-                <p className="text-sm font-medium text-foreground">{selectedContract.contract_number}</p>
-                {selectedContract.student && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedContract.student.first_name} {selectedContract.student.last_name}
-                  </p>
-                )}
-              </div>
-            )}
+            {/* --- DROPDOWN RO'YXATI (Ism bilan) --- */}
+            {showContractDropdown &&
+              contractsData?.data &&
+              contractsData.data.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {contractsData.data.map((contract: ContractRead) => (
+                    <button
+                      key={contract.id}
+                      type="button"
+                      onClick={() => handleContractSelect(contract)}
+                      className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border last:border-0 group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            {contract.contract_number}
+                          </p>
+                          <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors mt-0.5">
+                            {getStudentNameString(contract)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-sm">
+                            {new Intl.NumberFormat("uz-UZ").format(
+                              contract.monthly_fee
+                            )}{" "}
+                            UZS
+                          </p>
+                          <Badge
+                            className={`${
+                              contract.status === "active"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                            } border-0 text-[10px]`}
+                          >
+                            {contract.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {/* Autocomplete Dropdown */}
-            {showContractDropdown && contractsData?.data && contractsData.data.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
-                {contractsData.data.map((contract: ContractRead) => (
-                  <button
-                    key={contract.id}
-                    type="button"
-                    onClick={() => handleContractSelect(contract)}
-                    className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border last:border-0"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">{contract.contract_number}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {contract.student ? `${contract.student.first_name} ${contract.student.last_name}` : '-'}
-                        </p>
+            {/* --- STUDENT MA'LUMOTLARI KARTASI --- */}
+            {selectedContract && currentStudent && (
+              <div className="mt-4 p-4 bg-white dark:bg-card border border-border rounded-xl shadow-sm space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    O'quvchi Ma'lumotlari
+                  </h3>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                    <span className="text-blue-600 dark:text-blue-400 font-medium min-w-[120px]">
+                      {t("studentName") || "Talaba ismi"}:
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {currentStudent.first_name} {currentStudent.last_name}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                    <span className="text-blue-600 dark:text-blue-400 font-medium min-w-[120px]">
+                      {t("phoneNumber") || "Telefon raqami"}:
+                    </span>
+                    <span className="text-foreground">
+                      {currentStudent.phone}
+                    </span>
+                  </div>
+
+                  {currentStudent.date_of_birth && (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                      <div className="flex items-center gap-1 min-w-[120px]">
+                        <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">
+                          {t("birthYear") || "Tug'ilgan yili"}:
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground">
-                          {new Intl.NumberFormat('uz-UZ').format(contract.monthly_fee)} UZS
-                        </p>
-                        <Badge className={`${
-                          contract.status === 'active'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-                        } border-0 text-xs`}>
-                          {contract.status}
-                        </Badge>
-                      </div>
+                      <span className="text-foreground">
+                        {new Date(currentStudent.date_of_birth).getFullYear()} (
+                        {calculateAge(currentStudent.date_of_birth)}{" "}
+                        {t("yearsOld") || "yoshda"})
+                      </span>
                     </div>
-                  </button>
-                ))}
+                  )}
+
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                    <span className="text-blue-600 dark:text-blue-400 font-medium min-w-[120px]">
+                      {t("status") || "Holat"}:
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="w-fit bg-slate-100 text-slate-800 hover:bg-slate-200"
+                    >
+                      {t(currentStudent.status) || "Faol"}
+                    </Badge>
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="payment_year">{t('paymentYear')}</Label>
+            <Label htmlFor="payment_year">{t("paymentYear")}</Label>
             <Input
               id="payment_year"
               type="number"
               placeholder="2025"
-              {...register('payment_year', {
-                required: t('paymentYearRequired'),
+              {...register("payment_year", {
+                required: t("paymentYearRequired"),
                 valueAsNumber: true,
               })}
             />
@@ -301,12 +477,15 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
-              <Label>{t('selectPaymentMonths')} <span className="text-red-500">*</span></Label>
+              <Label>
+                {t("selectPaymentMonths")}{" "}
+                <span className="text-red-500">*</span>
+              </Label>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {monthShortNames.map((month, index) => {
-                const monthNumber = index + 1
-                const isSelected = selectedMonths.includes(monthNumber)
+                const monthNumber = index + 1;
+                const isSelected = selectedMonths.includes(monthNumber);
                 return (
                   <button
                     key={monthNumber}
@@ -314,8 +493,8 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
                     onClick={() => toggleMonth(monthNumber)}
                     className={`relative px-3 py-2.5 text-sm font-medium rounded-full border transition-all w-full min-w-0 ${
                       isSelected
-                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                        : 'bg-background hover:bg-muted border-input'
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-background hover:bg-muted border-input"
                     }`}
                   >
                     <span className="block">{month}</span>
@@ -325,18 +504,31 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
                       </span>
                     )}
                   </button>
-                )
+                );
               })}
             </div>
-            <input type="hidden" {...register('payment_months', { required: t('selectAtLeastOneMonth') })} />
+            <input
+              type="hidden"
+              {...register("payment_months", {
+                required: t("selectAtLeastOneMonth"),
+              })}
+            />
             {errors.payment_months && (
-              <p className="text-sm text-red-500">{errors.payment_months.message}</p>
+              <p className="text-sm text-red-500">
+                {errors.payment_months.message}
+              </p>
             )}
             {selectedMonths.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2 p-3 bg-muted rounded-md">
-                <span className="text-sm text-muted-foreground font-medium">{t('selected')}:</span>
-                {selectedMonths.map(month => (
-                  <Badge key={month} variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
+                <span className="text-sm text-muted-foreground font-medium">
+                  {t("selected")}:
+                </span>
+                {selectedMonths.map((month) => (
+                  <Badge
+                    key={month}
+                    variant="secondary"
+                    className="gap-1 px-3 py-1.5 text-sm"
+                  >
                     {monthNames[month - 1]}
                     <button
                       type="button"
@@ -352,11 +544,13 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="comment">{t('comment')} ({t('optional')})</Label>
+            <Label htmlFor="comment">
+              {t("comment")} ({t("optional")})
+            </Label>
             <Input
               id="comment"
-              placeholder={t('monthlyPayment')}
-              {...register('comment')}
+              placeholder={t("monthlyPayment")}
+              {...register("comment")}
             />
           </div>
 
@@ -366,14 +560,14 @@ export function TransactionDialog({ open, onOpenChange }: TransactionDialogProps
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              {t('cancel')}
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? t('saving') : t('save')}
+              {mutation.isPending ? t("saving") : t("save")}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -16,8 +16,8 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useLanguageStore } from '@/store/languageStore'
-import { reportService, transactionService, groupService, studentService, userService } from '@/services/api.service'
-import type { DashboardSummary, TransactionRead, GroupRead, StudentRead, UserRead, FinanceReport } from '@/types/api'
+import { reportService, transactionService, groupService, studentService, userService, attendanceService } from '@/services/api.service'
+import type { DashboardSummary, TransactionRead, GroupRead, StudentRead, UserRead, FinanceReport, AttendanceRead } from '@/types/api'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -142,14 +142,31 @@ export default function Dashboard() {
     queryFn: () => reportService.getGroupAttendanceReports(),
   })
 
-  // Process attendance data from group reports
+  // Fetch recent attendances (today's attendances)
+  const { data: recentAttendancesData } = useQuery({
+    queryKey: ['recent-attendances'],
+    queryFn: () => {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      return attendanceService.getAllAttendances({
+        from_date: today,
+        to_date: today,
+        page: 1,
+        page_size: 10,
+      })
+    },
+  })
+
+  // Process attendance data from recent attendances
   const attendanceChartData = (() => {
-    // For now, show placeholder data since detailed attendance by status requires backend support
-    // The backend needs an endpoint like /reports/attendance/today with present/absent/late counts
+    const attendances = recentAttendancesData?.data || []
+    const present = attendances.filter(a => a.status === 'present').length
+    const absent = attendances.filter(a => a.status === 'absent').length
+    const late = attendances.filter(a => a.status === 'late').length
+
     return [
-      { label: 'Present', value: 1, color: 'hsl(142, 71%, 45%)' },
-      { label: 'Absent', value: 0, color: 'hsl(0, 84%, 60%)' },
-      { label: 'Late', value: 0, color: 'hsl(47, 96%, 53%)' },
+      { label: 'Present', value: present || 1, color: 'hsl(142, 71%, 45%)' },
+      { label: 'Absent', value: absent || 0, color: 'hsl(0, 84%, 60%)' },
+      { label: 'Late', value: late || 0, color: 'hsl(47, 96%, 53%)' },
     ]
   })()
 
@@ -304,6 +321,59 @@ export default function Dashboard() {
                     <div className="text-right"><p className="text-xs text-muted-foreground">{getCoachName(group.coach_id)}</p></div>
                   </div>
                 )) || <div className="text-center py-8 text-muted-foreground">{t('noActiveGroups')}</div>}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+
+      <motion.div variants={containerVariants} initial="hidden" animate="visible">
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-lg font-semibold">{t('recentAttendance') || 'Recent Attendance'}</CardTitle>
+                <p className="text-sm text-muted-foreground">{t('todayAttendanceRecords') || "Today's attendance records"}</p>
+              </div>
+              <Link to="/reports"><Button variant="ghost" size="sm" className="gap-1">{t('viewAll')} <ArrowUpRight className="w-4 h-4" /></Button></Link>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentAttendancesData?.data && recentAttendancesData.data.length > 0 ? (
+                  recentAttendancesData.data.slice(0, 8).map((attendance: AttendanceRead) => (
+                    <div key={attendance.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 dark:bg-muted/20">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${
+                          attendance.status === 'present'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                            : attendance.status === 'late'
+                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        }`}>
+                          {attendance.status === 'present' ? <CheckCircle className="w-4 h-4" /> : attendance.status === 'late' ? <Clock className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground text-sm">{getStudentName(attendance.student_id)}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{attendance.status}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-xs font-medium capitalize ${
+                          attendance.status === 'present'
+                            ? 'text-green-600 dark:text-green-400'
+                            : attendance.status === 'late'
+                            ? 'text-yellow-600 dark:text-yellow-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {attendance.status}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(attendance.created_at), 'HH:mm')}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">{t('noAttendanceRecords') || 'No attendance records today'}</div>
+                )}
               </div>
             </CardContent>
           </Card>

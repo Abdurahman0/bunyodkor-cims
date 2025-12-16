@@ -113,16 +113,32 @@ export default function WaitingList() {
 
   const paginationItems = getPaginationItems();
 
-  const getPriorityColor = (priority: number) => {
-    if (priority >= 80) return "bg-red-100 text-red-700 border-red-200";
-    if (priority >= 50)
+  const getPriorityColor = (priority: number, groupId: number) => {
+    // Get group capacity to determine priority range
+    const group = groupsData?.data?.find((g: GroupRead) => g.id === groupId);
+    const capacity = group?.capacity || 100;
+
+    // Calculate priority percentage (1 is 0%, capacity is 100%)
+    const priorityPercent = ((priority - 1) / (capacity - 1)) * 100;
+
+    // Lower numbers = higher priority (red), higher numbers = lower priority (blue)
+    if (priorityPercent <= 33) return "bg-red-100 text-red-700 border-red-200";
+    if (priorityPercent <= 66)
       return "bg-yellow-100 text-yellow-700 border-yellow-200";
     return "bg-blue-100 text-blue-700 border-blue-200";
   };
 
-  const getPriorityLabel = (priority: number) => {
-    if (priority >= 80) return t("high") || "High";
-    if (priority >= 50) return t("medium") || "Medium";
+  const getPriorityLabel = (priority: number, groupId: number) => {
+    // Get group capacity to determine priority range
+    const group = groupsData?.data?.find((g: GroupRead) => g.id === groupId);
+    const capacity = group?.capacity || 100;
+
+    // Calculate priority percentage (1 is 0%, capacity is 100%)
+    const priorityPercent = ((priority - 1) / (capacity - 1)) * 100;
+
+    // Lower numbers = higher priority, higher numbers = lower priority
+    if (priorityPercent <= 33) return t("high") || "High";
+    if (priorityPercent <= 66) return t("medium") || "Medium";
     return t("low") || "Low";
   };
 
@@ -218,8 +234,8 @@ export default function WaitingList() {
                           <Users className="w-3.5 h-3.5" />
                           {getGroupName(entry.group_id)}
                         </Badge>
-                        <Badge className={getPriorityColor(entry.priority)}>
-                          {t("priority")}: {getPriorityLabel(entry.priority)} (
+                        <Badge className={getPriorityColor(entry.priority, entry.group_id)}>
+                          {t("priority")}: {getPriorityLabel(entry.priority, entry.group_id)} (
                           {entry.priority})
                         </Badge>
                         <Badge variant="secondary" className="gap-1.5">

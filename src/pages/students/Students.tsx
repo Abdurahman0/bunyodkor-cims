@@ -93,10 +93,10 @@ export default function Students() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] })
       queryClient.invalidateQueries({ queryKey: ['students-count'] })
-      toast.success('Student deleted successfully')
+      toast.success(t('studentDeleted'))
     },
     onError: () => {
-      toast.error('Failed to delete student')
+      toast.error(t('failedToDeleteStudent'))
     },
   })
 
@@ -127,13 +127,13 @@ export default function Students() {
   const handleExport = () => {
     try {
       if (!data?.data || data.data.length === 0) {
-        toast.error('No students to export')
+        toast.error(t('noStudentsToExport'))
         return
       }
       exportStudents(data.data)
-      toast.success('Students exported successfully')
+      toast.success(t('studentsExported'))
     } catch (error) {
-      toast.error('Failed to export students')
+      toast.error(t('failedToExportStudents'))
     }
   }
 

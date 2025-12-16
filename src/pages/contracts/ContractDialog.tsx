@@ -96,8 +96,39 @@ export function ContractDialog({ open, onOpenChange, contract, onSuccess }: Cont
       }
       return contractService.createContract(data as ContractCreate);
     },
-    onSuccess: () => {
+    onSuccess: async (response) => {
       toast.success(contract ? t('contractUpdatedSuccess') : t('contractCreatedSuccess'));
+
+      // Automatically open PDF after creating a new contract
+      if (!contract && response?.data) {
+        const createdContract = response.data;
+
+        // First try to use final_pdf_url if available
+        if (createdContract.final_pdf_url) {
+          window.open(createdContract.final_pdf_url, '_blank');
+        } else {
+          // Fallback: fetch PDF URL using year and contract number
+          try {
+            const year = new Date(createdContract.start_date).getFullYear();
+            const pdfResponse = await contractService.getContractPdfUrl(
+              year,
+              createdContract.contract_number
+            );
+
+            const url = typeof pdfResponse === 'object' && pdfResponse !== null && 'pdf_url' in pdfResponse
+              ? (pdfResponse as any).pdf_url
+              : pdfResponse;
+
+            if (url && typeof url === 'string') {
+              window.open(url, '_blank');
+            }
+          } catch (error) {
+            console.error('Failed to fetch PDF URL:', error);
+            toast.error(t('pdfNotFound') || 'PDF topilmadi');
+          }
+        }
+      }
+
       onOpenChange(false);
       if (onSuccess) onSuccess();
     },
@@ -122,7 +153,7 @@ export function ContractDialog({ open, onOpenChange, contract, onSuccess }: Cont
       monthly_fee: Number(data.monthly_fee),
     };
     if (!payload.student_id) {
-      toast.error('Please select a student.');
+      toast.error(t('pleaseSelectStudent'));
       return;
     }
     mutation.mutate(payload);

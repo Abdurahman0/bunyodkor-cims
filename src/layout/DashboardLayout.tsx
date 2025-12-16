@@ -140,7 +140,7 @@ const DashboardLayout = () => {
     },
     {
       path: "/archive",
-      label: "Archive",
+      label: t("archive"),
       icon: Archive,
       permission: "settings:system:view",
     },

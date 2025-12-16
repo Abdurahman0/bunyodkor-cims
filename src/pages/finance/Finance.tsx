@@ -118,21 +118,41 @@ export default function Finance() {
   const cancelMutation = useMutation({
     mutationFn: (id: number) => transactionService.cancelTransaction(id),
     onSuccess: () => {
+      // Invalidate finance section queries
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
-      toast.success("Transaction cancelled");
+      queryClient.invalidateQueries({ queryKey: ["finance-report"] });
+
+      // Invalidate dashboard queries
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
+
+      // Invalidate student detail page queries (all students)
+      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+
+      toast.success(t("transactionCancelled"));
     },
-    onError: () => toast.error("Failed to cancel transaction"),
+    onError: () => toast.error(t("failedToCancelTransaction")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => transactionService.deleteTransaction(id),
     onSuccess: () => {
+      // Invalidate finance section queries
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
-      toast.success("Transaction deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["finance-report"] });
+
+      // Invalidate dashboard queries
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
+
+      // Invalidate student detail page queries (all students)
+      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+
+      toast.success(t("transactionDeleted"));
     },
-    onError: () => toast.error("Failed to delete transaction"),
+    onError: () => toast.error(t("failedToDeleteTransaction")),
   });
 
   const clearFilters = () => {
@@ -146,14 +166,14 @@ export default function Finance() {
   const handleExport = () => {
     try {
       if (!data?.data || data.data.length === 0) {
-        toast.error("No data to export");
+        toast.error(t("noDataToExport"));
         return;
       }
       exportTransactions(data.data, studentsData?.data); // Pass students data for name lookup
-      toast.success("Transactions exported successfully");
+      toast.success(t("transactionsExported"));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      toast.error("Failed to export transactions"); // The 'error' variable is used here.
+      toast.error(t("failedToExportTransactions")); // The 'error' variable is used here.
     }
   };
 

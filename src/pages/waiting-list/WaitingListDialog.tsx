@@ -71,6 +71,10 @@ export function WaitingListDialog({
     enabled: open,
   });
 
+  // Get selected group's capacity for validation
+  const selectedGroup = groupsData?.data?.find((g: any) => g.id === Number(selectedGroupId));
+  const maxPriority = selectedGroup?.capacity || 100;
+
   // Auto-calculate priority based on group capacity
   useEffect(() => {
     if (selectedGroupId && groupsData?.data && !entry) {
@@ -78,8 +82,8 @@ export function WaitingListDialog({
       if (selectedGroup && selectedGroup.capacity) {
         const currentCount = selectedGroup.current_student_count || 0;
         const capacity = selectedGroup.capacity;
-        // Formula: Full group (100%) = priority 1 (highest), Empty group (0%) = priority 100 (lowest)
-        const calculatedPriority = Math.max(1, Math.min(100, Math.floor(100 - ((currentCount / capacity) * 99))));
+        // Formula: Full group (100%) = priority close to capacity (lowest), Empty group (0%) = priority 1 (highest)
+        const calculatedPriority = Math.max(1, Math.min(capacity, Math.floor(1 + ((currentCount / capacity) * (capacity - 1)))));
         setValue("priority", calculatedPriority);
       }
     }
@@ -113,7 +117,7 @@ export function WaitingListDialog({
           mother_name: "",
           mother_phone: "",
           group_id: "",
-          priority: 50,
+          priority: 1, // Default to highest priority
           notes: "",
         });
       }
@@ -366,31 +370,31 @@ export function WaitingListDialog({
 
             <div className="space-y-2">
               <Label htmlFor="priority">
-                {t("priority") || "Priority"} (0-100) <span className="text-red-500">*</span>
+                {t("priority") || "Priority"} (1-{maxPriority}) <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="priority"
                 type="number"
-                min="0"
-                max="100"
+                min="1"
+                max={maxPriority}
                 {...register("priority", {
                   required: t("priorityRequired") || "Priority is required",
                   min: {
-                    value: 0,
-                    message: t("priorityMin") || "Priority must be at least 0",
+                    value: 1,
+                    message: t("priorityMin") || "Priority must be at least 1",
                   },
                   max: {
-                    value: 100,
-                    message: t("priorityMax") || "Priority must be at most 100",
+                    value: maxPriority,
+                    message: t("priorityMax") || `Priority must be at most ${maxPriority}`,
                   },
                 })}
-                placeholder="50"
+                placeholder="1"
               />
               {errors.priority && (
                 <p className="text-sm text-red-500">{errors.priority.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                {t("priorityHelp") || "Higher priority students get accepted first (0-100)"}
+                {t("priorityHelp") || `1 = Highest priority, ${maxPriority} = Lowest priority`}
               </p>
             </div>
           </div>

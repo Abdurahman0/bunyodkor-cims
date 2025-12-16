@@ -345,12 +345,21 @@ export const studentService = {
   },
 
   /**
-   * Get unpaid students for a specific month
+   * Get unpaid students for a specific month or date range
    * GET /students/unpaid
+   * Supports multiple filter options:
+   * - year + month: Single month
+   * - year + months: Multiple months (comma-separated)
+   * - from_date + to_date: Date range
+   * - group_id: Filter by group
    */
   getUnpaidStudents: async (params?: {
     year?: number
     month?: number
+    months?: string
+    from_date?: string
+    to_date?: string
+    group_id?: number
     page?: number
     page_size?: number
   }): Promise<ApiResponse<UnpaidStudentInfo[]>> => {
@@ -968,6 +977,30 @@ export const coachService = {
     attendance_rate: number
   }>> => {
     const response = await apiClient.get(`/coach/students/${studentId}/attendance-stats`, { params })
+    return response.data
+  },
+}
+
+// ============================================================================
+// ATTENDANCE SERVICES
+// ============================================================================
+
+export interface GetAllAttendancesParams {
+  from_date?: string
+  to_date?: string
+  group_id?: number
+  student_id?: number
+  page?: number
+  page_size?: number
+}
+
+export const attendanceService = {
+  /**
+   * Get all student attendances with filters
+   * GET /students/attendances/all
+   */
+  getAllAttendances: async (params?: GetAllAttendancesParams): Promise<ApiResponse<AttendanceRead[]>> => {
+    const response = await apiClient.get<ApiResponse<AttendanceRead[]>>('/students/attendances/all', { params })
     return response.data
   },
 }

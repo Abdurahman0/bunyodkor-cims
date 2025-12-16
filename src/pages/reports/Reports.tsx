@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -16,8 +17,8 @@ import {
   TableEmpty,
 } from '@/components/ui/table'
 import { BarChart, DonutChart, StatsCard } from '@/components/ui/charts'
-import { reportService, groupService } from '@/services/api.service'
-import type { FinanceReport, DebtorItem, GroupAttendanceReport, GroupRead } from '@/types/api'
+import { reportService, groupService, studentService } from '@/services/api.service'
+import type { GroupRead, UnpaidStudentInfo } from '@/types/api'
 import {
   BarChart3,
   TrendingUp,
@@ -42,6 +43,18 @@ export default function Reports() {
   const [debtorsPage, setDebtorsPage] = useState(1)
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
 
+  // Unpaid students filters
+  const [filterMode, setFilterMode] = useState<'month' | 'dateRange'>('month')
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+  const [selectedYear, setSelectedYear] = useState(currentYear)
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(currentMonth)
+  const [selectedMonths, setSelectedMonths] = useState<string>('') // comma-separated months
+  const [unpaidDateRange, setUnpaidDateRange] = useState({
+    from: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    to: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
+  })
+
   const { data: financeReport, isLoading: financeLoading } = useQuery({
     queryKey: ['finance-report', dateRange],
     queryFn: () =>
@@ -51,7 +64,7 @@ export default function Reports() {
 
   const { data: attendanceReport, isLoading: attendanceLoading } = useQuery({
     queryKey: ['attendance-report'],
-    queryFn: () => reportService.getGroupAttendanceReport(),
+    queryFn: () => reportService.getGroupAttendanceReports(),
     enabled: activeTab === 'attendance',
   })
 
@@ -61,14 +74,30 @@ export default function Reports() {
     enabled: activeTab === 'debtors',
   })
 
+  // Use unpaid students API instead of debtors report
   const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
-    queryKey: ['debtors-report', debtorsPage, selectedGroupId],
-    queryFn: () =>
-      reportService.getDebtorsReport({
+    queryKey: ['unpaid-students', debtorsPage, selectedGroupId, filterMode, selectedYear, selectedMonth, selectedMonths, unpaidDateRange],
+    queryFn: () => {
+      const params: any = {
         page: debtorsPage,
         page_size: 10,
         group_id: selectedGroupId || undefined,
-      }),
+      }
+
+      if (filterMode === 'month') {
+        params.year = selectedYear
+        if (selectedMonths) {
+          params.months = selectedMonths
+        } else if (selectedMonth) {
+          params.month = selectedMonth
+        }
+      } else {
+        params.from_date = unpaidDateRange.from
+        params.to_date = unpaidDateRange.to
+      }
+
+      return studentService.getUnpaidStudents(params)
+    },
     enabled: activeTab === 'debtors',
   })
 
@@ -88,17 +117,17 @@ export default function Reports() {
     { id: 'debtors', label: t('debtors'), icon: AlertTriangle },
   ]
 
-  const paymentSourcesData = financeReport?.data?.breakdown?.map((item) => ({
+  const paymentSourcesData = financeReport?.data?.breakdown?.map((item: any) => ({
     label: formatSource(item.source),
     value: item.total_amount,
   })) || []
 
-  const transactionCountData = financeReport?.data?.breakdown?.map((item) => ({
+  const transactionCountData = financeReport?.data?.breakdown?.map((item: any) => ({
     label: formatSource(item.source),
     value: item.transaction_count,
   })) || []
 
-  const attendanceChartData = attendanceReport?.data?.map((group) => ({
+  const attendanceChartData = attendanceReport?.data?.map((group: any) => ({
     label: group.group_name,
     value: group.attendance_percentage,
   })) || []
@@ -111,7 +140,7 @@ export default function Reports() {
       switch (activeTab) {
         case 'finance':
           if (!financeReport?.data?.breakdown?.length) {
-            toast.error('No finance data to export');
+            toast.error(t('noFinanceDataToExport'));
             return;
           }
           dataToExport = financeReport.data.breakdown.map((item) => ({
@@ -125,7 +154,7 @@ export default function Reports() {
 
         case 'attendance':
           if (!attendanceReport?.data?.length) {
-            toast.error('No attendance data to export');
+            toast.error(t('noAttendanceDataToExport'));
             return;
           }
           dataToExport = attendanceReport.data.map((group) => ({
@@ -139,26 +168,28 @@ export default function Reports() {
 
         case 'debtors':
           if (!debtorsData?.data?.length) {
-            toast.error('No debtors data to export');
+            toast.error(t('noDebtorsDataToExport'));
             return;
           }
-          dataToExport = debtorsData.data.map((debtor) => ({
-            'Student ID': debtor.student_id,
-            'Student Name': debtor.student_name,
-            'Contract Number': debtor.contract_number,
-            'Group Name': debtor.group_name,
+          dataToExport = debtorsData.data.map((debtor: UnpaidStudentInfo) => ({
+            'Student ID': debtor.student.id,
+            'Student Name': `${debtor.student.first_name} ${debtor.student.last_name}`,
+            'Group ID': debtor.student.group_id || 'N/A',
+            'Active Contracts': debtor.active_contracts_count,
+            'Total Expected': debtor.total_expected,
+            'Total Paid': debtor.total_paid,
             'Debt Amount': debtor.debt_amount,
           }));
-          reportType = 'debtors-report';
+          reportType = 'unpaid-students-report';
           break;
       }
 
       if (dataToExport) {
         exportReport(dataToExport, reportType);
-        toast.success('Report exported successfully');
+        toast.success(t('reportExported'));
       }
     } catch (error) {
-      toast.error('Failed to export report');
+      toast.error(t('failedToExportReport'));
     }
   }
 
@@ -231,7 +262,7 @@ export default function Reports() {
           </Card>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatsCard title={t('totalRevenue')} value={formatCurrency(financeReport?.data?.total_revenue || 0)} icon={<TrendingUp className="w-6 h-6" />} />
-            <StatsCard title={t('transactions')} value={financeReport?.data?.breakdown?.reduce((acc, item) => acc + item.transaction_count, 0) || 0} icon={<CreditCard className="w-6 h-6" />} />
+            <StatsCard title={t('transactions')} value={financeReport?.data?.breakdown?.reduce((acc: number, item: any) => acc + item.transaction_count, 0) || 0} icon={<CreditCard className="w-6 h-6" />} />
             <StatsCard title={t('paymentMethods')} value={financeReport?.data?.breakdown?.length || 0} icon={<BarChart3 className="w-6 h-6" />} />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -302,7 +333,7 @@ export default function Reports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {attendanceReport?.data?.map((group) => (
+                {attendanceReport?.data?.map((group: any) => (
                   <TableRow key={group.group_id}>
                     <TableCell className="font-medium">{group.group_name}</TableCell>
                     <TableCell className="text-right">{group.total_sessions}</TableCell>
@@ -320,60 +351,212 @@ export default function Reports() {
         </motion.div>
       )}
 
-      {activeTab === 'debtors' && (
+{activeTab === 'debtors' && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <Card>
             <CardContent className="p-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="w-64">
-                  <label className="text-sm font-medium text-foreground mb-1 block">{t('filterByGroup')}</label>
-                  <select
-                    value={selectedGroupId || ''}
-                    onChange={(e) => {
-                      setSelectedGroupId(e.target.value ? Number(e.target.value) : null)
-                      setDebtorsPage(1) // Reset to first page when filter changes
-                    }}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3"
+              <div className="space-y-4">
+                {/* Filter Mode Selector */}
+                <div className="flex gap-2">
+                  <Button
+                    variant={filterMode === 'month' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterMode('month')}
                   >
-                    <option value="">{t('allGroups') || 'Barcha guruhlar'}</option>
-                    {groupsData?.data?.map((group: GroupRead) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name}
-                      </option>
-                    ))}
-                  </select>
+                    {t('byMonth')}
+                  </Button>
+                  <Button
+                    variant={filterMode === 'dateRange' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterMode('dateRange')}
+                  >
+                    {t('byDateRange')}
+                  </Button>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-wrap items-end gap-4">
+                  {filterMode === 'month' ? (
+                    <>
+                      {/* Year Selector */}
+                      <div className="w-32">
+                        <label className="text-sm font-medium text-foreground mb-1 block">{t('year')}</label>
+                        <select
+                          value={selectedYear}
+                          onChange={(e) => {
+                            setSelectedYear(Number(e.target.value))
+                            setDebtorsPage(1)
+                          }}
+                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map((year) => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Month Selector */}
+                      <div className="w-48">
+                        <label className="text-sm font-medium text-foreground mb-1 block">{t('month')}</label>
+                        <select
+                          value={selectedMonth || ''}
+                          onChange={(e) => {
+                            setSelectedMonth(e.target.value ? Number(e.target.value) : null)
+                            setSelectedMonths('')
+                            setDebtorsPage(1)
+                          }}
+                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="">{t('allMonths')}</option>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                            <option key={month} value={month}>
+                              {format(new Date(2000, month - 1), 'MMMM')}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Multiple Months Input */}
+                      <div className="w-48">
+                        <label className="text-sm font-medium text-foreground mb-1 block">{t('multipleMonths')}</label>
+                        <Input
+                          value={selectedMonths}
+                          onChange={(e) => {
+                            setSelectedMonths(e.target.value)
+                            setSelectedMonth(null)
+                            setDebtorsPage(1)
+                          }}
+                          placeholder="1,2,3"
+                          className="h-10"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Date Range */}
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-1 block">{t('fromDate')}</label>
+                        <Input
+                          type="date"
+                          value={unpaidDateRange.from}
+                          onChange={(e) => {
+                            setUnpaidDateRange({ ...unpaidDateRange, from: e.target.value })
+                            setDebtorsPage(1)
+                          }}
+                          className="w-40"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-1 block">{t('toDate')}</label>
+                        <Input
+                          type="date"
+                          value={unpaidDateRange.to}
+                          onChange={(e) => {
+                            setUnpaidDateRange({ ...unpaidDateRange, to: e.target.value })
+                            setDebtorsPage(1)
+                          }}
+                          className="w-40"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Group Selector */}
+                  <div className="w-64">
+                    <label className="text-sm font-medium text-foreground mb-1 block">{t('group')}</label>
+                    <select
+                      value={selectedGroupId || ''}
+                      onChange={(e) => {
+                        setSelectedGroupId(e.target.value ? Number(e.target.value) : null)
+                        setDebtorsPage(1)
+                      }}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="">{t('allGroups') || 'All Groups'}</option>
+                      {groupsData?.data?.map((group: GroupRead) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <StatsCard title={t('totalDebtors')} value={debtorsData?.meta?.total || 0} icon={<AlertTriangle className="w-6 h-6" />} />
-            <StatsCard title={t('totalDebtAmount')} value={formatCurrency(debtorsData?.data?.reduce((acc, item) => acc + item.debt_amount, 0) || 0)} icon={<CreditCard className="w-6 h-6" />} />
+            <StatsCard 
+              title={t('totalDebtors')} 
+              value={debtorsData?.meta?.total || 0} 
+              icon={<AlertTriangle className="w-6 h-6" />} 
+            />
+            <StatsCard 
+              title={t('totalDebtAmount')} 
+              value={formatCurrency(debtorsData?.data?.reduce((acc, item) => acc + item.debt_amount, 0) || 0)} 
+              icon={<CreditCard className="w-6 h-6" />} 
+            />
           </div>
+
           <Card>
-            <CardHeader><CardTitle className="text-lg">{t('debtorsList')}</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg">{t('debtorsList')}</CardTitle>
+            </CardHeader>
             <Table isLoading={debtorsLoading}>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('student')}</TableHead>
-                  <TableHead>{t('contract')}</TableHead>
-                  <TableHead>{t('group')}</TableHead>
+                  <TableHead>{t('phone')}</TableHead>
+                  <TableHead className="text-right">{t('activeContracts')}</TableHead>
+                  <TableHead className="text-right">{t('totalExpected')}</TableHead>
+                  <TableHead className="text-right">{t('totalPaid')}</TableHead>
                   <TableHead className="text-right">{t('debtAmount')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {debtorsData?.data?.map((debtor) => (
-                  <TableRow key={debtor.student_id}>
-                    <TableCell className="font-medium">{debtor.student_name}</TableCell>
-                    <TableCell><Badge variant="outline">{debtor.contract_number}</Badge></TableCell>
-                    <TableCell>{debtor.group_name}</TableCell>
-                    <TableCell className="text-right"><span className="text-red-600 dark:text-red-400 font-medium">{formatCurrency(debtor.debt_amount)}</span></TableCell>
-                  </TableRow>
-                )) || <TableEmpty icon={<CheckCircle className="w-12 h-12 text-green-500" />} title={t('noDebtors')} description={t('allStudentsPaid')} />}
+                {debtorsData?.data && debtorsData.data.length > 0 ? (
+                  debtorsData.data.map((debtor: UnpaidStudentInfo) => (
+                    <TableRow key={debtor.student.id}>
+                      <TableCell className="font-medium">
+                        {debtor.student.first_name} {debtor.student.last_name}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">{debtor.student.phone}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline">{debtor.active_contracts_count}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatCurrency(debtor.total_expected)}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600 dark:text-green-400">
+                        {formatCurrency(debtor.total_paid)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-red-600 dark:text-red-400 font-medium">
+                          {formatCurrency(debtor.debt_amount)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableEmpty
+                    icon={<CheckCircle className="w-12 h-12 text-green-500" />}
+                    title={t('noDebtors')}
+                    description={t('allStudentsPaid')}
+                  />
+                )}
               </TableBody>
             </Table>
+            
             {debtorsData?.meta && debtorsData.meta.total_pages > 1 && (
-              <TablePagination currentPage={debtorsPage} totalPages={debtorsData.meta.total_pages} totalItems={debtorsData.meta.total} pageSize={10} onPageChange={setDebtorsPage} />
+              <TablePagination 
+                currentPage={debtorsPage} 
+                totalPages={debtorsData.meta.total_pages} 
+                totalItems={debtorsData.meta.total} 
+                pageSize={10} 
+                onPageChange={setDebtorsPage} 
+              />
             )}
           </Card>
         </motion.div>
