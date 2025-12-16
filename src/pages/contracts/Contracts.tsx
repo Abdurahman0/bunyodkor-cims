@@ -293,7 +293,10 @@ export default function Contracts() {
                     </TableHead>
                     <TableHead>{t("monthlyFee")}</TableHead>
                     <TableHead>{t("status")}</TableHead>
-                    <TableHead className="text-right">{t("actions")}</TableHead>
+                    {/* O'zgartirish: [&>div]:justify-end klassi qo'shildi */}
+                    <TableHead className="text-right [&>div]:justify-end">
+                      {t("actions")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

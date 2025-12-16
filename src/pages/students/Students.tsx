@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Select } from '@/components/ui/select'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -15,8 +15,8 @@ import {
   TableCell,
   TablePagination,
   TableEmpty,
-} from '@/components/ui/table'
-import { motion } from 'framer-motion'
+} from "@/components/ui/table";
+import { motion } from "framer-motion";
 import {
   Plus,
   Search,
@@ -28,35 +28,44 @@ import {
   Download,
   Upload,
   X,
-} from 'lucide-react'
-import toast from 'react-hot-toast'
-import { studentService, groupService } from '@/services/api.service'
-import type { StudentRead, GroupRead } from '@/types/api'
-import { StudentDialog } from './StudentDialog'
-import { StudentWithContractDialog } from './StudentWithContractDialog'
-import { ImportDialog } from '@/components/import/ImportDialog'
-import { exportStudents } from '@/lib/export-utils'
-import { format } from 'date-fns'
-import { useDebounce } from '@/hooks/useDebounce'
-import { useLanguageStore } from '@/store/languageStore'
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { studentService, groupService } from "@/services/api.service";
+import type { StudentRead, GroupRead } from "@/types/api";
+import { StudentDialog } from "./StudentDialog";
+import { StudentWithContractDialog } from "./StudentWithContractDialog";
+import { ImportDialog } from "@/components/import/ImportDialog";
+import { exportStudents } from "@/lib/export-utils";
+import { format } from "date-fns";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useLanguageStore } from "@/store/languageStore";
 
 export default function Students() {
-  const { t } = useLanguageStore()
-  const [page, setPage] = useState(1)
-  const [pageSize] = useState(10)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [groupFilter, setGroupFilter] = useState<string>('')
-  const [selectedStudent, setSelectedStudent] = useState<StudentRead | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isCombinedDialogOpen, setIsCombinedDialogOpen] = useState(false)
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-  const queryClient = useQueryClient()
+  const { t } = useLanguageStore();
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [groupFilter, setGroupFilter] = useState<string>("");
+  const [selectedStudent, setSelectedStudent] = useState<StudentRead | null>(
+    null
+  );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCombinedDialogOpen, setIsCombinedDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  const debouncedSearch = useDebounce(search, 500)
+  const debouncedSearch = useDebounce(search, 500);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['students', page, pageSize, debouncedSearch, statusFilter, groupFilter],
+    queryKey: [
+      "students",
+      page,
+      pageSize,
+      debouncedSearch,
+      statusFilter,
+      groupFilter,
+    ],
     queryFn: () =>
       studentService.getStudents({
         page,
@@ -65,99 +74,122 @@ export default function Students() {
         status: statusFilter || undefined,
         group_id: groupFilter ? parseInt(groupFilter, 10) : undefined,
       }),
-  })
+  });
 
   const { data: groupsData } = useQuery({
-    queryKey: ['groups-list'],
+    queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
-  })
+  });
 
   // Get total count for each status (independent of pagination)
   const { data: activeCountData } = useQuery({
-    queryKey: ['students-count', 'active'],
-    queryFn: () => studentService.getStudents({ status: 'active', page: 1, page_size: 1 }),
-  })
+    queryKey: ["students-count", "active"],
+    queryFn: () =>
+      studentService.getStudents({ status: "active", page: 1, page_size: 1 }),
+  });
 
   const { data: graduatedCountData } = useQuery({
-    queryKey: ['students-count', 'graduated'],
-    queryFn: () => studentService.getStudents({ status: 'graduated', page: 1, page_size: 1 }),
-  })
+    queryKey: ["students-count", "graduated"],
+    queryFn: () =>
+      studentService.getStudents({
+        status: "graduated",
+        page: 1,
+        page_size: 1,
+      }),
+  });
 
   const { data: droppedCountData } = useQuery({
-    queryKey: ['students-count', 'dropped'],
-    queryFn: () => studentService.getStudents({ status: 'dropped', page: 1, page_size: 1 }),
-  })
+    queryKey: ["students-count", "dropped"],
+    queryFn: () =>
+      studentService.getStudents({ status: "dropped", page: 1, page_size: 1 }),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => studentService.deleteStudent(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] })
-      queryClient.invalidateQueries({ queryKey: ['students-count'] })
-      toast.success(t('studentDeleted'))
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["students-count"] });
+      toast.success(t("studentDeleted"));
     },
     onError: () => {
-      toast.error(t('failedToDeleteStudent'))
+      toast.error(t("failedToDeleteStudent"));
     },
-  })
+  });
 
   const handleDelete = (student: StudentRead) => {
-    if (confirm(`Are you sure you want to delete ${student.first_name} ${student.last_name}?`)) {
-      deleteMutation.mutate(student.id)
+    if (
+      confirm(
+        `Are you sure you want to delete ${student.first_name} ${student.last_name}?`
+      )
+    ) {
+      deleteMutation.mutate(student.id);
     }
-  }
+  };
 
   const handleEdit = (student: StudentRead) => {
-    setSelectedStudent(student)
-    setIsDialogOpen(true)
-  }
+    setSelectedStudent(student);
+    setIsDialogOpen(true);
+  };
 
   const handleCreate = () => {
-    setSelectedStudent(null)
-    setIsCombinedDialogOpen(true)
-  }
+    setSelectedStudent(null);
+    setIsCombinedDialogOpen(true);
+  };
 
   const clearFilters = () => {
-    setSearch('')
-    setStatusFilter('')
-    setGroupFilter('')
-  }
+    setSearch("");
+    setStatusFilter("");
+    setGroupFilter("");
+  };
 
-  const hasActiveFilters = search || statusFilter || groupFilter
+  const hasActiveFilters = search || statusFilter || groupFilter;
 
   const handleExport = () => {
     try {
       if (!data?.data || data.data.length === 0) {
-        toast.error(t('noStudentsToExport'))
-        return
+        toast.error(t("noStudentsToExport"));
+        return;
       }
-      exportStudents(data.data)
-      toast.success(t('studentsExported'))
+      exportStudents(data.data);
+      toast.success(t("studentsExported"));
     } catch (error) {
-      toast.error(t('failedToExportStudents'))
+      toast.error(t("failedToExportStudents"));
     }
-  }
+  };
 
-  const getStatusBadge = (status: StudentRead['status']) => {
+  const getStatusBadge = (status: StudentRead["status"]) => {
     const variants: Record<string, { bg: string; text: string }> = {
-      active: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400' },
-      graduated: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400' },
-      dropped: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400' },
-      suspended: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-400' },
-    }
-    const variant = variants[status!] || variants.active
+      active: {
+        bg: "bg-green-100 dark:bg-green-900/30",
+        text: "text-green-700 dark:text-green-400",
+      },
+      graduated: {
+        bg: "bg-blue-100 dark:bg-blue-900/30",
+        text: "text-blue-700 dark:text-blue-400",
+      },
+      dropped: {
+        bg: "bg-red-100 dark:bg-red-900/30",
+        text: "text-red-700 dark:text-red-400",
+      },
+      suspended: {
+        bg: "bg-yellow-100 dark:bg-yellow-900/30",
+        text: "text-yellow-700 dark:text-yellow-400",
+      },
+    };
+    const variant = variants[status!] || variants.active;
     return (
       <Badge className={`${variant.bg} ${variant.text} border-0 font-medium`}>
         {status}
       </Badge>
-    )
-  }
+    );
+  };
 
   const stats = {
     total: data?.meta?.total || 0,
     active: activeCountData?.meta?.total || 0,
     graduated: graduatedCountData?.meta?.total || 0,
     dropped: droppedCountData?.meta?.total || 0,
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -168,21 +200,33 @@ export default function Students() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('students')}</h1>
-          <p className="text-muted-foreground mt-1">{t('manageStudents')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            {t("students")}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t("manageStudents")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsImportDialogOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setIsImportDialogOpen(true)}
+          >
             <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('import')}</span>
+            <span className="hidden sm:inline">{t("import")}</span>
           </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleExport}
+          >
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('export')}</span>
+            <span className="hidden sm:inline">{t("export")}</span>
           </Button>
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('addStudent')}</span>
+            <span className="hidden sm:inline">{t("addStudent")}</span>
           </Button>
         </div>
       </motion.div>
@@ -195,20 +239,49 @@ export default function Students() {
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {[
-          { label: t('totalStudents'), value: stats.total, icon: UsersIcon, color: 'blue' },
-          { label: t('active'), value: stats.active, icon: UsersIcon, color: 'green' },
-          { label: t('graduated'), value: stats.graduated, icon: UsersIcon, color: 'purple' },
-          { label: t('dropped'), value: stats.dropped, icon: UsersIcon, color: 'red' },
+          {
+            label: t("totalStudents"),
+            value: stats.total,
+            icon: UsersIcon,
+            color: "blue",
+          },
+          {
+            label: t("active"),
+            value: stats.active,
+            icon: UsersIcon,
+            color: "green",
+          },
+          {
+            label: t("graduated"),
+            value: stats.graduated,
+            icon: UsersIcon,
+            color: "purple",
+          },
+          {
+            label: t("dropped"),
+            value: stats.dropped,
+            icon: UsersIcon,
+            color: "red",
+          },
         ].map((stat) => (
-          <Card key={stat.label} className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <Card
+            key={stat.label}
+            className="border-border/50 shadow-sm hover:shadow-md transition-shadow"
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1">
+                    {stat.value}
+                  </p>
                 </div>
-                <div className={`p-2 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/30`}>
-                  <stat.icon className={`w-5 h-5 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+                <div
+                  className={`p-2 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/30`}
+                >
+                  <stat.icon
+                    className={`w-5 h-5 text-${stat.color}-600 dark:text-${stat.color}-400`}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -228,7 +301,7 @@ export default function Students() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder={t('searchByName')}
+                  placeholder={t("searchByName")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10 border-border/50"
@@ -240,18 +313,18 @@ export default function Students() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full sm:w-40"
                 >
-                  <option value="">{t('allStatuses')}</option>
-                  <option value="active">{t('active')}</option>
-                  <option value="graduated">{t('graduated')}</option>
-                  <option value="dropped">{t('dropped')}</option>
-                  <option value="suspended">{t('suspended')}</option>
+                  <option value="">{t("allStatuses")}</option>
+                  <option value="active">{t("active")}</option>
+                  <option value="graduated">{t("graduated")}</option>
+                  <option value="dropped">{t("dropped")}</option>
+                  <option value="suspended">{t("suspended")}</option>
                 </Select>
                 <Select
                   value={groupFilter}
                   onChange={(e) => setGroupFilter(e.target.value)}
                   className="w-full sm:w-40"
                 >
-                  <option value="">{t('allGroups')}</option>
+                  <option value="">{t("allGroups")}</option>
                   {groupsData?.data?.map((group: GroupRead) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
@@ -268,12 +341,25 @@ export default function Students() {
             {hasActiveFilters && (
               <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
                 <Filter className="w-4 h-4" />
-                <span>{t('activeFilters')}</span>
-                {search && <Badge variant="secondary">{t('search')}: {search}</Badge>}
-                {statusFilter && <Badge variant="secondary">{t('status')}: {statusFilter}</Badge>}
+                <span>{t("activeFilters")}</span>
+                {search && (
+                  <Badge variant="secondary">
+                    {t("search")}: {search}
+                  </Badge>
+                )}
+                {statusFilter && (
+                  <Badge variant="secondary">
+                    {t("status")}: {statusFilter}
+                  </Badge>
+                )}
                 {groupFilter && (
                   <Badge variant="secondary">
-                    {t('group')}: {groupsData?.data?.find((g) => g.id.toString() === groupFilter)?.name}
+                    {t("group")}:{" "}
+                    {
+                      groupsData?.data?.find(
+                        (g) => g.id.toString() === groupFilter
+                      )?.name
+                    }
                   </Badge>
                 )}
               </div>
@@ -290,17 +376,26 @@ export default function Students() {
       >
         <Card className="border-border/50 shadow-sm">
           <CardHeader className="border-b border-border/50">
-            <CardTitle className="text-lg">{t('studentsList')}</CardTitle>
+            <CardTitle className="text-lg">{t("studentsList")}</CardTitle>
           </CardHeader>
           <Table isLoading={isLoading}>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('studentName')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('contact')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('group')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('dateOfBirth')}</TableHead>
-                <TableHead>{t('status')}</TableHead>
-                <TableHead className="text-right">{t('actions')}</TableHead>
+                <TableHead>{t("studentName")}</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  {t("contact")}
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  {t("group")}
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  {t("dateOfBirth")}
+                </TableHead>
+                <TableHead>{t("status")}</TableHead>
+                {/* O'zgartirish: [&>div]:justify-end klassi qo'shildi */}
+                <TableHead className="text-right [&>div]:justify-end">
+                  {t("actions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -310,10 +405,14 @@ export default function Students() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                          {student.first_name?.[0]}{student.last_name?.[0]}
+                          {student.first_name?.[0]}
+                          {student.last_name?.[0]}
                         </div>
                         <div className="min-w-0">
-                          <Link to={`/students/${student.id}`} className="font-medium text-foreground truncate hover:underline">
+                          <Link
+                            to={`/students/${student.id}`}
+                            className="font-medium text-foreground truncate hover:underline"
+                          >
                             {student.first_name} {student.last_name}
                           </Link>
                           <p className="text-sm text-muted-foreground md:hidden truncate">
@@ -324,7 +423,9 @@ export default function Students() {
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <div>
-                        <p className="text-sm text-foreground">{student.phone}</p>
+                        <p className="text-sm text-foreground">
+                          {student.phone}
+                        </p>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">
                           {student.address}
                         </p>
@@ -332,13 +433,19 @@ export default function Students() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline">
-                        {groupsData?.data?.find((g) => g.id === student.group_id)?.name || `Group #${student.group_id}`}
+                        {groupsData?.data?.find(
+                          (g) => g.id === student.group_id
+                        )?.name || `Group #${student.group_id}`}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" />
-                        {student.date_of_birth && format(new Date(student.date_of_birth), 'MMM d, yyyy')}
+                        {student.date_of_birth &&
+                          format(
+                            new Date(student.date_of_birth),
+                            "MMM d, yyyy"
+                          )}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(student.status)}</TableCell>
@@ -368,20 +475,21 @@ export default function Students() {
               ) : (
                 <TableEmpty
                   icon={<UsersIcon className="w-12 h-12" />}
-                  title={t('noStudentsFound')}
-                  description={hasActiveFilters
-                    ? t('adjustFiltersMessage')
-                    : t('getStartedByCreating')
+                  title={t("noStudentsFound")}
+                  description={
+                    hasActiveFilters
+                      ? t("adjustFiltersMessage")
+                      : t("getStartedByCreating")
                   }
                   action={
                     hasActiveFilters ? (
                       <Button variant="outline" onClick={clearFilters}>
-                        {t('clearFilters')}
+                        {t("clearFilters")}
                       </Button>
                     ) : (
                       <Button onClick={handleCreate}>
                         <Plus className="w-4 h-4 mr-2" />
-                        {t('addStudent')}
+                        {t("addStudent")}
                       </Button>
                     )
                   }
@@ -413,8 +521,8 @@ export default function Students() {
         open={isCombinedDialogOpen}
         onOpenChange={setIsCombinedDialogOpen}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['students'] })
-          queryClient.invalidateQueries({ queryKey: ['students-count'] })
+          queryClient.invalidateQueries({ queryKey: ["students"] });
+          queryClient.invalidateQueries({ queryKey: ["students-count"] });
         }}
       />
 
@@ -423,13 +531,13 @@ export default function Students() {
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
         endpoint="/import/students"
-        title={t('importStudents')}
-        description={t('importStudentsDescription')}
+        title={t("importStudents")}
+        description={t("importStudentsDescription")}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['students'] })
-          queryClient.invalidateQueries({ queryKey: ['students-count'] })
+          queryClient.invalidateQueries({ queryKey: ["students"] });
+          queryClient.invalidateQueries({ queryKey: ["students-count"] });
         }}
       />
     </div>
-  )
+  );
 }

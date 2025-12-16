@@ -89,8 +89,8 @@ export default function StudentDetailPage() {
         typeof response === "object" &&
         response !== null &&
         "pdf_url" in response
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ? (response as any).pdf_url
+          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (response as any).pdf_url
           : response;
 
       if (url && typeof url === "string") {
@@ -419,7 +419,10 @@ export default function StudentDetailPage() {
                 <TableHead>Oylik To'lov</TableHead>
                 <TableHead>Davr</TableHead>
                 <TableHead>Davomiyligi</TableHead>
-                <TableHead className="text-right">Kontrakt</TableHead>
+                {/* O'zgartirish: O'ng tomonga to'g'rilash uchun [&>div]:justify-end klassi qo'shildi */}
+                <TableHead className="text-right [&>div]:justify-end">
+                  Kontrakt
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

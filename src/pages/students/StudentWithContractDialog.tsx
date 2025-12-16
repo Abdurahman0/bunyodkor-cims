@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 import {
   studentService,
@@ -20,7 +19,7 @@ import {
 } from "@/services/api.service";
 import type { GroupRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
-import { Loader2, UserPlus, FileText, Upload, User, Users } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 
 interface StudentWithContractDialogProps {
   open: boolean;
@@ -118,6 +117,7 @@ export function StudentWithContractDialog({
     reset,
     watch,
     setValue,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     formState: { errors },
   } = useForm<StudentFormData>();
 
@@ -136,9 +136,10 @@ export function StudentWithContractDialog({
       if (selectedGroupId) {
         try {
           // Agar yil kiritilgan bo'lsa, yildan foydalanish, aks holda joriy yil
-          const year = birthYear && birthYear.length === 4
-            ? Number(birthYear)
-            : new Date().getFullYear();
+          const year =
+            birthYear && birthYear.length === 4
+              ? Number(birthYear)
+              : new Date().getFullYear();
 
           const response = await contractService.getNextAvailableNumber(
             Number(selectedGroupId),
@@ -321,21 +322,25 @@ export function StudentWithContractDialog({
         return;
       }
 
-     const response = await studentService.createStudentWithContract(formData);
+      // createStudentWithContract javobi Blob (PDF fayl) qaytaradi
+      const response = await studentService.createStudentWithContract(formData);
 
-     const pdfUrl = response.data?.pdf_url;
-
-     if (pdfUrl) {
-       window.open(pdfUrl, "_blank"); // PDF ni to'g'ri ochadi
-     } else {
-       toast.error(t("pdfNotFound") || "PDF topilmadi!");
-     }
+      // Blob dan URL yaratib ochamiz
+      if (response) {
+        const fileURL = window.URL.createObjectURL(
+          new Blob([response], { type: "application/pdf" })
+        );
+        window.open(fileURL, "_blank");
+      } else {
+        toast.error(t("pdfNotFound") || "PDF topilmadi!");
+      }
 
       toast.success(t("successfullySaved") || "Muvaffaqiyatli saqlandi!");
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       onOpenChange(false);
       if (onSuccess) onSuccess();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Xatolik:", error);
       let errorMessage = t("anErrorOccurred") || "Xatolik yuz berdi";
@@ -458,15 +463,24 @@ export function StudentWithContractDialog({
 
               <div className="space-y-1">
                 <Label>O'quvchi F.I.O (To'liq) *</Label>
-                <Input {...register("student_fio", { required: true })} placeholder="Ism Familiya Otasining ismi" />
+                <Input
+                  {...register("student_fio", { required: true })}
+                  placeholder="Ism Familiya Otasining ismi"
+                />
               </div>
               <div className="space-y-1">
                 <Label>Tug'ilgan yili *</Label>
-                <Input {...register("birth_year", { required: true })} placeholder="2015" />
+                <Input
+                  {...register("birth_year", { required: true })}
+                  placeholder="2015"
+                />
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1">
                 <Label>O'quvchi Manzili *</Label>
-                <Input {...register("student_address", { required: true })} placeholder="Shahar, tuman, ko'cha, uy" />
+                <Input
+                  {...register("student_address", { required: true })}
+                  placeholder="Shahar, tuman, ko'cha, uy"
+                />
               </div>
               <div className="space-y-1">
                 <Label>Boshlanish Sanasi *</Label>
@@ -514,11 +528,17 @@ export function StudentWithContractDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Ish Joyi</Label>
-                  <Input {...register("dad_occupation")} placeholder="Korxona/tashkilot nomi" />
+                  <Input
+                    {...register("dad_occupation")}
+                    placeholder="Korxona/tashkilot nomi"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Telefon</Label>
-                  <Input {...register("dad_phone")} placeholder="+998 XX XXX XX XX" />
+                  <Input
+                    {...register("dad_phone")}
+                    placeholder="+998 XX XXX XX XX"
+                  />
                 </div>
               </div>
 
@@ -533,11 +553,17 @@ export function StudentWithContractDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>Ish Joyi</Label>
-                  <Input {...register("mom_occupation")} placeholder="Korxona/tashkilot nomi" />
+                  <Input
+                    {...register("mom_occupation")}
+                    placeholder="Korxona/tashkilot nomi"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Telefon</Label>
-                  <Input {...register("mom_phone")} placeholder="+998 XX XXX XX XX" />
+                  <Input
+                    {...register("mom_phone")}
+                    placeholder="+998 XX XXX XX XX"
+                  />
                 </div>
               </div>
             </div>
@@ -576,7 +602,10 @@ export function StudentWithContractDialog({
                   </div>
                   <div>
                     <Label>Kim Bergan</Label>
-                    <Input {...register("buyurtmachi_who_give")} placeholder="IIB nomi" />
+                    <Input
+                      {...register("buyurtmachi_who_give")}
+                      placeholder="IIB nomi"
+                    />
                   </div>
                   <div>
                     <Label>Qachon Berilgan</Label>
@@ -584,7 +613,10 @@ export function StudentWithContractDialog({
                   </div>
                   <div>
                     <Label>Manzil</Label>
-                    <Input {...register("buyurtmachi_address")} placeholder="Shahar, tuman, ko'cha, uy" />
+                    <Input
+                      {...register("buyurtmachi_address")}
+                      placeholder="Shahar, tuman, ko'cha, uy"
+                    />
                   </div>
                 </div>
               </div>
@@ -612,7 +644,10 @@ export function StudentWithContractDialog({
                   </div>
                   <div>
                     <Label>Kim Bergan</Label>
-                    <Input {...register("tarbiyalanuvchi_who_give")} placeholder="FHDY nomi" />
+                    <Input
+                      {...register("tarbiyalanuvchi_who_give")}
+                      placeholder="FHDY nomi"
+                    />
                   </div>
                   <div>
                     <Label>Qachon Berilgan</Label>

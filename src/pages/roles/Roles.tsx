@@ -208,7 +208,10 @@ const Roles = () => {
                 <TableRow>
                   <TableHead>{t("role")}</TableHead>
                   <TableHead>{t("permissions")}</TableHead>
-                  <TableHead className="text-right">{t("actions")}</TableHead>
+                  {/* O'zgartirish shu qatorda: [&>div]:justify-end qo'shildi */}
+                  <TableHead className="text-right [&>div]:justify-end">
+                    {t("actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -225,8 +228,7 @@ const Roles = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">
-                          {role.permissions.length}{" "}
-                          {t("permissions")}
+                          {role.permissions.length} {t("permissions")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
