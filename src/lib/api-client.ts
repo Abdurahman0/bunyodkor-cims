@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 const getApiUrl = () => {
   // In development, use proxy to avoid CORS issues
-  return "https://utilities-wishing-pharmacy-vehicle.trycloudflare.com/";
+  return "https://knitting-ceramic-elect-vision.trycloudflare.com/";
 };
 
 // Helper function to get translated message
