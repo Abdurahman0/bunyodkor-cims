@@ -71,7 +71,18 @@ export function AssignTransactionDialog({
     },
     onSuccess: () => {
       toast.success('Transaction assigned successfully!');
-      queryClient.invalidateQueries({ queryKey: ['unassigned-transactions'] }); // Invalidate unassigned transactions
+      queryClient.invalidateQueries({
+        queryKey: ['unassigned-transactions'],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['transactions'],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['all-transactions-stats'],
+        refetchType: "all"
+      });
       onOpenChange(false);
       if (onSuccess) onSuccess();
     },

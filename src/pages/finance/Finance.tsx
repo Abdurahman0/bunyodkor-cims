@@ -69,6 +69,9 @@ export default function Finance() {
         status: statusFilter || undefined,
         source: sourceFilter || undefined,
       }),
+    staleTime: 0, // Always refetch
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const { data: studentsData } = useQuery({
@@ -80,6 +83,9 @@ export default function Finance() {
     queryKey: ["unassigned-transactions"],
     queryFn: () =>
       transactionService.getUnassignedTransactions({ page: 1, page_size: 5 }),
+    staleTime: 0, // Always refetch
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   // Separate query for all transactions to calculate accurate statistics
@@ -113,22 +119,43 @@ export default function Finance() {
 
       return { data: allTransactions, meta: { total: allTransactions.length } };
     },
+    staleTime: 0, // Always refetch
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: number) => transactionService.cancelTransaction(id),
     onSuccess: () => {
-      // Invalidate finance section queries
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["finance-report"] });
+      // Invalidate AND refetch finance section queries
+      queryClient.invalidateQueries({
+        queryKey: ["transactions"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["all-transactions-stats"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["finance-report"],
+        refetchType: "all"
+      });
 
       // Invalidate dashboard queries
-      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard-summary"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["recent-transactions"],
+        refetchType: "all"
+      });
 
       // Invalidate student detail page queries (all students)
-      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info"],
+        refetchType: "all"
+      });
 
       toast.success(t("transactionCancelled"));
     },
@@ -138,17 +165,35 @@ export default function Finance() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => transactionService.deleteTransaction(id),
     onSuccess: () => {
-      // Invalidate finance section queries
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["finance-report"] });
+      // Invalidate AND refetch finance section queries
+      queryClient.invalidateQueries({
+        queryKey: ["transactions"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["all-transactions-stats"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["finance-report"],
+        refetchType: "all"
+      });
 
       // Invalidate dashboard queries
-      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard-summary"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["recent-transactions"],
+        refetchType: "all"
+      });
 
       // Invalidate student detail page queries (all students)
-      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info"],
+        refetchType: "all"
+      });
 
       toast.success(t("transactionDeleted"));
     },

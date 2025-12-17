@@ -205,17 +205,39 @@ export function TransactionDialog({
   const mutation = useMutation({
     mutationFn: transactionService.createManualTransaction,
     onSuccess: () => {
-      // Invalidate finance section queries
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["all-transactions-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["finance-report"] });
+      // Invalidate AND refetch finance section queries
+      queryClient.invalidateQueries({
+        queryKey: ["transactions"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["all-transactions-stats"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["finance-report"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["unassigned-transactions"],
+        refetchType: "all"
+      });
 
       // Invalidate dashboard queries
-      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard-summary"],
+        refetchType: "all"
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["recent-transactions"],
+        refetchType: "all"
+      });
 
       // Invalidate student detail page queries (all students)
-      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info"],
+        refetchType: "all"
+      });
 
       toast.success(
         t("transactionCreatedSuccess") || "Tranzaksiya muvaffaqiyatli yaratildi"

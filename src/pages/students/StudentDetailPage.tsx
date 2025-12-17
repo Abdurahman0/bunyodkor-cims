@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { useLanguageStore } from "@/store/languageStore";
 import type {
   StudentFullInfo,
   TransactionRead,
@@ -62,6 +63,7 @@ const formatSource = (source: any) => {
 };
 
 export default function StudentDetailPage() {
+  const { t } = useLanguageStore();
   const { id } = useParams<{ id: string }>();
   const studentId = parseInt(id || "0", 10);
 
@@ -96,11 +98,11 @@ export default function StudentDetailPage() {
       if (url && typeof url === "string") {
         window.open(url, "_blank");
       } else {
-        toast.error("Shartnoma PDF fayli topilmadi");
+        toast.error(t("pdfNotFound"));
       }
     } catch (error) {
       console.error(error);
-      toast.error("Faylni yuklashda xatolik yuz berdi");
+      toast.error(t("errorDownloadingFile"));
     }
   };
 
@@ -116,13 +118,13 @@ export default function StudentDetailPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-red-500">
-          Ma'lumotlarni yuklashda xatolik
+          {t("loadingError")}
         </h2>
         <p className="text-muted-foreground">
-          Talaba topilmadi yoki serverda xatolik yuz berdi.
+          {t("studentNotFoundOrError")}
         </p>
         <Button asChild variant="link" className="mt-4">
-          <Link to="/students">Talabalar ro'yxatiga qaytish</Link>
+          <Link to="/students">{t("backToStudents")}</Link>
         </Button>
       </div>
     );
@@ -171,7 +173,7 @@ export default function StudentDetailPage() {
             first_name:
               customFields.buyurtmachi.fio || customFields.buyurtmachi.name,
             last_name: "",
-            relationship_type: "Buyurtmachi (Shartnoma)",
+            relationship_type: "Buyurtmachi",
             phone:
               customFields.buyurtmachi.telefon ||
               customFields.buyurtmachi.phone ||
@@ -228,7 +230,7 @@ export default function StudentDetailPage() {
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="w-4 h-4" />
-        Ortga qaytish
+        {t("backToStudents")}
       </Link>
 
       <Card>
@@ -259,7 +261,7 @@ export default function StudentDetailPage() {
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-muted-foreground" />
             <span>
-              Tug'ilgan sana:{" "}
+              {t("birthDate")}:{" "}
               {format(new Date(student.date_of_birth!), "dd.MM.yyyy")}
             </span>
           </div>
@@ -271,7 +273,7 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Jami To'lovlar</p>
+              <p className="text-sm text-muted-foreground">{t("totalPayments")}</p>
               <p className="text-2xl font-bold">
                 {new Intl.NumberFormat("en-US").format(
                   transactions?.reduce((sum, t) => sum + t.amount, 0) || 0
@@ -284,7 +286,7 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Faol Shartnomalar</p>
+              <p className="text-sm text-muted-foreground">{t("activeContracts")}</p>
               <p className="text-2xl font-bold">
                 {contracts?.filter((c) => c.status === "active").length || 0}
               </p>
@@ -294,7 +296,7 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Davomat Foizi</p>
+              <p className="text-sm text-muted-foreground">{t("attendancePercentage")}</p>
               <p className="text-2xl font-bold">
                 {attendances && attendances.length > 0
                   ? Math.round(
@@ -314,29 +316,29 @@ export default function StudentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Ma'lumotlar</CardTitle>
+            <CardTitle>{t("information")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Guruh</span>
+              <span className="text-muted-foreground">{t("group")}</span>
               <span className="font-medium">
-                {group?.name || "Biriktirilmagan"}
+                {group?.name || t("notAssigned")}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Murabbiy</span>
+              <span className="text-muted-foreground">{t("coach")}</span>
               <span className="font-medium">
-                {coach?.full_name || "Biriktirilmagan"}
+                {coach?.full_name || t("notAssigned")}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Face ID</span>
               <Badge variant="secondary">
-                {student.face_id || "O'rnatilmagan"}
+                {student.face_id || t("notSet")}
               </Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Qo'shilgan sana</span>
+              <span className="text-muted-foreground">{t("joinedDate")}</span>
               <span className="font-medium">
                 {format(new Date(student.created_at!), "dd.MM.yyyy")}
               </span>
@@ -348,7 +350,7 @@ export default function StudentDetailPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" /> Ota-onalar / Vasiylar
+              <Users className="w-5 h-5" /> {t("parentsGuardians")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -381,7 +383,7 @@ export default function StudentDetailPage() {
                             variant="outline"
                             className="text-[10px] mt-1 h-5 ml-2"
                           >
-                            Shartnomadan
+                            {t("fromContract")}
                           </Badge>
                         )}
                       </div>
@@ -389,7 +391,7 @@ export default function StudentDetailPage() {
                     <div className="text-sm flex items-center gap-2 bg-background dark:bg-muted/30 px-3 py-1.5 rounded border">
                       <Phone className="w-4 h-4 text-muted-foreground" />
                       <span className="font-mono text-foreground">
-                        {parent.phone || "No phone"}
+                        {parent.phone || t("noPhone")}
                       </span>
                     </div>
                   </div>
@@ -398,7 +400,7 @@ export default function StudentDetailPage() {
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>Ota-ona ma'lumotlari topilmadi.</p>
+                <p>{t("noParentInfo")}</p>
               </div>
             )}
           </CardContent>
@@ -407,21 +409,20 @@ export default function StudentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Shartnomalar</CardTitle>
+          <CardTitle>{t("contracts")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>Shartnoma №</TableHead>
-                <TableHead>Holati</TableHead>
-                <TableHead>Oylik To'lov</TableHead>
-                <TableHead>Davr</TableHead>
-                <TableHead>Davomiyligi</TableHead>
-                {/* O'zgartirish: O'ng tomonga to'g'rilash uchun [&>div]:justify-end klassi qo'shildi */}
+                <TableHead>{t("contractNumber")}</TableHead>
+                <TableHead>{t("status")}</TableHead>
+                <TableHead>{t("monthlyFee")}</TableHead>
+                <TableHead>{t("period")}</TableHead>
+                <TableHead>{t("duration")}</TableHead>
                 <TableHead className="text-right [&>div]:justify-end">
-                  Kontrakt
+                  {t("contract")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -461,7 +462,7 @@ export default function StudentDetailPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{monthsDiff} oy</Badge>
+                        <Badge variant="outline">{monthsDiff} {t("months")}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end">
@@ -469,7 +470,7 @@ export default function StudentDetailPage() {
                             className="botao"
                             onClick={() => handleDownloadPdf(c)}
                           >
-                            <span className="texto">Yuklash</span>
+                            <span className="texto">{t("downloadContract")}</span>
                             <span className="mysvg">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -495,7 +496,7 @@ export default function StudentDetailPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center h-24">
-                    Shartnomalar mavjud emas.
+                    {t("noContracts")}
                   </TableCell>
                 </TableRow>
               )}
@@ -506,19 +507,19 @@ export default function StudentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>To'lovlar Tarixi</CardTitle>
+          <CardTitle>{t("paymentHistory")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>Sana</TableHead>
-                <TableHead>Yil/Oy</TableHead>
-                <TableHead>Summa</TableHead>
-                <TableHead>Manba</TableHead>
-                <TableHead>Holati</TableHead>
-                <TableHead>Izoh</TableHead>
+                <TableHead>{t("date")}</TableHead>
+                <TableHead>{t("yearMonth")}</TableHead>
+                <TableHead>{t("sum")}</TableHead>
+                <TableHead>{t("source")}</TableHead>
+                <TableHead>{t("status")}</TableHead>
+                <TableHead>{t("comment")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -554,7 +555,7 @@ export default function StudentDetailPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center h-24">
-                    To'lovlar topilmadi.
+                    {t("noPayments")}
                   </TableCell>
                 </TableRow>
               )}
@@ -565,15 +566,15 @@ export default function StudentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Davomat Tarixi</CardTitle>
+          <CardTitle>{t("attendanceHistory")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Sana</TableHead>
-                <TableHead>Holati</TableHead>
-                <TableHead>Izoh</TableHead>
+                <TableHead>{t("date")}</TableHead>
+                <TableHead>{t("status")}</TableHead>
+                <TableHead>{t("comment")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -590,7 +591,7 @@ export default function StudentDetailPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center h-24">
-                    Davomat ma'lumotlari topilmadi.
+                    {t("noAttendanceData")}
                   </TableCell>
                 </TableRow>
               )}

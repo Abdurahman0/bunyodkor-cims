@@ -30,6 +30,9 @@ export function UnassignedTransactions() {
   const { data, isLoading } = useQuery({
     queryKey: ['unassigned-transactions', page],
     queryFn: () => transactionService.getUnassignedTransactions({ page, page_size: 10 }),
+    staleTime: 0, // Always refetch
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const handleOpenDialog = (transaction: TransactionRead) => {
@@ -108,8 +111,18 @@ export function UnassignedTransactions() {
         onOpenChange={setIsDialogOpen}
         transaction={selectedTransaction}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['unassigned-transactions'] });
-          queryClient.invalidateQueries({ queryKey: ['transactions'] });
+          queryClient.invalidateQueries({
+            queryKey: ['unassigned-transactions'],
+            refetchType: "all"
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['transactions'],
+            refetchType: "all"
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['all-transactions-stats'],
+            refetchType: "all"
+          });
         }}
       />
     </>
