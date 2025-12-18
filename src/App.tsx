@@ -60,7 +60,7 @@ const routesConfig = [
   { path: "/finance", permission: "finance:transactions:view" },
   { path: "/coach", permission: "attendance:coach:mark" },
   { path: "/gate", permission: "gate:logs:view" },
-  { path: "/waiting-list", permission: "students:view" },
+  { path: "/waiting-list", permission: "students:manage" },
   { path: "/reports", permission: "reports:dashboard:view" },
   { path: "/users", permission: "users:manage" },
   { path: "/roles", permission: "roles:view" },
@@ -236,7 +236,7 @@ function App() {
             <Route
               path="waiting-list"
               element={
-                <ProtectedRoute permission="students:view">
+                <ProtectedRoute permission="students:manage">
                   <WaitingList />
                 </ProtectedRoute>
               }

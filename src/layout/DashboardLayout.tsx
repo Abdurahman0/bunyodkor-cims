@@ -112,7 +112,7 @@ const DashboardLayout = () => {
       path: "/waiting-list",
       label: t("waitingList"),
       icon: Clock,
-      permission: "students:view",
+      permission: "students:manage",
     },
     {
       path: "/reports",
