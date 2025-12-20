@@ -248,6 +248,7 @@ export interface ParentUpdateRequest {
 export interface GroupRead {
   id: number;
   name: string;
+  identifier: string;
   birth_year: number;
   description: string;
   schedule_days: string;
@@ -261,6 +262,7 @@ export interface GroupRead {
 
 export interface GroupCreateRequest {
   name: string;
+  identifier: string;
   birth_year: number;
   description: string;
   schedule_days: string;
@@ -271,6 +273,7 @@ export interface GroupCreateRequest {
 
 export interface GroupUpdateRequest {
   name?: string;
+  identifier?: string;
   birth_year?: number;
   description?: string;
   schedule_days?: string;

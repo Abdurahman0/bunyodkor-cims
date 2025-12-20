@@ -30,6 +30,7 @@ interface GroupDialogProps {
 // Form ma'lumotlari uchun type (API typelaridan foydalanamiz)
 type GroupFormData = {
   name: string;
+  identifier: string;
   birth_year: number | string;
   description: string;
   schedule_days: string;
@@ -64,6 +65,7 @@ export function GroupDialog({
       if (group) {
         reset({
           name: group.name,
+          identifier: group.identifier,
           birth_year: group.birth_year,
           description: group.description,
           schedule_days: group.schedule_days,
@@ -74,6 +76,7 @@ export function GroupDialog({
       } else {
         reset({
           name: "",
+          identifier: "",
           birth_year: new Date().getFullYear() - 7, // Default: 7 yoshli bolalar uchun
           description: "",
           schedule_days: "Mon-Wed-Fri",
@@ -118,6 +121,7 @@ export function GroupDialog({
   const onSubmit = (data: GroupFormData) => {
     const payload: GroupCreateRequest = {
       name: data.name,
+      identifier: data.identifier,
       birth_year: Number(data.birth_year),
       description: data.description,
       schedule_days: data.schedule_days,
@@ -149,14 +153,30 @@ export function GroupDialog({
               </Label>
               <Input
                 id="name"
-                placeholder="e.g., U-15 Elite"
-                {...register("name", { required: "Group name is required" })}
+                placeholder="U15-2B"
+                {...register("name", { required: t("groupNameRequired") })}
               />
               {errors.name && (
                 <p className="text-sm text-red-500">{errors.name.message}</p>
               )}
             </div>
 
+            <div className="space-y-1">
+              <Label htmlFor="identifier">
+                {t("identifier")} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="identifier"
+                placeholder="2B"
+                {...register("identifier", { required: t("identifierRequired") })}
+              />
+              {errors.identifier && (
+                <p className="text-sm text-red-500">{errors.identifier.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="birth_year">
                 {t("birthYear")} <span className="text-red-500">*</span>
@@ -166,13 +186,33 @@ export function GroupDialog({
                 type="number"
                 placeholder="2015"
                 {...register("birth_year", {
-                  required: "Birth year is required",
+                  required: t("birthYearRequired"),
                   valueAsNumber: true,
                 })}
               />
               {errors.birth_year && (
                 <p className="text-sm text-red-500">
                   {errors.birth_year.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="capacity">
+                {t("capacity")} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="capacity"
+                type="number"
+                placeholder="25"
+                {...register("capacity", {
+                  required: t("capacityRequired"),
+                  valueAsNumber: true,
+                })}
+              />
+              {errors.capacity && (
+                <p className="text-sm text-red-500">
+                  {errors.capacity.message}
                 </p>
               )}
             </div>
@@ -196,7 +236,7 @@ export function GroupDialog({
                 id="schedule_days"
                 placeholder="Mon, Wed, Fri"
                 {...register("schedule_days", {
-                  required: "Schedule days are required",
+                  required: t("scheduleDaysRequired"),
                 })}
               />
               {errors.schedule_days && (
@@ -214,7 +254,7 @@ export function GroupDialog({
                 id="schedule_time"
                 placeholder="15:00 - 17:00"
                 {...register("schedule_time", {
-                  required: "Schedule time is required",
+                  required: t("scheduleTimeRequired"),
                 })}
               />
               {errors.schedule_time && (
@@ -225,48 +265,26 @@ export function GroupDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="capacity">
-                {t("capacity")} <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="capacity"
-                type="number"
-                placeholder="25"
-                {...register("capacity", {
-                  required: "Capacity is required",
-                  valueAsNumber: true,
-                })}
-              />
-              {errors.capacity && (
-                <p className="text-sm text-red-500">
-                  {errors.capacity.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="coach_id">
-                {t("coach")} <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                id="coach_id"
-                {...register("coach_id", { required: "Please select a coach" })}
-              >
-                <option value="">{t("selectCoach")}</option>
-                {coachesData?.data?.map((coach: UserWithGroups) => (
-                  <option key={coach.id} value={coach.id}>
-                    {coach.full_name}
-                  </option>
-                ))}
-              </Select>
-              {errors.coach_id && (
-                <p className="text-sm text-red-500">
-                  {errors.coach_id.message}
-                </p>
-              )}
-            </div>
+          <div className="space-y-1">
+            <Label htmlFor="coach_id">
+              {t("coach")} <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              id="coach_id"
+              {...register("coach_id", { required: t("coachRequired") })}
+            >
+              <option value="">{t("selectCoach")}</option>
+              {coachesData?.data?.map((coach: any) => (
+                <option key={coach.id} value={coach.id}>
+                  {coach.full_name}
+                </option>
+              ))}
+            </Select>
+            {errors.coach_id && (
+              <p className="text-sm text-red-500">
+                {errors.coach_id.message}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 mt-6 border-t">

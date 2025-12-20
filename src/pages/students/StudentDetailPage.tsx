@@ -21,6 +21,7 @@ import {
   FileText,
   User,
   Users,
+  Download,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -103,6 +104,40 @@ export default function StudentDetailPage() {
     } catch (error) {
       console.error(error);
       toast.error(t("errorDownloadingFile"));
+    }
+  };
+
+  const handleExportComprehensiveData = async () => {
+    try {
+      toast.loading(t("exportingData") || "Exporting data...");
+
+      // Get date range for current year
+      const currentYear = new Date().getFullYear();
+      const fromDate = `${currentYear}-01-01`;
+      const toDate = new Date().toISOString().split('T')[0];
+
+      const blob = await studentService.exportComprehensiveStudentData({
+        from_date: fromDate,
+        to_date: toDate,
+        status: student.status || undefined,
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `student_${student.first_name}_${student.last_name}_comprehensive_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success(t("exportedSuccessfully") || "Data exported successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss();
+      toast.error(t("errorExportingData") || "Error exporting data");
     }
   };
 
@@ -247,7 +282,18 @@ export default function StudentDetailPage() {
               <p className="text-muted-foreground">{student.phone}</p>
             </div>
           </div>
-          {getStatusBadge(student.status!)}
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleExportComprehensiveData}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              {t("exportData") || "Export Data"}
+            </Button>
+            {getStatusBadge(student.status!)}
+          </div>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
           <div className="flex items-center gap-3">

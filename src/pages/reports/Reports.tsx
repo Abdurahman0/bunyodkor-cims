@@ -36,6 +36,7 @@ import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
 import { exportReport } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatCurrency as formatCurrencyUtil, formatNumber } from "@/lib/utils";
 
 export default function Reports() {
   const { t } = useLanguageStore();
@@ -121,13 +122,9 @@ export default function Reports() {
     enabled: activeTab === "debtors",
   });
 
-  const formatCurrency = (amount: number) => {
-    return (
-      new Intl.NumberFormat("uz-UZ", {
-        style: "decimal",
-        minimumFractionDigits: 0,
-      }).format(amount) + " UZS"
-    );
+  // Use compact formatting for large numbers to prevent overflow
+  const formatCurrency = (amount: number, compact: boolean = true) => {
+    return formatCurrencyUtil(amount, "UZS", "uz-UZ", compact);
   };
 
   const formatSource = (source: string) => {
@@ -373,12 +370,12 @@ export default function Reports() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-4">
-                  <CardTitle className="text-lg">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-2 sm:gap-4">
+                  <CardTitle className="text-lg shrink-0">
                     {t("revenueBySource")}
                   </CardTitle>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-foreground">
+                  <div className="text-left sm:text-right w-full sm:w-auto">
+                    <div className="text-xl sm:text-2xl font-bold text-foreground break-words overflow-wrap-anywhere">
                       {formatCurrency(financeReport?.data?.total_revenue || 0)}
                     </div>
                     <div className="text-xs text-muted-foreground">Total</div>
@@ -453,11 +450,12 @@ export default function Reports() {
                       {formatCurrency(
                         Math.round(
                           item.total_amount / (item.transaction_count || 1)
-                        )
+                        ),
+                        false
                       )}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {formatCurrency(item.total_amount)}
+                      {formatCurrency(item.total_amount, false)}
                     </TableCell>
                   </TableRow>
                 )) || (
@@ -730,7 +728,8 @@ export default function Reports() {
                 debtorsData?.data?.reduce(
                   (acc, item) => acc + item.debt_amount,
                   0
-                ) || 0
+                ) || 0,
+                true
               )}
               icon={<CreditCard className="w-6 h-6" />}
             />
@@ -784,14 +783,14 @@ export default function Reports() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
-                        {formatCurrency(debtor.total_expected)}
+                        {formatCurrency(debtor.total_expected, false)}
                       </TableCell>
                       <TableCell className="text-right text-green-600 dark:text-green-400">
-                        {formatCurrency(debtor.total_paid)}
+                        {formatCurrency(debtor.total_paid, false)}
                       </TableCell>
                       <TableCell className="text-right">
                         <span className="text-red-600 dark:text-red-400 font-medium">
-                          {formatCurrency(debtor.debt_amount)}
+                          {formatCurrency(debtor.debt_amount, false)}
                         </span>
                       </TableCell>
                     </TableRow>

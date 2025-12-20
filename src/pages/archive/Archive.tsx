@@ -104,8 +104,9 @@ export default function Archive() {
   };
 
   // Safe access to stats data with default values
+  // Handle both possible API response structures: { data: {...} } or direct {...}
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stats: any = statsData?.data || {
+  const stats: any = statsData?.data?.data || statsData?.data || {
     active_count: 0,
     archived_count: 0,
     total: 0,
@@ -144,23 +145,32 @@ export default function Archive() {
         onValueChange={setActiveTab}
         className="space-y-4"
       >
-        <TabsList>
-          <TabsTrigger value="stats" className="gap-2">
+        <TabsList className="flex flex-col sm:flex-row h-auto sm:h-10 w-full sm:w-auto gap-2 sm:gap-0 bg-transparent sm:bg-muted p-0 sm:p-1">
+          <TabsTrigger
+            value="stats"
+            className="gap-2 w-full sm:w-auto justify-start sm:justify-center px-4 py-3 sm:py-2 border-2 sm:border-0 border-border data-[state=active]:border-primary sm:data-[state=active]:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg sm:rounded-md shadow-sm sm:shadow-none"
+          >
             <ArchiveIcon className="w-4 h-4" />
             {t("statisticsAndManagement" as any) || "Statistics and Management"}
           </TabsTrigger>
-          <TabsTrigger value="terminated" className="gap-2">
+          <TabsTrigger
+            value="terminated"
+            className="gap-2 w-full sm:w-auto justify-start sm:justify-center px-4 py-3 sm:py-2 border-2 sm:border-0 border-border data-[state=active]:border-primary sm:data-[state=active]:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg sm:rounded-md shadow-sm sm:shadow-none"
+          >
             <FileX className="w-4 h-4" />
             {t("terminatedContracts" as any) || "Terminated Contracts"}
           </TabsTrigger>
-          <TabsTrigger value="backup" className="gap-2">
+          <TabsTrigger
+            value="backup"
+            className="gap-2 w-full sm:w-auto justify-start sm:justify-center px-4 py-3 sm:py-2 border-2 sm:border-0 border-border data-[state=active]:border-primary sm:data-[state=active]:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg sm:rounded-md shadow-sm sm:shadow-none"
+          >
             <Database className="w-4 h-4" />
             {t("backup" as any) || "Backup"}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="stats" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {/* Statistika Kartalari */}
             <Card>
               <CardHeader className="pb-2">
@@ -219,11 +229,11 @@ export default function Archive() {
                 {(t("archivingOperationsDescription" as any) || "These operations affect all groups, students and contracts for {{year}}.").replace("{{year}}", selectedYear.toString())}
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-4">
+            <CardContent className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
               <Button
                 onClick={handleArchive}
                 disabled={archiveMutation.isPending || stats.active_count === 0}
-                className="gap-2 bg-orange-600 hover:bg-orange-700"
+                className="gap-2 bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
               >
                 {archiveMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -239,7 +249,7 @@ export default function Archive() {
                 disabled={
                   unarchiveMutation.isPending || stats.archived_count === 0
                 }
-                className="gap-2 border-orange-600 text-orange-600 hover:bg-orange-50"
+                className="gap-2 border-orange-600 text-orange-600 hover:bg-orange-50 w-full sm:w-auto"
               >
                 {unarchiveMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import { studentService, groupService } from '@/services/api.service'
 import type { StudentRead, StudentCreate, StudentUpdate, GroupRead } from '@/types/api'
 import { format } from 'date-fns'
+import { useLanguageStore } from '@/store/languageStore'
 
 interface StudentDialogProps {
   open: boolean
@@ -29,6 +30,7 @@ type StudentFormData = Omit<StudentCreate, 'group_id'> & {
 
 export function StudentDialog({ open, onOpenChange, student, onSuccess }: StudentDialogProps) {
   const queryClient = useQueryClient()
+  const { t } = useLanguageStore()
   const {
     register,
     handleSubmit,
@@ -39,6 +41,13 @@ export function StudentDialog({ open, onOpenChange, student, onSuccess }: Studen
   const { data: groupsData } = useQuery({
     queryKey: ['groups-list'],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }), // Fetch groups (max allowed by API)
+  })
+
+  // Get student count for each group to check capacity
+  // API allows max page_size of 100, so we fetch with that limit
+  const { data: allStudentsData } = useQuery({
+    queryKey: ['all-students-for-capacity'],
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }),
   })
 
   useEffect(() => {
@@ -76,7 +85,7 @@ export function StudentDialog({ open, onOpenChange, student, onSuccess }: Studen
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] })
       queryClient.invalidateQueries({ queryKey: ['students-count'] })
-      toast.success(student ? 'Student updated successfully' : 'Student created successfully')
+      toast.success(student ? t('studentUpdatedSuccess') : t('studentCreatedSuccess'))
       onOpenChange(false)
       if (onSuccess) {
         onSuccess()
@@ -96,7 +105,36 @@ export function StudentDialog({ open, onOpenChange, student, onSuccess }: Studen
     },
   })
 
+  // Helper function to get student count in a group
+  const getGroupStudentCount = (groupId: number): number => {
+    if (!allStudentsData?.data) return 0
+    return allStudentsData.data.filter(s => s.group_id === groupId).length
+  }
+
+  // Helper function to check if group is full
+  const isGroupFull = (groupId: number): boolean => {
+    const group = groupsData?.data?.find(g => g.id === groupId)
+    if (!group) return false
+    const studentCount = getGroupStudentCount(groupId)
+    return studentCount >= group.capacity
+  }
+
   const onSubmit = (data: StudentFormData) => {
+    // Check if we're adding a student to a new group (not editing existing student)
+    const selectedGroupId = Number(data.group_id)
+
+    if (selectedGroupId && (!student || student.group_id !== selectedGroupId)) {
+      // Check if the selected group is full
+      if (isGroupFull(selectedGroupId)) {
+        const group = groupsData?.data?.find(g => g.id === selectedGroupId)
+        toast.error(
+          `${group?.name || 'Guruh'} to'lgan! Iltimos, boshqa guruh tanlang.`,
+          { duration: 4000 }
+        )
+        return
+      }
+    }
+
     const payload = {
       ...data,
       group_id: Number(data.group_id),
@@ -108,26 +146,26 @@ export function StudentDialog({ open, onOpenChange, student, onSuccess }: Studen
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md" onClose={() => onOpenChange(false)}>
         <DialogHeader>
-          <DialogTitle>{student ? 'Edit Student' : 'Add New Student'}</DialogTitle>
+          <DialogTitle>{student ? t('editStudent') : t('addNewStudent')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="first_name">First Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="first_name">{t('firstName')} <span className="text-red-500">*</span></Label>
               <Input
                 id="first_name"
-                {...register('first_name', { required: 'First name is required' })}
+                {...register('first_name', { required: t('firstNameRequired') })}
               />
               {errors.first_name && (
                 <p className="text-sm text-red-500">{errors.first_name.message}</p>
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="last_name">Last Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="last_name">{t('lastName')} <span className="text-red-500">*</span></Label>
               <Input
                 id="last_name"
-                {...register('last_name', { required: 'Last name is required' })}
+                {...register('last_name', { required: t('lastNameRequired') })}
               />
               {errors.last_name && (
                 <p className="text-sm text-red-500">{errors.last_name.message}</p>
@@ -136,59 +174,63 @@ export function StudentDialog({ open, onOpenChange, student, onSuccess }: Studen
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="date_of_birth">Date of Birth <span className="text-red-500">*</span></Label>
+            <Label htmlFor="date_of_birth">{t('dateOfBirth')} <span className="text-red-500">*</span></Label>
             <Input
               id="date_of_birth"
               type="date"
-              {...register('date_of_birth', { required: 'Date of birth is required' })}
+              {...register('date_of_birth', { required: t('dateOfBirthRequired') })}
             />
             {errors.date_of_birth && <p className="text-sm text-red-500">{errors.date_of_birth.message}</p>}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
+            <Label htmlFor="phone">{t('phoneNumber')} <span className="text-red-500">*</span></Label>
             <Input
               id="phone"
               placeholder="+998901234567"
-              {...register('phone', { required: 'Phone is required' })}
+              {...register('phone', { required: t('phoneIsRequired') })}
             />
             {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">{t('address')}</Label>
             <Input id="address" {...register('address')} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
+              <Label htmlFor="status">{t('status')} <span className="text-red-500">*</span></Label>
               <Select id="status" {...register('status', { required: true })}>
-                <option value="active">Active</option>
-                <option value="graduated">Graduated</option>
-                <option value="dropped">Dropped</option>
-                <option value="suspended">Suspended</option>
+                <option value="active">{t('active')}</option>
+                <option value="graduated">{t('graduated')}</option>
+                <option value="dropped">{t('dropped')}</option>
+                <option value="suspended">{t('suspended')}</option>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="group_id">Group</Label>
+              <Label htmlFor="group_id">{t('group')}</Label>
               <Select id="group_id" {...register('group_id')}>
-                <option value="">Select a group</option>
-                {groupsData?.data?.map((group: GroupRead) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
+                <option value="">{t('selectGroup')}</option>
+                {groupsData?.data?.map((group: GroupRead) => {
+                  const studentCount = getGroupStudentCount(group.id)
+                  const isFull = studentCount >= group.capacity
+                  return (
+                    <option key={group.id} value={group.id} disabled={isFull && (!student || student.group_id !== group.id)}>
+                      {group.name} ({studentCount}/{group.capacity}){isFull ? ' - To\'liq' : ''}
+                    </option>
+                  )
+                })}
               </Select>
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 mt-6 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Saving...' : 'Save Changes'}
+              {mutation.isPending ? t('saving') : t('saveChanges')}
             </Button>
           </div>
         </form>

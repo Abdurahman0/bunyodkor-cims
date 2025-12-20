@@ -554,6 +554,23 @@ export const studentService = {
     });
     return response.data;
   },
+
+  /**
+   * Export comprehensive student data to Excel
+   * GET /students/comprehensive-export
+   */
+  exportComprehensiveStudentData: async (params?: {
+    from_date?: string;
+    to_date?: string;
+    group_id?: number;
+    status?: string;
+  }): Promise<Blob> => {
+    const response = await apiClient.get<Blob>("/students/comprehensive-export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  },
 };
 
 // ============================================================================

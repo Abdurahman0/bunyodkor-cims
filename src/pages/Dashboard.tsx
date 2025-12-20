@@ -21,6 +21,7 @@ import type { DashboardSummary, TransactionRead, GroupRead, StudentRead, UserRea
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { formatCurrency as formatCurrencyUtil } from '@/lib/utils'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
@@ -84,8 +85,9 @@ export default function Dashboard() {
     visible: { opacity: 1, y: 0 },
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('uz-UZ', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' UZS'
+  // Use compact formatting for large numbers in stats cards
+  const formatCurrency = (amount: number, compact: boolean = true) => {
+    return formatCurrencyUtil(amount, 'UZS', 'uz-UZ', compact)
   }
 
   const formatSource = (source: string) => {
@@ -266,7 +268,7 @@ export default function Dashboard() {
                         {tx.status === 'success' ? <CheckCircle className="w-4 h-4" /> : tx.status === 'pending' ? <Clock className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                       </div>
                       <div>
-                        <p className="font-medium text-foreground text-sm">{formatCurrency(tx.amount)}</p>
+                        <p className="font-medium text-foreground text-sm">{formatCurrency(tx.amount, false)}</p>
                         <p className="text-xs text-muted-foreground capitalize">{tx.source} • {getStudentName(tx.student_id!) || 'N/A'}</p>
                       </div>
                     </div>

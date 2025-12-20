@@ -121,11 +121,11 @@ const UserDialog = ({ open, onOpenChange, user, onSuccess }: UserDialogProps) =>
       }
     },
     onSuccess: () => {
-      toast.success(user ? 'User updated successfully!' : 'User created successfully!')
+      toast.success(user ? t('userUpdatedSuccessfully') : t('userCreatedSuccessfully'))
       onSuccess()
     },
     onError: (error: any) => {
-      const errorMsg = error.response?.data?.detail || 'An error occurred'
+      const errorMsg = error.response?.data?.detail || t('anErrorOccurred')
       toast.error(errorMsg)
     },
   })

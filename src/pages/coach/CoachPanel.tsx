@@ -82,13 +82,13 @@ export default function CoachPanel() {
     mutationFn: (data: { session_id: number; attendances: AttendanceCreateRequest[] }) =>
       coachService.bulkAttendance(data),
     onSuccess: () => {
-      toast.success('Attendance submitted successfully!')
+      toast.success(t('attendanceSubmittedSuccessfully'))
       setAttendanceStatus({})
       queryClient.invalidateQueries({ queryKey: ['session-students', selectedSession] })
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
-      let errorMessage = 'Failed to submit attendance';
+      let errorMessage = t('failedToSubmitAttendance');
 
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
@@ -112,7 +112,7 @@ export default function CoachPanel() {
 
   const handleSubmitAttendance = () => {
     if (!selectedSession || Object.keys(attendanceStatus).length === 0) {
-      toast.error('No attendance changes to submit.')
+      toast.error(t('noAttendanceChangesToSubmit'))
       return
     }
     const attendances: AttendanceCreateRequest[] = Object.entries(attendanceStatus).map(
@@ -416,14 +416,14 @@ export default function CoachPanel() {
                       </TableCell>
                       <TableCell>
                         {student.has_debt ? (
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0 gap-1">
+                          <div className="flex flex-col gap-1">
+                            <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0 gap-1 w-fit">
                               <AlertTriangle className="w-3 h-3" />
                               {formatCurrency(student.debt_amount!)}
                             </Badge>
-                            {student.debt_warning && (
-                              <span className="text-xs text-red-500">{student.debt_warning}</span>
-                            )}
+                            <span className="text-xs text-red-500">
+                              {t('studentOwes')} {formatCurrency(student.debt_amount!)}
+                            </span>
                           </div>
                         ) : (
                           <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">

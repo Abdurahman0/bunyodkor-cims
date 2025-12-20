@@ -42,6 +42,14 @@ export default function WaitingList() {
       }),
   });
 
+  // Sort waiting list by priority (ascending - lower numbers = higher priority)
+  const sortedData = data?.data
+    ? {
+        ...data,
+        data: [...data.data].sort((a, b) => a.priority - b.priority),
+      }
+    : data;
+
   // Get all groups for display
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
@@ -91,7 +99,7 @@ export default function WaitingList() {
     return group ? group.name : `Group #${groupId}`;
   };
 
-  const totalPages = data?.meta?.total_pages || 1;
+  const totalPages = sortedData?.meta?.total_pages || 1;
 
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
@@ -171,9 +179,9 @@ export default function WaitingList() {
               <Users className="w-5 h-5" />
               {t("waitingListEntries") || "Waiting List Entries"}
             </CardTitle>
-            {data?.meta && (
+            {sortedData?.meta && (
               <Badge variant="secondary">
-                {t("total")}: {data.meta.total}
+                {t("total")}: {sortedData.meta.total}
               </Badge>
             )}
           </div>
@@ -183,9 +191,9 @@ export default function WaitingList() {
             <div className="flex justify-center items-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : data?.data && data.data.length > 0 ? (
+          ) : sortedData?.data && sortedData.data.length > 0 ? (
             <div className="divide-y">
-              {data.data.map((entry: WaitingListRead, index: number) => (
+              {sortedData.data.map((entry: WaitingListRead, index: number) => (
                 <motion.div
                   key={entry.id}
                   initial={{ opacity: 0, y: 10 }}

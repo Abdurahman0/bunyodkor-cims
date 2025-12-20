@@ -41,14 +41,14 @@ export default function Login() {
     },
     onSuccess: (data) => {
       setAuth(data.token, data.user, data.permissions)
-      toast.success(`Welcome, ${data.user.full_name}!`, {
+      toast.success(`Xush kelibsiz, ${data.user.full_name}!`, {
         icon: '👋',
         duration: 3000,
       })
       navigate('/')
     },
     onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Invalid credentials'
+      const message = error.response?.data?.detail || 'Noto\'g\'ri ma\'lumotlar'
       toast.error(message, { duration: 4000 })
     },
   })
@@ -103,16 +103,16 @@ export default function Login() {
                 damping: 20,
                 delay: 0.2,
               }}
-              className="mx-auto bg-gradient-to-br from-blue-600 to-blue-700 p-3 rounded-2xl shadow-lg"
+              className="mx-auto"
             >
-              <GraduationCap className="w-10 h-10 text-white" />
+              <img src="/logo.png" alt="Bunyodkor" className="w-20 h-20 object-contain" />
             </motion.div>
 
             <CardTitle className="text-3xl text-center font-bold bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
               Bunyodkor CIMS
             </CardTitle>
             <CardDescription className="text-center text-base">
-              Course Information Management System
+              Kurs Ma'lumotlari Boshqaruv Tizimi
             </CardDescription>
           </CardHeader>
 
@@ -126,16 +126,16 @@ export default function Login() {
                 className="space-y-2"
               >
                 <Label htmlFor="phone_or_email" className="text-sm font-medium">
-                  Email or Phone
+                  Email yoki Telefon
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="phone_or_email"
-                    placeholder="admin@bunyodkor.uz or +998901234567"
+                    placeholder="admin@bunyodkor.uz yoki +998901234567"
                     className="pl-10 h-11"
                     {...register('phone_or_email', {
-                      required: 'Email or phone is required',
+                      required: 'Email yoki telefon talab qilinadi',
                     })}
                   />
                 </div>
@@ -158,7 +158,7 @@ export default function Login() {
                 className="space-y-2"
               >
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  Parol
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -168,10 +168,10 @@ export default function Login() {
                     placeholder="••••••••"
                     className="pl-10 h-11"
                     {...register('password', {
-                      required: 'Password is required',
+                      required: 'Parol talab qilinadi',
                       minLength: {
                         value: 6,
-                        message: 'Password must be at least 6 characters',
+                        message: 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak',
                       },
                     })}
                   />
@@ -205,12 +205,12 @@ export default function Login() {
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                         className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       />
-                      Logging in...
+                      Kirish...
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <LogIn className="w-4 h-4" />
-                      Sign In
+                      Kirish
                     </div>
                   )}
                 </Button>
@@ -225,9 +225,9 @@ export default function Login() {
                   className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg"
                 >
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                    🔵 Mock API Active
+                    🔵 Mock API Faol
                   </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">Test credentials:</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">Test ma'lumotlari:</p>
                   <div className="text-xs font-mono space-y-1 text-blue-800 dark:text-blue-200">
                     <p>admin@bunyodkor.uz / admin123</p>
                     <p>teacher@bunyodkor.uz / teacher123</p>
@@ -246,7 +246,7 @@ export default function Login() {
           transition={{ delay: 0.7 }}
           className="text-center text-sm text-muted-foreground mt-6"
         >
-          © 2024 Bunyodkor. All rights reserved.
+          © 2024 Bunyodkor. Barcha huquqlar himoyalangan.
         </motion.p>
       </motion.div>
     </div>

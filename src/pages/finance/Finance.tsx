@@ -39,6 +39,7 @@ import { exportTransactions } from "@/lib/export-utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 import { UnassignedTransactions } from "./UnassignedTransactions";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
 export default function Finance() {
   const { t } = useLanguageStore();
@@ -290,13 +291,9 @@ export default function Finance() {
     return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
   };
 
-  const formatCurrency = (amount: number) => {
-    return (
-      new Intl.NumberFormat("uz-UZ", {
-        style: "decimal",
-        minimumFractionDigits: 0,
-      }).format(amount) + " UZS"
-    );
+  // Use compact formatting for large numbers to prevent overflow on mobile
+  const formatCurrency = (amount: number, compact: boolean = true) => {
+    return formatCurrencyUtil(amount, "UZS", "uz-UZ", compact);
   };
 
   const formatPaymentMonths = (months: number[] | null | undefined) => {
@@ -515,8 +512,8 @@ export default function Finance() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold text-foreground">
-                        {formatCurrency(transaction.amount)}
+                      <span className="font-semibold text-foreground text-sm sm:text-base">
+                        {formatCurrency(transaction.amount, false)}
                       </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">

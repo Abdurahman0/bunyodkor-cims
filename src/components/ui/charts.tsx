@@ -393,14 +393,14 @@ export const StatsCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'p-6 rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow',
+        'p-4 sm:p-6 rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow',
         className
       )}
     >
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0 flex-1">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-bold text-foreground">
+          <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground break-words">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
           {change !== undefined && (

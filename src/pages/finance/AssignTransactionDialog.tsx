@@ -70,7 +70,7 @@ export function AssignTransactionDialog({
       return transactionService.assignTransaction(transaction.id, data);
     },
     onSuccess: () => {
-      toast.success('Transaction assigned successfully!');
+      toast.success(t('transactionAssignedSuccessfully'));
       queryClient.invalidateQueries({
         queryKey: ['unassigned-transactions'],
         refetchType: "all"

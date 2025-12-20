@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  UserCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -28,6 +29,122 @@ import { useLanguageStore } from "@/store/languageStore";
 import type { GroupRead, UserRead } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
+
+// Component to display individual group card with capacity
+function GroupCard({
+  group,
+  coachName,
+  onEdit,
+  onDelete,
+  onOpenDetails,
+  t,
+}: {
+  group: GroupRead;
+  coachName: string;
+  onEdit: () => void;
+  onDelete: () => void;
+  onOpenDetails: () => void;
+  t: any;
+}) {
+  // Use student count from group data (no need for extra API calls)
+  // The API already returns active_students_count with each group
+  const studentCount = group.active_students_count || 0;
+  const availableSlots = group.capacity - studentCount;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card
+        className="hover:shadow-lg transition-all duration-200 cursor-pointer group h-full border-border/50 hover:border-border"
+        onClick={onOpenDetails}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                  {group.name}
+                </CardTitle>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                  <User className="w-3 h-3" />
+                  {coachName}
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{group.schedule_days}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{group.schedule_time}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <UserCheck className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">
+                {studentCount} / {group.capacity}
+              </span>
+              <Badge
+                variant={
+                  availableSlots > 0 ? "default" : "destructive"
+                }
+                className="ml-auto"
+              >
+                {availableSlots > 0
+                  ? `${availableSlots} ${t("availableSlots") || "slots"}`
+                  : t("full") || "Full"}
+              </Badge>
+            </div>
+          </div>
+          {group.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {group.description}
+            </p>
+          )}
+          <div
+            className="flex items-center gap-2 pt-2 border-t border-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="flex-1 gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              {t("edit")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="w-4 h-4" />
+              {t("delete")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
 
 export default function Groups() {
   const { t } = useLanguageStore();
@@ -208,86 +325,15 @@ export default function Groups() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {data.data.map((group: GroupRead) => (
-                <motion.div
+                <GroupCard
                   key={group.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Card
-                    className="hover:shadow-lg transition-all duration-200 cursor-pointer group h-full border-border/50 hover:border-border"
-                    onClick={() => handleOpenDetailsDialog(group)}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                              {group.name}
-                            </CardTitle>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                              <User className="w-3 h-3" />
-                              {getCoachName(group.coach_id)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground">
-                            {group.schedule_days}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground">
-                            {group.schedule_time}
-                          </span>
-                        </div>
-                      </div>
-                      {group.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {group.description}
-                        </p>
-                      )}
-                      <div
-                        className="flex items-center gap-2 pt-2 border-t border-border"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenDialog(group);
-                          }}
-                          className="flex-1 gap-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                          {t("edit")}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(group);
-                          }}
-                          className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          {t("delete")}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                  group={group}
+                  coachName={getCoachName(group.coach_id)}
+                  onEdit={() => handleOpenDialog(group)}
+                  onDelete={() => handleDelete(group)}
+                  onOpenDetails={() => handleOpenDetailsDialog(group)}
+                  t={t}
+                />
               ))}
             </div>
 

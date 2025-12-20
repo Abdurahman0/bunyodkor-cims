@@ -19,7 +19,7 @@ import {
 } from "@/services/api.service";
 import type { GroupRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, CheckCircle2 } from "lucide-react";
 
 interface StudentWithContractDialogProps {
   open: boolean;
@@ -110,6 +110,17 @@ export function StudentWithContractDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestedContractNumber, setSuggestedContractNumber] =
     useState<string>("");
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string>("");
+
+  const steps = [
+    t('preparingData'),
+    t('generatingContract'),
+    t('formattingDocument'),
+    t('finalizing'),
+  ];
 
   const {
     register,
@@ -133,8 +144,15 @@ export function StudentWithContractDialog({
   // Guruh tanlanganda shartnoma raqamini taklif qilish
   useEffect(() => {
     const fetchContractNumber = async () => {
-      if (selectedGroupId) {
+      if (selectedGroupId && groupsData?.data) {
         try {
+          // Tanlangan guruhni topish
+          const selectedGroup = groupsData.data.find(
+            (g: any) => g.id === Number(selectedGroupId)
+          );
+
+          if (!selectedGroup) return;
+
           // Agar yil kiritilgan bo'lsa, yildan foydalanish, aks holda joriy yil
           const year =
             birthYear && birthYear.length === 4
@@ -145,14 +163,19 @@ export function StudentWithContractDialog({
             Number(selectedGroupId),
             year
           );
+
           if (response.data.contract_number) {
-            setSuggestedContractNumber(response.data.contract_number);
-            setValue("contract_number", response.data.contract_number);
-            toast.success(`Taklif: ${response.data.contract_number}`, {
+            // API dan kelgan shartnoma raqamini to'g'ridan-to'g'ri ishlatish
+            // API sequential format qaytarishi kerak: N1, N2, N3, ...
+            const contractNumber = response.data.contract_number;
+
+            setSuggestedContractNumber(contractNumber);
+            setValue("contract_number", contractNumber);
+            toast.success(`${t('suggestion')}: ${contractNumber}`, {
               duration: 3000,
             });
           } else if (response.data.is_full) {
-            toast.error("Bu guruh to'lgan!");
+            toast.error(t('groupIsFull'));
           }
         } catch (error) {
           console.error("Shartnoma raqami xatosi:", error);
@@ -160,7 +183,23 @@ export function StudentWithContractDialog({
       }
     };
     fetchContractNumber();
-  }, [selectedGroupId, birthYear, setValue]);
+  }, [selectedGroupId, birthYear, setValue, groupsData]);
+
+  const handleViewContract = () => {
+    if (pdfUrl) {
+      window.open(pdfUrl, "_blank");
+    }
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setIsSuccess(false);
+    setIsSubmitting(false);
+    setPdfUrl("");
+    setLoadingProgress(0);
+    setCurrentStep(0);
+    onOpenChange(false);
+  };
 
   useEffect(() => {
     if (open) {
@@ -210,9 +249,28 @@ export function StudentWithContractDialog({
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
+  const simulateProgress = async (
+    stepIndex: number,
+    duration: number = 1000
+  ) => {
+    setCurrentStep(stepIndex);
+    const startProgress = stepIndex * 25;
+    const endProgress = (stepIndex + 1) * 25;
+
+    // Animate progress
+    const steps = 20;
+    const increment = (endProgress - startProgress) / steps;
+    for (let i = 0; i <= steps; i++) {
+      await new Promise((resolve) => setTimeout(resolve, duration / steps));
+      setLoadingProgress(Math.min(startProgress + increment * i, endProgress));
+    }
+  };
+
   const onSubmit = async (data: StudentFormData) => {
     try {
       setIsSubmitting(true);
+      setLoadingProgress(0);
+      setCurrentStep(0);
 
       // Sana validatsiyasi
       if (!data.contract_start_date) {
@@ -220,6 +278,9 @@ export function StudentWithContractDialog({
         setIsSubmitting(false);
         return;
       }
+
+      // Step 0: Preparing data
+      await simulateProgress(0, 800);
 
       // Sana parsing
       const startDateObj = new Date(data.contract_start_date);
@@ -322,23 +383,33 @@ export function StudentWithContractDialog({
         return;
       }
 
+      // Step 1: Generating contract
+      await simulateProgress(1, 1000);
+
+      // Step 2: Formatting document (API call happens here)
+      await simulateProgress(2, 500);
+
       // createStudentWithContract javobi Blob (PDF fayl) qaytaradi
       const response = await studentService.createStudentWithContract(formData);
 
-      // Blob dan URL yaratib ochamiz
+      // Step 3: Finalizing
+      await simulateProgress(3, 800);
+
+      // Blob dan URL yaratib saqlaymiz
       if (response) {
         const fileURL = window.URL.createObjectURL(
           new Blob([response], { type: "application/pdf" })
         );
-        window.open(fileURL, "_blank");
+        setPdfUrl(fileURL);
+        setIsSuccess(true);
       } else {
         toast.error(t("pdfNotFound") || "PDF topilmadi!");
+        setIsSubmitting(false);
+        return;
       }
 
-      toast.success(t("successfullySaved") || "Muvaffaqiyatli saqlandi!");
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      onOpenChange(false);
       if (onSuccess) onSuccess();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -731,6 +802,127 @@ export function StudentWithContractDialog({
             </Button>
           </div>
         </form>
+
+        {/* Loading Overlay */}
+        {isSubmitting && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+              {/* Progress Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                  {t('creatingContract')}
+                </h3>
+                <span className="text-2xl font-bold text-primary">
+                  {Math.round(loadingProgress)}%
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="relative w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-8">
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-300 ease-out rounded-full"
+                  style={{ width: `${loadingProgress}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                </div>
+              </div>
+
+              {/* Steps */}
+              <div className="space-y-4">
+                {steps.map((step, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-3 transition-all duration-300 ${
+                      index === currentStep
+                        ? "scale-105"
+                        : index < currentStep
+                        ? "opacity-60"
+                        : "opacity-30"
+                    }`}
+                  >
+                    <div
+                      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        index < currentStep
+                          ? "bg-green-500 text-white"
+                          : index === currentStep
+                          ? "bg-primary text-white animate-pulse"
+                          : "bg-gray-200 dark:bg-gray-700 text-gray-400"
+                      }`}
+                    >
+                      {index < currentStep ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : index === currentStep ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <span className="text-sm font-semibold">
+                          {index + 1}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={`text-sm font-medium transition-colors ${
+                        index === currentStep
+                          ? "text-gray-900 dark:text-gray-100"
+                          : "text-gray-600 dark:text-gray-400"
+                      }`}
+                    >
+                      {step}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer Message */}
+              <div className="mt-8 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('pleaseWaitDoNotClose')}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Overlay */}
+        {isSuccess && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+              {/* Success Icon */}
+              <div className="flex justify-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+
+              {/* Success Message */}
+              <h3 className="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-3">
+                {t('contractCreatedSuccess')}
+              </h3>
+              <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
+                {t('successfullySaved')}
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={handleViewContract}
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  {t('viewContract')}
+                </Button>
+                <Button
+                  onClick={handleClose}
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                >
+                  {t('close')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
