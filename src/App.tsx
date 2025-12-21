@@ -25,6 +25,7 @@ import StudentDetailPage from "./pages/students/StudentDetailPage";
 import WaitingList from "./pages/waiting-list/WaitingList";
 import Archive from "./pages/archive/Archive"; // Yangi qo'shilgan sahifa
 import PublicContractCheck from "./pages/public/PublicContractCheck"; // Yangi qo'shilgan
+import Attendance from "./pages/attendance/Attendance";
 
 // Dev Tools
 import { DevTools } from "./components/DevTools";
@@ -59,6 +60,7 @@ const routesConfig = [
   { path: "/contracts", permission: "contracts:view" },
   { path: "/finance", permission: "finance:transactions:view" },
   { path: "/coach", permission: "attendance:coach:mark" },
+  { path: "/attendance", permission: "attendance:view" },
   { path: "/gate", permission: "gate:logs:view" },
   { path: "/waiting-list", permission: "students:manage" },
   { path: "/reports", permission: "reports:dashboard:view" },
@@ -220,6 +222,15 @@ function App() {
               element={
                 <ProtectedRoute permission="attendance:coach:mark">
                   <CoachPanel />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="attendance"
+              element={
+                <ProtectedRoute permission="attendance:view">
+                  <Attendance />
                 </ProtectedRoute>
               }
             />

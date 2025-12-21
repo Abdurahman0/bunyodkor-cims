@@ -24,7 +24,7 @@ import {
   TablePagination,
   TableEmpty,
 } from "@/components/ui/table";
-import { roleService } from "@/services/api.service";
+import { roleService, userService } from "@/services/api.service";
 import type { RoleWithPermissions } from "@/types/api";
 import toast from "react-hot-toast";
 import RoleDialog from "./RoleDialog";
@@ -54,9 +54,15 @@ const Roles = () => {
     },
   });
 
+  // Fetch all users to compute stats
+  const { data: usersData } = useQuery({
+    queryKey: ["all-users-for-stats"],
+    queryFn: () => userService.getUsers({ page: 1, page_size: 100 }),
+  });
+
   // Compute stats
   const usersWithRolesCount =
-    data?.data?.reduce((acc, role) => acc + (role.users_count || 0), 0) || 0;
+    usersData?.data?.filter((user) => user.role_id !== null && user.role_id !== undefined).length || 0;
   const totalPermissionsCount =
     data?.data?.reduce((acc, role) => acc + role.permissions.length, 0) || 0;
 

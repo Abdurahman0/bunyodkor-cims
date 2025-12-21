@@ -103,6 +103,12 @@ const DashboardLayout = () => {
       permission: "attendance:coach:mark",
     },
     {
+      path: "/attendance",
+      label: t("attendance"),
+      icon: Clock,
+      permission: "attendance:view",
+    },
+    {
       path: "/gate",
       label: t("gateLogs"),
       icon: DoorOpen,
@@ -112,7 +118,7 @@ const DashboardLayout = () => {
       path: "/waiting-list",
       label: t("waitingList"),
       icon: Clock,
-      permission: "students:manage",
+      permission: "students:view",
     },
     {
       path: "/reports",

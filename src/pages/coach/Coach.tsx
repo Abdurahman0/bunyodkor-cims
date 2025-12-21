@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { coachService } from "@/services/api.service";
+import { coachService, attendanceService } from "@/services/api.service";
 import type {
   GroupRead,
   SessionRead,
   StudentWithDebtInfo,
   ApiResponse,
+  AttendanceRead,
 } from "@/types/api";
 import {
   Calendar,
@@ -61,6 +62,34 @@ export default function Coach() {
     enabled: !!selectedSession,
   });
 
+  // Fetch existing attendances for the selected session
+  const { data: existingAttendancesData } = useQuery({
+    queryKey: ["session-attendances", selectedSession, selectedDate],
+    queryFn: () => {
+      if (!selectedSession) return Promise.resolve(null);
+      return attendanceService.getAllAttendances({
+        from_date: selectedDate,
+        to_date: selectedDate,
+        page: 1,
+        page_size: 100,
+      });
+    },
+    enabled: !!selectedSession,
+  });
+
+  // Create a map of student_id -> attendance for the current session
+  const existingAttendanceMap = useMemo(() => {
+    if (!existingAttendancesData?.data || !selectedSession) return new Map();
+
+    const map = new Map<number, AttendanceRead>();
+    existingAttendancesData.data.forEach((attendance) => {
+      if (attendance.session_id === selectedSession) {
+        map.set(attendance.student_id, attendance);
+      }
+    });
+    return map;
+  }, [existingAttendancesData, selectedSession]);
+
   const attendanceMutation = useMutation<
     ApiResponse<Record<string, unknown>>, // ✔ API real qaytaradigan type
     Error,
@@ -82,6 +111,9 @@ export default function Coach() {
       toast.success("Attendance marked");
       queryClient.invalidateQueries({
         queryKey: ["session-students", selectedSession],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["session-attendances", selectedSession],
       });
     },
 
@@ -295,6 +327,17 @@ export default function Coach() {
                         <p className="font-medium">
                           {group?.name || `Group #${session.group_id}`}
                         </p>
+                        {session.topic && (
+                          <p
+                            className={`text-xs mt-0.5 ${
+                              isSelected
+                                ? "text-primary-foreground/70"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {session.topic}
+                          </p>
+                        )}
                         <p
                           className={`text-sm mt-1 ${
                             isSelected
@@ -346,79 +389,94 @@ export default function Coach() {
                 </div>
               ) : studentsData?.data && studentsData.data.length > 0 ? (
                 <div className="space-y-3">
-                  {studentsData.data.map((student: StudentWithDebtInfo) => (
-                    <div
-                      key={student.student_id}
-                      className="p-3 rounded-lg bg-muted/50 dark:bg-muted/20"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {student.first_name} {student.last_name}
-                          </p>
-                          {student.has_debt && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <AlertTriangle className="w-3 h-3 text-red-500" />
-                              <span className="text-xs text-red-500">
-                                Debt: {formatCurrency(student.debt_amount!)}
-                              </span>
-                            </div>
-                          )}
+                  {studentsData.data.map((student: StudentWithDebtInfo) => {
+                    const existingAttendance = existingAttendanceMap.get(student.student_id);
+                    const hasExistingAttendance = !!existingAttendance;
+                    const displayStatus = hasExistingAttendance
+                      ? existingAttendance.status
+                      : attendanceStatus[student.student_id];
+
+                    return (
+                      <div
+                        key={student.student_id}
+                        className="p-3 rounded-lg bg-muted/50 dark:bg-muted/20"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {student.first_name} {student.last_name}
+                            </p>
+                            {student.has_debt && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <AlertTriangle className="w-3 h-3 text-red-500" />
+                                <span className="text-xs text-red-500">
+                                  Debt: {formatCurrency(student.debt_amount!)}
+                                </span>
+                              </div>
+                            )}
+                            {hasExistingAttendance && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <CheckCircle className="w-3 h-3 text-green-500" />
+                                <span className="text-xs text-green-600 dark:text-green-400">
+                                  Davomat olindi
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {displayStatus && getStatusIcon(displayStatus)}
                         </div>
-                        {attendanceStatus[student.student_id] &&
-                          getStatusIcon(attendanceStatus[student.student_id])}
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant={
+                              displayStatus === "present"
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() =>
+                              handleMarkAttendance(student.student_id, "present")
+                            }
+                            className="flex-1 gap-1"
+                            disabled={attendanceMutation.isPending || hasExistingAttendance}
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            Present
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={
+                              displayStatus === "absent"
+                                ? "destructive"
+                                : "outline"
+                            }
+                            onClick={() =>
+                              handleMarkAttendance(student.student_id, "absent")
+                            }
+                            className="flex-1 gap-1"
+                            disabled={attendanceMutation.isPending || hasExistingAttendance}
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Absent
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={
+                              displayStatus === "late"
+                                ? "secondary"
+                                : "outline"
+                            }
+                            onClick={() =>
+                              handleMarkAttendance(student.student_id, "late")
+                            }
+                            className="gap-1"
+                            disabled={attendanceMutation.isPending || hasExistingAttendance}
+                          >
+                            <Clock className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant={
-                            attendanceStatus[student.student_id] === "present"
-                              ? "default"
-                              : "outline"
-                          }
-                          onClick={() =>
-                            handleMarkAttendance(student.student_id, "present")
-                          }
-                          className="flex-1 gap-1"
-                          disabled={attendanceMutation.isPending}
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          Present
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={
-                            attendanceStatus[student.student_id] === "absent"
-                              ? "destructive"
-                              : "outline"
-                          }
-                          onClick={() =>
-                            handleMarkAttendance(student.student_id, "absent")
-                          }
-                          className="flex-1 gap-1"
-                          disabled={attendanceMutation.isPending}
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Absent
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={
-                            attendanceStatus[student.student_id] === "late"
-                              ? "secondary"
-                              : "outline"
-                          }
-                          onClick={() =>
-                            handleMarkAttendance(student.student_id, "late")
-                          }
-                          className="gap-1"
-                          disabled={attendanceMutation.isPending}
-                        >
-                          <Clock className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">

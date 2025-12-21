@@ -157,6 +157,40 @@ export default function Students() {
     }
   };
 
+  const handleExportComprehensiveData = async () => {
+    try {
+      toast.loading(t("exportingData") || "Exporting data...");
+
+      // Get date range for current year
+      const currentYear = new Date().getFullYear();
+      const fromDate = `${currentYear}-01-01`;
+      const toDate = new Date().toISOString().split('T')[0];
+
+      const blob = await studentService.exportComprehensiveStudentData({
+        from_date: fromDate,
+        to_date: toDate,
+        status: statusFilter || undefined,
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `all_students_comprehensive_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success(t("exportedSuccessfully") || "Data exported successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss();
+      toast.error(t("errorExportingData") || "Error exporting data");
+    }
+  };
+
   const getStatusBadge = (status: StudentRead["status"]) => {
     const variants: Record<string, { bg: string; text: string }> = {
       active: {
@@ -220,9 +254,25 @@ export default function Students() {
             size="sm"
             className="gap-2"
             onClick={handleExport}
+            title={t("export") || "Export"}
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">{t("export")}</span>
+            <span className="sm:hidden">1</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 bg-primary/10 hover:bg-primary/20"
+            onClick={handleExportComprehensiveData}
+            title={t("exportAllStudentsData") || "Barcha talabalarni ma'lumotlarini yuklab olish"}
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden lg:inline">
+              {t("exportAllStudentsData") || "Barcha talabalarni ma'lumotlarini yuklab olish"}
+            </span>
+            <span className="hidden sm:inline lg:hidden">{t("exportAll") || "Barchasi"}</span>
+            <span className="sm:hidden font-bold">Full</span>
           </Button>
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />

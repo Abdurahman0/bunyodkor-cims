@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect, useMemo } from 'react'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatsCard, DonutChart, LineChart } from '@/components/ui/charts'
@@ -41,11 +42,6 @@ export default function Dashboard() {
   const { data: groupsData } = useQuery({
     queryKey: ['groups-stats'],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 4 }),
-  })
-
-  const { data: studentsData } = useQuery({
-    queryKey: ['students-list-short'],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }),
   })
 
   const { data: coachesData } = useQuery({
@@ -96,8 +92,71 @@ export default function Dashboard() {
     return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1)
   }
 
-  const getStudentName = (id: number) => studentsData?.data?.find(s => s.id === id)?.full_name || `ID: ${id}`
+  // Fetch recent attendances (today's attendances)
+  const { data: recentAttendancesData } = useQuery({
+    queryKey: ['recent-attendances'],
+    queryFn: () => {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      return attendanceService.getAllAttendances({
+        from_date: today,
+        to_date: today,
+        page: 1,
+        page_size: 10,
+      })
+    },
+  })
+
+  // Extract unique student IDs from transactions and attendances
+  const uniqueStudentIds = useMemo(() => {
+    const ids = new Set<number>()
+
+    // Add student IDs from transactions
+    transactionsData?.data?.forEach((tx) => {
+      if (tx.student_id) ids.add(tx.student_id)
+    })
+
+    // Add student IDs from attendances
+    recentAttendancesData?.data?.forEach((attendance) => {
+      if (attendance.student_id) ids.add(attendance.student_id)
+    })
+
+    return Array.from(ids)
+  }, [transactionsData, recentAttendancesData])
+
+  // Fetch individual students using their IDs
+  const studentQueries = useQueries({
+    queries: uniqueStudentIds.map((studentId) => ({
+      queryKey: ['student', studentId],
+      queryFn: () => studentService.getStudent(studentId),
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    })),
+  })
+
+  // Create a map of student ID to student data for quick lookup
+  const studentsMap = useMemo(() => {
+    const map = new Map()
+    studentQueries.forEach((query) => {
+      if (query.data?.data) {
+        map.set(query.data.data.id, query.data.data)
+      }
+    })
+    return map
+  }, [studentQueries])
+
+  const getStudentName = (id: number) => {
+    const student = studentsMap.get(id)
+    return student?.full_name || `ID: ${id}`
+  }
+
   const getCoachName = (id: number) => coachesData?.data?.find(c => c.id === id)?.full_name || `ID: ${id}`
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'present': return t('present')
+      case 'absent': return t('absent')
+      case 'late': return t('late')
+      default: return status
+    }
+  }
 
   const paymentSourcesData = financeData?.data?.breakdown?.map((item) => ({
     label: formatSource(item.source),
@@ -144,20 +203,6 @@ export default function Dashboard() {
     queryFn: () => reportService.getGroupAttendanceReports(),
   })
 
-  // Fetch recent attendances (today's attendances)
-  const { data: recentAttendancesData } = useQuery({
-    queryKey: ['recent-attendances'],
-    queryFn: () => {
-      const today = format(new Date(), 'yyyy-MM-dd')
-      return attendanceService.getAllAttendances({
-        from_date: today,
-        to_date: today,
-        page: 1,
-        page_size: 10,
-      })
-    },
-  })
-
   // Process attendance data from recent attendances
   const attendanceChartData = (() => {
     const attendances = recentAttendancesData?.data || []
@@ -166,9 +211,9 @@ export default function Dashboard() {
     const late = attendances.filter(a => a.status === 'late').length
 
     return [
-      { label: 'Present', value: present || 1, color: 'hsl(142, 71%, 45%)' },
-      { label: 'Absent', value: absent || 0, color: 'hsl(0, 84%, 60%)' },
-      { label: 'Late', value: late || 0, color: 'hsl(47, 96%, 53%)' },
+      { label: t('present'), value: present || 1, color: 'hsl(142, 71%, 45%)' },
+      { label: t('absent'), value: absent || 0, color: 'hsl(0, 84%, 60%)' },
+      { label: t('late'), value: late || 0, color: 'hsl(47, 96%, 53%)' },
     ]
   })()
 
@@ -337,7 +382,7 @@ export default function Dashboard() {
                 <CardTitle className="text-lg font-semibold">{t('recentAttendance') || 'Recent Attendance'}</CardTitle>
                 <p className="text-sm text-muted-foreground">{t('todayAttendanceRecords') || "Today's attendance records"}</p>
               </div>
-              <Link to="/reports"><Button variant="ghost" size="sm" className="gap-1">{t('viewAll')} <ArrowUpRight className="w-4 h-4" /></Button></Link>
+              <Link to="/attendance"><Button variant="ghost" size="sm" className="gap-1">{t('viewAll')} <ArrowUpRight className="w-4 h-4" /></Button></Link>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -356,18 +401,18 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="font-medium text-foreground text-sm">{getStudentName(attendance.student_id)}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{attendance.status}</p>
+                          <p className="text-xs text-muted-foreground">{getStatusLabel(attendance.status)}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`text-xs font-medium capitalize ${
+                        <p className={`text-xs font-medium ${
                           attendance.status === 'present'
                             ? 'text-green-600 dark:text-green-400'
                             : attendance.status === 'late'
                             ? 'text-yellow-600 dark:text-yellow-400'
                             : 'text-red-600 dark:text-red-400'
                         }`}>
-                          {attendance.status}
+                          {getStatusLabel(attendance.status)}
                         </p>
                         <p className="text-xs text-muted-foreground">{format(new Date(attendance.created_at), 'HH:mm')}</p>
                       </div>
