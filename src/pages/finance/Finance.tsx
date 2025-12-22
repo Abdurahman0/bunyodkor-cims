@@ -94,7 +94,7 @@ export default function Finance() {
     queryKey: ["all-transactions-stats"],
     queryFn: async () => {
       // Fetch all transactions by making multiple requests if needed
-      let allTransactions: any[] = [];
+      let allTransactions: TransactionRead[] = [];
       let currentPage = 1;
       let hasMore = true;
 
@@ -131,31 +131,31 @@ export default function Finance() {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
         queryKey: ["transactions"],
-        refetchType: "all"
+        refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["all-transactions-stats"],
-        refetchType: "all"
+        refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["finance-report"],
-        refetchType: "all"
+        refetchType: "all",
       });
 
       // Invalidate dashboard queries
       queryClient.invalidateQueries({
         queryKey: ["dashboard-summary"],
-        refetchType: "all"
+        refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["recent-transactions"],
-        refetchType: "all"
+        refetchType: "all",
       });
 
       // Invalidate student detail page queries (all students)
       queryClient.invalidateQueries({
         queryKey: ["student-full-info"],
-        refetchType: "all"
+        refetchType: "all",
       });
 
       toast.success(t("transactionCancelled"));
@@ -169,31 +169,31 @@ export default function Finance() {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
         queryKey: ["transactions"],
-        refetchType: "all"
+        refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["all-transactions-stats"],
-        refetchType: "all"
+        refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["finance-report"],
-        refetchType: "all"
+        refetchType: "all",
       });
 
       // Invalidate dashboard queries
       queryClient.invalidateQueries({
         queryKey: ["dashboard-summary"],
-        refetchType: "all"
+        refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["recent-transactions"],
-        refetchType: "all"
+        refetchType: "all",
       });
 
       // Invalidate student detail page queries (all students)
       queryClient.invalidateQueries({
         queryKey: ["student-full-info"],
-        refetchType: "all"
+        refetchType: "all",
       });
 
       toast.success(t("transactionDeleted"));
@@ -328,7 +328,8 @@ export default function Finance() {
       ?.filter((t) => t.status === "pending")
       .reduce((acc, t) => acc + t.amount, 0) || 0;
   const successCount =
-    allTransactionsData?.data?.filter((t) => t.status === "success").length || 0;
+    allTransactionsData?.data?.filter((t) => t.status === "success").length ||
+    0;
   const unassignedCount = unassignedData?.meta?.total || 0;
 
   return (
@@ -456,6 +457,7 @@ export default function Finance() {
           <Table isLoading={isLoading}>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>{t("transaction")}</TableHead>
                 <TableHead className="hidden md:table-cell">
                   {t("source")}
@@ -476,8 +478,15 @@ export default function Finance() {
             </TableHeader>
             <TableBody>
               {data?.data && data.data.length > 0 ? (
-                data.data.map((transaction) => (
+                (() => {
+                  const displayed = [...data.data].sort((a: TransactionRead, b: TransactionRead) => a.id - b.id)
+                  return displayed.map((transaction, idx) => (
                   <TableRow key={transaction.id}>
+                    <TableCell>
+                      <p className="font-medium text-foreground text-sm">
+                        {(page - 1) * 10 + idx + 1}
+                      </p>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="text-2xl">
@@ -555,6 +564,7 @@ export default function Finance() {
                     </TableCell>
                   </TableRow>
                 ))
+              })()
               ) : (
                 <TableEmpty
                   icon={<CreditCard className="w-12 h-12" />}

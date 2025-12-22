@@ -1,12 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { format } from "date-fns";
+
+const DEFAULT_TO = format(new Date(), "yyyy-MM-dd");
+const DEFAULT_FROM = format(
+  new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+  "yyyy-MM-dd"
+);
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableHeader,
@@ -29,19 +31,16 @@ import {
   Search,
   Download,
 } from "lucide-react";
-import { attendanceService, studentService, groupService } from "@/services/api.service";
+import { attendanceService, studentService } from "@/services/api.service";
 import type { AttendanceRead } from "@/types/api";
-import { format } from "date-fns";
 import { useLanguageStore } from "@/store/languageStore";
 import toast from "react-hot-toast";
 
 export default function Attendance() {
   const { t } = useLanguageStore();
   const [page, setPage] = useState(1);
-  const [fromDate, setFromDate] = useState(
-    format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")
-  );
-  const [toDate, setToDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [fromDate, setFromDate] = useState(DEFAULT_FROM);
+  const [toDate, setToDate] = useState(DEFAULT_TO);
   const [searchStudent, setSearchStudent] = useState("");
 
   const { data: attendanceData, isLoading } = useQuery({
@@ -53,11 +52,6 @@ export default function Attendance() {
         page,
         page_size: 20,
       }),
-  });
-
-  const { data: groupsData } = useQuery({
-    queryKey: ["groups-list-all"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
   });
 
   // Extract unique student IDs from attendance data
@@ -89,11 +83,20 @@ export default function Attendance() {
 
   const getStudentName = (id: number) => {
     const student = studentsMap.get(id);
-    return student?.full_name || `ID: ${id}`;
+    if (!student) return "";
+    // Some endpoints return `full_name`, others return `first_name` / `last_name`.
+    const s = student as unknown as {
+      full_name?: string;
+      first_name?: string;
+      last_name?: string;
+    };
+    const full =
+      (s.full_name && String(s.full_name)) ||
+      `${s.first_name || ""} ${s.last_name || ""}`;
+    return String(full).trim();
   };
 
-  const getGroupName = (id: number) =>
-    groupsData?.data?.find((g) => g.id === id)?.name || `Group #${id}`;
+  // group lookup not needed here; remove unused helper to avoid linter warnings
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -162,7 +165,9 @@ export default function Attendance() {
   const filteredAttendances = (attendanceData?.data || []).filter(
     (attendance: AttendanceRead) => {
       if (!searchStudent) return true;
-      const studentName = getStudentName(attendance.student_id).toLowerCase();
+      const studentName = String(
+        getStudentName(attendance.student_id)
+      ).toLowerCase();
       return studentName.includes(searchStudent.toLowerCase());
     }
   );
@@ -170,9 +175,14 @@ export default function Attendance() {
   // Calculate statistics
   const stats = {
     total: filteredAttendances.length,
-    present: filteredAttendances.filter((a: AttendanceRead) => a.status === "present").length,
-    absent: filteredAttendances.filter((a: AttendanceRead) => a.status === "absent").length,
-    late: filteredAttendances.filter((a: AttendanceRead) => a.status === "late").length,
+    present: filteredAttendances.filter(
+      (a: AttendanceRead) => a.status === "present"
+    ).length,
+    absent: filteredAttendances.filter(
+      (a: AttendanceRead) => a.status === "absent"
+    ).length,
+    late: filteredAttendances.filter((a: AttendanceRead) => a.status === "late")
+      .length,
   };
 
   return (
@@ -191,7 +201,8 @@ export default function Attendance() {
               {t("attendance") || "Attendance"}
             </h1>
             <p className="text-muted-foreground">
-              {t("manageAttendanceRecords") || "Manage and view attendance records"}
+              {t("manageAttendanceRecords") ||
+                "Manage and view attendance records"}
             </p>
           </div>
         </div>
@@ -280,7 +291,9 @@ export default function Attendance() {
       >
         <Card>
           <CardHeader className="border-b border-border p-4">
-            <CardTitle className="text-lg">{t("filters") || "Filters"}</CardTitle>
+            <CardTitle className="text-lg">
+              {t("filters") || "Filters"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -344,6 +357,7 @@ export default function Attendance() {
           <Table isLoading={isLoading}>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>{t("date") || "Date"}</TableHead>
                 <TableHead>{t("student") || "Student"}</TableHead>
                 <TableHead>{t("session") || "Session"}</TableHead>
@@ -353,39 +367,49 @@ export default function Attendance() {
             </TableHeader>
             <TableBody>
               {filteredAttendances.length > 0 ? (
-                filteredAttendances.map((attendance: AttendanceRead) => (
-                  <TableRow key={attendance.id}>
-                    <TableCell>
-                      <p className="text-sm">
-                        {format(new Date(attendance.created_at), "yyyy-MM-dd")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(attendance.created_at), "HH:mm")}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="font-medium">
-                        {getStudentName(attendance.student_id)}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-muted-foreground">
-                        Session #{attendance.session_id}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(attendance.status)}
-                        <span>{getStatusLabel(attendance.status)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-muted-foreground">
-                        {attendance.comment || "-"}
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredAttendances.map(
+                  (attendance: AttendanceRead, idx: number) => (
+                    <TableRow key={attendance.id}>
+                      <TableCell>
+                        <p className="font-medium">
+                          {(page - 1) * 20 + idx + 1}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm">
+                          {format(
+                            new Date(attendance.created_at),
+                            "yyyy-MM-dd"
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(attendance.created_at), "HH:mm")}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-medium">
+                          {getStudentName(attendance.student_id)}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-muted-foreground">
+                          Session #{attendance.session_id}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(attendance.status)}
+                          <span>{getStatusLabel(attendance.status)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-muted-foreground">
+                          {attendance.comment || "-"}
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )
               ) : (
                 <TableEmpty
                   icon={<AlertTriangle className="w-12 h-12" />}
@@ -398,11 +422,12 @@ export default function Attendance() {
               )}
             </TableBody>
           </Table>
-          {attendanceData?.meta && attendanceData.meta.total_pages > 1 && (
+          {/* Ensure meta is available before rendering pagination */}
+          {(attendanceData?.meta?.total_pages ?? 0) > 1 && (
             <TablePagination
               currentPage={page}
-              totalPages={attendanceData.meta.total_pages}
-              totalItems={attendanceData.meta.total}
+              totalPages={attendanceData!.meta!.total_pages}
+              totalItems={attendanceData!.meta!.total}
               pageSize={20}
               onPageChange={setPage}
             />
