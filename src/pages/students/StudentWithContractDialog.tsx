@@ -20,6 +20,7 @@ import {
 import type { GroupRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import { Loader2, UserPlus, CheckCircle2 } from "lucide-react";
+import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 
 interface StudentWithContractDialogProps {
   open: boolean;
@@ -116,10 +117,10 @@ export function StudentWithContractDialog({
   const [pdfUrl, setPdfUrl] = useState<string>("");
 
   const steps = [
-    t('preparingData'),
-    t('generatingContract'),
-    t('formattingDocument'),
-    t('finalizing'),
+    t("preparingData"),
+    t("generatingContract"),
+    t("formattingDocument"),
+    t("finalizing"),
   ];
 
   const {
@@ -171,11 +172,11 @@ export function StudentWithContractDialog({
 
             setSuggestedContractNumber(contractNumber);
             setValue("contract_number", contractNumber);
-            toast.success(`${t('suggestion')}: ${contractNumber}`, {
+            toast.success(`${t("suggestion")}: ${contractNumber}`, {
               duration: 3000,
             });
           } else if (response.data.is_full) {
-            toast.error(t('groupIsFull'));
+            toast.error(t("groupIsFull"));
           }
         } catch (error) {
           console.error("Shartnoma raqami xatosi:", error);
@@ -185,12 +186,17 @@ export function StudentWithContractDialog({
     fetchContractNumber();
   }, [selectedGroupId, birthYear, setValue, groupsData]);
 
-  const handleViewContract = () => {
-    if (pdfUrl) {
-      window.open(pdfUrl, "_blank");
-    }
-    handleClose();
-  };
+const handleViewContract = () => {
+  if (!pdfUrl) {
+    toast.error("PDF topilmadi");
+    return;
+  }
+
+  window.open(pdfUrl, "_blank");
+  handleClose();
+};
+
+
 
   const handleClose = () => {
     setIsSuccess(false);
@@ -389,23 +395,43 @@ export function StudentWithContractDialog({
       // Step 2: Formatting document (API call happens here)
       await simulateProgress(2, 500);
 
-      // createStudentWithContract javobi Blob (PDF fayl) qaytaradi
+      // createStudentWithContract may return either { pdf_url: string }
+      // or raw Blob depending on backend. Handle both cases.
       const response = await studentService.createStudentWithContract(formData);
 
       // Step 3: Finalizing
       await simulateProgress(3, 800);
 
-      // Blob dan URL yaratib saqlaymiz
-      if (response) {
-        const fileURL = window.URL.createObjectURL(
-          new Blob([response], { type: "application/pdf" })
-        );
-        setPdfUrl(fileURL);
-        setIsSuccess(true);
-      } else {
+      if (!response) {
         toast.error(t("pdfNotFound") || "PDF topilmadi!");
         setIsSubmitting(false);
         return;
+      }
+
+      // If backend returned an object with `pdf_url`, use it directly.
+      if (
+        typeof response === "object" &&
+        "pdf_url" in response &&
+        response.pdf_url
+      ) {
+        setPdfUrl(response.pdf_url as string);
+        setIsSuccess(true);
+      } else {
+        // Fallback: assume response is binary blob (ArrayBuffer/Blob)
+        try {
+          const blob =
+            response instanceof Blob
+              ? response
+              : new Blob([response], { type: "application/pdf" });
+          const fileURL = window.URL.createObjectURL(blob);
+          setPdfUrl(fileURL);
+          setIsSuccess(true);
+        } catch (e) {
+          console.error("Error creating blob URL from response", e);
+          toast.error(t("pdfNotFound") || "PDF topilmadi!");
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["students"] });
@@ -810,7 +836,7 @@ export function StudentWithContractDialog({
               {/* Progress Header */}
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                  {t('creatingContract')}
+                  {t("creatingContract")}
                 </h3>
                 <span className="text-2xl font-bold text-primary">
                   {Math.round(loadingProgress)}%
@@ -875,7 +901,7 @@ export function StudentWithContractDialog({
               {/* Footer Message */}
               <div className="mt-8 text-center">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('pleaseWaitDoNotClose')}
+                  {t("pleaseWaitDoNotClose")}
                 </p>
               </div>
             </div>
@@ -895,10 +921,10 @@ export function StudentWithContractDialog({
 
               {/* Success Message */}
               <h3 className="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-3">
-                {t('contractCreatedSuccess')}
+                {t("contractCreatedSuccess")}
               </h3>
               <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
-                {t('successfullySaved')}
+                {t("successfullySaved")}
               </p>
 
               {/* Action Buttons */}
@@ -909,7 +935,7 @@ export function StudentWithContractDialog({
                   size="lg"
                 >
                   <CheckCircle2 className="w-5 h-5" />
-                  {t('viewContract')}
+                  {t("viewContract")}
                 </Button>
                 <Button
                   onClick={handleClose}
@@ -917,7 +943,7 @@ export function StudentWithContractDialog({
                   className="w-full"
                   size="lg"
                 >
-                  {t('close')}
+                  {t("close")}
                 </Button>
               </div>
             </div>

@@ -479,92 +479,101 @@ export default function Finance() {
             <TableBody>
               {data?.data && data.data.length > 0 ? (
                 (() => {
-                  const displayed = [...data.data].sort((a: TransactionRead, b: TransactionRead) => a.id - b.id)
+                  const displayed = [...data.data].sort(
+                    (a: TransactionRead, b: TransactionRead) => a.id - b.id
+                  );
                   return displayed.map((transaction, idx) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>
-                      <p className="font-medium text-foreground text-sm">
-                        {(page - 1) * 10 + idx + 1}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl">
-                          {getSourceIcon(transaction.source)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground text-sm">
-                            #{transaction.id}
-                          </p>
-                          {transaction.external_id && (
-                            <p className="text-xs text-muted-foreground">
-                              {transaction.external_id.substring(0, 12)}...
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        <p className="font-medium text-foreground text-sm">
+                          {(page - 1) * 10 + idx + 1}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl">
+                            {getSourceIcon(transaction.source)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground text-sm">
+                              #{transaction.id}
                             </p>
-                          )}
+                            {transaction.external_id && (
+                              <p className="text-xs text-muted-foreground">
+                                {transaction.external_id.substring(0, 12)}...
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge variant="outline">
-                        {formatSource(transaction.source)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {transaction.student_id ? (
-                        <span className="text-sm">
-                          {getStudentName(transaction.student_id)}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline">
+                          {formatSource(transaction.source)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {transaction.student_id ? (
+                          <span className="text-sm">
+                            {getStudentName(transaction.student_id)}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            {t("unassigned")}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-foreground text-sm sm:text-base">
+                          {formatCurrency(transaction.amount, false)}
                         </span>
-                      ) : (
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <span className="text-sm text-muted-foreground">
-                          {t("unassigned")}
+                          {formatPaymentMonths(transaction.payment_months)}
                         </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-foreground text-sm sm:text-base">
-                        {formatCurrency(transaction.amount, false)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <span className="text-sm text-muted-foreground">
-                        {formatPaymentMonths(transaction.payment_months)}
-                      </span>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(transaction.paid_at!), "MMM d, HH:mm")}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {transaction.status === "pending" && (
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(transaction.status)}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <span className="text-sm text-muted-foreground">
+                          {format(
+                            new Date(transaction.paid_at!),
+                            "MMM d, HH:mm"
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {transaction.status === "pending" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                cancelMutation.mutate(transaction.id)
+                              }
+                              disabled={cancelMutation.isPending}
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                            >
+                              <Ban className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              cancelMutation.mutate(transaction.id)
+                              deleteMutation.mutate(transaction.id)
                             }
-                            disabled={cancelMutation.isPending}
+                            disabled={deleteMutation.isPending}
                             className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                           >
-                            <Ban className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(transaction.id)}
-                          disabled={deleteMutation.isPending}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              })()
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ));
+                })()
               ) : (
                 <TableEmpty
                   icon={<CreditCard className="w-12 h-12" />}

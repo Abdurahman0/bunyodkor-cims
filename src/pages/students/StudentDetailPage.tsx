@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 import { useLanguageStore } from "@/store/languageStore";
 import type {
   StudentFullInfo,
@@ -64,6 +65,7 @@ const formatSource = (source: any) => {
 
 export default function StudentDetailPage() {
   const { t } = useLanguageStore();
+
   const { id } = useParams<{ id: string }>();
   const studentId = parseInt(id || "0", 10);
 
@@ -74,34 +76,33 @@ export default function StudentDetailPage() {
   });
 
   const handleDownloadPdf = async (contract: ContractRead) => {
+    // First try to use final_pdf_url if available
     if (contract.final_pdf_url) {
-      window.open(contract.final_pdf_url, "_blank");
+      console.log("Opening PDF from final_pdf_url:", contract.final_pdf_url);
+      await openPdfUrl(contract.final_pdf_url);
       return;
     }
 
     try {
       const year = new Date(contract.start_date).getFullYear();
+      console.log("Fetching PDF URL for:", year, contract.contract_number);
+
       const response = await contractService.getContractPdfUrl(
         year,
         contract.contract_number
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const url =
-        typeof response === "object" &&
-        response !== null &&
-        "pdf_url" in response
-          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (response as any).pdf_url
-          : response;
+      console.log("PDF URL response:", response);
 
-      if (url && typeof url === "string") {
-        window.open(url, "_blank");
-      } else {
-        toast.error(t("pdfNotFound"));
+      // If API returned a blob/url/object, use openPdfResponse for robust handling
+      if (response) {
+        await openPdfResponse(response);
+        return;
       }
+
+      toast.error(t("pdfNotFound") || "PDF topilmadi");
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching PDF:", error);
       toast.error(t("errorDownloadingFile"));
     }
   };
@@ -120,9 +121,7 @@ export default function StudentDetailPage() {
         <h2 className="text-xl font-semibold text-red-500">
           {t("loadingError")}
         </h2>
-        <p className="text-muted-foreground">
-          {t("studentNotFoundOrError")}
-        </p>
+        <p className="text-muted-foreground">{t("studentNotFoundOrError")}</p>
         <Button asChild variant="link" className="mt-4">
           <Link to="/students">{t("backToStudents")}</Link>
         </Button>
@@ -275,7 +274,9 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">{t("totalPayments")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("totalPayments")}
+              </p>
               <p className="text-2xl font-bold">
                 {new Intl.NumberFormat("en-US").format(
                   transactions?.reduce((sum, t) => sum + t.amount, 0) || 0
@@ -288,7 +289,9 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">{t("activeContracts")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("activeContracts")}
+              </p>
               <p className="text-2xl font-bold">
                 {contracts?.filter((c) => c.status === "active").length || 0}
               </p>
@@ -298,7 +301,9 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">{t("attendancePercentage")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("attendancePercentage")}
+              </p>
               <p className="text-2xl font-bold">
                 {attendances && attendances.length > 0
                   ? Math.round(
@@ -464,7 +469,9 @@ export default function StudentDetailPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{monthsDiff} {t("months")}</Badge>
+                        <Badge variant="outline">
+                          {monthsDiff} {t("months")}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end">
@@ -472,7 +479,9 @@ export default function StudentDetailPage() {
                             className="botao"
                             onClick={() => handleDownloadPdf(c)}
                           >
-                            <span className="texto">{t("downloadContract")}</span>
+                            <span className="texto">
+                              {t("downloadContract")}
+                            </span>
                             <span className="mysvg">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
