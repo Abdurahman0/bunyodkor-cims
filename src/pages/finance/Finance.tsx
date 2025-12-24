@@ -539,7 +539,7 @@ export default function Finance() {
                         <span className="text-sm text-muted-foreground">
                           {format(
                             new Date(transaction.paid_at!),
-                            "MMM d, HH:mm"
+                            "MMM d, yyyy HH:mm"
                           )}
                         </span>
                       </TableCell>

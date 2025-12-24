@@ -88,11 +88,11 @@ export default function Students() {
       studentService.getStudents({ status: "active", page: 1, page_size: 1 }),
   });
 
-  const { data: graduatedCountData } = useQuery({
-    queryKey: ["students-count", "graduated"],
+  const { data: suspendedCountData } = useQuery({
+    queryKey: ["students-count", "suspended"],
     queryFn: () =>
       studentService.getStudents({
-        status: "graduated",
+        status: "suspended",
         page: 1,
         page_size: 1,
       }),
@@ -119,7 +119,7 @@ export default function Students() {
   const handleDelete = (student: StudentRead) => {
     if (
       confirm(
-        `Are you sure you want to delete ${student.first_name} ${student.last_name}?`
+        `${t("confirmDeleteStudent")} ${student.first_name} ${student.last_name}?`
       )
     ) {
       deleteMutation.mutate(student.id);
@@ -213,7 +213,7 @@ export default function Students() {
     const variant = variants[status!] || variants.active;
     return (
       <Badge className={`${variant.bg} ${variant.text} border-0 font-medium`}>
-        {status}
+        {t(status!)}
       </Badge>
     );
   };
@@ -221,7 +221,7 @@ export default function Students() {
   const stats = {
     total: data?.meta?.total || 0,
     active: activeCountData?.meta?.total || 0,
-    graduated: graduatedCountData?.meta?.total || 0,
+    suspended: suspendedCountData?.meta?.total || 0,
     dropped: droppedCountData?.meta?.total || 0,
   };
 
@@ -302,10 +302,10 @@ export default function Students() {
             color: "green",
           },
           {
-            label: t("graduated"),
-            value: stats.graduated,
+            label: t("suspended"),
+            value: stats.suspended,
             icon: UsersIcon,
-            color: "purple",
+            color: "yellow",
           },
           {
             label: t("dropped"),
@@ -365,7 +365,6 @@ export default function Students() {
                 >
                   <option value="">{t("allStatuses")}</option>
                   <option value="active">{t("active")}</option>
-                  <option value="graduated">{t("graduated")}</option>
                   <option value="dropped">{t("dropped")}</option>
                   <option value="suspended">{t("suspended")}</option>
                 </Select>
@@ -399,7 +398,7 @@ export default function Students() {
                 )}
                 {statusFilter && (
                   <Badge variant="secondary">
-                    {t("status")}: {statusFilter}
+                    {t("status")}: {t(statusFilter)}
                   </Badge>
                 )}
                 {groupFilter && (

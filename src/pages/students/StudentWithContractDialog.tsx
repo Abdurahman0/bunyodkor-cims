@@ -20,6 +20,7 @@ import {
 import type { GroupRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import { Loader2, UserPlus, CheckCircle2 } from "lucide-react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 
 interface StudentWithContractDialogProps {
@@ -149,6 +150,7 @@ export function StudentWithContractDialog({
         try {
           // Tanlangan guruhni topish
           const selectedGroup = groupsData.data.find(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (g: any) => g.id === Number(selectedGroupId)
           );
 
@@ -452,6 +454,7 @@ const handleViewContract = () => {
                 ? json.detail
                 : JSON.stringify(json.detail);
           }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
           /* ignore */
         }
@@ -473,10 +476,10 @@ const handleViewContract = () => {
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <UserPlus className="w-6 h-6" />
-            O'quvchi va Shartnoma Yaratish
+{t("createStudentAndContract")}
           </DialogTitle>
           <DialogDescription>
-            Barcha maydonlarni to'ldiring. Hujjatlar yuklanishi shart.
+            {t("fillAllFieldsDocsRequired")}
           </DialogDescription>
         </DialogHeader>
 
@@ -484,48 +487,48 @@ const handleViewContract = () => {
           {/* 1. TIZIM MA'LUMOTLARI */}
           <div className="space-y-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200">
             <h3 className="font-bold text-blue-800 dark:text-blue-200 text-lg border-b border-blue-200 pb-2 mb-4">
-              1. Tizim uchun O'quvchi ma'lumotlari
+              1. {t("systemStudentInfo")}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label>Ism *</Label>
+                <Label>{t("firstName")} *</Label>
                 <Input
                   {...register("first_name", { required: true })}
-                  placeholder="Ism"
+                  placeholder={t("firstName")}
                 />
               </div>
               <div className="space-y-1">
-                <Label>Familiya *</Label>
+                <Label>{t("lastName")} *</Label>
                 <Input
                   {...register("last_name", { required: true })}
-                  placeholder="Familiya"
+                  placeholder={t("lastName")}
                 />
               </div>
               <div className="space-y-1">
-                <Label>Tug'ilgan sana *</Label>
+                <Label>{t("dateOfBirth")} *</Label>
                 <Input
                   type="date"
                   {...register("date_of_birth", { required: true })}
                 />
               </div>
               <div className="space-y-1">
-                <Label>Telefon *</Label>
+                <Label>{t("phoneNumber")} *</Label>
                 <Input
                   {...register("phone", { required: true })}
                   placeholder="+998901234567"
                 />
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1">
-                <Label>Manzil</Label>
-                <Input {...register("address")} placeholder="Manzil" />
+                <Label>{t("address")}</Label>
+                <Input {...register("address")} placeholder={t("address")} />
               </div>
               <div className="space-y-1">
-                <Label>Guruh *</Label>
+                <Label>{t("group")} *</Label>
                 <select
                   {...register("group_id", { required: true })}
                   className="h-10 w-full rounded-md border border-input bg-background px-3"
                 >
-                  <option value="">Guruhni tanlang</option>
+                  <option value="">{t("selectGroupPlaceholder")}</option>
                   {groupsData?.data?.map((group: GroupRead) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
@@ -539,13 +542,13 @@ const handleViewContract = () => {
           {/* 2. SHARTNOMA MA'LUMOTLARI */}
           <div className="space-y-4 p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200">
             <h3 className="font-bold text-green-800 dark:text-green-200 text-lg border-b border-green-200 pb-2 mb-4">
-              2. Shartnoma ma'lumotlari (PDF uchun)
+              2. {t("contractInfoForPDF")}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-1 md:col-span-2 space-y-1">
                 <Label className="text-green-700 font-semibold">
-                  Shartnoma Raqami *
+                  {t("contractNumber")} *
                 </Label>
                 <Input
                   {...register("contract_number", { required: true })}
@@ -553,41 +556,41 @@ const handleViewContract = () => {
                 />
                 {suggestedContractNumber && (
                   <p className="text-xs text-green-600 mt-1">
-                    Taklif: {suggestedContractNumber}
+                    {t("suggestion")}: {suggestedContractNumber}
                   </p>
                 )}
               </div>
 
               <div className="space-y-1">
-                <Label>O'quvchi F.I.O (To'liq) *</Label>
+                <Label>{t("studentFullName")} *</Label>
                 <Input
                   {...register("student_fio", { required: true })}
                   placeholder="Ism Familiya Otasining ismi"
                 />
               </div>
               <div className="space-y-1">
-                <Label>Tug'ilgan yili *</Label>
+                <Label>{t("birthYear")} *</Label>
                 <Input
                   {...register("birth_year", { required: true })}
                   placeholder="2015"
                 />
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1">
-                <Label>O'quvchi Manzili *</Label>
+                <Label>{t("studentAddress")} *</Label>
                 <Input
                   {...register("student_address", { required: true })}
                   placeholder="Shahar, tuman, ko'cha, uy"
                 />
               </div>
               <div className="space-y-1">
-                <Label>Boshlanish Sanasi *</Label>
+                <Label>{t("startDate")} *</Label>
                 <Input
                   type="date"
                   {...register("contract_start_date", { required: true })}
                 />
               </div>
               <div className="space-y-1">
-                <Label>Tugash Sanasi *</Label>
+                <Label>{t("endDate")} *</Label>
                 <Input
                   type="date"
                   {...register("contract_end_date", { required: true })}
@@ -596,7 +599,7 @@ const handleViewContract = () => {
 
               {/* To'lov qismi yangilandi */}
               <div className="space-y-1">
-                <Label>Oylik To'lov (UZS) *</Label>
+                <Label>{t("monthlyFee")} (UZS) *</Label>
                 <Input
                   type="number"
                   {...register("tolov_monthly_fee", { required: true })}
@@ -604,7 +607,7 @@ const handleViewContract = () => {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Summa so'z bilan (masalan: olti yuz ming) *</Label>
+                <Label>{t("amountInWords")} *</Label>
                 <Input
                   {...register("tolov_amount_in_words", { required: true })}
                   placeholder="olti yuz ming"
@@ -617,21 +620,21 @@ const handleViewContract = () => {
               {/* Chap: Ota */}
               <div className="space-y-4 p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-green-100 shadow-sm">
                 <h4 className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <UserPlus className="w-4 h-4" /> Ota Ma'lumotlari
+                  <UserPlus className="w-4 h-4" /> {t("fatherInfo")}
                 </h4>
                 <div className="space-y-2">
-                  <Label>Ismi (To'liq)</Label>
+                  <Label>{t("fullName")}</Label>
                   <Input {...register("dad_name")} placeholder="F.I.O" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Ish Joyi</Label>
+                  <Label>{t("occupation")}</Label>
                   <Input
                     {...register("dad_occupation")}
                     placeholder="Korxona/tashkilot nomi"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Telefon</Label>
+                  <Label>{t("phoneNumber")}</Label>
                   <Input
                     {...register("dad_phone")}
                     placeholder="+998 XX XXX XX XX"
@@ -642,21 +645,21 @@ const handleViewContract = () => {
               {/* O'ng: Ona */}
               <div className="space-y-4 p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-green-100 shadow-sm">
                 <h4 className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <UserPlus className="w-4 h-4" /> Ona Ma'lumotlari
+                  <UserPlus className="w-4 h-4" /> {t("motherInfo")}
                 </h4>
                 <div className="space-y-2">
-                  <Label>Ismi (To'liq)</Label>
+                  <Label>{t("fullName")}</Label>
                   <Input {...register("mom_fio")} placeholder="F.I.O" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Ish Joyi</Label>
+                  <Label>{t("occupation")}</Label>
                   <Input
                     {...register("mom_occupation")}
                     placeholder="Korxona/tashkilot nomi"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Telefon</Label>
+                  <Label>{t("phoneNumber")}</Label>
                   <Input
                     {...register("mom_phone")}
                     placeholder="+998 XX XXX XX XX"
@@ -669,11 +672,11 @@ const handleViewContract = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-green-200 pt-6 mt-4">
               <div className="space-y-3">
                 <h4 className="font-semibold mb-2 text-green-800">
-                  Buyurtmachi (Passport Egasi)
+                  {t("customer")}
                 </h4>
                 <div className="space-y-2">
                   <div>
-                    <Label>F.I.O *</Label>
+                    <Label>{t("fullName")} *</Label>
                     <Input
                       {...register("buyurtmachi_fio", { required: true })}
                       placeholder="Ism Familiya Otasining ismi"
@@ -681,7 +684,7 @@ const handleViewContract = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>Pasport Seriya *</Label>
+                      <Label>{t("passportSeries")} *</Label>
                       <Input
                         {...register("buyurtmachi_passport_series_number", {
                           required: true,
@@ -690,7 +693,7 @@ const handleViewContract = () => {
                       />
                     </div>
                     <div>
-                      <Label>Telefon *</Label>
+                      <Label>{t("phoneNumber")} *</Label>
                       <Input
                         {...register("buyurtmachi_phone", { required: true })}
                         placeholder="+998 XX XXX XX XX"
@@ -698,18 +701,18 @@ const handleViewContract = () => {
                     </div>
                   </div>
                   <div>
-                    <Label>Kim Bergan</Label>
+                    <Label>{t("issuedBy")}</Label>
                     <Input
                       {...register("buyurtmachi_who_give")}
                       placeholder="IIB nomi"
                     />
                   </div>
                   <div>
-                    <Label>Qachon Berilgan</Label>
+                    <Label>{t("issuedDate")}</Label>
                     <Input type="date" {...register("buyurtmachi_when_give")} />
                   </div>
                   <div>
-                    <Label>Manzil</Label>
+                    <Label>{t("address")}</Label>
                     <Input
                       {...register("buyurtmachi_address")}
                       placeholder="Shahar, tuman, ko'cha, uy"
@@ -720,19 +723,19 @@ const handleViewContract = () => {
 
               <div className="space-y-3">
                 <h4 className="font-semibold mb-2 text-green-800">
-                  Tarbiyalanuvchi Hujjatlari
+                  {t("traineeDocuments")}
                 </h4>
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>Guvohnoma Seriyasi</Label>
+                      <Label>{t("certificateSeries")}</Label>
                       <Input
                         {...register("tarbiyalanuvchi_birth_series_number")}
                         placeholder="I-AA 1234567"
                       />
                     </div>
                     <div>
-                      <Label>Tug'ilgan Yili</Label>
+                      <Label>{t("birthYear")}</Label>
                       <Input
                         {...register("tarbiyalanuvchi_birth_year")}
                         placeholder="2012"
@@ -740,14 +743,14 @@ const handleViewContract = () => {
                     </div>
                   </div>
                   <div>
-                    <Label>Kim Bergan</Label>
+                    <Label>{t("issuedBy")}</Label>
                     <Input
                       {...register("tarbiyalanuvchi_who_give")}
                       placeholder="FHDY nomi"
                     />
                   </div>
                   <div>
-                    <Label>Qachon Berilgan</Label>
+                    <Label>{t("issuedDate")}</Label>
                     <Input
                       type="date"
                       {...register("tarbiyalanuvchi_when_give")}
@@ -761,46 +764,46 @@ const handleViewContract = () => {
           {/* 3. FAYLLAR */}
           <div className="space-y-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200">
             <h3 className="font-bold text-orange-800 dark:text-orange-200 text-lg border-b border-orange-200 pb-2 mb-4">
-              3. Hujjatlar (Rasmlar/PDF)
+3. {t("documents")} (Rasmlar/PDF)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label>Profil Rasmi (3x4) *</Label>
+                <Label>{t("profilePhoto")} *</Label>
                 <Input
                   type="file"
                   {...register("contract_image_1", { required: true })}
                 />
               </div>
               <div>
-                <Label>Shartnoma Rasmi (Scan) *</Label>
+                <Label>{t("contractPhoto")} *</Label>
                 <Input
                   type="file"
                   {...register("contract_image_2", { required: true })}
                 />
               </div>
               <div>
-                <Label>Pasport Nusxasi *</Label>
+                <Label>{t("passportCopy")} *</Label>
                 <Input
                   type="file"
                   {...register("passport_copy", { required: true })}
                 />
               </div>
               <div>
-                <Label>086 Forma *</Label>
+                <Label>{t("form086")} *</Label>
                 <Input
                   type="file"
                   {...register("form_086", { required: true })}
                 />
               </div>
               <div>
-                <Label>Yurak Tekshiruvi *</Label>
+                <Label>{t("heartCheckup")} *</Label>
                 <Input
                   type="file"
                   {...register("heart_checkup", { required: true })}
                 />
               </div>
               <div>
-                <Label>Tug'ilganlik Guvohnomasi *</Label>
+                <Label>{t("birthCertificate")} *</Label>
                 <Input
                   type="file"
                   {...register("birth_certificate", { required: true })}
@@ -816,7 +819,7 @@ const handleViewContract = () => {
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Bekor qilish
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting} className="w-40">
               {isSubmitting ? (
@@ -824,7 +827,7 @@ const handleViewContract = () => {
               ) : (
                 <UserPlus className="w-4 h-4 mr-2" />
               )}
-              Yaratish
+              {t("create")}
             </Button>
           </div>
         </form>
