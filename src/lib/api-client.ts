@@ -67,6 +67,25 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Track if we're currently refreshing to avoid multiple refresh calls
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 // Response interceptor
 apiClient.interceptors.response.use(
   (response) => {
@@ -76,7 +95,9 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     // Handle different error scenarios
     if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
       // Timeout error
@@ -86,10 +107,74 @@ apiClient.interceptors.response.use(
       if (import.meta.env.VITE_USE_MOCK_API !== "true") {
         showLimitedToast.error(getTranslation("errorNetwork"));
       }
-    } else if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      showLimitedToast.error(getTranslation("errorSessionExpired"));
-      window.location.href = "/login";
+    } else if (error.response?.status === 401 && !originalRequest._retry) {
+      // Try to refresh token
+      const refreshToken = useAuthStore.getState().refreshToken;
+
+      if (!refreshToken) {
+        // No refresh token, logout
+        useAuthStore.getState().logout();
+        showLimitedToast.error(getTranslation("errorSessionExpired"));
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Call refresh endpoint
+        const response = await axios.post(
+          `${getApiUrl()}/auth/refresh`,
+          { refresh_token: refreshToken },
+          { headers: { "Content-Type": "application/json" } }
+        );
+
+        const { access_token, refresh_token } = response.data;
+
+        // Update tokens in store
+        useAuthStore.getState().setAuth(
+          access_token,
+          refresh_token,
+          useAuthStore.getState().user!,
+          useAuthStore.getState().permissions
+        );
+
+        // Update the failed request with new token
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+        // Process queue
+        processQueue(null, access_token);
+
+        isRefreshing = false;
+
+        // Retry the original request
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        isRefreshing = false;
+
+        // Refresh failed, logout
+        useAuthStore.getState().logout();
+        showLimitedToast.error(getTranslation("errorSessionExpired"));
+        window.location.href = "/login";
+
+        return Promise.reject(refreshError);
+      }
     } else if (error.response?.status === 403) {
       showLimitedToast.error(getTranslation("errorPermissionDenied"));
     } else if (error.response?.status >= 500) {

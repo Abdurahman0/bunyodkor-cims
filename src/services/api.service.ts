@@ -39,6 +39,7 @@ import type {
   GroupRead,
   GroupCreateRequest,
   GroupUpdateRequest,
+  GroupedByYearResponse,
   // Contracts
   ContractRead,
   ContractCreateRequest,
@@ -109,6 +110,17 @@ export const authService = {
    */
   getCurrentUser: async (): Promise<CurrentUserResponse> => {
     const response = await apiClient.get<CurrentUserResponse>("/auth/me");
+    return response.data;
+  },
+
+  /**
+   * Refresh access token using refresh token
+   * POST /auth/refresh
+   */
+  refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>("/auth/refresh", {
+      refresh_token: refreshToken,
+    });
     return response.data;
   },
 };
@@ -659,6 +671,8 @@ export const parentService = {
 export interface GetGroupsParams {
   page?: number;
   page_size?: number;
+  birth_year?: number;
+  search?: string;
 }
 
 export const groupService = {
@@ -776,6 +790,22 @@ export const groupService = {
     const response = await apiClient.get(`/groups/${groupId}/capacity`, {
       params,
     });
+    return response.data;
+  },
+
+  /**
+   * Get all groups organized by birth year with statistics for each year
+   * GET /groups/grouped-by-year
+   */
+  getGroupsGroupedByYear: async (params?: {
+    archive_year?: number;
+    status?: string;
+    include_archived?: boolean;
+  }): Promise<GroupedByYearResponse> => {
+    const response = await apiClient.get<GroupedByYearResponse>(
+      "/groups/grouped-by-year",
+      { params }
+    );
     return response.data;
   },
 };

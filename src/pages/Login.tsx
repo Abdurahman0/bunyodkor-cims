@@ -29,6 +29,7 @@ export default function Login() {
       // 1. Login to get the token
       const tokenResponse = await authService.login(data)
       const token = tokenResponse.access_token
+      const refreshToken = tokenResponse.refresh_token
 
       // 2. Get User Info using the new token
       const userRes = await apiClient.get<CurrentUserResponse>('/auth/me', {
@@ -37,12 +38,13 @@ export default function Login() {
 
       return {
         token,
+        refreshToken,
         user: userRes.data.user,
         permissions: userRes.data.permissions,
       }
     },
     onSuccess: (data) => {
-      setAuth(data.token, data.user, data.permissions)
+      setAuth(data.token, data.refreshToken, data.user, data.permissions)
       toast.success(`Xush kelibsiz, ${data.user.full_name}!`, {
         icon: '👋',
         duration: 3000,

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,7 +148,6 @@ function GroupCard({
 
 export default function Groups() {
   const { t } = useLanguageStore();
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
@@ -157,15 +156,32 @@ export default function Groups() {
 
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["groups", page, debouncedSearch],
-    queryFn: () =>
-      groupService.getGroups({
-        page,
-        page_size: 10,
-        search: debouncedSearch || undefined,
-      }),
+  // Fetch groups organized by birth year
+  const { data: groupedData, isLoading } = useQuery({
+    queryKey: ["groups-grouped-by-year"],
+    queryFn: () => groupService.getGroupsGroupedByYear(),
   });
+
+  // Apply search filter to grouped data
+  const getFilteredGroupedData = () => {
+    if (!groupedData?.data) return [];
+
+    if (!debouncedSearch) return groupedData.data;
+
+    return groupedData.data
+      .map((yearData) => ({
+        ...yearData,
+        groups: yearData.groups.filter((group) =>
+          group.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        ),
+        total_groups: yearData.groups.filter((group) =>
+          group.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        ).length,
+      }))
+      .filter((yearData) => yearData.groups.length > 0);
+  };
+
+  const filteredGroupedData = getFilteredGroupedData();
 
   const { data: coachesData } = useQuery({
     queryKey: ["coaches"],
@@ -175,7 +191,7 @@ export default function Groups() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => groupService.deleteGroup(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({ queryKey: ["groups-grouped-by-year"] });
       toast.success(
         t("groupDeletedSuccess" as any) || "Group deleted successfully"
       );
@@ -222,48 +238,11 @@ export default function Groups() {
   // --- Handlers for Search ---
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    setPage(1); // Reset page on search
   };
 
   const handleClearSearch = () => {
     setSearch("");
-    setPage(1);
   };
-
-  // --- Pagination Logic ---
-  const totalPages = data?.meta?.total_pages || 1;
-
-  const getPaginationItems = () => {
-    if (totalPages <= 1) return [];
-
-    // If 7 or fewer pages, show all
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    // If current page is near the start
-    if (page <= 4) {
-      return [1, 2, 3, 4, 5, "...", totalPages];
-    }
-
-    // If current page is near the end
-    if (page >= totalPages - 3) {
-      return [
-        1,
-        "...",
-        totalPages - 4,
-        totalPages - 3,
-        totalPages - 2,
-        totalPages - 1,
-        totalPages,
-      ];
-    }
-
-    // If current page is in the middle
-    return [1, "...", page - 1, page, page + 1, "...", totalPages];
-  };
-
-  const paginationItems = getPaginationItems();
 
   return (
     <div className="space-y-6">
@@ -312,110 +291,72 @@ export default function Groups() {
         </Card>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : data?.data && data.data.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.data.map((group: GroupRead) => (
-                <GroupCard
-                  key={group.id}
-                  group={group}
-                  coachName={getCoachName(group.coach_id)}
-                  onEdit={() => handleOpenDialog(group)}
-                  onDelete={() => handleDelete(group)}
-                  onOpenDetails={() => handleOpenDetailsDialog(group)}
-                  t={t}
-                />
-              ))}
-            </div>
-
-            {/* Pagination Controls */}
-            {data?.meta && data.meta.total_pages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="h-9 px-4 py-2 hover:bg-accent hover:text-accent-foreground"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  <span>{t("previous")}</span>
-                </Button>
-
-                <div className="flex items-center gap-1 mx-2">
-                  {paginationItems.map((item, index) =>
-                    typeof item === "number" ? (
-                      <Button
-                        key={`${item}-${index}`}
-                        variant={page === item ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setPage(item)}
-                        className={`w-9 h-9 p-0 font-medium rounded-md transition-colors ${
-                          page === item
-                            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                            : "hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        {item}
-                      </Button>
-                    ) : (
-                      <span
-                        key={`dots-${index}`}
-                        className="flex items-center justify-center w-9 h-9 text-muted-foreground"
-                      >
-                        ...
-                      </span>
-                    )
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="h-9 px-4 py-2 hover:bg-accent hover:text-accent-foreground"
-                >
-                  <span>{t("next")}</span>
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            )}
-          </>
-        ) : (
-          <Card className="border-border/50 shadow-sm">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="w-16 h-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {t("noGroupsFound")}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t("getStartedGroup")}
-              </p>
-              <Button onClick={() => handleOpenDialog()}>
-                <Plus className="w-4 h-4 mr-2" />
-                {t("createGroup")}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </motion.div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : filteredGroupedData && filteredGroupedData.length > 0 ? (
+        <div className="space-y-8">
+          {filteredGroupedData.map((yearData) => (
+            <motion.div
+              key={yearData.birth_year}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border-border/50 shadow-md">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-b border-blue-200 dark:border-blue-800">
+                  <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center gap-3">
+                    <Calendar className="w-6 h-6" />
+                    {yearData.birth_year} {t("birthYear") || "yil tug'ilganlar"}
+                    <Badge variant="secondary" className="ml-auto">
+                      {yearData.total_groups} {t("group")}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {yearData.groups.map((group: GroupRead) => (
+                      <GroupCard
+                        key={group.id}
+                        group={group}
+                        coachName={getCoachName(group.coach_id)}
+                        onEdit={() => handleOpenDialog(group)}
+                        onDelete={() => handleDelete(group)}
+                        onOpenDetails={() => handleOpenDetailsDialog(group)}
+                        t={t}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <Card className="border-border/50 shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Users className="w-16 h-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {t("noGroupsFound")}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t("getStartedGroup")}
+            </p>
+            <Button onClick={() => handleOpenDialog()}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t("createGroup")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <GroupDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         group={selectedGroup}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["groups"] });
+          queryClient.invalidateQueries({ queryKey: ["groups-grouped-by-year"] });
         }}
       />
 

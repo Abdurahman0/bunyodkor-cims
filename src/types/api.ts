@@ -36,6 +36,7 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token: string;
   token_type: string;
 }
 
@@ -290,6 +291,17 @@ export interface GroupCapacityInfo {
   available_slots: number;
   waiting_list_count: number;
   by_birth_year: Record<string, { used: number; available: number }>;
+}
+
+export interface GroupsByBirthYear {
+  birth_year: number;
+  groups: GroupRead[];
+  total_groups: number;
+}
+
+export interface GroupedByYearResponse {
+  data: GroupsByBirthYear[];
+  total_birth_years: number;
 }
 
 // ============================================================================
