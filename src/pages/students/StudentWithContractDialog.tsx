@@ -186,7 +186,7 @@ export function StudentWithContractDialog({
       }
     };
     fetchContractNumber();
-  }, [selectedGroupId, birthYear, setValue, groupsData]);
+  }, [selectedGroupId, setValue, groupsData]);
 
 const handleViewContract = () => {
   if (!pdfUrl) {
