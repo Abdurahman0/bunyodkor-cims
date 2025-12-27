@@ -285,6 +285,7 @@ export function ContractDialog({
                 required: t("contractNumberRequired"),
               })}
               placeholder="e.g., BFA-2025-001"
+              disabled={!!contract}
             />
             {errors.contract_number && (
               <p className="text-sm text-red-500">
@@ -403,6 +404,7 @@ export function ContractDialog({
                 {...register("start_date", {
                   required: t("startDateRequired"),
                 })}
+                disabled={!!contract}
               />
               {errors.start_date && (
                 <p className="text-sm text-red-500">
@@ -418,6 +420,7 @@ export function ContractDialog({
                 id="end_date"
                 type="date"
                 {...register("end_date", { required: t("endDateRequired") })}
+                disabled={!!contract}
               />
               {errors.end_date && (
                 <p className="text-sm text-red-500">
@@ -440,6 +443,7 @@ export function ContractDialog({
                   valueAsNumber: true,
                 })}
                 placeholder="e.g., 500000"
+                disabled={!!contract}
               />
               {errors.monthly_fee && (
                 <p className="text-sm text-red-500">

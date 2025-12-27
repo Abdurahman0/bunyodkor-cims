@@ -1,11 +1,18 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableHeader,
@@ -28,6 +35,7 @@ import {
   Download,
   Upload,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { studentService, groupService } from "@/services/api.service";
@@ -42,6 +50,7 @@ import { useLanguageStore } from "@/store/languageStore";
 
 export default function Students() {
   const { t } = useLanguageStore();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [search, setSearch] = useState("");
@@ -53,6 +62,8 @@ export default function Students() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCombinedDialogOpen, setIsCombinedDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<StudentRead | null>(null);
   const queryClient = useQueryClient();
 
   const debouncedSearch = useDebounce(search, 500);
@@ -107,8 +118,14 @@ export default function Students() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => studentService.deleteStudent(id),
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates after cascade delete
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["students-count"] });
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["finance"] });
+      queryClient.invalidateQueries({ queryKey: ["attendances"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
       toast.success(t("studentDeleted"));
     },
     onError: () => {
@@ -117,12 +134,15 @@ export default function Students() {
   });
 
   const handleDelete = (student: StudentRead) => {
-    if (
-      confirm(
-        `${t("confirmDeleteStudent")} ${student.first_name} ${student.last_name}?`
-      )
-    ) {
-      deleteMutation.mutate(student.id);
+    setStudentToDelete(student);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (studentToDelete) {
+      deleteMutation.mutate(studentToDelete.id);
+      setIsDeleteDialogOpen(false);
+      setStudentToDelete(null);
     }
   };
 
@@ -450,7 +470,11 @@ export default function Students() {
             <TableBody>
               {data?.data && data.data.length > 0 ? (
                 data.data.map((student) => (
-                  <TableRow key={student.id}>
+                  <TableRow
+                    key={student.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/students/${student.id}`)}
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
@@ -503,7 +527,10 @@ export default function Students() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(student)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(student);
+                          }}
                           className="h-8 w-8 p-0"
                         >
                           <Edit className="w-4 h-4" />
@@ -511,7 +538,10 @@ export default function Students() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(student)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(student);
+                          }}
                           disabled={deleteMutation.isPending}
                           className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
@@ -587,6 +617,59 @@ export default function Students() {
           queryClient.invalidateQueries({ queryKey: ["students-count"] });
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <DialogTitle className="text-xl">
+                {t("confirmDelete") || "Confirm Delete"}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-base mt-4">
+              {t("deleteStudentWarning") || "Are you sure you want to delete"}{" "}
+              <span className="font-semibold text-foreground">
+                {studentToDelete?.first_name} {studentToDelete?.last_name}
+              </span>?
+              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-2">
+                  {t("deletionWarning") || "This will permanently delete:"}
+                </p>
+                <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                  <li>{t("studentProfile") || "Student profile"}</li>
+                  <li>{t("allContracts") || "All contracts"}</li>
+                  <li>{t("paymentHistory") || "Payment history"}</li>
+                  <li>{t("attendanceRecords") || "Attendance records"}</li>
+                </ul>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setStudentToDelete(null);
+              }}
+              className="flex-1"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+              className="flex-1"
+            >
+              {deleteMutation.isPending ? t("deleting") : t("deleteStudent")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

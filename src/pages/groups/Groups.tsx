@@ -71,9 +71,16 @@ function GroupCard({
                 <CardTitle className="text-lg group-hover:text-primary transition-colors">
                   {group.name}
                 </CardTitle>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                  <User className="w-3 h-3" />
-                  {coachName}
+                <div className="flex items-center gap-2 mt-1">
+                  {group.identifier && (
+                    <Badge variant="outline" className="text-xs">
+                      {group.identifier}
+                    </Badge>
+                  )}
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <User className="w-3 h-3" />
+                    {coachName}
+                  </div>
                 </div>
               </div>
             </div>

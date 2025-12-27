@@ -426,7 +426,7 @@ export default function StudentDetailPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
+                <TableHead>#</TableHead>
                 <TableHead>{t("contractNumber")}</TableHead>
                 <TableHead>{t("status")}</TableHead>
                 <TableHead>{t("monthlyFee")}</TableHead>
@@ -439,7 +439,7 @@ export default function StudentDetailPage() {
             </TableHeader>
             <TableBody>
               {contracts && contracts.length > 0 ? (
-                contracts.map((c: ContractRead) => {
+                contracts.map((c: ContractRead, index: number) => {
                   const startDate = new Date(c.start_date!);
                   const endDate = new Date(c.end_date!);
                   const monthsDiff = Math.round(
@@ -449,7 +449,7 @@ export default function StudentDetailPage() {
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{c.id}
+                        #{index + 1}
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
@@ -478,32 +478,14 @@ export default function StudentDetailPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end">
-                          <button
-                            className="botao"
-                            onClick={() => handleDownloadPdf(c)}
-                          >
-                            <span className="texto">
-                              {t("downloadContract")}
-                            </span>
-                            <span className="mysvg">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className="w-6 h-6"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                                />
-                              </svg>
-                            </span>
-                          </button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadPdf(c)}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          {t("downloadContract")}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -528,7 +510,7 @@ export default function StudentDetailPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
+                <TableHead>#</TableHead>
                 <TableHead>{t("date")}</TableHead>
                 <TableHead>{t("yearMonth")}</TableHead>
                 <TableHead>{t("sum")}</TableHead>
@@ -539,12 +521,12 @@ export default function StudentDetailPage() {
             </TableHeader>
             <TableBody>
               {transactions && transactions.length > 0 ? (
-                transactions.map((t: TransactionRead) => {
+                transactions.map((t: TransactionRead, index: number) => {
                   const paidDate = new Date(t.paid_at!);
                   return (
                     <TableRow key={t.id}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{t.id}
+                        #{index + 1}
                       </TableCell>
                       <TableCell>{format(paidDate, "dd.MM.yyyy")}</TableCell>
                       <TableCell>

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -314,7 +315,16 @@ export default function Contracts() {
                         <TableCell className="hidden md:table-cell">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            {getStudentName(contract.student_id)}
+                            {contract.student_id ? (
+                              <Link
+                                to={`/students/${contract.student_id}`}
+                                className="hover:underline text-primary hover:text-primary/80"
+                              >
+                                {getStudentName(contract.student_id)}
+                              </Link>
+                            ) : (
+                              getStudentName(contract.student_id)
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">

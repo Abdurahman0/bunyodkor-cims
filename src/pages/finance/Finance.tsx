@@ -495,12 +495,9 @@ export default function Finance() {
                             {getSourceIcon(transaction.source)}
                           </div>
                           <div>
-                            <p className="font-medium text-foreground text-sm">
-                              #{transaction.id}
-                            </p>
                             {transaction.external_id && (
                               <p className="text-xs text-muted-foreground">
-                                {transaction.external_id.substring(0, 12)}...
+                                {transaction.external_id.substring(0, 20)}...
                               </p>
                             )}
                           </div>
