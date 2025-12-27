@@ -167,7 +167,7 @@ export function GroupDialog({
               </Label>
               <Input
                 id="identifier"
-                placeholder="2B"
+                placeholder="B2"
                 {...register("identifier", { required: t("identifierRequired") })}
               />
               {errors.identifier && (

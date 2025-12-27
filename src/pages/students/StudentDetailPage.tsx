@@ -36,16 +36,17 @@ import type {
 
 const getStatusBadge = (status: string) => {
   const styles: { [key: string]: string } = {
-    active: "bg-green-100 text-green-700",
-    present: "bg-green-100 text-green-700",
-    success: "bg-green-100 text-green-700",
-    graduated: "bg-blue-100 text-blue-700",
-    dropped: "bg-red-100 text-red-700",
-    absent: "bg-red-100 text-red-700",
-    failed: "bg-red-100 text-red-700",
-    suspended: "bg-yellow-100 text-yellow-700",
-    pending: "bg-yellow-100 text-yellow-700",
-    late: "bg-orange-100 text-orange-700",
+    active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    present: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    graduated: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    dropped: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    absent: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    failed: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    suspended: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    late: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   };
   return (
     <Badge
@@ -279,9 +280,12 @@ export default function StudentDetailPage() {
               </p>
               <p className="text-2xl font-bold">
                 {new Intl.NumberFormat("en-US").format(
-                  transactions?.reduce((sum, t) => sum + t.amount, 0) || 0
+                  transactions?.filter((t) => t.status?.toLowerCase() === "success").reduce((sum, t) => sum + (t.amount || 0), 0) || 0
                 )}{" "}
                 UZS
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {transactions?.filter((t) => t.status?.toLowerCase() === "success").length || 0} {t("successfulPayments") || "muvaffaqiyatli"}
               </p>
             </div>
           </CardContent>

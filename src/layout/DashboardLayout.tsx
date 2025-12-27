@@ -493,10 +493,11 @@ const DashboardLayout = () => {
 
                       <div className="pt-2 border-t border-border">
                         <Link
-                          to="/profile"
+                          to="/settings"
                           className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md mb-2"
+                          onClick={() => setIsProfileOpen(false)}
                         >
-                          <UserCog className="w-4 h-4" /> Sozlamalar
+                          <UserCog className="w-4 h-4" /> {t("settings")}
                         </Link>
 
                         {/* YANGILANGAN LOGOUT BUTTON */}
@@ -505,7 +506,7 @@ const DashboardLayout = () => {
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-md transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
-                          Chiqish
+                          {t("logout")}
                         </button>
                       </div>
                     </div>

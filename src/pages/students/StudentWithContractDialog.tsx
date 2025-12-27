@@ -19,7 +19,7 @@ import {
 } from "@/services/api.service";
 import type { GroupRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
-import { Loader2, UserPlus, CheckCircle2 } from "lucide-react";
+import { Loader2, UserPlus, CheckCircle2, Copy } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 
@@ -136,6 +136,7 @@ export function StudentWithContractDialog({
 
   const selectedGroupId = watch("group_id");
   const birthYear = watch("birth_year");
+  const primaryAddress = watch("address");
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
@@ -207,6 +208,15 @@ const handleViewContract = () => {
     setLoadingProgress(0);
     setCurrentStep(0);
     onOpenChange(false);
+  };
+
+  const copyAddressToField = (targetField: "student_address" | "buyurtmachi_address") => {
+    if (primaryAddress) {
+      setValue(targetField, primaryAddress);
+      toast.success(t("addressCopied") || "Manzil ko'chirildi");
+    } else {
+      toast.error(t("enterAddressFirst") || "Avval birinchi manzilni kiriting");
+    }
   };
 
   useEffect(() => {
@@ -464,7 +474,43 @@ const handleViewContract = () => {
             ? error.response.data.detail
             : JSON.stringify(error.response.data.detail);
       }
-      toast.error(errorMessage);
+
+      // Check if error is about duplicate/existing contract number
+      const isDuplicateContract = errorMessage.toLowerCase().includes("already exists") ||
+        errorMessage.toLowerCase().includes("mavjud") ||
+        errorMessage.toLowerCase().includes("duplicate") ||
+        errorMessage.toLowerCase().includes("contract number");
+
+      if (isDuplicateContract && data.group_id) {
+        // Retry with new contract number
+        try {
+          toast.info(t("retryingWithNewNumber") || "Yangi shartnoma raqami bilan qayta urinilmoqda...");
+
+          const year = data.birth_year && data.birth_year.toString().length === 4
+            ? Number(data.birth_year)
+            : new Date().getFullYear();
+
+          const response = await contractService.getNextAvailableNumber(
+            Number(data.group_id),
+            year
+          );
+
+          if (response.data.contract_number) {
+            const newContractNumber = response.data.contract_number;
+            setSuggestedContractNumber(newContractNumber);
+            setValue("contract_number", newContractNumber);
+            toast.success(`${t("newNumberSuggested")}: ${newContractNumber}` || `Yangi raqam taklif qilingan: ${newContractNumber}`);
+            toast.info(t("pleaseSubmitAgain") || "Iltimos, yana bir bor 'Saqlash' tugmasini bosing");
+          } else {
+            toast.error(errorMessage);
+          }
+        } catch (retryError) {
+          console.error("Retry error:", retryError);
+          toast.error(errorMessage);
+        }
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -576,10 +622,28 @@ const handleViewContract = () => {
                 />
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1">
-                <Label>{t("studentAddress")} *</Label>
+                <div className="flex items-center justify-between">
+                  <Label>{t("studentAddress")} *</Label>
+                  {primaryAddress && (
+                    <button
+                      type="button"
+                      onClick={() => copyAddressToField("student_address")}
+                      className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      Yuqoridagi manzilni ko'chirish
+                    </button>
+                  )}
+                </div>
                 <Input
                   {...register("student_address", { required: true })}
                   placeholder="Shahar, tuman, ko'cha, uy"
+                  onKeyDown={(e) => {
+                    if ((e.key === "Tab" || e.key === "Enter") && primaryAddress && !watch("student_address")) {
+                      e.preventDefault();
+                      copyAddressToField("student_address");
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-1">
@@ -603,14 +667,14 @@ const handleViewContract = () => {
                 <Input
                   type="number"
                   {...register("tolov_monthly_fee", { required: true })}
-                  placeholder="600000"
+                  placeholder="800,000 ming"
                 />
               </div>
               <div className="space-y-1">
                 <Label>{t("amountInWords")} *</Label>
                 <Input
                   {...register("tolov_amount_in_words", { required: true })}
-                  placeholder="olti yuz ming"
+                  placeholder="sakkiz yuz ming"
                 />
               </div>
             </div>
@@ -712,10 +776,28 @@ const handleViewContract = () => {
                     <Input type="date" {...register("buyurtmachi_when_give")} />
                   </div>
                   <div>
-                    <Label>{t("address")}</Label>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label>{t("address")}</Label>
+                      {primaryAddress && (
+                        <button
+                          type="button"
+                          onClick={() => copyAddressToField("buyurtmachi_address")}
+                          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                        >
+                          <Copy className="w-3 h-3" />
+                          Yuqoridagi manzilni ko'chirish
+                        </button>
+                      )}
+                    </div>
                     <Input
                       {...register("buyurtmachi_address")}
                       placeholder="Shahar, tuman, ko'cha, uy"
+                      onKeyDown={(e) => {
+                        if ((e.key === "Tab" || e.key === "Enter") && primaryAddress && !watch("buyurtmachi_address")) {
+                          e.preventDefault();
+                          copyAddressToField("buyurtmachi_address");
+                        }
+                      }}
                     />
                   </div>
                 </div>

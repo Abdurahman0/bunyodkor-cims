@@ -45,7 +45,7 @@ export default function Students() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("active");
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<StudentRead | null>(
     null
@@ -194,20 +194,20 @@ export default function Students() {
   const getStatusBadge = (status: StudentRead["status"]) => {
     const variants: Record<string, { bg: string; text: string }> = {
       active: {
-        bg: "bg-green-100 dark:bg-green-900/30",
-        text: "text-green-700 dark:text-green-400",
+        bg: "bg-emerald-100 dark:bg-emerald-900/30",
+        text: "text-emerald-700 dark:text-emerald-400",
       },
       graduated: {
-        bg: "bg-blue-100 dark:bg-blue-900/30",
-        text: "text-blue-700 dark:text-blue-400",
+        bg: "bg-purple-100 dark:bg-purple-900/30",
+        text: "text-purple-700 dark:text-purple-400",
       },
       dropped: {
-        bg: "bg-red-100 dark:bg-red-900/30",
-        text: "text-red-700 dark:text-red-400",
+        bg: "bg-rose-100 dark:bg-rose-900/30",
+        text: "text-rose-700 dark:text-rose-400",
       },
       suspended: {
-        bg: "bg-yellow-100 dark:bg-yellow-900/30",
-        text: "text-yellow-700 dark:text-yellow-400",
+        bg: "bg-amber-100 dark:bg-amber-900/30",
+        text: "text-amber-700 dark:text-amber-400",
       },
     };
     const variant = variants[status!] || variants.active;
