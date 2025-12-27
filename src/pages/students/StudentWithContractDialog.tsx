@@ -638,6 +638,11 @@ const handleViewContract = () => {
                 <Input
                   {...register("student_address", { required: true })}
                   placeholder="Shahar, tuman, ko'cha, uy"
+                  onFocus={() => {
+                    if (primaryAddress && !watch("student_address")) {
+                      copyAddressToField("student_address");
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if ((e.key === "Tab" || e.key === "Enter") && primaryAddress && !watch("student_address")) {
                       e.preventDefault();
@@ -792,6 +797,11 @@ const handleViewContract = () => {
                     <Input
                       {...register("buyurtmachi_address")}
                       placeholder="Shahar, tuman, ko'cha, uy"
+                      onFocus={() => {
+                        if (primaryAddress && !watch("buyurtmachi_address")) {
+                          copyAddressToField("buyurtmachi_address");
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if ((e.key === "Tab" || e.key === "Enter") && primaryAddress && !watch("buyurtmachi_address")) {
                           e.preventDefault();
@@ -821,6 +831,11 @@ const handleViewContract = () => {
                       <Input
                         {...register("tarbiyalanuvchi_birth_year")}
                         placeholder="2012"
+                        onFocus={() => {
+                          if (birthYear && !watch("tarbiyalanuvchi_birth_year")) {
+                            setValue("tarbiyalanuvchi_birth_year", birthYear);
+                          }
+                        }}
                       />
                     </div>
                   </div>
