@@ -34,6 +34,7 @@ import type { UserRead, Role, RoleWithPermissions } from "@/types/api";
 import toast from "react-hot-toast";
 import UserDialog from "./UserDialog";
 import { UserDetailsDialog } from "./UserDetailsDialog";
+import { UserDetailsCard } from "./UserDetailsCard";
 import { useLanguageStore } from "@/store/languageStore";
 
 const Users = () => {
@@ -48,6 +49,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<UserRead | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserRead | null>(null);
+  const [selectedUserForCard, setSelectedUserForCard] = useState<UserRead | null>(null);
 
   // Fetch roles for filter
   const { data: rolesData } = useQuery({
@@ -100,6 +102,7 @@ const Users = () => {
 
   const handleViewDetails = (user: UserRead) => {
     setSelectedUserForDetails(user);
+    setSelectedUserForCard(user);
     setIsDetailsDialogOpen(true);
   };
 
@@ -495,6 +498,20 @@ const Users = () => {
         onOpenChange={setIsDetailsDialogOpen}
         user={selectedUserForDetails}
       />
+
+      {/* User Details Card - Displayed on page */}
+      {selectedUserForCard && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <UserDetailsCard
+            user={selectedUserForCard}
+            onClose={() => setSelectedUserForCard(null)}
+          />
+        </motion.div>
+      )}
     </motion.div>
   );
 };

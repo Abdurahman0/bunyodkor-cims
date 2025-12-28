@@ -1,10 +1,5 @@
 import type { FC } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserRead } from "@/types/api";
 import { Badge } from "@/components/ui/badge";
 import { useLanguageStore } from "@/store/languageStore";
@@ -14,23 +9,19 @@ import {
   Phone,
   Shield,
   Calendar,
-  Key,
   UserCheck,
   Briefcase,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
-interface UserDetailsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface UserDetailsCardProps {
   user: UserRead | null;
+  onClose: () => void;
 }
 
-export const UserDetailsDialog: FC<UserDetailsDialogProps> = ({
-  open,
-  onOpenChange,
-  user,
-}) => {
+export const UserDetailsCard: FC<UserDetailsCardProps> = ({ user, onClose }) => {
   const { t } = useLanguageStore();
 
   if (!user) return null;
@@ -48,13 +39,10 @@ export const UserDetailsDialog: FC<UserDetailsDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="max-w-2xl max-h-[85vh] overflow-y-auto border-2 border-blue-500"
-        onClose={() => onOpenChange(false)}
-      >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
+    <Card className="border-2 border-blue-500">
+      <CardHeader className="border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
               {user.full_name?.charAt(0) || "U"}
             </div>
@@ -64,10 +52,20 @@ export const UserDetailsDialog: FC<UserDetailsDialogProps> = ({
                 {t("userDetails")}
               </p>
             </div>
-          </DialogTitle>
-        </DialogHeader>
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardHeader>
 
-        <div className="space-y-6 mt-4">
+      <CardContent className="p-6">
+        <div className="space-y-6">
           {/* Asosiy ma'lumotlar */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg border-b pb-2">
@@ -141,18 +139,14 @@ export const UserDetailsDialog: FC<UserDetailsDialogProps> = ({
                 </div>
               </div>
 
-              {/* Parol holati */}
+              {/* User ID */}
               <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <Key className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <User className="w-5 h-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">
-                    {t("passwordStatus")}
+                    {t("userId")}
                   </p>
-                  <div className="mt-1">
-                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
-                      {t("passwordSet")}
-                    </Badge>
-                  </div>
+                  <p className="font-medium font-mono">#{user.id}</p>
                 </div>
               </div>
             </div>
@@ -201,21 +195,10 @@ export const UserDetailsDialog: FC<UserDetailsDialogProps> = ({
                   </p>
                 </div>
               </div>
-
-              {/* User ID */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <User className="w-5 h-5 text-muted-foreground mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">
-                    {t("userId")}
-                  </p>
-                  <p className="font-medium font-mono">#{user.id}</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 };
