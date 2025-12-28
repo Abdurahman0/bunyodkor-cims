@@ -21,7 +21,10 @@ interface UserDetailsCardProps {
   onClose: () => void;
 }
 
-export const UserDetailsCard: FC<UserDetailsCardProps> = ({ user, onClose }) => {
+export const UserDetailsCard: FC<UserDetailsCardProps> = ({
+  user,
+  onClose,
+}) => {
   const { t } = useLanguageStore();
 
   if (!user) return null;
@@ -39,7 +42,7 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({ user, onClose }) => 
   };
 
   return (
-    <Card className="border-2 border-blue-500">
+    <Card className="border-2 border-blue-500 mx-4 md:mx-0">
       <CardHeader className="border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-3">
@@ -143,9 +146,7 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({ user, onClose }) => 
               <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                 <User className="w-5 h-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">
-                    {t("userId")}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t("userId")}</p>
                   <p className="font-medium font-mono">#{user.id}</p>
                 </div>
               </div>
