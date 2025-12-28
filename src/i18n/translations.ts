@@ -1458,7 +1458,7 @@ export const translations = {
     systemStudentInfo: 'Tizim uchun O\'quvchi ma\'lumotlari',
     contractInfoForPDF: 'Shartnoma ma\'lumotlari (PDF uchun)',
     studentFullName: 'O\'quvchi F.I.O (To\'liq)',
-    studentAddress: 'O\'quvchi hozirgi yashash manzili',
+    studentAddress: 'O\'quvchi doimiy yashash manzili',
     startDate: 'Boshlanish Sanasi',
     endDate: 'Tugash Sanasi',
     amountInWords: 'Summa so\'z bilan (masalan: olti yuz ming)',

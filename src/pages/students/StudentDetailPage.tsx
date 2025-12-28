@@ -531,7 +531,9 @@ export default function StudentDetailPage() {
                       <TableCell>{format(paidDate, "dd.MM.yyyy")}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-mono">
-                          {format(paidDate, "yyyy-MM")}
+                          {t.payment_year}-{t.payment_months && t.payment_months.length > 0
+                            ? t.payment_months.map(m => String(m).padStart(2, '0')).join(',')
+                            : format(paidDate, "MM")}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-semibold">
