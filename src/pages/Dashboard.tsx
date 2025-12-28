@@ -318,7 +318,7 @@ export default function Dashboard() {
       >
         <motion.div variants={itemVariants}>
           <Card className="h-full">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
               <div>
                 <CardTitle className="text-lg font-semibold">
                   {t("revenueOverview")}
@@ -329,7 +329,7 @@ export default function Dashboard() {
               </div>
               <TrendingUp className="w-5 h-5 text-green-500" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-6">
               <LineChart
                 data={revenueData}
                 height={250}
@@ -343,7 +343,7 @@ export default function Dashboard() {
 
         <motion.div variants={itemVariants}>
           <Card className="h-full">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold">
                 {t("paymentSources")}
               </CardTitle>
@@ -351,10 +351,10 @@ export default function Dashboard() {
                 {t("distributionByMethod")}
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col items-center justify-center py-6">
               <DonutChart
                 data={paymentSourcesData}
-                size={160}
+                size={200}
                 centerValue={paymentSourcesData.reduce(
                   (a: any, b: any) => a + b.value,
                   0
@@ -375,7 +375,7 @@ export default function Dashboard() {
       >
         <motion.div variants={itemVariants}>
           <Card className="h-full">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold">
                 {t("todayAttendance")}
               </CardTitle>
@@ -383,10 +383,10 @@ export default function Dashboard() {
                 {t("studentAttendanceStatus")}
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col items-center justify-center py-6">
               <DonutChart
                 data={attendanceChartData}
-                size={160}
+                size={200}
                 centerValue={attendanceChartData
                   .reduce((sum, item) => sum + item.value, 0)
                   .toString()}
