@@ -314,10 +314,10 @@ export default function Dashboard() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
       >
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card>
+        <motion.div variants={itemVariants}>
+          <Card className="h-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
                 <CardTitle className="text-lg font-semibold">
@@ -342,7 +342,7 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card>
+          <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-semibold">
                 {t("paymentSources")}
@@ -371,10 +371,10 @@ export default function Dashboard() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
       >
         <motion.div variants={itemVariants}>
-          <Card>
+          <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-semibold">
                 {t("todayAttendance")}
@@ -397,8 +397,8 @@ export default function Dashboard() {
           </Card>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card>
+        <motion.div variants={itemVariants}>
+          <Card className="h-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
                 <CardTitle className="text-lg font-semibold">
