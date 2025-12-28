@@ -30,10 +30,9 @@ import {
   TableEmpty,
 } from "@/components/ui/table";
 import { userService, roleService } from "@/services/api.service";
-import type { UserRead, Role, RoleWithPermissions } from "@/types/api";
+import type { UserRead, RoleRead, RoleWithPermissions } from "@/types/api";
 import toast from "react-hot-toast";
 import UserDialog from "./UserDialog";
-import { UserDetailsDialog } from "./UserDetailsDialog";
 import { UserDetailsCard } from "./UserDetailsCard";
 import { useLanguageStore } from "@/store/languageStore";
 
@@ -47,8 +46,6 @@ const Users = () => {
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRead | null>(null);
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserRead | null>(null);
   const [selectedUserForCard, setSelectedUserForCard] = useState<UserRead | null>(null);
 
   // Fetch roles for filter
@@ -101,9 +98,7 @@ const Users = () => {
   };
 
   const handleViewDetails = (user: UserRead) => {
-    setSelectedUserForDetails(user);
     setSelectedUserForCard(user);
-    setIsDetailsDialogOpen(true);
   };
 
   const handleDialogClose = () => {
@@ -393,7 +388,7 @@ const Users = () => {
                     <TableCell className="hidden lg:table-cell">
                       {user.roles && user.roles.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {user.roles.map((role: Role) => (
+                          {user.roles.map((role: RoleRead) => (
                             <Badge key={role.id} variant="outline">
                               {role.name}
                             </Badge>
@@ -492,24 +487,27 @@ const Users = () => {
         }}
       />
 
-      {/* User Details Dialog */}
-      <UserDetailsDialog
-        open={isDetailsDialogOpen}
-        onOpenChange={setIsDetailsDialogOpen}
-        user={selectedUserForDetails}
-      />
-
-      {/* User Details Card - Displayed on page */}
+      {/* User Details Card - Modal Overlay */}
       {selectedUserForCard && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setSelectedUserForCard(null)}
         >
-          <UserDetailsCard
-            user={selectedUserForCard}
-            onClose={() => setSelectedUserForCard(null)}
-          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ delay: 0.1 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <UserDetailsCard
+              user={selectedUserForCard}
+              onClose={() => setSelectedUserForCard(null)}
+            />
+          </motion.div>
         </motion.div>
       )}
     </motion.div>
