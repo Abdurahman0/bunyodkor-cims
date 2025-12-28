@@ -85,6 +85,9 @@ interface StudentFormData {
   birth_certificate: FileList;
   contract_image_1: FileList;
   contract_image_2: FileList;
+  contract_image_3: FileList;
+  contract_image_4: FileList;
+  contract_image_5: FileList;
 }
 
 const MONTH_NAMES = [
@@ -378,22 +381,39 @@ const handleViewContract = () => {
       formData.append("student_data", JSON.stringify(student_data));
       formData.append("contract_data", JSON.stringify(contract_data));
 
-      const fileFields: (keyof StudentFormData)[] = [
+      // Required file fields
+      const requiredFileFields: (keyof StudentFormData)[] = [
         "passport_copy",
         "form_086",
         "heart_checkup",
         "birth_certificate",
-        "contract_image_1",
         "contract_image_2",
+        "contract_image_4",
+      ];
+
+      // Optional file fields
+      const optionalFileFields: (keyof StudentFormData)[] = [
+        "contract_image_1",
+        "contract_image_3",
+        "contract_image_5",
       ];
 
       let filesMissing = false;
-      for (const field of fileFields) {
+
+      // Check required files
+      for (const field of requiredFileFields) {
         if (data[field]?.[0]) {
           formData.append(field, data[field][0]);
         } else {
           filesMissing = true;
           toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
+        }
+      }
+
+      // Add optional files if provided
+      for (const field of optionalFileFields) {
+        if (data[field]?.[0]) {
+          formData.append(field, data[field][0]);
         }
       }
       if (filesMissing) {
@@ -861,49 +881,79 @@ const handleViewContract = () => {
           {/* 3. FAYLLAR */}
           <div className="space-y-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200">
             <h3 className="font-bold text-orange-800 dark:text-orange-200 text-lg border-b border-orange-200 pb-2 mb-4">
-3. {t("documents")} (Rasmlar/PDF)
+3. {t("documents")} (PNG, JPG, PDF)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label>{t("profilePhoto")} *</Label>
+                <Label>Portfolio *</Label>
                 <Input
                   type="file"
-                  {...register("contract_image_1", { required: true })}
-                />
-              </div>
-              <div>
-                <Label>{t("contractPhoto")} *</Label>
-                <Input
-                  type="file"
-                  {...register("contract_image_2", { required: true })}
-                />
-              </div>
-              <div>
-                <Label>{t("passportCopy")} *</Label>
-                <Input
-                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
                   {...register("passport_copy", { required: true })}
                 />
               </div>
               <div>
-                <Label>{t("form086")} *</Label>
+                <Label>086-shakl (Tibbiy ma'lumotnoma) *</Label>
                 <Input
                   type="file"
+                  accept="image/png,image/jpeg,application/pdf"
                   {...register("form_086", { required: true })}
                 />
               </div>
               <div>
-                <Label>{t("heartCheckup")} *</Label>
+                <Label>Yurak tekshiruvi *</Label>
                 <Input
                   type="file"
+                  accept="image/png,image/jpeg,application/pdf"
                   {...register("heart_checkup", { required: true })}
                 />
               </div>
               <div>
-                <Label>{t("birthCertificate")} *</Label>
+                <Label>Tug'ilganlik haqidagi guvohnoma (old tomoni) *</Label>
                 <Input
                   type="file"
+                  accept="image/png,image/jpeg,application/pdf"
                   {...register("birth_certificate", { required: true })}
+                />
+              </div>
+              <div>
+                <Label>Tug'ilganlik guvohnomasi (orqa tomoni)</Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
+                  {...register("contract_image_1")}
+                />
+              </div>
+              <div>
+                <Label>Otaning pasporti (old tomoni) *</Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
+                  {...register("contract_image_2", { required: true })}
+                />
+              </div>
+              <div>
+                <Label>Otaning pasporti (orqa tomoni)</Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
+                  {...register("contract_image_3")}
+                />
+              </div>
+              <div>
+                <Label>Onaning pasporti (old tomoni) *</Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
+                  {...register("contract_image_4", { required: true })}
+                />
+              </div>
+              <div>
+                <Label>Onaning pasporti (orqa tomoni)</Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
+                  {...register("contract_image_5")}
                 />
               </div>
             </div>
