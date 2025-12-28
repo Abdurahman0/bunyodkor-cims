@@ -33,6 +33,7 @@ import { userService, roleService } from "@/services/api.service";
 import type { UserRead, Role, RoleWithPermissions } from "@/types/api";
 import toast from "react-hot-toast";
 import UserDialog from "./UserDialog";
+import { UserDetailsDialog } from "./UserDetailsDialog";
 import { useLanguageStore } from "@/store/languageStore";
 
 const Users = () => {
@@ -45,6 +46,8 @@ const Users = () => {
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRead | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserRead | null>(null);
 
   // Fetch roles for filter
   const { data: rolesData } = useQuery({
@@ -93,6 +96,11 @@ const Users = () => {
     if (confirm(`${t("areYouSureDeleteUser")} ${user.full_name}?`)) {
       deleteMutation.mutate(user.id);
     }
+  };
+
+  const handleViewDetails = (user: UserRead) => {
+    setSelectedUserForDetails(user);
+    setIsDetailsDialogOpen(true);
   };
 
   const handleDialogClose = () => {
@@ -335,7 +343,11 @@ const Users = () => {
             <TableBody>
               {data?.data && data.data.length > 0 ? (
                 data.data.map((user: UserRead) => (
-                  <TableRow key={user.id}>
+                  <TableRow
+                    key={user.id}
+                    onClick={() => handleViewDetails(user)}
+                    className="cursor-pointer"
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
@@ -398,7 +410,10 @@ const Users = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(user);
+                          }}
                           className="h-8 w-8 p-0"
                           title={t("editUser")}
                         >
@@ -407,7 +422,10 @@ const Users = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(user);
+                          }}
                           className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                           title={t("deleteUser")}
                           disabled={user.is_super_admin}
@@ -469,6 +487,13 @@ const Users = () => {
           refetch();
           handleDialogClose();
         }}
+      />
+
+      {/* User Details Dialog */}
+      <UserDetailsDialog
+        open={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
+        user={selectedUserForDetails}
       />
     </motion.div>
   );
