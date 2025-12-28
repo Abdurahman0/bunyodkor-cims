@@ -32,8 +32,10 @@ import {
 } from "lucide-react";
 import { format, addDays, subDays } from "date-fns";
 import toast from "react-hot-toast";
+import { useLanguageStore } from "@/store/languageStore";
 
 export default function Coach() {
+  const { t } = useLanguageStore();
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
   );
@@ -108,7 +110,7 @@ export default function Coach() {
       }),
 
     onSuccess: () => {
-      toast.success("Attendance marked");
+      toast.success(t("attendanceMarked"));
       queryClient.invalidateQueries({
         queryKey: ["session-students", selectedSession],
       });

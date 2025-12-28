@@ -13,8 +13,10 @@ import { motion } from 'framer-motion'
 import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LoginRequest, TokenResponse, UserRead, CurrentUserResponse } from '@/types/api'
+import { useLanguageStore } from '@/store/languageStore'
 
 export default function Login() {
+  const { t } = useLanguageStore()
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
   const [showPassword, setShowPassword] = useState(false)
@@ -45,7 +47,7 @@ export default function Login() {
     },
     onSuccess: (data) => {
       setAuth(data.token, data.refreshToken, data.user, data.permissions)
-      toast.success(`Xush kelibsiz, ${data.user.full_name}!`, {
+      toast.success(`${t('welcomeBack')}, ${data.user.full_name}!`, {
         icon: '👋',
         duration: 3000,
       })

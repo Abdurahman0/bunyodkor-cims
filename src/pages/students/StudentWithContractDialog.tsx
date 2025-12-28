@@ -194,7 +194,7 @@ export function StudentWithContractDialog({
 
 const handleViewContract = () => {
   if (!pdfUrl) {
-    toast.error("PDF topilmadi");
+    toast.error(t("pdfNotFound"));
     return;
   }
 

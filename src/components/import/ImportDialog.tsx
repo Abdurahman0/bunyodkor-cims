@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import { apiClient } from '@/lib/api-client'
+import { useLanguageStore } from '@/store/languageStore'
 
 interface ImportDialogProps {
   open: boolean
@@ -25,6 +26,7 @@ export const ImportDialog = ({
   description,
   acceptedFormats = ['.xlsx', '.xls', '.csv'],
 }: ImportDialogProps) => {
+  const { t } = useLanguageStore()
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -63,7 +65,7 @@ export const ImportDialog = ({
 
   const handleUpload = async () => {
     if (!file) {
-      toast.error('Please select a file to upload')
+      toast.error(t('pleaseSelectFile'))
       return
     }
 
@@ -79,7 +81,7 @@ export const ImportDialog = ({
         },
       })
 
-      toast.success('Import completed successfully')
+      toast.success(t('importCompleted'))
       onSuccess?.()
       handleClose()
     } catch (error: any) {

@@ -461,6 +461,12 @@ export const translations = {
     fileNotUploaded: 'File not uploaded',
     pdfNotFound: 'PDF not found!',
     successfullySaved: 'Successfully saved!',
+    enterAddressFirst: 'Please enter the primary address first',
+    addressCopied: 'Address copied',
+    pleaseSubmitAgain: 'Please click the Save button again',
+    newNumberSuggested: 'New number suggested',
+    retryingWithNewNumber: 'Retrying with new contract number...',
+    invalidFileFormat: 'Invalid file format. Accepted formats',
 
     // Transaction form
     transactionCreatedSuccess: 'Transaction created successfully',
@@ -1208,6 +1214,12 @@ export const translations = {
     fileNotUploaded: 'Fayl yuklanmagan',
     pdfNotFound: 'PDF topilmadi!',
     successfullySaved: 'Muvaffaqiyatli saqlandi!',
+    enterAddressFirst: 'Avval birinchi manzilni kiriting',
+    addressCopied: 'Manzil ko\'chirildi',
+    pleaseSubmitAgain: 'Iltimos, yana bir bor "Saqlash" tugmasini bosing',
+    newNumberSuggested: 'Yangi raqam taklif qilingan',
+    retryingWithNewNumber: 'Yangi shartnoma raqami bilan qayta urinilmoqda...',
+    invalidFileFormat: 'Noto\'g\'ri fayl formati. Qabul qilinadigan formatlar',
 
     // Transaction form
     transactionCreatedSuccess: 'Tranzaksiya muvaffaqiyatli yaratildi',
@@ -1955,6 +1967,12 @@ export const translations = {
     fileNotUploaded: 'Файл не загружен',
     pdfNotFound: 'PDF не найден!',
     successfullySaved: 'Успешно сохранено!',
+    enterAddressFirst: 'Сначала введите основной адрес',
+    addressCopied: 'Адрес скопирован',
+    pleaseSubmitAgain: 'Пожалуйста, нажмите кнопку "Сохранить" еще раз',
+    newNumberSuggested: 'Предложен новый номер',
+    retryingWithNewNumber: 'Повторная попытка с новым номером контракта...',
+    invalidFileFormat: 'Неверный формат файла. Допустимые форматы',
 
     // Transaction form
     transactionCreatedSuccess: 'Транзакция успешно создана',
