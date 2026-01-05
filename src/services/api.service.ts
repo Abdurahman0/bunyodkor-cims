@@ -507,6 +507,20 @@ export const studentService = {
   },
 
   /**
+   * Hard delete student (PERMANENT DELETION)
+   * DELETE /students/{student_id}/hard-delete
+   * WARNING: This action is irreversible!
+   */
+  hardDeleteStudent: async (
+    studentId: number
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.delete<
+      ApiResponse<Record<string, unknown>>
+    >(`/students/${studentId}/hard-delete`);
+    return response.data;
+  },
+
+  /**
    * Bulk delete students by IDs
    * POST /students/bulk-delete
    */
@@ -1016,6 +1030,24 @@ export const contractService = {
   ): Promise<string> => {
     const response = await apiClient.get<string>(
       `/contracts/${year}/${contractNumber}/pdf`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get all available contract numbers (ONLY GAPS - not unused numbers after max)
+   * GET /contracts/available-numbers/{group_id}
+   */
+  getAllAvailableNumbers: async (
+    groupId: number
+  ): Promise<
+    ApiResponse<{
+      available_numbers: number[];
+      total_available: number;
+    }>
+  > => {
+    const response = await apiClient.get(
+      `/contracts/available-numbers/${groupId}`
     );
     return response.data;
   },

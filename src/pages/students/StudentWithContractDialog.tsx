@@ -115,6 +115,7 @@ export function StudentWithContractDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestedContractNumber, setSuggestedContractNumber] =
     useState<string>("");
+  const [availableNumbers, setAvailableNumbers] = useState<number[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -154,7 +155,7 @@ export function StudentWithContractDialog({
     enabled: open,
   });
 
-  // Guruh tanlanganda shartnoma raqamini taklif qilish
+  // Guruh tanlanganda shartnoma raqamini taklif qilish va bo'sh raqamlarni olish
   useEffect(() => {
     const fetchContractNumber = async () => {
       if (selectedGroupId && groupsData?.data) {
@@ -173,6 +174,7 @@ export function StudentWithContractDialog({
               ? Number(birthYear)
               : new Date().getFullYear();
 
+          // Get next available number (suggestion)
           const response = await contractService.getNextAvailableNumber(
             Number(selectedGroupId),
             year
@@ -190,6 +192,15 @@ export function StudentWithContractDialog({
             });
           } else if (response.data.is_full) {
             toast.error(t("groupIsFull"));
+          }
+
+          // Get all available numbers (gaps)
+          const availableResponse = await contractService.getAllAvailableNumbers(
+            Number(selectedGroupId)
+          );
+
+          if (availableResponse.data?.available_numbers) {
+            setAvailableNumbers(availableResponse.data.available_numbers);
           }
         } catch (error) {
           console.error("Shartnoma raqami xatosi:", error);
@@ -649,6 +660,35 @@ const handleViewContract = () => {
                   <p className="text-xs text-green-600 mt-1">
                     {t("suggestion")}: {suggestedContractNumber}
                   </p>
+                )}
+                {availableNumbers.length > 0 && (
+                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200">
+                    <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">
+                      {t("availableNumbers") || "Qolib ketgan raqamlar"}:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {availableNumbers.map((num) => {
+                        const selectedGroup = groupsData?.data?.find(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          (g: any) => g.id === Number(selectedGroupId)
+                        );
+                        const contractNumber = `${num}-${selectedGroup?.name || ''}`;
+                        return (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => {
+                              setValue("contract_number", contractNumber);
+                              toast.success(`${t("numberSelected") || "Raqam tanlandi"}: ${contractNumber}`);
+                            }}
+                            className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors border border-blue-300"
+                          >
+                            {contractNumber}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
 

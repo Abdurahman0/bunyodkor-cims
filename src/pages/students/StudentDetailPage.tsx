@@ -1,9 +1,17 @@
-import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { studentService, contractService } from "@/services/api.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableHeader,
@@ -21,6 +29,8 @@ import {
   FileText,
   User,
   Users,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -66,14 +76,38 @@ const formatSource = (source: any) => {
 
 export default function StudentDetailPage() {
   const { t } = useLanguageStore();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { id } = useParams<{ id: string }>();
   const studentId = parseInt(id || "0", 10);
+  const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
     queryFn: () => studentService.getStudentFullInfo(studentId),
     enabled: !!studentId,
+  });
+
+  const hardDeleteMutation = useMutation({
+    mutationFn: () => studentService.hardDeleteStudent(studentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      toast.success(t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi");
+      navigate("/students");
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      let errorMessage = t("failedToDeleteStudent") || "Talabani o'chirishda xato";
+
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+
+      toast.error(errorMessage);
+    },
   });
 
   const handleDownloadPdf = async (contract: ContractRead) => {
@@ -249,6 +283,15 @@ export default function StudentDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge(student.status!)}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setIsHardDeleteDialogOpen(true)}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              {t("permanentDelete") || "Butunlay o'chirish"}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
@@ -598,6 +641,71 @@ export default function StudentDetailPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Hard Delete Confirmation Dialog */}
+      <Dialog open={isHardDeleteDialogOpen} onOpenChange={setIsHardDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <DialogTitle className="text-xl text-red-600 dark:text-red-400">
+                {t("permanentDeleteWarning") || "OGOHLANTRISH: Butunlay o'chirish"}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-base mt-4">
+              <p className="font-semibold text-foreground mb-3">
+                {t("permanentDeleteStudent") || "Talabani butunlay o'chirasizmi"}:{" "}
+                <span className="text-red-600">
+                  {student.first_name} {student.last_name}
+                </span>?
+              </p>
+              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-800 dark:text-red-200 font-bold mb-2">
+                  ⚠️ {t("thisActionCannotBeUndone") || "Bu amalni qaytarib bo'lmaydi!"}
+                </p>
+                <p className="text-sm text-red-700 dark:text-red-300 font-medium mb-2">
+                  {t("followingWillBeDeleted") || "Quyidagilar butunlay o'chiriladi"}:
+                </p>
+                <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                  <li>{t("studentProfile") || "Talaba profili"}</li>
+                  <li>{t("allContracts") || "Barcha shartnomalar"}</li>
+                  <li>{t("paymentHistory") || "To'lov tarixi"}</li>
+                  <li>{t("attendanceRecords") || "Davomat yozuvlari"}</li>
+                  <li>{t("parentRecords") || "Ota-ona ma'lumotlari"}</li>
+                  <li>{t("gateLogRecords") || "Kirish-chiqish yozuvlari"}</li>
+                  <li>{t("waitingListEntries") || "Navbat ro'yxati yozuvlari"}</li>
+                </ul>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-3 font-medium">
+                  {t("contractNumbersWillBeFreed") || "Shartnoma raqamlari bo'shab, qayta ishlatilishi mumkin"}
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsHardDeleteDialogOpen(false)}
+              className="flex-1"
+              disabled={hardDeleteMutation.isPending}
+            >
+              {t("cancel") || "Bekor qilish"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => hardDeleteMutation.mutate()}
+              disabled={hardDeleteMutation.isPending}
+              className="flex-1 gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              {hardDeleteMutation.isPending
+                ? (t("deleting") || "O'chirilmoqda...")
+                : (t("permanentlyDelete") || "Butunlay o'chirish")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
