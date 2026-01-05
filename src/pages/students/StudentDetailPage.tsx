@@ -290,7 +290,9 @@ export default function StudentDetailPage() {
               className="gap-2"
             >
               <Trash2 className="w-4 h-4" />
-              {t("permanentDelete") || "Butunlay o'chirish"}
+              <span className="whitespace-nowrap">
+                {t("permanentlyDelete") || "Butunlay o'chirish"}
+              </span>
             </Button>
           </div>
         </CardHeader>
