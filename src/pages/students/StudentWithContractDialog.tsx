@@ -140,6 +140,13 @@ export function StudentWithContractDialog({
   const selectedGroupId = watch("group_id");
   const birthYear = watch("birth_year");
   const primaryAddress = watch("address");
+  const [customerType, setCustomerType] = useState<"father" | "mother" | "other">("other");
+
+  // Watch parent fields for auto-fill
+  const dadName = watch("dad_name");
+  const dadPhone = watch("dad_phone");
+  const momFio = watch("mom_fio");
+  const momPhone = watch("mom_phone");
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
@@ -222,11 +229,29 @@ const handleViewContract = () => {
     }
   };
 
+  const handleCustomerTypeChange = (type: "father" | "mother" | "other") => {
+    setCustomerType(type);
+
+    if (type === "father") {
+      if (dadName) setValue("buyurtmachi_fio", dadName);
+      if (dadPhone) setValue("buyurtmachi_phone", dadPhone);
+      toast.success(t("fatherInfoCopied") || "Otaning ma'lumotlari ko'chirildi");
+    } else if (type === "mother") {
+      if (momFio) setValue("buyurtmachi_fio", momFio);
+      if (momPhone) setValue("buyurtmachi_phone", momPhone);
+      toast.success(t("motherInfoCopied") || "Onaning ma'lumotlari ko'chirildi");
+    } else {
+      // Clear customer fields when "other" is selected
+      setValue("buyurtmachi_fio", "");
+      setValue("buyurtmachi_phone", "");
+    }
+  };
+
   useEffect(() => {
     if (open) {
       const today = new Date().toISOString().split("T")[0];
-      const nextYear = new Date();
-      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      const currentYear = new Date().getFullYear();
+      const endOfYear = `${currentYear}-12-31`;
 
       reset({
         first_name: "",
@@ -247,7 +272,7 @@ const handleViewContract = () => {
         mom_phone: "",
         mom_occupation: "",
         contract_start_date: today,
-        contract_end_date: nextYear.toISOString().split("T")[0],
+        contract_end_date: endOfYear,
         buyurtmachi_fio: "",
         buyurtmachi_passport_series_number: "",
         buyurtmachi_who_give: "",
@@ -765,10 +790,29 @@ const handleViewContract = () => {
                 </h4>
                 <div className="space-y-2">
                   <div>
+                    <Label>{t("customerType") || "Buyurtmachi kim?"} *</Label>
+                    <select
+                      value={customerType}
+                      onChange={(e) => handleCustomerTypeChange(e.target.value as "father" | "mother" | "other")}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3"
+                    >
+                      <option value="father">{t("father") || "Ota"}</option>
+                      <option value="mother">{t("mother") || "Ona"}</option>
+                      <option value="other">{t("other") || "Boshqa"}</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {customerType === "father" && (t("fatherInfoWillBeUsed") || "Ota ma'lumotlari ishlatiladi")}
+                      {customerType === "mother" && (t("motherInfoWillBeUsed") || "Ona ma'lumotlari ishlatiladi")}
+                      {customerType === "other" && (t("enterCustomerInfo") || "Buyurtmachi ma'lumotlarini kiriting")}
+                    </p>
+                  </div>
+                  <div>
                     <Label>{t("fullName")} *</Label>
                     <Input
                       {...register("buyurtmachi_fio", { required: true })}
                       placeholder="Ism Familiya Otasining ismi"
+                      readOnly={customerType !== "other"}
+                      className={customerType !== "other" ? "bg-gray-100 dark:bg-gray-800" : ""}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -786,6 +830,8 @@ const handleViewContract = () => {
                       <Input
                         {...register("buyurtmachi_phone", { required: true })}
                         placeholder="+998 XX XXX XX XX"
+                        readOnly={customerType !== "other"}
+                        className={customerType !== "other" ? "bg-gray-100 dark:bg-gray-800" : ""}
                       />
                     </div>
                   </div>
