@@ -6,13 +6,19 @@ import toast from "react-hot-toast";
 
 const getApiUrl = () => {
   // In development, use proxy to avoid CORS issues
-  return "https://bunyodkor.api.cims.cognilabs.org/";
+  return (
+    import.meta.env.VITE_API_URL || "https://bunyodkor.api.cims.cognilabs.org/"
+  );
 };
 
 // Helper function to get translated message
 const getTranslation = (key: TranslationKey): string => {
   const language = useLanguageStore.getState().language;
-  return translations[language][key];
+  const translation = translations[language];
+  if (typeof translation === "string") {
+    return translation;
+  }
+  return translation[key] as string;
 };
 
 // Toast ID'larini saqlash
@@ -147,12 +153,14 @@ apiClient.interceptors.response.use(
         const { access_token, refresh_token } = response.data;
 
         // Update tokens in store
-        useAuthStore.getState().setAuth(
-          access_token,
-          refresh_token,
-          useAuthStore.getState().user!,
-          useAuthStore.getState().permissions
-        );
+        useAuthStore
+          .getState()
+          .setAuth(
+            access_token,
+            refresh_token,
+            useAuthStore.getState().user!,
+            useAuthStore.getState().permissions
+          );
 
         // Update the failed request with new token
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
