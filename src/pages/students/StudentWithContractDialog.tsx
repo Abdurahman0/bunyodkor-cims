@@ -141,6 +141,7 @@ export function StudentWithContractDialog({
   const selectedGroupId = watch("group_id");
   const birthYear = watch("birth_year");
   const primaryAddress = watch("address");
+  const dateOfBirth = watch("date_of_birth");
   const [customerType, setCustomerType] = useState<"father" | "mother" | "other">("other");
 
   // Watch parent fields for auto-fill
@@ -154,6 +155,17 @@ export function StudentWithContractDialog({
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
     enabled: open,
   });
+
+  // Tug'ilgan sanadan yilni avtomatik ajratib olish
+  useEffect(() => {
+    if (dateOfBirth) {
+      const year = new Date(dateOfBirth).getFullYear().toString();
+      if (year && year.length === 4) {
+        setValue("birth_year", year);
+        setValue("tarbiyalanuvchi_birth_year", year);
+      }
+    }
+  }, [dateOfBirth, setValue]);
 
   // Guruh tanlanganda shartnoma raqamini taklif qilish va bo'sh raqamlarni olish
   useEffect(() => {
