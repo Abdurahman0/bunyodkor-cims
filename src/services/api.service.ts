@@ -325,6 +325,7 @@ export interface GetStudentsParams {
   search?: string;
   group_id?: number;
   status?: string;
+  archive_year?: number;
   page?: number;
   page_size?: number;
 }

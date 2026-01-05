@@ -56,6 +56,7 @@ export default function Students() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("active");
   const [groupFilter, setGroupFilter] = useState<string>("");
+  const [archiveYearFilter, setArchiveYearFilter] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<StudentRead | null>(
     null
   );
@@ -76,6 +77,7 @@ export default function Students() {
       debouncedSearch,
       statusFilter,
       groupFilter,
+      archiveYearFilter,
     ],
     queryFn: () =>
       studentService.getStudents({
@@ -84,6 +86,7 @@ export default function Students() {
         search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         group_id: groupFilter ? parseInt(groupFilter, 10) : undefined,
+        archive_year: archiveYearFilter ? parseInt(archiveYearFilter, 10) : undefined,
       }),
   });
 
@@ -160,9 +163,10 @@ export default function Students() {
     setSearch("");
     setStatusFilter("");
     setGroupFilter("");
+    setArchiveYearFilter("");
   };
 
-  const hasActiveFilters = search || statusFilter || groupFilter;
+  const hasActiveFilters = search || statusFilter || groupFilter || archiveYearFilter;
 
   const handleExport = () => {
     try {
@@ -400,6 +404,15 @@ export default function Students() {
                     </option>
                   ))}
                 </Select>
+                <Input
+                  type="number"
+                  placeholder={t("archiveYear") || "Arxiv yili"}
+                  value={archiveYearFilter}
+                  onChange={(e) => setArchiveYearFilter(e.target.value)}
+                  className="w-full sm:w-40"
+                  min="2020"
+                  max="2050"
+                />
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>
                     <X className="w-4 h-4" />
@@ -429,6 +442,11 @@ export default function Students() {
                         (g) => g.id.toString() === groupFilter
                       )?.name
                     }
+                  </Badge>
+                )}
+                {archiveYearFilter && (
+                  <Badge variant="secondary">
+                    {t("archiveYear") || "Arxiv yili"}: {archiveYearFilter}
                   </Badge>
                 )}
               </div>
