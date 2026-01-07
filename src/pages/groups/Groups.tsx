@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
   ChevronRight,
   Loader2,
   UserCheck,
+  FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -37,6 +39,7 @@ function GroupCard({
   onEdit,
   onDelete,
   onOpenDetails,
+  onViewContracts,
   t,
 }: {
   group: GroupRead;
@@ -44,6 +47,7 @@ function GroupCard({
   onEdit: () => void;
   onDelete: () => void;
   onOpenDetails: () => void;
+  onViewContracts: () => void;
   t: any;
 }) {
   // Use student count from group data (no need for extra API calls)
@@ -119,32 +123,46 @@ function GroupCard({
             </p>
           )}
           <div
-            className="flex items-center gap-2 pt-2 border-t border-border"
+            className="flex flex-col gap-2 pt-2 border-t border-border"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="flex-1 gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                {t("edit")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="w-4 h-4" />
+                {t("delete")}
+              </Button>
+            </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                onEdit();
+                onViewContracts();
               }}
-              className="flex-1 gap-2"
+              className="w-full gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <Edit className="w-4 h-4" />
-              {t("edit")}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <Trash2 className="w-4 h-4" />
-              {t("delete")}
+              <FileText className="w-4 h-4" />
+              {t("viewContracts") || "Shartnomalarni ko'rish"}
             </Button>
           </div>
         </CardContent>
@@ -155,6 +173,7 @@ function GroupCard({
 
 export default function Groups() {
   const { t } = useLanguageStore();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
@@ -235,6 +254,10 @@ export default function Groups() {
     if (confirm(message.replace("{{name}}", group.name))) {
       deleteMutation.mutate(group.id);
     }
+  };
+
+  const handleViewContracts = (group: GroupRead) => {
+    navigate(`/contracts?group_id=${group.id}`);
   };
 
   const getCoachName = (coachId: number) => {
@@ -331,6 +354,7 @@ export default function Groups() {
                         onEdit={() => handleOpenDialog(group)}
                         onDelete={() => handleDelete(group)}
                         onOpenDetails={() => handleOpenDetailsDialog(group)}
+                        onViewContracts={() => handleViewContracts(group)}
                         t={t}
                       />
                     ))}

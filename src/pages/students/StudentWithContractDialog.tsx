@@ -224,12 +224,28 @@ export function StudentWithContractDialog({
 
 const handleViewContract = () => {
   if (!pdfUrl) {
-    toast.error(t("pdfNotFound"));
+    toast.error(t("pdfNotFound") || "PDF topilmadi");
     return;
   }
 
-  window.open(pdfUrl, "_blank");
-  handleClose();
+  try {
+    // If pdfUrl is a blob URL, open it directly
+    if (pdfUrl.startsWith('blob:')) {
+      window.open(pdfUrl, "_blank");
+    } else {
+      // If it's a regular URL, open it
+      window.open(pdfUrl, "_blank");
+    }
+    toast.success(t("contractOpened") || "Shartnoma ochildi");
+  } catch (error) {
+    console.error("Error opening contract:", error);
+    toast.error(t("errorOpeningContract") || "Shartnomani ochishda xatolik");
+  } finally {
+    // Don't close the dialog immediately, let user decide
+    setTimeout(() => {
+      handleClose();
+    }, 1000);
+  }
 };
 
 
@@ -628,8 +644,17 @@ const handleViewContract = () => {
               <div className="space-y-1">
                 <Label>{t("phoneNumber")} *</Label>
                 <Input
-                  {...register("phone", { required: true })}
+                  {...register("phone", {
+                    required: true,
+                    onChange: (e) => {
+                      const value = e.target.value;
+                      if (!value.startsWith('+998')) {
+                        e.target.value = '+998' + value.replace(/^\+998/, '');
+                      }
+                    }
+                  })}
                   placeholder="+998901234567"
+                  defaultValue="+998"
                 />
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1">
@@ -769,7 +794,8 @@ const handleViewContract = () => {
                 <Input
                   type="number"
                   {...register("tolov_monthly_fee", { required: true })}
-                  placeholder="800,000 ming"
+                  placeholder="800000"
+                  defaultValue="800000"
                 />
               </div>
               <div className="space-y-1">
@@ -777,6 +803,7 @@ const handleViewContract = () => {
                 <Input
                   {...register("tolov_amount_in_words", { required: true })}
                   placeholder="sakkiz yuz ming"
+                  defaultValue="sakkiz yuz ming"
                 />
               </div>
             </div>

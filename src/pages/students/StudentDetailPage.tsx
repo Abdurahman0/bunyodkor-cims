@@ -93,8 +93,14 @@ export default function StudentDetailPage() {
     mutationFn: () => studentService.hardDeleteStudent(studentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
       toast.success(t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi");
-      navigate("/students");
+      setIsHardDeleteDialogOpen(false);
+      // Navigate after a brief delay to ensure toast is visible
+      setTimeout(() => {
+        navigate("/students", { replace: true });
+      }, 500);
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
@@ -291,7 +297,7 @@ export default function StudentDetailPage() {
             >
               <Trash2 className="w-4 h-4" />
               <span className="whitespace-nowrap">
-                {t("permanentlyDelete") || "Butunlay o'chirish"}
+                Permanently Delete
               </span>
             </Button>
           </div>

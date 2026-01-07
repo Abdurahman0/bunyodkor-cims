@@ -832,6 +832,8 @@ export const groupService = {
 export interface GetContractsParams {
   status?: string;
   student_id?: number;
+  group_id?: number;
+  contract_id?: number;
   contract_number?: string;
   page?: number;
   page_size?: number;

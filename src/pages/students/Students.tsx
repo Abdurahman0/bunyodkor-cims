@@ -509,6 +509,15 @@ export default function Students() {
                           <p className="text-sm text-muted-foreground md:hidden truncate">
                             {student.phone}
                           </p>
+                          {student.created_at && (
+                            <p className="text-xs text-muted-foreground/70 truncate">
+                              {new Date(student.created_at).toLocaleDateString("uz-UZ", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric"
+                              })}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </TableCell>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
   TableCell,
   TableEmpty,
 } from "@/components/ui/table";
-import { contractService, studentService } from "@/services/api.service";
+import { contractService, studentService, groupService } from "@/services/api.service";
 import {
   Plus,
   Search,
@@ -41,31 +41,56 @@ import { ContractDialog } from "./ContractDialog";
 
 export default function Contracts() {
   const { t } = useLanguageStore();
+  const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState<number | undefined>(undefined);
+  const [contractIdFilter, setContractIdFilter] = useState<number | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<ContractRead | null>(
     null
   );
   const queryClient = useQueryClient();
 
+  // Read group_id and contract_id from URL parameters
+  useEffect(() => {
+    const groupId = searchParams.get("group_id");
+    if (groupId) {
+      setGroupFilter(parseInt(groupId, 10));
+    }
+
+    const contractId = searchParams.get("contract_id");
+    if (contractId) {
+      setContractIdFilter(parseInt(contractId, 10));
+    }
+  }, [searchParams]);
+
   const debouncedSearch = useDebounce(search, 500);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["contracts", page, debouncedSearch, statusFilter],
+    queryKey: ["contracts", page, debouncedSearch, statusFilter, groupFilter, contractIdFilter],
     queryFn: () =>
       contractService.getContracts({
         page,
         page_size: 10,
         contract_number: debouncedSearch || undefined,
         status: statusFilter || undefined,
+        group_id: groupFilter,
+        contract_id: contractIdFilter,
       }),
   });
 
   const { data: studentsData } = useQuery({
     queryKey: ["students-list"],
     queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }), // Fetch students (max allowed by API)
+  });
+
+  // Fetch group details if filtering by group
+  const { data: groupData } = useQuery({
+    queryKey: ["group", groupFilter],
+    queryFn: () => groupService.getGroup(groupFilter!),
+    enabled: !!groupFilter,
   });
 
   const deleteMutation = useMutation({
@@ -164,10 +189,12 @@ export default function Contracts() {
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("");
+    setGroupFilter(undefined);
+    setContractIdFilter(undefined);
     setPage(1);
   };
 
-  const hasActiveFilters = search || statusFilter;
+  const hasActiveFilters = search || statusFilter || groupFilter || contractIdFilter;
 
   // --- Pagination Logic ---
   const totalPages = data?.meta?.total_pages || 1;
@@ -265,6 +292,43 @@ export default function Contracts() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {groupFilter && groupData?.data && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50">
+                    <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      {t("filteringByGroup") || "Guruh bo'yicha filtrlangan"}
+                    </p>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      {groupData.data.name}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  {t("clearFilter") || "Filtrni tozalash"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ opacity: 0 }}
