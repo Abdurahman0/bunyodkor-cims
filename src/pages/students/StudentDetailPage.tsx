@@ -264,10 +264,10 @@ export default function StudentDetailPage() {
   const displayParents = getDisplayParents();
 
   // Separate parents and guardians
-  const parents = displayParents.filter((p) =>
+  const parentsList = displayParents.filter((p) =>
     p.relationship_type === "Ota" || p.relationship_type === "Ona"
   );
-  const guardians = displayParents.filter((p) =>
+  const guardiansList = displayParents.filter((p) =>
     p.relationship_type !== "Ota" && p.relationship_type !== "Ona"
   );
 
@@ -424,10 +424,10 @@ export default function StudentDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {parents.length > 0 ? (
+            {parentsList.length > 0 ? (
               <div className="space-y-3">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {parents.map((parent: ParentRead | any, index) => (
+                {parentsList.map((parent: ParentRead | any, index) => (
                   <div
                     key={parent.id || index}
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-muted/50 gap-2"
@@ -477,7 +477,7 @@ export default function StudentDetailPage() {
         </Card>
 
         {/* GUARDIANS SECTION */}
-        {guardians.length > 0 && (
+        {guardiansList.length > 0 && (
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -487,7 +487,7 @@ export default function StudentDetailPage() {
             <CardContent>
               <div className="space-y-3">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {guardians.map((guardian: ParentRead | any, index) => (
+                {guardiansList.map((guardian: ParentRead | any, index) => (
                   <div
                     key={guardian.id || index}
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 gap-2"
