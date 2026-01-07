@@ -631,12 +631,14 @@ const handleViewContract = () => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
-          {/* 1. TIZIM MA'LUMOTLARI */}
-          <div className="space-y-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200">
-            <h3 className="font-bold text-blue-800 dark:text-blue-200 text-lg border-b border-blue-200 pb-2 mb-4">
-              1. {t("systemStudentInfo")}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 1. TIZIM MA'LUMOTLARI VA TARBIYALANUVCHI HUJJATLARI */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* TIZIM MA'LUMOTLARI */}
+            <div className="space-y-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200">
+              <h3 className="font-bold text-blue-800 dark:text-blue-200 text-lg border-b border-blue-200 pb-2 mb-4">
+                1. {t("systemStudentInfo")}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>{t("firstName")} *</Label>
                 <Input
@@ -698,6 +700,51 @@ const handleViewContract = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+            </div>
+
+            {/* TARBIYALANUVCHI HUJJATLARI */}
+            <div className="space-y-4 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200">
+              <h3 className="font-bold text-purple-800 dark:text-purple-200 text-lg border-b border-purple-200 pb-2 mb-4">
+                {t("traineeDocuments")}
+              </h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>{t("certificateSeries")}</Label>
+                    <Input
+                      {...register("tarbiyalanuvchi_birth_series_number")}
+                      placeholder="I-AA 1234567"
+                    />
+                  </div>
+                  <div>
+                    <Label>{t("birthYear")}</Label>
+                    <Input
+                      {...register("tarbiyalanuvchi_birth_year")}
+                      placeholder="2012"
+                      onFocus={() => {
+                        if (birthYear && !watch("tarbiyalanuvchi_birth_year")) {
+                          setValue("tarbiyalanuvchi_birth_year", birthYear);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>{t("issuedBy")}</Label>
+                  <Input
+                    {...register("tarbiyalanuvchi_who_give")}
+                    placeholder="FHDY nomi"
+                  />
+                </div>
+                <div>
+                  <Label>{t("issuedDate")}</Label>
+                  <Input
+                    type="date"
+                    {...register("tarbiyalanuvchi_when_give")}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -885,53 +932,8 @@ const handleViewContract = () => {
               </div>
             </div>
 
-            {/* TARBIYALANUVCHI VA BUYURTMACHI */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-green-200 pt-6 mt-4">
-              {/* TARBIYALANUVCHI HUJJATLARI (birinchi) */}
-              <div className="space-y-3">
-                <h4 className="font-semibold mb-2 text-green-800">
-                  {t("traineeDocuments")}
-                </h4>
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label>{t("certificateSeries")}</Label>
-                      <Input
-                        {...register("tarbiyalanuvchi_birth_series_number")}
-                        placeholder="I-AA 1234567"
-                      />
-                    </div>
-                    <div>
-                      <Label>{t("birthYear")}</Label>
-                      <Input
-                        {...register("tarbiyalanuvchi_birth_year")}
-                        placeholder="2012"
-                        onFocus={() => {
-                          if (birthYear && !watch("tarbiyalanuvchi_birth_year")) {
-                            setValue("tarbiyalanuvchi_birth_year", birthYear);
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>{t("issuedBy")}</Label>
-                    <Input
-                      {...register("tarbiyalanuvchi_who_give")}
-                      placeholder="FHDY nomi"
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("issuedDate")}</Label>
-                    <Input
-                      type="date"
-                      {...register("tarbiyalanuvchi_when_give")}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* BUYURTMACHI (ikkinchi) */}
+            {/* BUYURTMACHI */}
+            <div className="border-t border-green-200 pt-6 mt-4">
               <div className="space-y-3">
                 <h4 className="font-semibold mb-2 text-green-800">
                   {t("customer")}

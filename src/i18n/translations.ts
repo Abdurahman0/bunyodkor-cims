@@ -762,6 +762,9 @@ export const translations = {
     viewContract: 'View Contract',
     selectGroupPlaceholder: 'Select a group',
     confirmDeleteStudent: 'Are you sure you want to delete',
+    viewStudents: 'View Students',
+    groupStudents: 'Group Students',
+    noStudentsInGroup: 'No students in this group',
   },
 
   uz: {
@@ -1527,6 +1530,9 @@ export const translations = {
     viewContract: 'Shartnomani Ko\'rish',
     selectGroupPlaceholder: 'Guruhni tanlang',
     confirmDeleteStudent: 'Rostdan ham o\'chirmoqchimisiz',
+    viewStudents: 'Talabalarni Ko\'rish',
+    groupStudents: 'Guruh Talabalari',
+    noStudentsInGroup: 'Guruhda talabalar yo\'q',
   },
 
   ru: {
@@ -2293,6 +2299,9 @@ export const translations = {
     viewContract: 'Просмотреть Контракт',
     selectGroupPlaceholder: 'Выберите группу',
     confirmDeleteStudent: 'Вы уверены, что хотите удалить',
+    viewStudents: 'Просмотр Студентов',
+    groupStudents: 'Студенты Группы',
+    noStudentsInGroup: 'В группе нет студентов',
   },
 }
 

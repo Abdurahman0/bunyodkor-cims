@@ -7,7 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { groupService, userService } from "@/services/api.service";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import { groupService, userService, studentService } from "@/services/api.service";
 import {
   Plus,
   Search,
@@ -28,7 +42,7 @@ import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { GroupRead, UserRead } from "@/types/api";
+import type { GroupRead, UserRead, StudentRead } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 
@@ -165,7 +179,7 @@ function GroupCard({
                 className="flex-1 gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
               >
                 <Users className="w-4 h-4" />
-                {t("students") || "Talabalar"}
+                {t("viewStudents")}
               </Button>
               <Button
                 variant="outline"
@@ -193,7 +207,9 @@ export default function Groups() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupRead | null>(null);
+  const [selectedGroupForStudents, setSelectedGroupForStudents] = useState<GroupRead | null>(null);
   const queryClient = useQueryClient();
 
   const debouncedSearch = useDebounce(search, 500);
@@ -228,6 +244,18 @@ export default function Groups() {
   const { data: coachesData } = useQuery({
     queryKey: ["coaches"],
     queryFn: () => userService.getCoaches(),
+  });
+
+  // Fetch students for selected group
+  const { data: groupStudentsData, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ["group-students", selectedGroupForStudents?.id],
+    queryFn: () =>
+      studentService.getStudents({
+        group_id: selectedGroupForStudents!.id,
+        page: 1,
+        page_size: 100,
+      }),
+    enabled: !!selectedGroupForStudents,
   });
 
   const deleteMutation = useMutation({
@@ -277,7 +305,8 @@ export default function Groups() {
   };
 
   const handleViewStudents = (group: GroupRead) => {
-    navigate(`/students?group_id=${group.id}`);
+    setSelectedGroupForStudents(group);
+    setIsStudentsDialogOpen(true);
   };
 
   const getCoachName = (coachId: number) => {
@@ -419,6 +448,94 @@ export default function Groups() {
           group={selectedGroup}
         />
       )}
+
+      {/* Students Dialog */}
+      <Dialog open={isStudentsDialogOpen} onOpenChange={setIsStudentsDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              {selectedGroupForStudents?.name} - {t("groupStudents")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {isLoadingStudents ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : groupStudentsData?.data && groupStudentsData.data.length > 0 ? (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("student") || "Talaba"}</TableHead>
+                      <TableHead>{t("phone") || "Telefon"}</TableHead>
+                      <TableHead>{t("birthYear")}</TableHead>
+                      <TableHead>{t("address")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {groupStudentsData.data.map((student: StudentRead) => (
+                      <TableRow
+                        key={student.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => {
+                          navigate(`/students/${student.id}`);
+                          setIsStudentsDialogOpen(false);
+                        }}
+                      >
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+                              {student.first_name?.[0]}
+                              {student.last_name?.[0]}
+                            </div>
+                            <div>
+                              {student.first_name} {student.last_name}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{student.phone}</TableCell>
+                        <TableCell>
+                          {student.date_of_birth
+                            ? new Date(student.date_of_birth).getFullYear()
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {student.address || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              student.status === "active"
+                                ? "default"
+                                : student.status === "inactive"
+                                ? "secondary"
+                                : "destructive"
+                            }
+                          >
+                            {student.status === "active"
+                              ? t("active")
+                              : student.status === "inactive"
+                              ? t("inactive")
+                              : t("archived")}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>{t("noStudentsInGroup") || "Guruhda talabalar yo'q"}</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
