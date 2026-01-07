@@ -21,7 +21,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { groupService, userService, studentService } from "@/services/api.service";
+import { groupService, userService, studentService, contractService } from "@/services/api.service";
 import {
   Plus,
   Search,
@@ -37,12 +37,13 @@ import {
   Loader2,
   UserCheck,
   FileText,
+  CreditCard,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { GroupRead, UserRead, StudentRead } from "@/types/api";
+import type { GroupRead, UserRead, StudentRead, ContractRead } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 
@@ -191,7 +192,7 @@ function GroupCard({
                 className="flex-1 gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
                 <FileText className="w-4 h-4" />
-                {t("viewContracts") || "Shartnomalar"}
+                {t("viewContracts")}
               </Button>
             </div>
           </div>
@@ -208,8 +209,10 @@ export default function Groups() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
+  const [isContractsDialogOpen, setIsContractsDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupRead | null>(null);
   const [selectedGroupForStudents, setSelectedGroupForStudents] = useState<GroupRead | null>(null);
+  const [selectedGroupForContracts, setSelectedGroupForContracts] = useState<GroupRead | null>(null);
   const queryClient = useQueryClient();
 
   const debouncedSearch = useDebounce(search, 500);
@@ -258,6 +261,18 @@ export default function Groups() {
     enabled: !!selectedGroupForStudents,
   });
 
+  // Fetch contracts for selected group
+  const { data: groupContractsData, isLoading: isLoadingContracts } = useQuery({
+    queryKey: ["group-contracts", selectedGroupForContracts?.id],
+    queryFn: () =>
+      contractService.getContracts({
+        group_id: selectedGroupForContracts!.id,
+        page: 1,
+        page_size: 100,
+      }),
+    enabled: !!selectedGroupForContracts,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => groupService.deleteGroup(id),
     onSuccess: () => {
@@ -301,7 +316,8 @@ export default function Groups() {
   };
 
   const handleViewContracts = (group: GroupRead) => {
-    navigate(`/contracts?group_id=${group.id}`);
+    setSelectedGroupForContracts(group);
+    setIsContractsDialogOpen(true);
   };
 
   const handleViewStudents = (group: GroupRead) => {
@@ -531,6 +547,94 @@ export default function Groups() {
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p>{t("noStudentsInGroup") || "Guruhda talabalar yo'q"}</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contracts Dialog */}
+      <Dialog open={isContractsDialogOpen} onOpenChange={setIsContractsDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              {selectedGroupForContracts?.name} - {t("contracts")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {isLoadingContracts ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : groupContractsData?.data && groupContractsData.data.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {groupContractsData.data.map((contract: ContractRead) => (
+                  <Card
+                    key={contract.id}
+                    className="hover:shadow-lg transition-all duration-200 cursor-pointer border-border/50 hover:border-border"
+                    onClick={() => {
+                      navigate(`/contracts?contract_id=${contract.id}`);
+                      setIsContractsDialogOpen(false);
+                    }}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                            <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">
+                              {contract.contract_number}
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {contract.student_fio || t("noStudentName")}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge
+                          variant={
+                            contract.status === "active"
+                              ? "default"
+                              : contract.status === "expired"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
+                          {contract.status === "active"
+                            ? t("active")
+                            : contract.status === "expired"
+                            ? t("expired")
+                            : t("cancelled")}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-foreground">
+                          {contract.contract_start_date && contract.contract_end_date
+                            ? `${new Date(contract.contract_start_date).toLocaleDateString()} - ${new Date(contract.contract_end_date).toLocaleDateString()}`
+                            : t("noDates")}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <CreditCard className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium text-foreground">
+                          {contract.tolov_monthly_fee
+                            ? `${Number(contract.tolov_monthly_fee).toLocaleString()} UZS`
+                            : t("noFee")}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>{t("noContractsInGroup") || "Guruhda shartnomalar yo'q"}</p>
               </div>
             )}
           </div>
