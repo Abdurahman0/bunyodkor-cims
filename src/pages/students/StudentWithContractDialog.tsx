@@ -136,7 +136,12 @@ export function StudentWithContractDialog({
     setValue,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     formState: { errors },
-  } = useForm<StudentFormData>();
+  } = useForm<StudentFormData>({
+    defaultValues: {
+      tolov_monthly_fee: "800000",
+      tolov_amount_in_words: "sakkiz yuz ming",
+    },
+  });
 
   const selectedGroupId = watch("group_id");
   const birthYear = watch("birth_year");
@@ -339,8 +344,8 @@ const handleViewContract = () => {
         tarbiyalanuvchi_birth_year: "",
         tarbiyalanuvchi_who_give: "",
         tarbiyalanuvchi_when_give: "",
-        tolov_monthly_fee: "",
-        tolov_amount_in_words: "",
+        tolov_monthly_fee: "800000",
+        tolov_amount_in_words: "sakkiz yuz ming",
       });
     }
   }, [open, reset]);
@@ -866,7 +871,6 @@ const handleViewContract = () => {
                   type="number"
                   {...register("tolov_monthly_fee", { required: true })}
                   placeholder="800000"
-                  defaultValue="800000"
                 />
               </div>
               <div className="space-y-1">
@@ -874,7 +878,6 @@ const handleViewContract = () => {
                 <Input
                   {...register("tolov_amount_in_words", { required: true })}
                   placeholder="sakkiz yuz ming"
-                  defaultValue="sakkiz yuz ming"
                 />
               </div>
             </div>

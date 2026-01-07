@@ -477,14 +477,14 @@ export default function StudentDetailPage() {
         </Card>
 
         {/* GUARDIANS SECTION */}
-        {guardiansList.length > 0 && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" /> {t("guardian") || "Vasiy"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" /> {t("guardian") || "Vasiy"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {guardiansList.length > 0 ? (
               <div className="space-y-3">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {guardiansList.map((guardian: ParentRead | any, index) => (
@@ -527,9 +527,14 @@ export default function StudentDetailPage() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <User className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p>{t("noGuardianInfo") || "Vasiy ma'lumoti yo'q"}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
