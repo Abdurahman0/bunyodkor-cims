@@ -466,7 +466,10 @@ export default function Groups() {
 
       {/* Students Dialog */}
       <Dialog open={isStudentsDialogOpen} onOpenChange={setIsStudentsDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+        <DialogContent
+          className="max-w-5xl max-h-[80vh] overflow-y-auto"
+          onClose={() => setIsStudentsDialogOpen(false)}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -554,7 +557,10 @@ export default function Groups() {
 
       {/* Contracts Dialog */}
       <Dialog open={isContractsDialogOpen} onOpenChange={setIsContractsDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+        <DialogContent
+          className="max-w-5xl max-h-[80vh] overflow-y-auto"
+          onClose={() => setIsContractsDialogOpen(false)}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
@@ -613,16 +619,16 @@ export default function Groups() {
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-foreground">
-                          {contract.contract_start_date && contract.contract_end_date
-                            ? `${new Date(contract.contract_start_date).toLocaleDateString()} - ${new Date(contract.contract_end_date).toLocaleDateString()}`
+                          {contract.start_date && contract.end_date
+                            ? `${new Date(contract.start_date).toLocaleDateString()} - ${new Date(contract.end_date).toLocaleDateString()}`
                             : t("noDates")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <CreditCard className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium text-foreground">
-                          {contract.tolov_monthly_fee
-                            ? `${Number(contract.tolov_monthly_fee).toLocaleString()} UZS`
+                          {contract.monthly_fee
+                            ? `${Number(contract.monthly_fee).toLocaleString()} UZS`
                             : t("noFee")}
                         </span>
                       </div>
