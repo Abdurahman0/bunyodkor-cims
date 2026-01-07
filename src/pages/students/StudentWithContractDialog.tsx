@@ -144,6 +144,11 @@ export function StudentWithContractDialog({
   const dateOfBirth = watch("date_of_birth");
   const [customerType, setCustomerType] = useState<"father" | "mother" | "other">("other");
 
+  // Watch name fields for auto-fill
+  const firstName = watch("first_name");
+  const lastName = watch("last_name");
+  const middleName = watch("middle_name");
+
   // Watch parent fields for auto-fill
   const dadName = watch("dad_name");
   const dadPhone = watch("dad_phone");
@@ -166,6 +171,18 @@ export function StudentWithContractDialog({
       }
     }
   }, [dateOfBirth, setValue]);
+
+  // Auto-fill student full name (F.I.SH)
+  useEffect(() => {
+    if (firstName || lastName || middleName) {
+      const fullName = [lastName, firstName, middleName]
+        .filter(Boolean)
+        .join(" ");
+      if (fullName.trim()) {
+        setValue("student_fio", fullName);
+      }
+    }
+  }, [firstName, lastName, middleName, setValue]);
 
   // Guruh tanlanganda shartnoma raqamini taklif qilish va bo'sh raqamlarni olish
   useEffect(() => {
@@ -635,6 +652,13 @@ const handleViewContract = () => {
                 />
               </div>
               <div className="space-y-1">
+                <Label>{t("middleName") || "Sharif"}</Label>
+                <Input
+                  {...register("middle_name")}
+                  placeholder={t("middleName") || "Otasining ismi"}
+                />
+              </div>
+              <div className="space-y-1">
                 <Label>{t("dateOfBirth")} *</Label>
                 <Input
                   type="date"
@@ -861,15 +885,60 @@ const handleViewContract = () => {
               </div>
             </div>
 
-            {/* BUYURTMACHI VA TARBIYALANUVCHI */}
+            {/* TARBIYALANUVCHI VA BUYURTMACHI */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-green-200 pt-6 mt-4">
+              {/* TARBIYALANUVCHI HUJJATLARI (birinchi) */}
+              <div className="space-y-3">
+                <h4 className="font-semibold mb-2 text-green-800">
+                  {t("traineeDocuments")}
+                </h4>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label>{t("certificateSeries")}</Label>
+                      <Input
+                        {...register("tarbiyalanuvchi_birth_series_number")}
+                        placeholder="I-AA 1234567"
+                      />
+                    </div>
+                    <div>
+                      <Label>{t("birthYear")}</Label>
+                      <Input
+                        {...register("tarbiyalanuvchi_birth_year")}
+                        placeholder="2012"
+                        onFocus={() => {
+                          if (birthYear && !watch("tarbiyalanuvchi_birth_year")) {
+                            setValue("tarbiyalanuvchi_birth_year", birthYear);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>{t("issuedBy")}</Label>
+                    <Input
+                      {...register("tarbiyalanuvchi_who_give")}
+                      placeholder="FHDY nomi"
+                    />
+                  </div>
+                  <div>
+                    <Label>{t("issuedDate")}</Label>
+                    <Input
+                      type="date"
+                      {...register("tarbiyalanuvchi_when_give")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* BUYURTMACHI (ikkinchi) */}
               <div className="space-y-3">
                 <h4 className="font-semibold mb-2 text-green-800">
                   {t("customer")}
                 </h4>
                 <div className="space-y-2">
                   <div>
-                    <Label>{t("customerType") || "Buyurtmachi kim?"} *</Label>
+                    <Label>{t("customerType")} *</Label>
                     <select
                       value={customerType}
                       onChange={(e) => handleCustomerTypeChange(e.target.value as "father" | "mother" | "other")}
@@ -953,49 +1022,6 @@ const handleViewContract = () => {
                           copyAddressToField("buyurtmachi_address");
                         }
                       }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="font-semibold mb-2 text-green-800">
-                  {t("traineeDocuments")}
-                </h4>
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label>{t("certificateSeries")}</Label>
-                      <Input
-                        {...register("tarbiyalanuvchi_birth_series_number")}
-                        placeholder="I-AA 1234567"
-                      />
-                    </div>
-                    <div>
-                      <Label>{t("birthYear")}</Label>
-                      <Input
-                        {...register("tarbiyalanuvchi_birth_year")}
-                        placeholder="2012"
-                        onFocus={() => {
-                          if (birthYear && !watch("tarbiyalanuvchi_birth_year")) {
-                            setValue("tarbiyalanuvchi_birth_year", birthYear);
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>{t("issuedBy")}</Label>
-                    <Input
-                      {...register("tarbiyalanuvchi_who_give")}
-                      placeholder="FHDY nomi"
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("issuedDate")}</Label>
-                    <Input
-                      type="date"
-                      {...register("tarbiyalanuvchi_when_give")}
                     />
                   </div>
                 </div>

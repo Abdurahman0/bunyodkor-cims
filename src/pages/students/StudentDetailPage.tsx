@@ -263,6 +263,14 @@ export default function StudentDetailPage() {
 
   const displayParents = getDisplayParents();
 
+  // Separate parents and guardians
+  const parents = displayParents.filter((p) =>
+    p.relationship_type === "Ota" || p.relationship_type === "Ona"
+  );
+  const guardians = displayParents.filter((p) =>
+    p.relationship_type !== "Ota" && p.relationship_type !== "Ona"
+  );
+
   return (
     <div className="space-y-6">
       <Link
@@ -297,7 +305,7 @@ export default function StudentDetailPage() {
             >
               <Trash2 className="w-4 h-4" />
               <span className="whitespace-nowrap">
-                Permanently Delete
+                {t("permanentlyDelete")}
               </span>
             </Button>
           </div>
@@ -408,31 +416,31 @@ export default function StudentDetailPage() {
           </CardContent>
         </Card>
 
-        {/* PARENTS / GUARDIANS SECTION */}
+        {/* PARENTS SECTION */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" /> {t("parentsGuardians")}
+              <Users className="w-5 h-5" /> {t("parents") || "Ota-onalar"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {displayParents.length > 0 ? (
+            {parents.length > 0 ? (
               <div className="space-y-3">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {displayParents.map((parent: ParentRead | any, index) => (
+                {parents.map((parent: ParentRead | any, index) => (
                   <div
                     key={parent.id || index}
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-muted/50 gap-2"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-full bg-blue-100 text-blue-600 mt-1">
+                      <div className="p-2 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 mt-1">
                         <User className="w-4 h-4" />
                       </div>
                       <div>
                         <p className="font-medium text-lg">
                           {parent.first_name} {parent.last_name}
                         </p>
-                        <p className="text-sm text-blue-600 font-medium">
+                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
                           {parent.relationship_type}
                         </p>
                         {parent.email && (
@@ -443,7 +451,7 @@ export default function StudentDetailPage() {
                         {parent.is_from_contract && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] mt-1 h-5 ml-2"
+                            className="text-[10px] mt-1 h-5"
                           >
                             {t("fromContract")}
                           </Badge>
@@ -462,11 +470,66 @@ export default function StudentDetailPage() {
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("noParentInfo")}</p>
+                <p>{t("noParentInfo") || "Ota-ona ma'lumoti yo'q"}</p>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* GUARDIANS SECTION */}
+        {guardians.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" /> {t("guardian") || "Vasiy"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {guardians.map((guardian: ParentRead | any, index) => (
+                  <div
+                    key={guardian.id || index}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 gap-2"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 mt-1">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-lg">
+                          {guardian.first_name} {guardian.last_name}
+                        </p>
+                        <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                          {guardian.relationship_type}
+                        </p>
+                        {guardian.email && (
+                          <p className="text-sm text-muted-foreground">
+                            {guardian.email}
+                          </p>
+                        )}
+                        {guardian.is_from_contract && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] mt-1 h-5"
+                          >
+                            {t("fromContract")}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-sm flex items-center gap-2 bg-background dark:bg-muted/30 px-3 py-1.5 rounded border">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-mono text-foreground">
+                        {guardian.phone || t("noPhone")}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card>

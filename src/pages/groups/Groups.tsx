@@ -40,6 +40,7 @@ function GroupCard({
   onDelete,
   onOpenDetails,
   onViewContracts,
+  onViewStudents,
   t,
 }: {
   group: GroupRead;
@@ -48,6 +49,7 @@ function GroupCard({
   onDelete: () => void;
   onOpenDetails: () => void;
   onViewContracts: () => void;
+  onViewStudents: () => void;
   t: any;
 }) {
   // Use student count from group data (no need for extra API calls)
@@ -152,18 +154,32 @@ function GroupCard({
                 {t("delete")}
               </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewContracts();
-              }}
-              className="w-full gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            >
-              <FileText className="w-4 h-4" />
-              {t("viewContracts") || "Shartnomalarni ko'rish"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewStudents();
+                }}
+                className="flex-1 gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+              >
+                <Users className="w-4 h-4" />
+                {t("students") || "Talabalar"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewContracts();
+                }}
+                className="flex-1 gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <FileText className="w-4 h-4" />
+                {t("viewContracts") || "Shartnomalar"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -258,6 +274,10 @@ export default function Groups() {
 
   const handleViewContracts = (group: GroupRead) => {
     navigate(`/contracts?group_id=${group.id}`);
+  };
+
+  const handleViewStudents = (group: GroupRead) => {
+    navigate(`/students?group_id=${group.id}`);
   };
 
   const getCoachName = (coachId: number) => {
@@ -355,6 +375,7 @@ export default function Groups() {
                         onDelete={() => handleDelete(group)}
                         onOpenDetails={() => handleOpenDetailsDialog(group)}
                         onViewContracts={() => handleViewContracts(group)}
+                        onViewStudents={() => handleViewStudents(group)}
                         t={t}
                       />
                     ))}
