@@ -253,12 +253,8 @@ export default function Groups() {
   const { data: groupStudentsData, isLoading: isLoadingStudents } = useQuery({
     queryKey: ["group-students", selectedGroupForStudents?.id],
     queryFn: () =>
-      studentService.getStudents({
-        group_id: selectedGroupForStudents!.id,
-        page: 1,
-        page_size: 100,
-        status: "active",
-      }),
+      selectedGroupForStudents &&
+      groupService.getGroupStudents(selectedGroupForStudents.id).then((res) => res.data),
     enabled: !!selectedGroupForStudents,
   });
 
@@ -511,8 +507,8 @@ export default function Groups() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {groupStudentsData?.data && groupStudentsData.data.length > 0 ? (
-                      groupStudentsData.data.map((student: StudentRead) => (
+                    {groupStudentsData && groupStudentsData.length > 0 ? (
+                      groupStudentsData.map((student: StudentRead) => (
                         <TableRow
                           key={student.id}
                           className="cursor-pointer hover:bg-muted/50"
