@@ -256,7 +256,8 @@ export default function Groups() {
       studentService.getStudents({
         group_id: selectedGroupForStudents!.id,
         page: 1,
-        page_size: 100,
+        page_size: 1000,
+        status: "active",
       }),
     enabled: !!selectedGroupForStudents,
   });
@@ -272,13 +273,23 @@ export default function Groups() {
     enabled: !!selectedGroupForContracts,
   });
 
+  // Fetch students for contracts (to show student names)
+  const { data: studentsForContracts } = useQuery({
+    queryKey: ["students-for-contracts", selectedGroupForContracts?.id],
+    queryFn: () =>
+      studentService.getStudents({
+        group_id: selectedGroupForContracts!.id,
+        page: 1,
+        page_size: 100,
+      }),
+    enabled: !!selectedGroupForContracts,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => groupService.deleteGroup(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups-grouped-by-year"] });
-      toast.success(
-        t("groupDeletedSuccess" as any) || "Group deleted successfully"
-      );
+      toast.success(t("groupDeletedSuccess"));
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
@@ -327,6 +338,12 @@ export default function Groups() {
   const getCoachName = (coachId: number) => {
     const coach = coachesData?.data?.find((c) => c.id === coachId);
     return coach ? coach.full_name : `ID: ${coachId}`;
+  };
+
+  const getStudentName = (studentId: number | null | undefined) => {
+    if (!studentId) return t("noStudentName");
+    const student = studentsForContracts?.data?.find((s: StudentRead) => s.id === studentId);
+    return student ? `${student.first_name} ${student.last_name}` : t("noStudentName");
   };
 
   // --- Handlers for Search ---
@@ -594,7 +611,7 @@ export default function Groups() {
                               {contract.contract_number}
                             </CardTitle>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {contract.student_fio || t("noStudentName")}
+                              {getStudentName(contract.student_id)}
                             </p>
                           </div>
                         </div>

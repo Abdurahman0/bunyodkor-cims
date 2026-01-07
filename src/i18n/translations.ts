@@ -774,6 +774,7 @@ export const translations = {
     mother: 'Mother',
     other: 'Other',
     allGroups: 'All Groups',
+    groupDeletedSuccess: 'Group deleted successfully',
   },
 
   uz: {
@@ -1551,6 +1552,7 @@ export const translations = {
     mother: 'Ona',
     other: 'Boshqa',
     allGroups: 'Barcha guruhlar',
+    groupDeletedSuccess: 'Guruh muvaffaqiyatli o\'chirildi',
   },
 
   ru: {
@@ -2329,6 +2331,7 @@ export const translations = {
     mother: 'Мать',
     other: 'Другой',
     allGroups: 'Все группы',
+    groupDeletedSuccess: 'Группа успешно удалена',
   },
 }
 
