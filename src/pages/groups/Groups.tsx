@@ -256,7 +256,7 @@ export default function Groups() {
       studentService.getStudents({
         group_id: selectedGroupForStudents!.id,
         page: 1,
-        page_size: 1000,
+        page_size: 100,
         status: "active",
       }),
     enabled: !!selectedGroupForStudents,
@@ -498,7 +498,7 @@ export default function Groups() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
-            ) : groupStudentsData?.data && groupStudentsData.data.length > 0 ? (
+            ) : (
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -511,61 +511,65 @@ export default function Groups() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {groupStudentsData.data.map((student: StudentRead) => (
-                      <TableRow
-                        key={student.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => {
-                          navigate(`/students/${student.id}`);
-                          setIsStudentsDialogOpen(false);
-                        }}
-                      >
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
-                              {student.first_name?.[0]}
-                              {student.last_name?.[0]}
+                    {groupStudentsData?.data && groupStudentsData.data.length > 0 ? (
+                      groupStudentsData.data.map((student: StudentRead) => (
+                        <TableRow
+                          key={student.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => {
+                            navigate(`/students/${student.id}`);
+                            setIsStudentsDialogOpen(false);
+                          }}
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+                                {student.first_name?.[0]}
+                                {student.last_name?.[0]}
+                              </div>
+                              <div>
+                                {student.first_name} {student.last_name}
+                              </div>
                             </div>
-                            <div>
-                              {student.first_name} {student.last_name}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{student.phone}</TableCell>
-                        <TableCell>
-                          {student.date_of_birth
-                            ? new Date(student.date_of_birth).getFullYear()
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {student.address || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              student.status === "active"
-                                ? "default"
+                          </TableCell>
+                          <TableCell>{student.phone}</TableCell>
+                          <TableCell>
+                            {student.date_of_birth
+                              ? new Date(student.date_of_birth).getFullYear()
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {student.address || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                student.status === "active"
+                                  ? "default"
+                                  : student.status === "inactive"
+                                  ? "secondary"
+                                  : "destructive"
+                              }
+                            >
+                              {student.status === "active"
+                                ? t("active")
                                 : student.status === "inactive"
-                                ? "secondary"
-                                : "destructive"
-                            }
-                          >
-                            {student.status === "active"
-                              ? t("active")
-                              : student.status === "inactive"
-                              ? t("inactive")
-                              : t("archived")}
-                          </Badge>
+                                ? t("inactive")
+                                : t("archived")}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                          <p>{t("noStudentsInGroup") || "Guruhda talabalar yo'q"}</p>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p>{t("noStudentsInGroup") || "Guruhda talabalar yo'q"}</p>
               </div>
             )}
           </div>
