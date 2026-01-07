@@ -87,6 +87,12 @@ export default function Contracts() {
     queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }), // Fetch students (max allowed by API)
   });
 
+  // Fetch all groups for dropdown
+  const { data: allGroupsData } = useQuery({
+    queryKey: ["groups-list"],
+    queryFn: () => groupService.getGroupsGroupedByYear(),
+  });
+
   // Fetch group details if filtering by group
   const { data: groupData } = useQuery({
     queryKey: ["group", groupFilter],
@@ -272,7 +278,7 @@ export default function Contracts() {
                   </button>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Select
                   value={statusFilter}
                   onChange={handleStatusChange}
@@ -282,6 +288,20 @@ export default function Contracts() {
                   <option value="active">{t("active")}</option>
                   <option value="expired">{t("expired")}</option>
                   <option value="cancelled">{t("cancelled")}</option>
+                </Select>
+                <Select
+                  value={groupFilter?.toString() || ""}
+                  onChange={(e) => setGroupFilter(e.target.value ? parseInt(e.target.value) : undefined)}
+                  className="w-48"
+                >
+                  <option value="">{t("allGroups")}</option>
+                  {allGroupsData?.data?.map((yearGroup: any) =>
+                    yearGroup.groups.map((group: any) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))
+                  )}
                 </Select>
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>

@@ -758,6 +758,21 @@ export const groupService = {
   },
 
   /**
+   * Get contracts for a specific group
+   * GET /groups/{group_id}/contracts
+   */
+  getGroupContracts: async (
+    groupId: number,
+    params?: { status?: string; page?: number; page_size?: number }
+  ): Promise<ApiResponse<ContractRead[]>> => {
+    const response = await apiClient.get<ApiResponse<ContractRead[]>>(
+      `/groups/${groupId}/contracts`,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
    * Delete group
    * DELETE /groups/{group_id}
    */

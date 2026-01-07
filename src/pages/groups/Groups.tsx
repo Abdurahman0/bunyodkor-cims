@@ -143,7 +143,7 @@ function GroupCard({
             className="flex flex-col gap-2 pt-2 border-t border-border"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -151,7 +151,7 @@ function GroupCard({
                   e.stopPropagation();
                   onEdit();
                 }}
-                className="flex-1 gap-2"
+                className="gap-2"
               >
                 <Edit className="w-4 h-4" />
                 {t("edit")}
@@ -163,13 +163,13 @@ function GroupCard({
                   e.stopPropagation();
                   onDelete();
                 }}
-                className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
                 <Trash2 className="w-4 h-4" />
                 {t("delete")}
               </Button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -177,10 +177,10 @@ function GroupCard({
                   e.stopPropagation();
                   onViewStudents();
                 }}
-                className="flex-1 gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                className="gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
               >
                 <Users className="w-4 h-4" />
-                {t("viewStudents")}
+                <span className="truncate">{t("viewStudents")}</span>
               </Button>
               <Button
                 variant="outline"
@@ -189,10 +189,10 @@ function GroupCard({
                   e.stopPropagation();
                   onViewContracts();
                 }}
-                className="flex-1 gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
                 <FileText className="w-4 h-4" />
-                {t("viewContracts")}
+                <span className="truncate">{t("viewContracts")}</span>
               </Button>
             </div>
           </div>
@@ -265,8 +265,7 @@ export default function Groups() {
   const { data: groupContractsData, isLoading: isLoadingContracts } = useQuery({
     queryKey: ["group-contracts", selectedGroupForContracts?.id],
     queryFn: () =>
-      contractService.getContracts({
-        group_id: selectedGroupForContracts!.id,
+      groupService.getGroupContracts(selectedGroupForContracts!.id, {
         page: 1,
         page_size: 100,
       }),

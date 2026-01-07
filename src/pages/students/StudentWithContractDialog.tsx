@@ -900,8 +900,16 @@ const handleViewContract = () => {
                 <div className="space-y-2">
                   <Label>{t("phoneNumber")}</Label>
                   <Input
-                    {...register("dad_phone")}
+                    {...register("dad_phone", {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        if (!value.startsWith('+998')) {
+                          e.target.value = '+998' + value.replace(/^\+998/, '');
+                        }
+                      }
+                    })}
                     placeholder="+998 XX XXX XX XX"
+                    defaultValue="+998"
                   />
                 </div>
               </div>
@@ -925,8 +933,16 @@ const handleViewContract = () => {
                 <div className="space-y-2">
                   <Label>{t("phoneNumber")}</Label>
                   <Input
-                    {...register("mom_phone")}
+                    {...register("mom_phone", {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        if (!value.startsWith('+998')) {
+                          e.target.value = '+998' + value.replace(/^\+998/, '');
+                        }
+                      }
+                    })}
                     placeholder="+998 XX XXX XX XX"
+                    defaultValue="+998"
                   />
                 </div>
               </div>
@@ -946,9 +962,9 @@ const handleViewContract = () => {
                       onChange={(e) => handleCustomerTypeChange(e.target.value as "father" | "mother" | "other")}
                       className="h-10 w-full rounded-md border border-input bg-background px-3"
                     >
-                      <option value="father">{t("father") || "Ota"}</option>
-                      <option value="mother">{t("mother") || "Ona"}</option>
-                      <option value="other">{t("other") || "Boshqa"}</option>
+                      <option value="father">{t("father")}</option>
+                      <option value="mother">{t("mother")}</option>
+                      <option value="other">{t("other")}</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       {customerType === "father" && (t("fatherInfoWillBeUsed") || "Ota ma'lumotlari ishlatiladi")}

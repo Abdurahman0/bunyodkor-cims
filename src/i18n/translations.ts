@@ -770,6 +770,10 @@ export const translations = {
     noStudentName: 'No student name',
     noDates: 'No dates',
     noFee: 'No fee',
+    father: 'Father',
+    mother: 'Mother',
+    other: 'Other',
+    allGroups: 'All Groups',
   },
 
   uz: {
@@ -1543,6 +1547,10 @@ export const translations = {
     noStudentName: 'Talaba ismi yo\'q',
     noDates: 'Sanalar yo\'q',
     noFee: 'To\'lov yo\'q',
+    father: 'Ota',
+    mother: 'Ona',
+    other: 'Boshqa',
+    allGroups: 'Barcha guruhlar',
   },
 
   ru: {
@@ -2317,6 +2325,10 @@ export const translations = {
     noStudentName: 'Нет имени студента',
     noDates: 'Нет дат',
     noFee: 'Нет оплаты',
+    father: 'Отец',
+    mother: 'Мать',
+    other: 'Другой',
+    allGroups: 'Все группы',
   },
 }
 
