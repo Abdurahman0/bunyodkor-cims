@@ -478,9 +478,10 @@ export default function Students() {
                   <Badge variant="secondary">
                     {t("group")}:{" "}
                     {
-                      groupsData?.data?.find(
-                        (g) => g.id.toString() === groupFilter
-                      )?.name
+                      groupsData?.data
+                        ?.flatMap((yearGroup: any) => yearGroup.groups || [])
+                        .find((g: any) => g?.id?.toString() === groupFilter)
+                        ?.name
                     }
                   </Badge>
                 )}
