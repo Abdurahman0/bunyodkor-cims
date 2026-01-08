@@ -95,7 +95,7 @@ export default function Students() {
     queryKey: ["groups-list"],
     queryFn: async () => {
       console.log('[STUDENTS] Fetching groups list');
-      const response = await groupService.getGroups({ page: 1, page_size: 100 });
+      const response = await groupService.getGroupsGroupedByYear();
       console.log('[STUDENTS] Groups response:', response);
       console.log('[STUDENTS] Groups data:', response?.data);
       return response;
@@ -413,22 +413,35 @@ export default function Students() {
                     {isLoadingGroups ? t("loading") : t("allGroups")}
                   </option>
                   {!isLoadingGroups && groupsData?.data && Array.isArray(groupsData.data) ? (
-                    groupsData.data
-                      .filter((group: GroupRead) => {
-                        const isValid = group && group.id && group.name;
-                        if (!isValid) {
-                          console.log('[STUDENTS] Filtering out invalid group:', group);
-                        }
-                        return isValid;
-                      })
-                      .map((group: GroupRead) => {
-                        console.log('[STUDENTS] Rendering group option:', group.id, group.name);
-                        return (
-                          <option key={group.id} value={group.id.toString()}>
-                            {group.name}
-                          </option>
-                        );
-                      })
+                    groupsData.data.map((yearGroup: any, yearIndex: number) => {
+                      console.log('[STUDENTS] Processing yearGroup at index', yearIndex, ':', yearGroup);
+
+                      // Validate yearGroup structure
+                      if (!yearGroup?.groups || !Array.isArray(yearGroup.groups)) {
+                        console.log('[STUDENTS] Invalid yearGroup at index', yearIndex, '- missing or invalid groups array:', yearGroup);
+                        return null;
+                      }
+
+                      console.log('[STUDENTS] YearGroup has', yearGroup.groups.length, 'groups');
+
+                      // Map through the nested groups array
+                      return yearGroup.groups
+                        .filter((group: any) => {
+                          const isValid = group && group.id && group.name;
+                          if (!isValid) {
+                            console.log('[STUDENTS] Filtering out invalid group:', group);
+                          }
+                          return isValid;
+                        })
+                        .map((group: any) => {
+                          console.log('[STUDENTS] Rendering group option:', group.id, group.name);
+                          return (
+                            <option key={`group-${group.id}`} value={group.id}>
+                              {group.name}
+                            </option>
+                          );
+                        });
+                    })
                   ) : null}
                 </Select>
                 <Input
