@@ -244,33 +244,41 @@ export default function StudentDetailPage() {
 
         // Extract mom info
         const st = customFields.student || {};
-        const momName = st.mom_fullname || st.mom_fio || st.mom_name || customFields.mom_fio;
+        console.log('[STUDENT DETAIL] Student fields:', st);
+        const momName = st.mom_fullname || st.mom_fio || st.mom_name || customFields.mom_fio || customFields.mom_fullname;
+        const momPhone = st.mom_phone_number || st.mom_phone || customFields.mom_phone || customFields.mom_phone_number || "";
+        console.log('[STUDENT DETAIL] Checking mom - name:', momName, 'phone:', momPhone);
         if (momName) {
-          console.log('[STUDENT DETAIL] Found mom:', momName);
+          console.log('[STUDENT DETAIL] Found mom:', momName, momPhone);
           allParents.push({
             id: `contract-${contract.id}-mom`,
             first_name: momName,
             last_name: "",
             relationship_type: "Ona",
-            phone: st.mom_phone_number || st.mom_phone || customFields.mom_phone || "",
+            phone: momPhone,
             email: "",
             is_from_contract: true,
           });
         }
 
         // Extract dad info
-        const dadName = st.dad_fullname || st.dad_name || st.dad_fio || customFields.dad_name;
+        const dadName = st.dad_fullname || st.dad_name || st.dad_fio || customFields.dad_name || customFields.dad_fullname;
+        const dadPhone = st.dad_phone_number || st.dad_phone || customFields.dad_phone || customFields.dad_phone_number || "";
+        console.log('[STUDENT DETAIL] Checking dad - name:', dadName, 'phone:', dadPhone);
         if (dadName) {
-          console.log('[STUDENT DETAIL] Found dad:', dadName);
+          console.log('[STUDENT DETAIL] Found dad:', dadName, dadPhone);
           allParents.push({
             id: `contract-${contract.id}-dad`,
             first_name: dadName,
             last_name: "",
             relationship_type: "Ota",
-            phone: st.dad_phone_number || st.dad_phone || customFields.dad_phone || "",
+            phone: dadPhone,
             email: "",
             is_from_contract: true,
           });
+        } else {
+          console.log('[STUDENT DETAIL] No dad name found in contract', contract.id);
+          console.log('[STUDENT DETAIL] Checked fields - st.dad_fullname:', st.dad_fullname, 'st.dad_name:', st.dad_name, 'st.dad_fio:', st.dad_fio, 'customFields.dad_name:', customFields.dad_name);
         }
       }
 
