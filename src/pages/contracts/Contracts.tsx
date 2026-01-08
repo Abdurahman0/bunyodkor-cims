@@ -365,11 +365,13 @@ export default function Contracts() {
                   {allGroupsData?.data && Array.isArray(allGroupsData.data) ? (
                     allGroupsData.data.map((yearGroup: any) =>
                       yearGroup?.groups && Array.isArray(yearGroup.groups) ? (
-                        yearGroup.groups.map((group: any) => (
-                          <option key={group.id} value={group.id}>
-                            {group.name}
-                          </option>
-                        ))
+                        yearGroup.groups
+                          .filter((group: any) => group && group.id)
+                          .map((group: any) => (
+                            <option key={group.id} value={group.id}>
+                              {group.name}
+                            </option>
+                          ))
                       ) : null
                     )
                   ) : null}
