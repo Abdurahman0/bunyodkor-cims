@@ -358,22 +358,37 @@ export default function Contracts() {
                 </Select>
                 <Select
                   value={groupFilter?.toString() || ""}
-                  onChange={(e) => setGroupFilter(e.target.value ? parseInt(e.target.value) : undefined)}
+                  onChange={(e) => {
+                    console.log('[CONTRACTS] Group filter changed:', e.target.value);
+                    setGroupFilter(e.target.value ? parseInt(e.target.value) : undefined);
+                  }}
                   className="w-48"
                 >
                   <option value="">{t("allGroups")}</option>
                   {allGroupsData?.data && Array.isArray(allGroupsData.data) ? (
-                    allGroupsData.data.map((yearGroup: any) =>
-                      yearGroup?.groups && Array.isArray(yearGroup.groups) ? (
-                        yearGroup.groups
-                          .filter((group: any) => group && group.id)
-                          .map((group: any) => (
-                            <option key={group.id} value={group.id}>
+                    allGroupsData.data.map((yearGroup: any, yearIndex: number) => {
+                      if (!yearGroup?.groups || !Array.isArray(yearGroup.groups)) {
+                        console.log('[CONTRACTS] Invalid yearGroup at index', yearIndex, yearGroup);
+                        return null;
+                      }
+
+                      return yearGroup.groups
+                        .filter((group: any) => {
+                          const isValid = group && group.id && group.name;
+                          if (!isValid) {
+                            console.log('[CONTRACTS] Filtering out invalid group:', group);
+                          }
+                          return isValid;
+                        })
+                        .map((group: any) => {
+                          console.log('[CONTRACTS] Rendering group option:', group.id, group.name);
+                          return (
+                            <option key={`group-${group.id}`} value={group.id}>
                               {group.name}
                             </option>
-                          ))
-                      ) : null
-                    )
+                          );
+                        });
+                    })
                   ) : null}
                 </Select>
                 {hasActiveFilters && (

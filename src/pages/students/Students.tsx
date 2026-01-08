@@ -90,9 +90,16 @@ export default function Students() {
       }),
   });
 
-  const { data: groupsData } = useQuery({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
     queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
+    queryFn: async () => {
+      console.log('[STUDENTS] Fetching groups list');
+      const response = await groupService.getGroups({ page: 1, page_size: 100 });
+      console.log('[STUDENTS] Groups response:', response);
+      console.log('[STUDENTS] Groups data:', response?.data);
+      return response;
+    },
   });
 
   // Get total count for each status (independent of pagination)
@@ -176,6 +183,7 @@ export default function Students() {
       }
       exportStudents(data.data);
       toast.success(t("studentsExported"));
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error(t("failedToExportStudents"));
     }
@@ -394,18 +402,33 @@ export default function Students() {
                 </Select>
                 <Select
                   value={groupFilter}
-                  onChange={(e) => setGroupFilter(e.target.value)}
+                  onChange={(e) => {
+                    console.log('[STUDENTS] Group filter changed:', e.target.value);
+                    setGroupFilter(e.target.value);
+                  }}
                   className="w-full sm:w-40"
+                  disabled={isLoadingGroups}
                 >
-                  <option value="">{t("allGroups")}</option>
-                  {groupsData?.data && Array.isArray(groupsData.data) ? (
+                  <option value="">
+                    {isLoadingGroups ? t("loading") : t("allGroups")}
+                  </option>
+                  {!isLoadingGroups && groupsData?.data && Array.isArray(groupsData.data) ? (
                     groupsData.data
-                      .filter((group: GroupRead) => group && group.id)
-                      .map((group: GroupRead) => (
-                        <option key={group.id} value={group.id.toString()}>
-                          {group.name}
-                        </option>
-                      ))
+                      .filter((group: GroupRead) => {
+                        const isValid = group && group.id && group.name;
+                        if (!isValid) {
+                          console.log('[STUDENTS] Filtering out invalid group:', group);
+                        }
+                        return isValid;
+                      })
+                      .map((group: GroupRead) => {
+                        console.log('[STUDENTS] Rendering group option:', group.id, group.name);
+                        return (
+                          <option key={group.id} value={group.id.toString()}>
+                            {group.name}
+                          </option>
+                        );
+                      })
                   ) : null}
                 </Select>
                 <Input
