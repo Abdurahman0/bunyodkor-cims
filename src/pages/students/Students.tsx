@@ -399,11 +399,13 @@ export default function Students() {
                 >
                   <option value="">{t("allGroups")}</option>
                   {groupsData?.data && Array.isArray(groupsData.data) ? (
-                    groupsData.data.map((group: GroupRead) => (
-                      <option key={group.id} value={group.id.toString()}>
-                        {group.name}
-                      </option>
-                    ))
+                    groupsData.data
+                      .filter((group: GroupRead) => group && group.id)
+                      .map((group: GroupRead) => (
+                        <option key={group.id} value={group.id.toString()}>
+                          {group.name}
+                        </option>
+                      ))
                   ) : null}
                 </Select>
                 <Input
