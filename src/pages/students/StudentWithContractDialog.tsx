@@ -244,20 +244,15 @@ export function StudentWithContractDialog({
     fetchContractNumber();
   }, [selectedGroupId, setValue, groupsData]);
 
-const handleViewContract = () => {
+const handleViewContract = async () => {
   if (!pdfUrl) {
     toast.error(t("pdfNotFound") || "PDF topilmadi");
     return;
   }
 
   try {
-    // If pdfUrl is a blob URL, open it directly
-    if (pdfUrl.startsWith('blob:')) {
-      window.open(pdfUrl, "_blank");
-    } else {
-      // If it's a regular URL, open it
-      window.open(pdfUrl, "_blank");
-    }
+    // Use the same PDF opening logic as StudentDetailPage
+    await openPdfUrl(pdfUrl);
     toast.success(t("contractOpened") || "Shartnoma ochildi");
   } catch (error) {
     console.error("Error opening contract:", error);
