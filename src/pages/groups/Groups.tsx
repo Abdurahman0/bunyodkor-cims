@@ -249,12 +249,41 @@ export default function Groups() {
     queryFn: () => userService.getCoaches(),
   });
 
-  // Fetch students for selected group
+  // Fetch students for selected group with fallback
   const { data: groupStudentsData, isLoading: isLoadingStudents } = useQuery({
     queryKey: ["group-students", selectedGroupForStudents?.id],
-    queryFn: () =>
-      selectedGroupForStudents &&
-      groupService.getGroupStudents(selectedGroupForStudents.id).then((res) => res.data),
+    queryFn: async () => {
+      if (!selectedGroupForStudents) return [];
+
+      console.log('[DEBUG] Fetching group students for group:', selectedGroupForStudents);
+
+      // Try the primary endpoint first
+      const response = await groupService.getGroupStudents(selectedGroupForStudents.id);
+      console.log('[DEBUG] Group students response:', response);
+      console.log('[DEBUG] Group students data:', response.data);
+      console.log('[DEBUG] Group students data length:', response.data?.length);
+
+      // If primary endpoint returns empty or null, use fallback
+      if (!response.data || response.data.length === 0) {
+        console.log('[DEBUG] Primary endpoint returned empty, trying fallback /students endpoint');
+
+        const fallbackResponse = await studentService.getStudents({
+          group_id: selectedGroupForStudents.id,
+          page: 1,
+          page_size: 100,
+        });
+
+        console.log('[DEBUG] Fallback students response:', fallbackResponse);
+        console.log('[DEBUG] Fallback students data:', fallbackResponse.data);
+
+        if (fallbackResponse.data && Array.isArray(fallbackResponse.data)) {
+          console.log('[DEBUG] Using fallback data with', fallbackResponse.data.length, 'students');
+          return fallbackResponse.data;
+        }
+      }
+
+      return response.data || [];
+    },
     enabled: !!selectedGroupForStudents,
   });
 
@@ -272,12 +301,19 @@ export default function Groups() {
   // Fetch students for contracts (to show student names)
   const { data: studentsForContracts } = useQuery({
     queryKey: ["students-for-contracts", selectedGroupForContracts?.id],
-    queryFn: () =>
-      studentService.getStudents({
-        group_id: selectedGroupForContracts!.id,
+    queryFn: async () => {
+      if (!selectedGroupForContracts) return { data: [], meta: {} };
+
+      console.log('[DEBUG] Fetching students via /students for group:', selectedGroupForContracts.id);
+      const response = await studentService.getStudents({
+        group_id: selectedGroupForContracts.id,
         page: 1,
         page_size: 100,
-      }),
+      });
+      console.log('[DEBUG] Students via /students response:', response);
+
+      return response;
+    },
     enabled: !!selectedGroupForContracts,
   });
 
@@ -490,6 +526,13 @@ export default function Groups() {
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
+            {(() => {
+              console.log('[DEBUG] Rendering students dialog');
+              console.log('[DEBUG] isLoadingStudents:', isLoadingStudents);
+              console.log('[DEBUG] groupStudentsData:', groupStudentsData);
+              console.log('[DEBUG] groupStudentsData length:', groupStudentsData?.length);
+              console.log('[DEBUG] selectedGroupForStudents:', selectedGroupForStudents);
+            })()}
             {isLoadingStudents ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />

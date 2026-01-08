@@ -39,6 +39,7 @@ export const translations = {
     loading: 'Loading...',
     noData: 'No data available',
     viewAll: 'View All',
+    unknown: 'Unknown',
 
     // Dashboard
     welcomeBack: 'Welcome back',
@@ -776,6 +777,11 @@ export const translations = {
     other: 'Other',
     allGroups: 'All Groups',
     groupDeletedSuccess: 'Group deleted successfully',
+    fatherInfoCopied: 'Father information copied',
+    motherInfoCopied: 'Mother information copied',
+    contractOpened: 'Contract opened',
+    errorOpeningContract: 'Error opening contract',
+    numberSelected: 'Number selected',
   },
 
   uz: {
@@ -818,6 +824,7 @@ export const translations = {
     loading: 'Yuklanmoqda...',
     noData: 'Ma\'lumot yo\'q',
     viewAll: 'Barchasini ko\'rish',
+    unknown: 'Noma\'lum',
 
     // Dashboard
     welcomeBack: 'Xush kelibsiz',
@@ -1555,6 +1562,11 @@ export const translations = {
     other: 'Boshqa',
     allGroups: 'Barcha guruhlar',
     groupDeletedSuccess: 'Guruh muvaffaqiyatli o\'chirildi',
+    fatherInfoCopied: 'Otaning ma\'lumotlari ko\'chirildi',
+    motherInfoCopied: 'Onaning ma\'lumotlari ko\'chirildi',
+    contractOpened: 'Shartnoma ochildi',
+    errorOpeningContract: 'Shartnomani ochishda xatolik',
+    numberSelected: 'Raqam tanlandi',
   },
 
   ru: {
@@ -1597,6 +1609,7 @@ export const translations = {
     loading: 'Загрузка...',
     noData: 'Нет данных',
     viewAll: 'Посмотреть все',
+    unknown: 'Неизвестно',
 
     // Dashboard
     welcomeBack: 'Добро пожаловать',
@@ -2335,6 +2348,11 @@ export const translations = {
     other: 'Другой',
     allGroups: 'Все группы',
     groupDeletedSuccess: 'Группа успешно удалена',
+    fatherInfoCopied: 'Информация об отце скопирована',
+    motherInfoCopied: 'Информация о матери скопирована',
+    contractOpened: 'Контракт открыт',
+    errorOpeningContract: 'Ошибка открытия контракта',
+    numberSelected: 'Номер выбран',
   },
 }
 

@@ -182,36 +182,55 @@ export default function StudentDetailPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getDisplayParents = (): any[] => {
-    if (parents && parents.length > 0) return parents;
+    console.log('[STUDENT DETAIL] Getting parent info');
+    console.log('[STUDENT DETAIL] Parents from API:', parents);
+    console.log('[STUDENT DETAIL] Contracts:', contracts);
+
+    if (parents && parents.length > 0) {
+      console.log('[STUDENT DETAIL] Using parents from API');
+      return parents;
+    }
 
     if (contracts && contracts.length > 0) {
       const sortedContracts = [...contracts].sort((a, b) => b.id - a.id);
+      console.log('[STUDENT DETAIL] Sorted contracts:', sortedContracts);
+
+      // Try to extract parent info from ALL contracts, collect all unique parents
+      const allParents: any[] = [];
 
       for (const contract of sortedContracts) {
+        console.log('[STUDENT DETAIL] Processing contract:', contract.id);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let customFields: any = contract.custom_fields;
 
-        if (!customFields) continue;
+        if (!customFields) {
+          console.log('[STUDENT DETAIL] No custom_fields in contract', contract.id);
+          continue;
+        }
 
         if (typeof customFields === "string") {
           try {
             customFields = JSON.parse(customFields);
+            console.log('[STUDENT DETAIL] Parsed custom_fields:', customFields);
           } catch (e) {
-            console.error("Custom fields parse error", e);
+            console.error("[STUDENT DETAIL] Custom fields parse error", e);
             continue;
           }
+        } else {
+          console.log('[STUDENT DETAIL] Custom fields (object):', customFields);
         }
 
-        const inferredParents = [];
-
+        // Extract buyurtmachi
         if (
           customFields.buyurtmachi &&
           (customFields.buyurtmachi.fio || customFields.buyurtmachi.name)
         ) {
-          inferredParents.push({
+          const buyurtmachiName = customFields.buyurtmachi.fio || customFields.buyurtmachi.name;
+          console.log('[STUDENT DETAIL] Found buyurtmachi:', buyurtmachiName);
+
+          allParents.push({
             id: `contract-${contract.id}-buyurtmachi`,
-            first_name:
-              customFields.buyurtmachi.fio || customFields.buyurtmachi.name,
+            first_name: buyurtmachiName,
             last_name: "",
             relationship_type: "Buyurtmachi",
             phone:
@@ -223,53 +242,75 @@ export default function StudentDetailPage() {
           });
         }
 
-        if (customFields.student) {
-          const st = customFields.student;
-
-          const momName = st.mom_fullname || st.mom_fio || st.mom_name;
-          if (momName && momName !== customFields.buyurtmachi?.fio) {
-            inferredParents.push({
-              id: `contract-${contract.id}-mom`,
-              first_name: momName,
-              last_name: "",
-              relationship_type: "Ona",
-              phone: st.mom_phone_number || st.mom_phone || "",
-              email: "",
-              is_from_contract: true,
-            });
-          }
-
-          const dadName = st.dad_fullname || st.dad_name || st.dad_fio;
-          if (dadName && dadName !== customFields.buyurtmachi?.fio) {
-            inferredParents.push({
-              id: `contract-${contract.id}-dad`,
-              first_name: dadName,
-              last_name: "",
-              relationship_type: "Ota",
-              phone: st.dad_phone_number || st.dad_phone || "",
-              email: "",
-              is_from_contract: true,
-            });
-          }
+        // Extract mom info
+        const st = customFields.student || {};
+        const momName = st.mom_fullname || st.mom_fio || st.mom_name || customFields.mom_fio;
+        if (momName) {
+          console.log('[STUDENT DETAIL] Found mom:', momName);
+          allParents.push({
+            id: `contract-${contract.id}-mom`,
+            first_name: momName,
+            last_name: "",
+            relationship_type: "Ona",
+            phone: st.mom_phone_number || st.mom_phone || customFields.mom_phone || "",
+            email: "",
+            is_from_contract: true,
+          });
         }
 
-        if (inferredParents.length > 0) {
-          return inferredParents;
+        // Extract dad info
+        const dadName = st.dad_fullname || st.dad_name || st.dad_fio || customFields.dad_name;
+        if (dadName) {
+          console.log('[STUDENT DETAIL] Found dad:', dadName);
+          allParents.push({
+            id: `contract-${contract.id}-dad`,
+            first_name: dadName,
+            last_name: "",
+            relationship_type: "Ota",
+            phone: st.dad_phone_number || st.dad_phone || customFields.dad_phone || "",
+            email: "",
+            is_from_contract: true,
+          });
         }
       }
+
+      // Deduplicate by name and relationship_type
+      const uniqueParents = allParents.filter((parent, index, self) =>
+        index === self.findIndex((p) =>
+          p.first_name === parent.first_name && p.relationship_type === parent.relationship_type
+        )
+      );
+
+      console.log('[STUDENT DETAIL] All parents found:', allParents);
+      console.log('[STUDENT DETAIL] Unique parents:', uniqueParents);
+
+      if (uniqueParents.length > 0) {
+        return uniqueParents;
+      }
     }
+
+    console.log('[STUDENT DETAIL] No parent info found');
     return [];
   };
 
   const displayParents = getDisplayParents();
 
+  console.log('[STUDENT DETAIL] Display parents:', displayParents);
+
   // Separate parents and guardians
+  // Parents: Ota and Ona
   const parentsList = displayParents.filter((p) =>
     p.relationship_type === "Ota" || p.relationship_type === "Ona"
   );
+
+  // Guardians: Everyone else (Buyurtmachi, etc.)
+  // BUT also show Buyurtmachi separately if they are ALSO listed as parent
   const guardiansList = displayParents.filter((p) =>
     p.relationship_type !== "Ota" && p.relationship_type !== "Ona"
   );
+
+  console.log('[STUDENT DETAIL] Parents list:', parentsList);
+  console.log('[STUDENT DETAIL] Guardians list:', guardiansList);
 
   return (
     <div className="space-y-6">

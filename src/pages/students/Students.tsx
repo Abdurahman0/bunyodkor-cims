@@ -398,11 +398,13 @@ export default function Students() {
                   className="w-full sm:w-40"
                 >
                   <option value="">{t("allGroups")}</option>
-                  {groupsData?.data?.map((group: GroupRead) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
+                  {groupsData?.data && Array.isArray(groupsData.data) ? (
+                    groupsData.data.map((group: GroupRead) => (
+                      <option key={group.id} value={group.id.toString()}>
+                        {group.name}
+                      </option>
+                    ))
+                  ) : null}
                 </Select>
                 <Input
                   type="number"

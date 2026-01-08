@@ -69,29 +69,83 @@ export default function Contracts() {
 
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["contracts", page, debouncedSearch, statusFilter, groupFilter, contractIdFilter],
-    queryFn: () =>
-      contractService.getContracts({
+    queryFn: async () => {
+      console.log('[CONTRACTS] Fetching contracts with params:', {
         page,
         page_size: 10,
         contract_number: debouncedSearch || undefined,
         status: statusFilter || undefined,
         group_id: groupFilter,
         contract_id: contractIdFilter,
-      }),
+      });
+
+      try {
+        const response = await contractService.getContracts({
+          page,
+          page_size: 10,
+          contract_number: debouncedSearch || undefined,
+          status: statusFilter || undefined,
+          group_id: groupFilter,
+          contract_id: contractIdFilter,
+        });
+
+        console.log('[CONTRACTS] Response:', response);
+        console.log('[CONTRACTS] Data:', response?.data);
+        console.log('[CONTRACTS] Meta:', response?.meta);
+
+        return response;
+      } catch (err) {
+        console.error('[CONTRACTS] Error fetching contracts:', err);
+        throw err;
+      }
+    },
   });
 
-  const { data: studentsData } = useQuery({
+  // Log error if exists
+  if (error) {
+    console.error('[CONTRACTS] Query error:', error);
+  }
+
+  const { data: studentsData, error: studentsError } = useQuery({
     queryKey: ["students-list"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }), // Fetch students (max allowed by API)
+    queryFn: async () => {
+      console.log('[CONTRACTS] Fetching students list');
+      try {
+        const response = await studentService.getStudents({ page: 1, page_size: 100 });
+        console.log('[CONTRACTS] Students response:', response);
+        return response;
+      } catch (err) {
+        console.error('[CONTRACTS] Error fetching students:', err);
+        throw err;
+      }
+    },
   });
 
   // Fetch all groups for dropdown
-  const { data: allGroupsData } = useQuery({
+  const { data: allGroupsData, error: groupsError } = useQuery({
     queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroupsGroupedByYear(),
+    queryFn: async () => {
+      console.log('[CONTRACTS] Fetching groups');
+      try {
+        const response = await groupService.getGroupsGroupedByYear();
+        console.log('[CONTRACTS] Groups response:', response);
+        return response;
+      } catch (err) {
+        console.error('[CONTRACTS] Error fetching groups:', err);
+        throw err;
+      }
+    },
   });
+
+  // Log errors
+  if (studentsError) {
+    console.error('[CONTRACTS] Students query error:', studentsError);
+  }
+  if (groupsError) {
+    console.error('[CONTRACTS] Groups query error:', groupsError);
+  }
 
   // Fetch group details if filtering by group
   const { data: groupData } = useQuery({
@@ -139,7 +193,9 @@ export default function Contracts() {
     }
   };
 
-  const getStudentName = (studentId: number) => {
+  const getStudentName = (studentId: number | null | undefined) => {
+    if (!studentId) return t("unknown") || "Noma'lum";
+
     const student = studentsData?.data?.find(
       (s: StudentRead) => s.id === studentId
     );
@@ -148,7 +204,8 @@ export default function Contracts() {
       : `ID: ${studentId}`;
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined) return "-";
     return new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
   };
 
@@ -238,6 +295,16 @@ export default function Contracts() {
 
   const paginationItems = getPaginationItems();
 
+  // Debug log for render
+  console.log('[CONTRACTS] Rendering with state:', {
+    isLoading,
+    hasData: !!data,
+    dataLength: data?.data?.length,
+    hasError: !!error,
+    studentsCount: studentsData?.data?.length,
+    groupsCount: allGroupsData?.data?.length,
+  });
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -295,13 +362,17 @@ export default function Contracts() {
                   className="w-48"
                 >
                   <option value="">{t("allGroups")}</option>
-                  {allGroupsData?.data?.map((yearGroup: any) =>
-                    yearGroup.groups.map((group: any) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name}
-                      </option>
-                    ))
-                  )}
+                  {allGroupsData?.data && Array.isArray(allGroupsData.data) ? (
+                    allGroupsData.data.map((yearGroup: any) =>
+                      yearGroup?.groups && Array.isArray(yearGroup.groups) ? (
+                        yearGroup.groups.map((group: any) => (
+                          <option key={group.id} value={group.id}>
+                            {group.name}
+                          </option>
+                        ))
+                      ) : null
+                    )
+                  ) : null}
                 </Select>
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>
@@ -416,16 +487,24 @@ export default function Contracts() {
                           <div className="text-sm">
                             <div className="flex items-center gap-1">
                               <CalendarDays className="w-3 h-3 text-muted-foreground" />
-                              {format(
-                                new Date(contract.start_date),
-                                "MMM d, yyyy"
+                              {contract.start_date ? (
+                                format(
+                                  new Date(contract.start_date),
+                                  "MMM d, yyyy"
+                                )
+                              ) : (
+                                "-"
                               )}
                             </div>
                             <div className="text-muted-foreground">
                               to{" "}
-                              {format(
-                                new Date(contract.end_date),
-                                "MMM d, yyyy"
+                              {contract.end_date ? (
+                                format(
+                                  new Date(contract.end_date),
+                                  "MMM d, yyyy"
+                                )
+                              ) : (
+                                "-"
                               )}
                             </div>
                           </div>
@@ -434,11 +513,15 @@ export default function Contracts() {
                           <div className="flex items-center gap-1">
                             <CreditCard className="w-4 h-4 text-muted-foreground" />
                             <span className="font-medium">
-                              {formatCurrency(contract.monthly_fee)}
+                              {contract.monthly_fee ? formatCurrency(contract.monthly_fee) : "-"}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                        <TableCell>
+                          {contract.status ? getStatusBadge(contract.status) : (
+                            <Badge variant="secondary">{t("unknown") || "Noma'lum"}</Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Button
