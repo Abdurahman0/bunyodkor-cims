@@ -43,10 +43,12 @@ import {
   UserCheck,
   FileText,
   CreditCard,
+  Eye,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
+import { openPdfUrl } from "@/lib/open-pdf";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type {
   GroupRead,
@@ -674,8 +676,10 @@ export default function Groups() {
                     key={contract.id}
                     className="hover:shadow-lg transition-all duration-200 cursor-pointer border-border/50 hover:border-border"
                     onClick={() => {
-                      navigate(`/contracts?contract_id=${contract.id}`);
-                      setIsContractsDialogOpen(false);
+                      if (contract.student_id) {
+                        navigate(`/students/${contract.student_id}`);
+                        setIsContractsDialogOpen(false);
+                      }
                     }}
                   >
                     <CardHeader className="pb-3">
@@ -732,6 +736,39 @@ export default function Groups() {
                               ).toLocaleString()} UZS`
                             : t("noFee")}
                         </span>
+                      </div>
+                      <div className="pt-2 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              // Extract year from contract number (e.g., "6-2016B2" -> 2016)
+                              const yearMatch = contract.contract_number.match(/\d{4}/);
+                              const year = yearMatch ? parseInt(yearMatch[0]) : new Date().getFullYear();
+
+                              const pdfUrl = await contractService.getContractPdfUrl(
+                                year,
+                                contract.contract_number
+                              );
+
+                              if (pdfUrl) {
+                                await openPdfUrl(pdfUrl);
+                                toast.success(t("contractOpened") || "Shartnoma ochildi");
+                              } else {
+                                toast.error(t("pdfNotFound") || "PDF topilmadi");
+                              }
+                            } catch (error) {
+                              console.error("Error opening contract:", error);
+                              toast.error(t("errorOpeningContract") || "Xatolik yuz berdi");
+                            }
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                          {t("viewContract") || "Ko'rish"}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
