@@ -25,7 +25,6 @@ import {
   groupService,
   userService,
   studentService,
-  contractService,
 } from "@/services/api.service";
 import {
   Plus,
@@ -37,22 +36,17 @@ import {
   Clock,
   User,
   X,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   UserCheck,
   FileText,
   CreditCard,
-  Eye,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
-import { openPdfUrl } from "@/lib/open-pdf";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type {
   GroupRead,
-  UserRead,
   StudentRead,
   ContractRead,
 } from "@/types/api";
@@ -714,7 +708,7 @@ export default function Groups() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-2 pb-4">
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-foreground">
@@ -736,39 +730,6 @@ export default function Groups() {
                               ).toLocaleString()} UZS`
                             : t("noFee")}
                         </span>
-                      </div>
-                      <div className="pt-2 border-t">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full gap-2"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              // Extract year from contract number (e.g., "6-2016B2" -> 2016)
-                              const yearMatch = contract.contract_number.match(/\d{4}/);
-                              const year = yearMatch ? parseInt(yearMatch[0]) : new Date().getFullYear();
-
-                              const pdfUrl = await contractService.getContractPdfUrl(
-                                year,
-                                contract.contract_number
-                              );
-
-                              if (pdfUrl) {
-                                await openPdfUrl(pdfUrl);
-                                toast.success(t("contractOpened") || "Shartnoma ochildi");
-                              } else {
-                                toast.error(t("pdfNotFound") || "PDF topilmadi");
-                              }
-                            } catch (error) {
-                              console.error("Error opening contract:", error);
-                              toast.error(t("errorOpeningContract") || "Xatolik yuz berdi");
-                            }
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                          {t("viewContract") || "Ko'rish"}
-                        </Button>
                       </div>
                     </CardContent>
                   </Card>
