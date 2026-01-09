@@ -504,45 +504,46 @@ const handleDownloadContract = async () => {
       formData.append("student_data", JSON.stringify(student_data));
       formData.append("contract_data", JSON.stringify(contract_data));
 
+      // Hujjatlar backend ga yuborilmaydi (commented out)
       // Required file fields
-      const requiredFileFields: (keyof StudentFormData)[] = [
-        "passport_copy",
-        "form_086",
-        "heart_checkup",
-        "birth_certificate",
-        "contract_image_2",
-        "contract_image_4",
-      ];
+      // const requiredFileFields: (keyof StudentFormData)[] = [
+      //   "passport_copy",
+      //   "form_086",
+      //   "heart_checkup",
+      //   "birth_certificate",
+      //   "contract_image_2",
+      //   "contract_image_4",
+      // ];
 
       // Optional file fields
-      const optionalFileFields: (keyof StudentFormData)[] = [
-        "contract_image_1",
-        "contract_image_3",
-        "contract_image_5",
-      ];
+      // const optionalFileFields: (keyof StudentFormData)[] = [
+      //   "contract_image_1",
+      //   "contract_image_3",
+      //   "contract_image_5",
+      // ];
 
-      let filesMissing = false;
+      // let filesMissing = false;
 
       // Check required files
-      for (const field of requiredFileFields) {
-        if (data[field]?.[0]) {
-          formData.append(field, data[field][0]);
-        } else {
-          filesMissing = true;
-          toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
-        }
-      }
+      // for (const field of requiredFileFields) {
+      //   if (data[field]?.[0]) {
+      //     formData.append(field, data[field][0]);
+      //   } else {
+      //     filesMissing = true;
+      //     toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
+      //   }
+      // }
 
       // Add optional files if provided
-      for (const field of optionalFileFields) {
-        if (data[field]?.[0]) {
-          formData.append(field, data[field][0]);
-        }
-      }
-      if (filesMissing) {
-        setIsSubmitting(false);
-        return;
-      }
+      // for (const field of optionalFileFields) {
+      //   if (data[field]?.[0]) {
+      //     formData.append(field, data[field][0]);
+      //   }
+      // }
+      // if (filesMissing) {
+      //   setIsSubmitting(false);
+      //   return;
+      // }
 
       // Step 1: Generating contract
       await simulateProgress(1, 1000);
@@ -1096,35 +1097,35 @@ const handleDownloadContract = async () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label>Portfolio *</Label>
+                <Label>Portfolio</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
-                  {...register("passport_copy", { required: true })}
+                  {...register("passport_copy")}
                 />
               </div>
               <div>
-                <Label>086-shakl (Tibbiy ma'lumotnoma) *</Label>
+                <Label>086-shakl (Tibbiy ma'lumotnoma)</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
-                  {...register("form_086", { required: true })}
+                  {...register("form_086")}
                 />
               </div>
               <div>
-                <Label>Yurak tekshiruvi *</Label>
+                <Label>Yurak tekshiruvi</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
-                  {...register("heart_checkup", { required: true })}
+                  {...register("heart_checkup")}
                 />
               </div>
               <div>
-                <Label>Tug'ilganlik haqidagi guvohnoma (old tomoni) *</Label>
+                <Label>Tug'ilganlik haqidagi guvohnoma (old tomoni)</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
-                  {...register("birth_certificate", { required: true })}
+                  {...register("birth_certificate")}
                 />
               </div>
               <div>
@@ -1136,11 +1137,11 @@ const handleDownloadContract = async () => {
                 />
               </div>
               <div>
-                <Label>Otaning pasporti (old tomoni) *</Label>
+                <Label>Otaning pasporti (old tomoni)</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
-                  {...register("contract_image_2", { required: true })}
+                  {...register("contract_image_2")}
                 />
               </div>
               <div>
@@ -1152,11 +1153,11 @@ const handleDownloadContract = async () => {
                 />
               </div>
               <div>
-                <Label>Onaning pasporti (old tomoni) *</Label>
+                <Label>Onaning pasporti (old tomoni)</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
-                  {...register("contract_image_4", { required: true })}
+                  {...register("contract_image_4")}
                 />
               </div>
               <div>

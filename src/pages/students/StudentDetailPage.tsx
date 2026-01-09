@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 import { useLanguageStore } from "@/store/languageStore";
 import type {
   StudentFullInfo,
@@ -659,14 +660,24 @@ export default function StudentDetailPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadPdf(c)}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          {t("downloadContract")}
-                        </Button>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewContract(c)}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {t("viewContract")}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadPdf(c)}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            {t("downloadContract")}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
