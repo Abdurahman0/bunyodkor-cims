@@ -21,7 +21,12 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { groupService, userService, studentService, contractService } from "@/services/api.service";
+import {
+  groupService,
+  userService,
+  studentService,
+  contractService,
+} from "@/services/api.service";
 import {
   Plus,
   Search,
@@ -43,7 +48,12 @@ import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { GroupRead, UserRead, StudentRead, ContractRead } from "@/types/api";
+import type {
+  GroupRead,
+  UserRead,
+  StudentRead,
+  ContractRead,
+} from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 
@@ -123,9 +133,7 @@ function GroupCard({
                 {studentCount} / {group.capacity}
               </span>
               <Badge
-                variant={
-                  availableSlots > 0 ? "default" : "destructive"
-                }
+                variant={availableSlots > 0 ? "default" : "destructive"}
                 className="ml-auto"
               >
                 {availableSlots > 0
@@ -211,8 +219,10 @@ export default function Groups() {
   const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
   const [isContractsDialogOpen, setIsContractsDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupRead | null>(null);
-  const [selectedGroupForStudents, setSelectedGroupForStudents] = useState<GroupRead | null>(null);
-  const [selectedGroupForContracts, setSelectedGroupForContracts] = useState<GroupRead | null>(null);
+  const [selectedGroupForStudents, setSelectedGroupForStudents] =
+    useState<GroupRead | null>(null);
+  const [selectedGroupForContracts, setSelectedGroupForContracts] =
+    useState<GroupRead | null>(null);
   const queryClient = useQueryClient();
 
   const debouncedSearch = useDebounce(search, 500);
@@ -255,17 +265,24 @@ export default function Groups() {
     queryFn: async () => {
       if (!selectedGroupForStudents) return [];
 
-      console.log('[DEBUG] Fetching group students for group:', selectedGroupForStudents);
+      console.log(
+        "[DEBUG] Fetching group students for group:",
+        selectedGroupForStudents
+      );
 
       // Try the primary endpoint first
-      const response = await groupService.getGroupStudents(selectedGroupForStudents.id);
-      console.log('[DEBUG] Group students response:', response);
-      console.log('[DEBUG] Group students data:', response.data);
-      console.log('[DEBUG] Group students data length:', response.data?.length);
+      const response = await groupService.getGroupStudents(
+        selectedGroupForStudents.id
+      );
+      console.log("[DEBUG] Group students response:", response);
+      console.log("[DEBUG] Group students data:", response.data);
+      console.log("[DEBUG] Group students data length:", response.data?.length);
 
       // If primary endpoint returns empty or null, use fallback
       if (!response.data || response.data.length === 0) {
-        console.log('[DEBUG] Primary endpoint returned empty, trying fallback /students endpoint');
+        console.log(
+          "[DEBUG] Primary endpoint returned empty, trying fallback /students endpoint"
+        );
 
         const fallbackResponse = await studentService.getStudents({
           group_id: selectedGroupForStudents.id,
@@ -273,11 +290,15 @@ export default function Groups() {
           page_size: 100,
         });
 
-        console.log('[DEBUG] Fallback students response:', fallbackResponse);
-        console.log('[DEBUG] Fallback students data:', fallbackResponse.data);
+        console.log("[DEBUG] Fallback students response:", fallbackResponse);
+        console.log("[DEBUG] Fallback students data:", fallbackResponse.data);
 
         if (fallbackResponse.data && Array.isArray(fallbackResponse.data)) {
-          console.log('[DEBUG] Using fallback data with', fallbackResponse.data.length, 'students');
+          console.log(
+            "[DEBUG] Using fallback data with",
+            fallbackResponse.data.length,
+            "students"
+          );
           return fallbackResponse.data;
         }
       }
@@ -304,13 +325,16 @@ export default function Groups() {
     queryFn: async () => {
       if (!selectedGroupForContracts) return { data: [], meta: {} };
 
-      console.log('[DEBUG] Fetching students via /students for group:', selectedGroupForContracts.id);
+      console.log(
+        "[DEBUG] Fetching students via /students for group:",
+        selectedGroupForContracts.id
+      );
       const response = await studentService.getStudents({
         group_id: selectedGroupForContracts.id,
         page: 1,
         page_size: 100,
       });
-      console.log('[DEBUG] Students via /students response:', response);
+      console.log("[DEBUG] Students via /students response:", response);
 
       return response;
     },
@@ -374,8 +398,12 @@ export default function Groups() {
 
   const getStudentName = (studentId: number | null | undefined) => {
     if (!studentId) return t("noStudentName");
-    const student = studentsForContracts?.data?.find((s: StudentRead) => s.id === studentId);
-    return student ? `${student.first_name} ${student.last_name}` : t("noStudentName");
+    const student = studentsForContracts?.data?.find(
+      (s: StudentRead) => s.id === studentId
+    );
+    return student
+      ? `${student.first_name} ${student.last_name}`
+      : t("noStudentName");
   };
 
   // --- Handlers for Search ---
@@ -388,7 +416,7 @@ export default function Groups() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -501,7 +529,9 @@ export default function Groups() {
         onOpenChange={setIsDialogOpen}
         group={selectedGroup}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["groups-grouped-by-year"] });
+          queryClient.invalidateQueries({
+            queryKey: ["groups-grouped-by-year"],
+          });
         }}
       />
 
@@ -514,7 +544,10 @@ export default function Groups() {
       )}
 
       {/* Students Dialog */}
-      <Dialog open={isStudentsDialogOpen} onOpenChange={setIsStudentsDialogOpen}>
+      <Dialog
+        open={isStudentsDialogOpen}
+        onOpenChange={setIsStudentsDialogOpen}
+      >
         <DialogContent
           className="max-w-5xl max-h-[80vh] overflow-y-auto"
           onClose={() => setIsStudentsDialogOpen(false)}
@@ -526,13 +559,6 @@ export default function Groups() {
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            {(() => {
-              console.log('[DEBUG] Rendering students dialog');
-              console.log('[DEBUG] isLoadingStudents:', isLoadingStudents);
-              console.log('[DEBUG] groupStudentsData:', groupStudentsData);
-              console.log('[DEBUG] groupStudentsData length:', groupStudentsData?.length);
-              console.log('[DEBUG] selectedGroupForStudents:', selectedGroupForStudents);
-            })()}
             {isLoadingStudents ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -601,9 +627,14 @@ export default function Groups() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell
+                          colSpan={5}
+                          className="text-center py-8 text-muted-foreground"
+                        >
                           <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                          <p>{t("noStudentsInGroup") || "Guruhda talabalar yo'q"}</p>
+                          <p>
+                            {t("noStudentsInGroup") || "Guruhda talabalar yo'q"}
+                          </p>
                         </TableCell>
                       </TableRow>
                     )}
@@ -616,7 +647,10 @@ export default function Groups() {
       </Dialog>
 
       {/* Contracts Dialog */}
-      <Dialog open={isContractsDialogOpen} onOpenChange={setIsContractsDialogOpen}>
+      <Dialog
+        open={isContractsDialogOpen}
+        onOpenChange={setIsContractsDialogOpen}
+      >
         <DialogContent
           className="max-w-5xl max-h-[80vh] overflow-y-auto"
           onClose={() => setIsContractsDialogOpen(false)}
@@ -632,7 +666,8 @@ export default function Groups() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
-            ) : groupContractsData?.data && groupContractsData.data.length > 0 ? (
+            ) : groupContractsData?.data &&
+              groupContractsData.data.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {groupContractsData.data.map((contract: ContractRead) => (
                   <Card
@@ -680,7 +715,11 @@ export default function Groups() {
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-foreground">
                           {contract.start_date && contract.end_date
-                            ? `${new Date(contract.start_date).toLocaleDateString()} - ${new Date(contract.end_date).toLocaleDateString()}`
+                            ? `${new Date(
+                                contract.start_date
+                              ).toLocaleDateString()} - ${new Date(
+                                contract.end_date
+                              ).toLocaleDateString()}`
                             : t("noDates")}
                         </span>
                       </div>
@@ -688,7 +727,9 @@ export default function Groups() {
                         <CreditCard className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium text-foreground">
                           {contract.monthly_fee
-                            ? `${Number(contract.monthly_fee).toLocaleString()} UZS`
+                            ? `${Number(
+                                contract.monthly_fee
+                              ).toLocaleString()} UZS`
                             : t("noFee")}
                         </span>
                       </div>
