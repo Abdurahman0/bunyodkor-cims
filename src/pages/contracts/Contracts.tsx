@@ -123,25 +123,32 @@ export default function Contracts() {
     console.error('[CONTRACTS] Query error:', error);
   }
 
-  const { data: studentsData, error: studentsError } = useQuery({
+  const { data: studentsData, error: studentsError, isLoading: isLoadingStudents } = useQuery({
     queryKey: ["students-list"],
     queryFn: async () => {
       console.log('[CONTRACTS] Fetching students list');
       try {
         const response = await studentService.getStudents({ page: 1, page_size: 10000 });
         console.log('[CONTRACTS] Students response:', response);
+        console.log('[CONTRACTS] Students data:', response?.data);
+        console.log('[CONTRACTS] Students count:', response?.data?.length);
         return response;
       } catch (err) {
         console.error('[CONTRACTS] Error fetching students:', err);
         throw err;
       }
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Log errors
   if (studentsError) {
     console.log('[CONTRACTS] Students query error:', studentsError);
   }
+
+  // Log loading state
+  console.log('[CONTRACTS] Students loading state:', isLoadingStudents);
+  console.log('[CONTRACTS] Students data available:', !!studentsData);
 
   // Fetch group details if filtering by group
   const { data: groupData } = useQuery({
@@ -192,9 +199,17 @@ export default function Contracts() {
   const getStudentName = (studentId: number | null | undefined) => {
     if (!studentId) return t("unknown") || "Noma'lum";
 
+    console.log('[CONTRACTS] getStudentName called with studentId:', studentId);
+    console.log('[CONTRACTS] studentsData:', studentsData);
+    console.log('[CONTRACTS] studentsData?.data:', studentsData?.data);
+    console.log('[CONTRACTS] studentsData?.data length:', studentsData?.data?.length);
+
     const student = studentsData?.data?.find(
       (s: StudentRead) => s.id === studentId
     );
+
+    console.log('[CONTRACTS] Found student:', student);
+
     return student
       ? `${student.first_name} ${student.last_name}`
       : `ID: ${studentId}`;
@@ -446,9 +461,12 @@ export default function Contracts() {
             <CardTitle className="text-lg">{t("contractsList")}</CardTitle>
           </CardHeader>
 
-          {isLoading ? (
+          {isLoading || isLoadingStudents ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="ml-2 text-muted-foreground">
+                {isLoadingStudents ? "Talabalar yuklanmoqda..." : "Shartnomalar yuklanmoqda..."}
+              </span>
             </div>
           ) : (
             <>
