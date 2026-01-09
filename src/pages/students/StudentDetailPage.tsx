@@ -31,10 +31,10 @@ import {
   Users,
   Trash2,
   AlertTriangle,
+  Download,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
-import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 import { useLanguageStore } from "@/store/languageStore";
 import type {
   StudentFullInfo,
@@ -117,33 +117,46 @@ export default function StudentDetailPage() {
   });
 
   const handleDownloadPdf = async (contract: ContractRead) => {
-    // First try to use final_pdf_url if available
-    if (contract.final_pdf_url) {
-      console.log("Opening PDF from final_pdf_url:", contract.final_pdf_url);
-      await openPdfUrl(contract.final_pdf_url);
-      return;
-    }
-
+    // Same logic but for download
     try {
-      const year = new Date(contract.start_date).getFullYear();
-      console.log("Fetching PDF URL for:", year, contract.contract_number);
+      let pdfUrl: string | null = null;
 
-      const response = await contractService.getContractPdfUrl(
-        year,
-        contract.contract_number
-      );
+      if (contract.final_pdf_url) {
+        pdfUrl = contract.final_pdf_url;
+      } else {
+        const year = new Date(contract.start_date).getFullYear();
+        const response = await contractService.getContractPdfUrl(
+          year,
+          contract.contract_number
+        );
 
-      console.log("PDF URL response:", response);
+        if (typeof response === 'string') {
+          pdfUrl = response;
+        } else if (typeof response === 'object' && response !== null && 'pdf_url' in response) {
+          pdfUrl = (response as any).pdf_url;
+        }
+      }
 
-      // If API returned a blob/url/object, use openPdfResponse for robust handling
-      if (response) {
-        await openPdfResponse(response);
+      if (!pdfUrl) {
+        toast.error(t("pdfNotFound") || "PDF topilmadi");
         return;
       }
 
-      toast.error(t("pdfNotFound") || "PDF topilmadi");
+      // Download the PDF
+      const resp = await fetch(pdfUrl);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${contract.contract_number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("Yuklandi");
     } catch (error) {
-      console.error("Error fetching PDF:", error);
+      console.error("Error downloading PDF:", error);
       toast.error(t("errorDownloadingFile"));
     }
   };
@@ -651,7 +664,7 @@ export default function StudentDetailPage() {
                           size="sm"
                           onClick={() => handleDownloadPdf(c)}
                         >
-                          <FileText className="w-4 h-4 mr-2" />
+                          <Download className="w-4 h-4 mr-2" />
                           {t("downloadContract")}
                         </Button>
                       </TableCell>

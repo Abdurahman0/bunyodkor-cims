@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,8 +38,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { studentService, groupService } from "@/services/api.service";
-import type { StudentRead, GroupRead } from "@/types/api";
+import { studentService } from "@/services/api.service";
+import type { StudentRead } from "@/types/api";
 import { StudentDialog } from "./StudentDialog";
 import { StudentWithContractDialog } from "./StudentWithContractDialog";
 import { ImportDialog } from "@/components/import/ImportDialog";
@@ -47,6 +47,7 @@ import { exportStudents } from "@/lib/export-utils";
 import { format } from "date-fns";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
+import { useGroupsStore } from "@/store/groupsStore";
 
 export default function Students() {
   const { t } = useLanguageStore();
@@ -69,6 +70,19 @@ export default function Students() {
 
   const debouncedSearch = useDebounce(search, 500);
 
+  // Use global groups store
+  const { groupsData, isLoading: isLoadingGroups, fetchGroups } = useGroupsStore();
+
+  // Fetch groups on component mount if not already loaded
+  useEffect(() => {
+    if (!groupsData && !isLoadingGroups) {
+      console.log('[STUDENTS] No groups data, fetching from store...');
+      fetchGroups();
+    } else {
+      console.log('[STUDENTS] Groups already loaded:', groupsData);
+    }
+  }, [groupsData, isLoadingGroups, fetchGroups]);
+
   const { data, isLoading } = useQuery({
     queryKey: [
       "students",
@@ -88,18 +102,6 @@ export default function Students() {
         group_id: groupFilter ? parseInt(groupFilter, 10) : undefined,
         archive_year: archiveYearFilter ? parseInt(archiveYearFilter, 10) : undefined,
       }),
-  });
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
-    queryKey: ["groups-list"],
-    queryFn: async () => {
-      console.log('[STUDENTS] Fetching groups list');
-      const response = await groupService.getGroupsGroupedByYear();
-      console.log('[STUDENTS] Groups response:', response);
-      console.log('[STUDENTS] Groups data:', response?.data);
-      return response;
-    },
   });
 
   // Get total count for each status (independent of pagination)
@@ -412,8 +414,8 @@ export default function Students() {
                   <option value="">
                     {isLoadingGroups ? t("loading") : t("allGroups")}
                   </option>
-                  {!isLoadingGroups && groupsData?.data && Array.isArray(groupsData.data) ? (
-                    groupsData.data.map((yearGroup: any, yearIndex: number) => {
+                  {!isLoadingGroups && groupsData && Array.isArray(groupsData) ? (
+                    groupsData.map((yearGroup: any, yearIndex: number) => {
                       console.log('[STUDENTS] Processing yearGroup at index', yearIndex, ':', yearGroup);
 
                       // Validate yearGroup structure
@@ -478,7 +480,7 @@ export default function Students() {
                   <Badge variant="secondary">
                     {t("group")}:{" "}
                     {
-                      groupsData?.data
+                      groupsData
                         ?.flatMap((yearGroup: any) => yearGroup.groups || [])
                         .find((g: any) => g?.id?.toString() === groupFilter)
                         ?.name

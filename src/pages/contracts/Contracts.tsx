@@ -18,6 +18,7 @@ import {
   TableEmpty,
 } from "@/components/ui/table";
 import { contractService, studentService, groupService } from "@/services/api.service";
+import { useGroupsStore } from "@/store/groupsStore";
 import {
   Plus,
   Search,
@@ -54,6 +55,19 @@ export default function Contracts() {
     null
   );
   const queryClient = useQueryClient();
+
+  // Use global groups store
+  const { groupsData: allGroupsData, isLoading: isLoadingGroups, fetchGroups } = useGroupsStore();
+
+  // Fetch groups on component mount if not already loaded
+  useEffect(() => {
+    if (!allGroupsData && !isLoadingGroups) {
+      console.log('[CONTRACTS] No groups data, fetching from store...');
+      fetchGroups();
+    } else {
+      console.log('[CONTRACTS] Groups already loaded:', allGroupsData);
+    }
+  }, [allGroupsData, isLoadingGroups, fetchGroups]);
 
   // Read group_id and contract_id from URL parameters
   useEffect(() => {
@@ -124,28 +138,9 @@ export default function Contracts() {
     },
   });
 
-  // Fetch all groups for dropdown
-  const { data: allGroupsData, error: groupsError } = useQuery({
-    queryKey: ["groups-list"],
-    queryFn: async () => {
-      console.log('[CONTRACTS] Fetching groups');
-      try {
-        const response = await groupService.getGroupsGroupedByYear();
-        console.log('[CONTRACTS] Groups response:', response);
-        return response;
-      } catch (err) {
-        console.error('[CONTRACTS] Error fetching groups:', err);
-        throw err;
-      }
-    },
-  });
-
   // Log errors
   if (studentsError) {
-    console.error('[CONTRACTS] Students query error:', studentsError);
-  }
-  if (groupsError) {
-    console.error('[CONTRACTS] Groups query error:', groupsError);
+    console.log('[CONTRACTS] Students query error:', studentsError);
   }
 
   // Fetch group details if filtering by group
@@ -303,7 +298,8 @@ export default function Contracts() {
     dataLength: data?.data?.length,
     hasError: !!error,
     studentsCount: studentsData?.data?.length,
-    groupsCount: allGroupsData?.data?.length,
+    groupsCount: allGroupsData?.length,
+    groupsLoading: isLoadingGroups,
   });
 
   return (
@@ -366,8 +362,8 @@ export default function Contracts() {
                   className="w-48"
                 >
                   <option value="">{t("allGroups")}</option>
-                  {allGroupsData?.data && Array.isArray(allGroupsData.data) ? (
-                    allGroupsData.data.map((yearGroup: any, yearIndex: number) => {
+                  {allGroupsData && Array.isArray(allGroupsData) ? (
+                    allGroupsData.map((yearGroup: any, yearIndex: number) => {
                       if (!yearGroup?.groups || !Array.isArray(yearGroup.groups)) {
                         console.log('[CONTRACTS] Invalid yearGroup at index', yearIndex, yearGroup);
                         return null;

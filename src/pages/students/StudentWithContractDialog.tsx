@@ -415,6 +415,7 @@ const handleViewContract = async () => {
           mom_occupation: data.mom_occupation || "",
           dad_phone_number: data.dad_phone || "",
           mom_phone_number: data.mom_phone || "",
+          dad_fullname: data.dad_name || "",
           mom_fullname: data.mom_fio || "",
         },
 
