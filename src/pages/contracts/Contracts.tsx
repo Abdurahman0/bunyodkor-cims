@@ -128,7 +128,7 @@ export default function Contracts() {
     queryFn: async () => {
       console.log('[CONTRACTS] Fetching students list');
       try {
-        const response = await studentService.getStudents({ page: 1, page_size: 100 });
+        const response = await studentService.getStudents({ page: 1, page_size: 10000 });
         console.log('[CONTRACTS] Students response:', response);
         return response;
       } catch (err) {

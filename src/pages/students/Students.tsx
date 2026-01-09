@@ -73,14 +73,19 @@ export default function Students() {
   // Use global groups store
   const { groupsData, isLoading: isLoadingGroups, fetchGroups } = useGroupsStore();
 
+  // Flatten grouped data into single array
+  const allGroups = groupsData?.flatMap(yearGroup => yearGroup.groups) || [];
+
   // Fetch groups on component mount if not already loaded
   useEffect(() => {
     if (!groupsData && !isLoadingGroups) {
       console.log('[STUDENTS] No groups data, fetching from store...');
       fetchGroups();
-    } else {
+    } else if (groupsData) {
       console.log('[STUDENTS] Groups already loaded:', groupsData);
+      console.log('[STUDENTS] Flattened groups:', allGroups);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupsData, isLoadingGroups, fetchGroups]);
 
   const { data, isLoading } = useQuery({
@@ -414,36 +419,12 @@ export default function Students() {
                   <option value="">
                     {isLoadingGroups ? t("loading") : t("allGroups")}
                   </option>
-                  {!isLoadingGroups && groupsData && Array.isArray(groupsData) ? (
-                    groupsData.map((yearGroup: any, yearIndex: number) => {
-                      console.log('[STUDENTS] Processing yearGroup at index', yearIndex, ':', yearGroup);
-
-                      // Validate yearGroup structure
-                      if (!yearGroup?.groups || !Array.isArray(yearGroup.groups)) {
-                        console.log('[STUDENTS] Invalid yearGroup at index', yearIndex, '- missing or invalid groups array:', yearGroup);
-                        return null;
-                      }
-
-                      console.log('[STUDENTS] YearGroup has', yearGroup.groups.length, 'groups');
-
-                      // Map through the nested groups array
-                      return yearGroup.groups
-                        .filter((group: any) => {
-                          const isValid = group && group.id && group.name;
-                          if (!isValid) {
-                            console.log('[STUDENTS] Filtering out invalid group:', group);
-                          }
-                          return isValid;
-                        })
-                        .map((group: any) => {
-                          console.log('[STUDENTS] Rendering group option:', group.id, group.name);
-                          return (
-                            <option key={`group-${group.id}`} value={group.id}>
-                              {group.name}
-                            </option>
-                          );
-                        });
-                    })
+                  {!isLoadingGroups && allGroups.length > 0 ? (
+                    allGroups.map((group: any) => (
+                      <option key={`group-${group.id}`} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))
                   ) : null}
                 </Select>
                 <Input
@@ -480,8 +461,7 @@ export default function Students() {
                   <Badge variant="secondary">
                     {t("group")}:{" "}
                     {
-                      groupsData
-                        ?.flatMap((yearGroup: any) => yearGroup.groups || [])
+                      allGroups
                         .find((g: any) => g?.id?.toString() === groupFilter)
                         ?.name
                     }
@@ -576,9 +556,9 @@ export default function Students() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline">
-                        {groupsData?.data?.find(
+                        {allGroups.find(
                           (g) => g.id === student.group_id
-                        )?.name || `Group #${student.group_id}`}
+                        )?.name || t("noGroup")}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">

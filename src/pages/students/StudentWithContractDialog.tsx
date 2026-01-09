@@ -776,17 +776,17 @@ const handleDownloadContract = async () => {
                   </div>
                 </div>
                 <div>
-                  <Label>{t("issuedBy")}</Label>
-                  <Input
-                    {...register("tarbiyalanuvchi_who_give")}
-                    placeholder="FHDY nomi"
-                  />
-                </div>
-                <div>
                   <Label>{t("issuedDate")}</Label>
                   <Input
                     type="date"
                     {...register("tarbiyalanuvchi_when_give")}
+                  />
+                </div>
+                <div>
+                  <Label>{t("issuedBy")}</Label>
+                  <Input
+                    {...register("tarbiyalanuvchi_who_give")}
+                    placeholder="FHDY nomi"
                   />
                 </div>
               </div>
@@ -1074,15 +1074,15 @@ const handleDownloadContract = async () => {
                     />
                   </div>
                   <div>
+                    <Label>{t("issuedDate")}</Label>
+                    <Input type="date" {...register("buyurtmachi_when_give")} />
+                  </div>
+                  <div>
                     <Label>{t("issuedBy")}</Label>
                     <Input
                       {...register("buyurtmachi_who_give")}
                       placeholder="IIB nomi"
                     />
-                  </div>
-                  <div>
-                    <Label>{t("issuedDate")}</Label>
-                    <Input type="date" {...register("buyurtmachi_when_give")} />
                   </div>
                 </div>
               </div>
