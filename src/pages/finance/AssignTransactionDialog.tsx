@@ -142,7 +142,7 @@ export function AssignTransactionDialog({
                 <option value="">{isLoadingStudents ? 'Loading students...' : 'Select a student'}</option>
                 {studentsData?.data?.map((student: StudentRead) => (
                   <option key={student.id} value={student.id}>
-                    {student.first_name} {student.last_name} (ID: {student.id})
+                    {student.first_name} {student.last_name}
                   </option>
                 ))}
               </Select>

@@ -311,8 +311,7 @@ export function ContractDialog({
                   <option value="">{t("selectStudent")}</option>
                   {studentsData?.data?.map((student: StudentRead) => (
                     <option key={student.id} value={student.id}>
-                      {student.first_name} {student.last_name} (ID: {student.id}
-                      )
+                      {student.first_name} {student.last_name}
                     </option>
                   ))}
                 </Select>
@@ -332,9 +331,6 @@ export function ContractDialog({
                   <span className="text-base">
                     {selectedStudent.first_name} {selectedStudent.last_name}
                   </span>
-                  <Badge variant="secondary" className="text-xs ml-auto">
-                    ID: {selectedStudent.id}
-                  </Badge>
                 </div>
               </div>
             )}

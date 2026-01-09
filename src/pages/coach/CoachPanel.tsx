@@ -282,9 +282,6 @@ export default function CoachPanel() {
                             <p className="font-medium text-foreground text-sm truncate">
                               {student.first_name} {student.last_name}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              ID: {student.id}
-                            </p>
                           </div>
                         </div>
                         {student.phone && (
@@ -407,9 +404,6 @@ export default function CoachPanel() {
                           <div>
                             <p className="font-medium text-foreground">
                               {student.first_name} {student.last_name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              ID: {student.student_id}
                             </p>
                           </div>
                         </div>

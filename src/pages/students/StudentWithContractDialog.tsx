@@ -19,7 +19,7 @@ import {
 } from "@/services/api.service";
 import type { GroupRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
-import { Loader2, UserPlus, CheckCircle2, Copy } from "lucide-react";
+import { Loader2, UserPlus, CheckCircle2, Copy, Download, Eye } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 
@@ -139,7 +139,7 @@ export function StudentWithContractDialog({
   } = useForm<StudentFormData>({
     defaultValues: {
       tolov_monthly_fee: "800000",
-      tolov_amount_in_words: "sakkiz yuz ming",
+      tolov_amount_in_words: "саккиз юз минг",
     },
   });
 
@@ -245,27 +245,68 @@ export function StudentWithContractDialog({
   }, [selectedGroupId, setValue, groupsData]);
 
 const handleViewContract = async () => {
+  console.log("[DEBUG] handleViewContract called, pdfUrl:", pdfUrl);
+
   if (!pdfUrl) {
+    console.error("[DEBUG] No pdfUrl available");
     toast.error(t("pdfNotFound") || "PDF topilmadi");
     return;
   }
 
   try {
-    // Use the same PDF opening logic as StudentDetailPage
-    await openPdfUrl(pdfUrl);
-    toast.success(t("contractOpened") || "Shartnoma ochildi");
+    console.log("[DEBUG] Attempting to open PDF:", pdfUrl);
+    // Open PDF in new tab/window
+    const opened = window.open(pdfUrl, "_blank");
+    if (opened) {
+      console.log("[DEBUG] PDF opened successfully in new window");
+      toast.success(t("contractOpened") || "Shartnoma ochildi");
+    } else {
+      console.log("[DEBUG] Popup blocked, trying openPdfUrl");
+      // If popup was blocked, try opening with openPdfUrl
+      await openPdfUrl(pdfUrl);
+      toast.success(t("contractOpened") || "Shartnoma ochildi");
+    }
   } catch (error) {
-    console.error("Error opening contract:", error);
+    console.error("[DEBUG] Error opening contract:", error);
     toast.error(t("errorOpeningContract") || "Shartnomani ochishda xatolik");
-  } finally {
-    // Don't close the dialog immediately, let user decide
-    setTimeout(() => {
-      handleClose();
-    }, 1000);
   }
 };
 
+const handleDownloadContract = async () => {
+  console.log("[DEBUG] handleDownloadContract called, pdfUrl:", pdfUrl);
 
+  if (!pdfUrl) {
+    console.error("[DEBUG] No pdfUrl available for download");
+    toast.error(t("pdfNotFound") || "PDF topilmadi");
+    return;
+  }
+
+  try {
+    console.log("[DEBUG] Fetching PDF for download:", pdfUrl);
+    // Fetch the PDF and trigger download
+    const response = await fetch(pdfUrl);
+    const blob = await response.blob();
+    console.log("[DEBUG] PDF blob created, size:", blob.size);
+
+    // Create a temporary link element to trigger download
+    const link = document.createElement('a');
+    const blobUrl = window.URL.createObjectURL(blob);
+    link.href = blobUrl;
+    link.download = `shartnoma-${Date.now()}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up blob URL
+    window.URL.revokeObjectURL(blobUrl);
+
+    console.log("[DEBUG] Download triggered successfully");
+    toast.success("Shartnoma yuklandi");
+  } catch (error) {
+    console.error("[DEBUG] Error downloading contract:", error);
+    toast.error("Shartnomani yuklashda xatolik");
+  }
+};
 
   const handleClose = () => {
     setIsSuccess(false);
@@ -340,7 +381,7 @@ const handleViewContract = async () => {
         tarbiyalanuvchi_who_give: "",
         tarbiyalanuvchi_when_give: "",
         tolov_monthly_fee: "800000",
-        tolov_amount_in_words: "sakkiz yuz ming",
+        tolov_amount_in_words: "саккиз юз минг",
       });
     }
   }, [open, reset]);
@@ -528,6 +569,7 @@ const handleViewContract = async () => {
         "pdf_url" in response &&
         response.pdf_url
       ) {
+        console.log("[DEBUG] PDF URL received from backend:", response.pdf_url);
         setPdfUrl(response.pdf_url as string);
         setIsSuccess(true);
       } else {
@@ -538,10 +580,11 @@ const handleViewContract = async () => {
               ? response
               : new Blob([response], { type: "application/pdf" });
           const fileURL = window.URL.createObjectURL(blob);
+          console.log("[DEBUG] Created blob URL:", fileURL);
           setPdfUrl(fileURL);
           setIsSuccess(true);
         } catch (e) {
-          console.error("Error creating blob URL from response", e);
+          console.error("[DEBUG] Error creating blob URL from response", e);
           toast.error(t("pdfNotFound") || "PDF topilmadi!");
           setIsSubmitting(false);
           return;
@@ -586,7 +629,7 @@ const handleViewContract = async () => {
       if (isDuplicateContract && data.group_id) {
         // Retry with new contract number
         try {
-          toast.info(t("retryingWithNewNumber") || "Yangi shartnoma raqami bilan qayta urinilmoqda...");
+          toast(t("retryingWithNewNumber") || "Yangi shartnoma raqami bilan qayta urinilmoqda...");
 
           const year = data.birth_year && data.birth_year.toString().length === 4
             ? Number(data.birth_year)
@@ -602,7 +645,7 @@ const handleViewContract = async () => {
             setSuggestedContractNumber(newContractNumber);
             setValue("contract_number", newContractNumber);
             toast.success(`${t("newNumberSuggested")}: ${newContractNumber}` || `Yangi raqam taklif qilingan: ${newContractNumber}`);
-            toast.info(t("pleaseSubmitAgain") || "Iltimos, yana bir bor 'Saqlash' tugmasini bosing");
+            toast(t("pleaseSubmitAgain") || "Iltimos, yana bir bor 'Saqlash' tugmasini bosing");
           } else {
             toast.error(errorMessage);
           }
@@ -641,17 +684,17 @@ const handleViewContract = async () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label>{t("firstName")} *</Label>
-                <Input
-                  {...register("first_name", { required: true })}
-                  placeholder={t("firstName")}
-                />
-              </div>
-              <div className="space-y-1">
                 <Label>{t("lastName")} *</Label>
                 <Input
                   {...register("last_name", { required: true })}
                   placeholder={t("lastName")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>{t("firstName")} *</Label>
+                <Input
+                  {...register("first_name", { required: true })}
+                  placeholder={t("firstName")}
                 />
               </div>
               <div className="space-y-1">
@@ -873,7 +916,7 @@ const handleViewContract = async () => {
                 <Label>{t("amountInWords")} *</Label>
                 <Input
                   {...register("tolov_amount_in_words", { required: true })}
-                  placeholder="sakkiz yuz ming"
+                  placeholder="саккиз юз минг"
                 />
               </div>
             </div>
@@ -1001,17 +1044,6 @@ const handleViewContract = async () => {
                     </div>
                   </div>
                   <div>
-                    <Label>{t("issuedBy")}</Label>
-                    <Input
-                      {...register("buyurtmachi_who_give")}
-                      placeholder="IIB nomi"
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("issuedDate")}</Label>
-                    <Input type="date" {...register("buyurtmachi_when_give")} />
-                  </div>
-                  <div>
                     <div className="flex items-center justify-between mb-1">
                       <Label>{t("address")}</Label>
                       {primaryAddress && (
@@ -1040,6 +1072,17 @@ const handleViewContract = async () => {
                         }
                       }}
                     />
+                  </div>
+                  <div>
+                    <Label>{t("issuedBy")}</Label>
+                    <Input
+                      {...register("buyurtmachi_who_give")}
+                      placeholder="IIB nomi"
+                    />
+                  </div>
+                  <div>
+                    <Label>{t("issuedDate")}</Label>
+                    <Input type="date" {...register("buyurtmachi_when_give")} />
                   </div>
                 </div>
               </div>
@@ -1241,21 +1284,42 @@ const handleViewContract = async () => {
               <h3 className="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-3">
                 {t("contractCreatedSuccess")}
               </h3>
-              <p className="text-center text-gray-600 dark:text-gray-400 mb-8">
+              <p className="text-center text-gray-600 dark:text-gray-400 mb-4">
                 {t("successfullySaved")}
               </p>
 
+              {/* Debug info - remove this later */}
+              {pdfUrl && (
+                <div className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 p-2 rounded mb-4 break-all">
+                  <strong>Debug PDF URL:</strong> {pdfUrl.substring(0, 100)}...
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    onClick={handleViewContract}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    <Eye className="w-5 h-5" />
+                    Ko'rish
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleDownloadContract}
+                    variant="secondary"
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    <Download className="w-5 h-5" />
+                    Yuklash
+                  </Button>
+                </div>
                 <Button
-                  onClick={handleViewContract}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                  {t("viewContract")}
-                </Button>
-                <Button
+                  type="button"
                   onClick={handleClose}
                   variant="outline"
                   className="w-full"
