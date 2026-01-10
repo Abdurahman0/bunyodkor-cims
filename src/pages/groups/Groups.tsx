@@ -40,16 +40,13 @@ import {
   UserCheck,
   FileText,
   CreditCard,
+  Eye, // <--- MANA SHUNI QO'SHING
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type {
-  GroupRead,
-  StudentRead,
-  ContractRead,
-} from "@/types/api";
+import type { GroupRead, StudentRead, ContractRead } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 
@@ -642,7 +639,6 @@ export default function Groups() {
         </DialogContent>
       </Dialog>
 
-      {/* Contracts Dialog */}
       {/* Contracts Dialog */}
       <Dialog
         open={isContractsDialogOpen}
