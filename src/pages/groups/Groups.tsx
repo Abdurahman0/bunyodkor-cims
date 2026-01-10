@@ -40,7 +40,6 @@ import {
   UserCheck,
   FileText,
   CreditCard,
-  Eye, // <--- MANA SHUNI QO'SHING
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
