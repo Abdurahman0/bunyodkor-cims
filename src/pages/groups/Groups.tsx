@@ -708,7 +708,7 @@ export default function Groups() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2 pb-4">
+                    <CardContent className="space-y-2 pb-4 p-4">
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-foreground">
