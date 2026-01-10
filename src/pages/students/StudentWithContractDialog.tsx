@@ -264,18 +264,10 @@ export function StudentWithContractDialog({
     }
 
     try {
-      console.log("[DEBUG] Attempting to open PDF:", pdfUrl);
-      // Open PDF in new tab/window
-      const opened = window.open(pdfUrl, "_blank");
-      if (opened) {
-        console.log("[DEBUG] PDF opened successfully in new window");
-        toast.success(t("contractOpened") || "Shartnoma ochildi");
-      } else {
-        console.log("[DEBUG] Popup blocked, trying openPdfUrl");
-        // If popup was blocked, try opening with openPdfUrl
-        await openPdfUrl(pdfUrl);
-        toast.success(t("contractOpened") || "Shartnoma ochildi");
-      }
+      console.log("[DEBUG] Attempting to open PDF in new tab:", pdfUrl);
+      // Open PDF directly in new tab (not blob)
+      window.open(pdfUrl, "_blank");
+      toast.success(t("contractOpened") || "Shartnoma ochildi");
     } catch (error) {
       console.error("[DEBUG] Error opening contract:", error);
       toast.error(t("errorOpeningContract") || "Shartnomani ochishda xatolik");
@@ -292,7 +284,7 @@ export function StudentWithContractDialog({
     }
 
     try {
-      console.log("[DEBUG] Fetching PDF for download:", pdfUrl);
+      console.log("[DEBUG] Downloading PDF:", pdfUrl);
       // Fetch the PDF and trigger download
       const response = await fetch(pdfUrl);
       const blob = await response.blob();
@@ -302,7 +294,7 @@ export function StudentWithContractDialog({
       const link = document.createElement("a");
       const blobUrl = window.URL.createObjectURL(blob);
       link.href = blobUrl;
-      link.download = `shartnoma-${Date.now()}.pdf`;
+      link.download = `shartnoma.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -311,10 +303,10 @@ export function StudentWithContractDialog({
       window.URL.revokeObjectURL(blobUrl);
 
       console.log("[DEBUG] Download triggered successfully");
-      toast.success("Shartnoma yuklandi");
+      toast.success(t("contractDownloaded") || "Shartnoma yuklandi");
     } catch (error) {
       console.error("[DEBUG] Error downloading contract:", error);
-      toast.error("Shartnomani yuklashda xatolik");
+      toast.error(t("errorDownloadingFile") || "Shartnomani yuklashda xatolik");
     }
   };
 
@@ -1325,10 +1317,18 @@ export function StudentWithContractDialog({
                 {t("successfullySaved")}
               </p>
 
-              {/* Debug info - remove this later */}
+              {/* PDF Link Section */}
               {pdfUrl && (
-                <div className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 p-2 rounded mb-4 break-all">
-                  <strong>Debug PDF URL:</strong> {pdfUrl.substring(0, 100)}...
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
+                  <span className="text-lg">📄</span>
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex-1"
+                  >
+                    {t("viewContractPdf") || "Shartnomani ko'rish"}
+                  </a>
                 </div>
               )}
 
