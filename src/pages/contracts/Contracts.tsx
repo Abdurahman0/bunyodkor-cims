@@ -33,7 +33,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";

@@ -32,6 +32,7 @@ import {
   Trash2,
   AlertTriangle,
   Download,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
