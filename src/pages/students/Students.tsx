@@ -138,10 +138,10 @@ export default function Students() {
       studentService.getStudents({ status: "dropped", page: 1, page_size: 1 }),
   });
 
+  // Use DELETE /students/{student_id} for soft delete
   const deleteMutation = useMutation({
     mutationFn: (id: number) => studentService.deleteStudent(id),
     onSuccess: () => {
-      // Invalidate all related queries to ensure UI updates after cascade delete
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["students-count"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
@@ -149,13 +149,22 @@ export default function Students() {
       queryClient.invalidateQueries({ queryKey: ["finance"] });
       queryClient.invalidateQueries({ queryKey: ["attendances"] });
       queryClient.invalidateQueries({ queryKey: ["groups"] });
-      toast.success(t("studentDeleted"));
+      toast.success(t("studentDeleted") || "Talaba o'chirildi");
     },
-    onError: () => {
-      toast.error(t("failedToDeleteStudent"));
+    onError: (error: any) => {
+      const detail = error?.response?.data?.detail;
+      let errorMessage =
+        t("failedToDeleteStudent") || "Talabani o'chirishda xato";
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+      toast.error(errorMessage);
     },
   });
 
+  // Professional UI: open dialog, confirm, then delete
   const handleDelete = (student: StudentRead) => {
     setStudentToDelete(student);
     setIsDeleteDialogOpen(true);
@@ -600,7 +609,8 @@ export default function Students() {
                             handleDelete(student);
                           }}
                           disabled={deleteMutation.isPending}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-white hover:bg-red-500 dark:hover:bg-red-900/40 transition-colors duration-150"
+                          title={t("deleteStudent")}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -668,28 +678,38 @@ export default function Students() {
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
-                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 animate-pulse" />
               </div>
-              <DialogTitle className="text-xl">
-                {t("confirmDelete") || "Confirm Delete"}
+              <DialogTitle className="text-xl font-bold text-red-600 dark:text-red-400">
+                {t("confirmDelete") || "O'chirishni tasdiqlang"}
               </DialogTitle>
             </div>
             <DialogDescription className="text-base mt-4">
-              {t("deleteStudentWarning") || "Are you sure you want to delete"}{" "}
-              <span className="font-semibold text-foreground">
-                {studentToDelete?.first_name} {studentToDelete?.last_name}
-              </span>
-              ?
-              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-2">
-                  {t("deletionWarning") || "This will permanently delete:"}
-                </p>
-                <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
-                  <li>{t("studentProfile") || "Student profile"}</li>
-                  <li>{t("allContracts") || "All contracts"}</li>
-                  <li>{t("paymentHistory") || "Payment history"}</li>
-                  <li>{t("attendanceRecords") || "Attendance records"}</li>
-                </ul>
+              <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-l-4 border-red-500 rounded-lg shadow-sm">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
+                      <span>⚠️</span>
+                      <span>
+                        {t("deleteStudentWarning") || "Talabani o'chirasizmi?"}
+                      </span>
+                    </p>
+                    <p className="text-xs text-red-800 dark:text-red-300 font-semibold mb-2">
+                      {t("thisActionCannotBeUndone") ||
+                        "Bu amalni qaytarib bo'lmaydi!"}
+                    </p>
+                    <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-1.5">
+                      {t("followingWillBeDeleted") ||
+                        "Quyidagilar o'chiriladi:"}
+                    </p>
+                    <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
+                      <li>{t("studentProfile") || "Talaba profili"}</li>
+                      <li>{t("allContracts") || "Barcha shartnomalar"}</li>
+                      <li>{t("paymentHistory") || "To'lov tarixi"}</li>
+                      <li>{t("attendanceRecords") || "Davomat yozuvlari"}</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </DialogDescription>
           </DialogHeader>
@@ -708,8 +728,9 @@ export default function Students() {
               variant="destructive"
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
-              className="flex-1"
+              className="flex-1 gap-2"
             >
+              <Trash2 className="w-4 h-4" />
               {deleteMutation.isPending ? t("deleting") : t("deleteStudent")}
             </Button>
           </div>

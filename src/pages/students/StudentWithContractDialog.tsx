@@ -254,60 +254,29 @@ export function StudentWithContractDialog({
     fetchContractNumber();
   }, [selectedGroupId, setValue, groupsData]);
 
-  const handleViewContract = async () => {
-    console.log("[DEBUG] handleViewContract called, pdfUrl:", pdfUrl);
-
+  // Use direct link for view/download, camelCase
+  const handleViewContract = () => {
     if (!pdfUrl) {
-      console.error("[DEBUG] No pdfUrl available");
       toast.error(t("pdfNotFound") || "PDF topilmadi");
       return;
     }
-
-    try {
-      console.log("[DEBUG] Attempting to open PDF in new tab:", pdfUrl);
-      // Open PDF directly in new tab (not blob)
-      window.open(pdfUrl, "_blank");
-      toast.success(t("contractOpened") || "Shartnoma ochildi");
-    } catch (error) {
-      console.error("[DEBUG] Error opening contract:", error);
-      toast.error(t("errorOpeningContract") || "Shartnomani ochishda xatolik");
-    }
+    window.open(pdfUrl, "_blank");
+    toast.success(t("contractOpened") || "Shartnoma ochildi");
   };
 
-  const handleDownloadContract = async () => {
-    console.log("[DEBUG] handleDownloadContract called, pdfUrl:", pdfUrl);
-
+  const handleDownloadContract = () => {
     if (!pdfUrl) {
-      console.error("[DEBUG] No pdfUrl available for download");
       toast.error(t("pdfNotFound") || "PDF topilmadi");
       return;
     }
-
-    try {
-      console.log("[DEBUG] Downloading PDF:", pdfUrl);
-      // Fetch the PDF and trigger download
-      const response = await fetch(pdfUrl);
-      const blob = await response.blob();
-      console.log("[DEBUG] PDF blob created, size:", blob.size);
-
-      // Create a temporary link element to trigger download
-      const link = document.createElement("a");
-      const blobUrl = window.URL.createObjectURL(blob);
-      link.href = blobUrl;
-      link.download = `shartnoma.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up blob URL
-      window.URL.revokeObjectURL(blobUrl);
-
-      console.log("[DEBUG] Download triggered successfully");
-      toast.success(t("contractDownloaded") || "Shartnoma yuklandi");
-    } catch (error) {
-      console.error("[DEBUG] Error downloading contract:", error);
-      toast.error(t("errorDownloadingFile") || "Shartnomani yuklashda xatolik");
-    }
+    // Download directly using anchor
+    const link = document.createElement("a");
+    link.href = pdfUrl;
+    link.download = "shartnoma.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(t("contractDownloaded") || "Shartnoma yuklandi");
   };
 
   const handleClose = () => {
