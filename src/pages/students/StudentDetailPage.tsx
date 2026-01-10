@@ -781,26 +781,106 @@ export default function StudentDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Danger Zone - Delete Student */}
-      <Card className="border-red-200 dark:border-red-900">
-        <CardHeader>
-          <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
-            {t("dangerZone") || "Xavfli zona"}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("deleteStudentWarning") || "Talabani butunlay o'chirish qaytarilmas jarayon"}
-          </p>
+      {/* Critical Actions Section */}
+      <Card className="relative overflow-hidden border-2 border-red-500/20 dark:border-red-500/30 shadow-lg hover:shadow-red-500/20 dark:hover:shadow-red-500/30 transition-all duration-300 group">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-red-50/50 to-transparent dark:from-red-950/20 dark:via-red-950/10 dark:to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
+
+        {/* Animated border effect */}
+        <div className="absolute inset-0 border-2 border-red-500/0 group-hover:border-red-500/30 transition-all duration-300 rounded-lg" />
+
+        <CardHeader className="relative pb-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              {/* Warning icon with pulse animation */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-red-500 rounded-full blur-md opacity-40 animate-pulse" />
+                <div className="relative p-3 rounded-full bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
+                  <AlertTriangle className="w-6 h-6 text-white animate-pulse" />
+                </div>
+              </div>
+
+              <div>
+                <CardTitle className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-700 dark:from-red-400 dark:to-red-500 bg-clip-text text-transparent">
+                  {t("criticalAction") || "Muhim harakat"}
+                </CardTitle>
+                <p className="text-sm text-red-600/80 dark:text-red-400/80 font-medium mt-1">
+                  {t("irreversibleAction") || "Qaytarib bo'lmaydigan amal"}
+                </p>
+              </div>
+            </div>
+
+            {/* Warning badge with 3 languages */}
+            <div className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700">
+              <span className="text-xs font-bold text-red-700 dark:text-red-300">
+                ⚠️ CAUTION | EHTIYOT | ВНИМАНИЕ
+              </span>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            onClick={() => setIsHardDeleteDialogOpen(true)}
-            className="gap-2"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>{t("permanentlyDelete") || "Butunlay o'chirish"}</span>
-          </Button>
+
+        <CardContent className="relative space-y-4">
+          {/* Warning message box with 3 languages */}
+          <div className="p-4 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-l-4 border-red-500 shadow-sm">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="space-y-3">
+                {/* Uzbek */}
+                <div>
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1.5">
+                    🇺🇿 {t("deleteStudentWarning") || "Talabani butunlay o'chirish qaytarilmas jarayon"}
+                  </p>
+                  <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
+                    <li>Talaba profili o'chiriladi</li>
+                    <li>Barcha shartnomalar o'chiriladi</li>
+                    <li>To'lov tarixi o'chiriladi</li>
+                    <li>Davomat yozuvlari o'chiriladi</li>
+                  </ul>
+                </div>
+
+                {/* English */}
+                <div className="border-t border-red-200/50 dark:border-red-800/50 pt-2">
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1.5">
+                    🇬🇧 Permanently deleting a student is an irreversible action
+                  </p>
+                  <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
+                    <li>Student profile will be deleted</li>
+                    <li>All contracts will be removed</li>
+                    <li>Payment history will be erased</li>
+                    <li>Attendance records will be lost</li>
+                  </ul>
+                </div>
+
+                {/* Russian */}
+                <div className="border-t border-red-200/50 dark:border-red-800/50 pt-2">
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1.5">
+                    🇷🇺 Полное удаление студента - необратимое действие
+                  </p>
+                  <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
+                    <li>Профиль студента будет удален</li>
+                    <li>Все контракты будут удалены</li>
+                    <li>История платежей будет стерта</li>
+                    <li>Записи посещаемости будут потеряны</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Delete button with enhanced styling */}
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-xs text-muted-foreground italic">
+              {t("clickButtonToConfirm") || "Tasdiqlash uchun tugmani bosing"}
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => setIsHardDeleteDialogOpen(true)}
+              className="gap-2 px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 font-semibold"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>{t("permanentlyDelete") || "Butunlay o'chirish"}</span>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
