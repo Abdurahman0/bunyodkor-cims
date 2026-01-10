@@ -260,8 +260,8 @@ export function StudentWithContractDialog({
       toast.error(t("pdfNotFound") || "PDF topilmadi");
       return;
     }
-    window.open(pdfUrl, "_blank");
-    toast.success(t("contractOpened") || "Shartnoma ochildi");
+
+    window.open(pdfUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleDownloadContract = () => {
@@ -269,13 +269,14 @@ export function StudentWithContractDialog({
       toast.error(t("pdfNotFound") || "PDF topilmadi");
       return;
     }
-    // Download directly using anchor
+
     const link = document.createElement("a");
     link.href = pdfUrl;
     link.download = "shartnoma.pdf";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
     toast.success(t("contractDownloaded") || "Shartnoma yuklandi");
   };
 
