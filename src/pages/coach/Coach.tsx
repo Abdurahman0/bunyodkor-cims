@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -10,6 +10,24 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { coachService, attendanceService } from "@/services/api.service";
 import type {
   GroupRead,
@@ -29,9 +47,13 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Upload,
+  FileText,
+  History,
+  TrendingUp,
 } from "lucide-react";
 import { format, addDays, subDays } from "date-fns";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { useLanguageStore } from "@/store/languageStore";
 
 export default function Coach() {
@@ -43,6 +65,10 @@ export default function Coach() {
   const [attendanceStatus, setAttendanceStatus] = useState<
     Record<number, string>
   >({});
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [currentTab, setCurrentTab] = useState("attendance");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
@@ -53,6 +79,12 @@ export default function Coach() {
   const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
     queryKey: ["coach-sessions", selectedDate],
     queryFn: () => coachService.getCoachSessions({ date: selectedDate }),
+  });
+
+  // Fetch my attendances for history view
+  const { data: myAttendancesData } = useQuery({
+    queryKey: ["my-attendances"],
+    queryFn: () => coachService.getMyAttendances(),
   });
 
   const { data: studentsData, isLoading: studentsLoading } = useQuery({
@@ -93,7 +125,7 @@ export default function Coach() {
   }, [existingAttendancesData, selectedSession]);
 
   const attendanceMutation = useMutation<
-    ApiResponse<Record<string, unknown>>, // ✔ API real qaytaradigan type
+    ApiResponse<Record<string, unknown>>,
     Error,
     {
       session_id: number;
@@ -117,12 +149,14 @@ export default function Coach() {
       queryClient.invalidateQueries({
         queryKey: ["session-attendances", selectedSession],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["my-attendances"],
+      });
     },
 
     onError: (error: unknown) => {
       let errorMessage = "Failed to mark attendance";
 
-      // First: ensure error is an object
       if (typeof error === "object" && error !== null && "response" in error) {
         type ErrorResponse = {
           response?: {
@@ -143,6 +177,28 @@ export default function Coach() {
       }
 
       toast.error(errorMessage);
+    },
+  });
+
+  // Upload konspekt mutation
+  const uploadKonspektMutation = useMutation({
+    mutationFn: ({ sessionId, file }: { sessionId: number; file: File }) => {
+      const formData = new FormData();
+      formData.append("konspekt", file);
+      return coachService.uploadKonspekt(sessionId, formData);
+    },
+    onSuccess: () => {
+      toast.success(t("konspektUploaded") || "Konspekt uploaded successfully!");
+      setUploadDialogOpen(false);
+      setSelectedFile(null);
+      queryClient.invalidateQueries({ queryKey: ["coach-sessions"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.detail ||
+          t("errorUploadingKonspekt") ||
+          "Error uploading konspekt"
+      );
     },
   });
 
@@ -169,6 +225,24 @@ export default function Coach() {
     });
   };
 
+  const handleUploadKonspekt = () => {
+    if (!selectedSession || !selectedFile) {
+      toast.error(t("pleaseSelectFile") || "Please select a file");
+      return;
+    }
+    uploadKonspektMutation.mutate({
+      sessionId: selectedSession,
+      file: selectedFile,
+    });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
   };
@@ -186,6 +260,11 @@ export default function Coach() {
     }
   };
 
+  // Calculate stats
+  const totalSessions = sessionsData?.data?.length || 0;
+  const totalGroups = groupsData?.data?.length || 0;
+  const totalAttendances = myAttendancesData?.data?.length || 0;
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -195,18 +274,69 @@ export default function Coach() {
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            Coach Panel
+            {t("coachPanel") || "Coach Panel"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage sessions and mark attendance
+            {t("manageSessionsAndAttendance") || "Manage sessions and mark attendance"}
           </p>
         </div>
       </motion.div>
 
+      {/* Stats Cards */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("myGroups") || "My Groups"}</p>
+                <p className="text-2xl font-bold mt-1">{totalGroups}</p>
+              </div>
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                <GraduationCap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("todaySessions") || "Today's Sessions"}</p>
+                <p className="text-2xl font-bold mt-1">{totalSessions}</p>
+              </div>
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <Calendar className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("totalAttendances") || "Total Attendances"}</p>
+                <p className="text-2xl font-bold mt-1">{totalAttendances}</p>
+              </div>
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Date Picker */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
       >
         <Card>
           <CardContent className="p-4">
@@ -245,250 +375,401 @@ export default function Coach() {
         </Card>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <GraduationCap className="w-5 h-5" />
-                My Groups
-              </CardTitle>
-              <CardDescription>Groups assigned to you</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {groupsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : groupsData?.data && groupsData.data.length > 0 ? (
-                <div className="space-y-3">
-                  {groupsData.data.map((group: GroupRead) => (
-                    <div
-                      key={group.id}
-                      className="p-3 rounded-lg bg-muted/50 dark:bg-muted/20"
-                    >
-                      <p className="font-medium text-foreground">
-                        {group.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {group.schedule_days} • {group.schedule_time}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No groups assigned
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+      {/* Tabs Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Tabs value={currentTab} onValueChange={setCurrentTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="attendance" className="gap-2">
+              <Users className="w-4 h-4" />
+              {t("markAttendance") || "Mark Attendance"}
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <History className="w-4 h-4" />
+              {t("attendanceHistory") || "Attendance History"}
+            </TabsTrigger>
+          </TabsList>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Sessions
-              </CardTitle>
-              <CardDescription>
-                {format(new Date(selectedDate), "MMMM d, yyyy")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {sessionsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : sessionsData?.data && sessionsData.data.length > 0 ? (
-                <div className="space-y-3">
-                  {sessionsData.data.map((session: SessionRead) => {
-                    const group = groupsData?.data?.find(
-                      (g) => g.id === session.group_id
-                    );
-                    const isSelected = selectedSession === session.id;
-                    return (
-                      <button
-                        key={session.id}
-                        onClick={() => setSelectedSession(session.id)}
-                        className={`w-full p-3 rounded-lg text-left transition-colors ${
-                          isSelected
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/50 dark:bg-muted/20 hover:bg-muted"
-                        }`}
+          {/* Attendance Tab */}
+          <TabsContent value="attendance" className="mt-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Groups Column */}
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5" />
+                    {t("myGroups") || "My Groups"}
+                  </CardTitle>
+                  <CardDescription>
+                    {t("groupsAssignedToYou") || "Groups assigned to you"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {groupsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : groupsData?.data && groupsData.data.length > 0 ? (
+                    <div className="space-y-3">
+                      {groupsData.data.map((group: GroupRead) => (
+                        <div
+                          key={group.id}
+                          className="p-3 rounded-lg bg-muted/50 dark:bg-muted/20"
+                        >
+                          <p className="font-medium text-foreground">
+                            {group.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {group.schedule_days} • {group.schedule_time}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {t("noGroupsAssigned") || "No groups assigned"}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Sessions Column */}
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Calendar className="w-5 h-5" />
+                        {t("sessions") || "Sessions"}
+                      </CardTitle>
+                      <CardDescription>
+                        {format(new Date(selectedDate), "MMMM d, yyyy")}
+                      </CardDescription>
+                    </div>
+                    {selectedSession && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setUploadDialogOpen(true)}
+                        className="gap-2"
                       >
-                        <p className="font-medium">
-                          {group?.name || `Group #${session.group_id}`}
-                        </p>
-                        {session.topic && (
-                          <p
-                            className={`text-xs mt-0.5 ${
+                        <Upload className="w-4 h-4" />
+                        {t("uploadKonspekt") || "Upload Konspekt"}
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {sessionsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : sessionsData?.data && sessionsData.data.length > 0 ? (
+                    <div className="space-y-3">
+                      {sessionsData.data.map((session: SessionRead) => {
+                        const group = groupsData?.data?.find(
+                          (g) => g.id === session.group_id
+                        );
+                        const isSelected = selectedSession === session.id;
+                        return (
+                          <button
+                            key={session.id}
+                            onClick={() => setSelectedSession(session.id)}
+                            className={`w-full p-3 rounded-lg text-left transition-colors ${
                               isSelected
-                                ? "text-primary-foreground/70"
-                                : "text-muted-foreground"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted/50 dark:bg-muted/20 hover:bg-muted"
                             }`}
                           >
-                            {session.topic}
-                          </p>
-                        )}
-                        <p
-                          className={`text-sm mt-1 ${
-                            isSelected
-                              ? "text-primary-foreground/80"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {session.start_time} - {session.end_time}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No sessions for this date
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="lg:col-span-1"
-        >
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Attendance
-              </CardTitle>
-              <CardDescription>
-                {selectedSession
-                  ? "Mark student attendance"
-                  : "Select a session"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!selectedSession ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Select a session to mark attendance
-                </div>
-              ) : studentsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : studentsData?.data && studentsData.data.length > 0 ? (
-                <div className="space-y-3">
-                  {studentsData.data.map((student: StudentWithDebtInfo) => {
-                    const existingAttendance = existingAttendanceMap.get(student.student_id);
-                    const hasExistingAttendance = !!existingAttendance;
-                    const displayStatus = hasExistingAttendance
-                      ? existingAttendance.status
-                      : attendanceStatus[student.student_id];
-
-                    return (
-                      <div
-                        key={student.student_id}
-                        className="p-3 rounded-lg bg-muted/50 dark:bg-muted/20"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {student.first_name} {student.last_name}
+                            <p className="font-medium">
+                              {group?.name || `Group #${session.group_id}`}
                             </p>
-                            {student.has_debt && (
-                              <div className="flex items-center gap-1 mt-1">
-                                <AlertTriangle className="w-3 h-3 text-red-500" />
-                                <span className="text-xs text-red-500">
-                                  Debt: {formatCurrency(student.debt_amount!)}
-                                </span>
-                              </div>
+                            {session.topic && (
+                              <p
+                                className={`text-xs mt-0.5 ${
+                                  isSelected
+                                    ? "text-primary-foreground/70"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                {session.topic}
+                              </p>
                             )}
-                            {hasExistingAttendance && (
-                              <div className="flex items-center gap-1 mt-1">
-                                <CheckCircle className="w-3 h-3 text-green-500" />
-                                <span className="text-xs text-green-600 dark:text-green-400">
-                                  Davomat olindi
-                                </span>
+                            <p
+                              className={`text-sm mt-1 ${
+                                isSelected
+                                  ? "text-primary-foreground/80"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {session.start_time} - {session.end_time}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {t("noSessionsForDate") || "No sessions for this date"}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Attendance Column */}
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    {t("attendance") || "Attendance"}
+                  </CardTitle>
+                  <CardDescription>
+                    {selectedSession
+                      ? t("markStudentAttendance") || "Mark student attendance"
+                      : t("selectSession") || "Select a session"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!selectedSession ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {t("selectSessionToMark") || "Select a session to mark attendance"}
+                    </div>
+                  ) : studentsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : studentsData?.data && studentsData.data.length > 0 ? (
+                    <div className="space-y-3">
+                      {studentsData.data.map((student: StudentWithDebtInfo) => {
+                        const existingAttendance = existingAttendanceMap.get(
+                          student.student_id
+                        );
+                        const hasExistingAttendance = !!existingAttendance;
+                        const displayStatus = hasExistingAttendance
+                          ? existingAttendance.status
+                          : attendanceStatus[student.student_id];
+
+                        return (
+                          <div
+                            key={student.student_id}
+                            className="p-3 rounded-lg bg-muted/50 dark:bg-muted/20"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-medium text-foreground">
+                                  {student.first_name} {student.last_name}
+                                </p>
+                                {student.has_debt && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <AlertTriangle className="w-3 h-3 text-red-500" />
+                                    <span className="text-xs text-red-500">
+                                      {t("debt") || "Debt"}: {formatCurrency(student.debt_amount!)}
+                                    </span>
+                                  </div>
+                                )}
+                                {hasExistingAttendance && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <CheckCircle className="w-3 h-3 text-green-500" />
+                                    <span className="text-xs text-green-600 dark:text-green-400">
+                                      {t("attendanceMarked") || "Davomat olindi"}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                              {displayStatus && getStatusIcon(displayStatus)}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant={
+                                  displayStatus === "present" ? "default" : "outline"
+                                }
+                                onClick={() =>
+                                  handleMarkAttendance(student.student_id, "present")
+                                }
+                                className="flex-1 gap-1"
+                                disabled={
+                                  attendanceMutation.isPending || hasExistingAttendance
+                                }
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                                {t("present") || "Present"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={
+                                  displayStatus === "absent" ? "destructive" : "outline"
+                                }
+                                onClick={() =>
+                                  handleMarkAttendance(student.student_id, "absent")
+                                }
+                                className="flex-1 gap-1"
+                                disabled={
+                                  attendanceMutation.isPending || hasExistingAttendance
+                                }
+                              >
+                                <XCircle className="w-4 h-4" />
+                                {t("absent") || "Absent"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={
+                                  displayStatus === "late" ? "secondary" : "outline"
+                                }
+                                onClick={() =>
+                                  handleMarkAttendance(student.student_id, "late")
+                                }
+                                className="gap-1"
+                                disabled={
+                                  attendanceMutation.isPending || hasExistingAttendance
+                                }
+                              >
+                                <Clock className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
-                          {displayStatus && getStatusIcon(displayStatus)}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant={
-                              displayStatus === "present"
-                                ? "default"
-                                : "outline"
-                            }
-                            onClick={() =>
-                              handleMarkAttendance(student.student_id, "present")
-                            }
-                            className="flex-1 gap-1"
-                            disabled={attendanceMutation.isPending || hasExistingAttendance}
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            Present
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={
-                              displayStatus === "absent"
-                                ? "destructive"
-                                : "outline"
-                            }
-                            onClick={() =>
-                              handleMarkAttendance(student.student_id, "absent")
-                            }
-                            className="flex-1 gap-1"
-                            disabled={attendanceMutation.isPending || hasExistingAttendance}
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Absent
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={
-                              displayStatus === "late"
-                                ? "secondary"
-                                : "outline"
-                            }
-                            onClick={() =>
-                              handleMarkAttendance(student.student_id, "late")
-                            }
-                            className="gap-1"
-                            disabled={attendanceMutation.isPending || hasExistingAttendance}
-                          >
-                            <Clock className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No students in this session
-                </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {t("noStudentsInSession") || "No students in this session"}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="mt-0">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  {t("myAttendanceHistory") || "My Attendance History"}
+                </CardTitle>
+                <CardDescription>
+                  {t("allAttendancesMarked") || "All attendances you've marked"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {myAttendancesData?.data && myAttendancesData.data.length > 0 ? (
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t("date") || "Date"}</TableHead>
+                          <TableHead>{t("student") || "Student"}</TableHead>
+                          <TableHead>{t("group") || "Group"}</TableHead>
+                          <TableHead>{t("status") || "Status"}</TableHead>
+                          <TableHead>{t("time") || "Time"}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {myAttendancesData.data.map((attendance: AttendanceRead) => (
+                          <TableRow key={attendance.id}>
+                            <TableCell>
+                              {format(new Date(attendance.date), "MMM d, yyyy")}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {t("studentId") || "Student"} #{attendance.student_id}
+                            </TableCell>
+                            <TableCell>
+                              {groupsData?.data?.find(
+                                (g) =>
+                                  sessionsData?.data?.find(
+                                    (s) => s.id === attendance.session_id
+                                  )?.group_id === g.id
+                              )?.name || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(attendance.status)}
+                                <span className="capitalize">{attendance.status}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {attendance.marked_at
+                                ? format(new Date(attendance.marked_at), "HH:mm")
+                                : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>{t("noAttendanceHistory") || "No attendance history yet"}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+
+      {/* Upload Konspekt Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              {t("uploadKonspekt") || "Upload Konspekt"}
+            </DialogTitle>
+            <DialogDescription>
+              {t("uploadKonspektDescription") || "Upload a konspekt file for this session"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="konspekt-file">
+                {t("selectFile") || "Select File"}
+              </Label>
+              <Input
+                id="konspekt-file"
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={handleFileChange}
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  {selectedFile.name}
+                </p>
               )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUploadDialogOpen(false);
+                setSelectedFile(null);
+              }}
+              disabled={uploadKonspektMutation.isPending}
+            >
+              {t("cancel") || "Cancel"}
+            </Button>
+            <Button
+              onClick={handleUploadKonspekt}
+              disabled={!selectedFile || uploadKonspektMutation.isPending}
+            >
+              {uploadKonspektMutation.isPending
+                ? t("uploading") || "Uploading..."
+                : t("upload") || "Upload"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

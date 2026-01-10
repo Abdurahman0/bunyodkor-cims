@@ -1345,6 +1345,105 @@ export const coachService = {
     );
     return response.data;
   },
+
+  /**
+   * Get all attendances created by the coach (read-only)
+   * GET /coach/my-attendances
+   */
+  getMyAttendances: async (params?: {
+    from_date?: string;
+    to_date?: string;
+    group_id?: number;
+    student_id?: number;
+  }): Promise<ApiResponse<AttendanceRead[]>> => {
+    const response = await apiClient.get<ApiResponse<AttendanceRead[]>>(
+      "/coach/my-attendances",
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Upload konspekt document to S3 and update session
+   * POST /coach/sessions/{session_id}/upload-konspekt
+   */
+  uploadKonspekt: async (
+    sessionId: number,
+    formData: FormData
+  ): Promise<ApiResponse<SessionRead>> => {
+    const response = await apiClient.post<ApiResponse<SessionRead>>(
+      `/coach/sessions/${sessionId}/upload-konspekt`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
+};
+
+// ============================================================================
+// HEAD COACH SERVICES
+// ============================================================================
+
+export const headCoachService = {
+  /**
+   * Get all active groups (exclude deleted)
+   * GET /head-coach/groups
+   */
+  getAllGroups: async (params?: {
+    birth_year?: number;
+  }): Promise<ApiResponse<GroupRead[]>> => {
+    const response = await apiClient.get<ApiResponse<GroupRead[]>>(
+      "/head-coach/groups",
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Create a new training session for any group
+   * POST /head-coach/sessions
+   */
+  createSession: async (
+    data: SessionCreateRequest
+  ): Promise<ApiResponse<SessionRead>> => {
+    const response = await apiClient.post<ApiResponse<SessionRead>>(
+      "/head-coach/sessions",
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Get all training sessions with optional filters
+   * GET /head-coach/sessions
+   */
+  getAllSessions: async (params?: {
+    date?: string;
+    group_id?: number;
+  }): Promise<ApiResponse<SessionRead[]>> => {
+    const response = await apiClient.get<ApiResponse<SessionRead[]>>(
+      "/head-coach/sessions",
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Get session details with all attendance records
+   * GET /head-coach/sessions/{session_id}
+   */
+  getSessionDetails: async (
+    sessionId: number
+  ): Promise<ApiResponse<SessionRead & { attendances: AttendanceRead[] }>> => {
+    const response = await apiClient.get(
+      `/head-coach/sessions/${sessionId}`
+    );
+    return response.data;
+  },
 };
 
 // ============================================================================
