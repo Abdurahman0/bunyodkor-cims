@@ -643,6 +643,7 @@ export default function Groups() {
       </Dialog>
 
       {/* Contracts Dialog */}
+      {/* Contracts Dialog */}
       <Dialog
         open={isContractsDialogOpen}
         onOpenChange={setIsContractsDialogOpen}
@@ -657,6 +658,7 @@ export default function Groups() {
               {selectedGroupForContracts?.name} - {t("contracts")}
             </DialogTitle>
           </DialogHeader>
+
           <div className="mt-4">
             {isLoadingContracts ? (
               <div className="flex items-center justify-center py-8">
@@ -664,11 +666,13 @@ export default function Groups() {
               </div>
             ) : groupContractsData?.data &&
               groupContractsData.data.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              // O'ZGARISH 1: Containerga padding (p-4) va gap berildi
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                 {groupContractsData.data.map((contract: ContractRead) => (
                   <Card
                     key={contract.id}
-                    className="hover:shadow-lg transition-all duration-200 cursor-pointer border-border/50 hover:border-border"
+                    // O'ZGARISH 2: Card dizayni zamonaviylashtirildi
+                    className="group relative overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border border-border/40 hover:border-blue-500/50 hover:bg-slate-50 dark:hover:bg-slate-900/50 rounded-xl hover:-translate-y-1"
                     onClick={() => {
                       if (contract.student_id) {
                         navigate(`/students/${contract.student_id}`);
@@ -676,22 +680,26 @@ export default function Groups() {
                       }
                     }}
                   >
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-3 p-5">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                            <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <div className="flex items-center gap-4">
+                          {/* Icon qismi */}
+                          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                            <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div>
-                            <CardTitle className="text-lg">
+                            <CardTitle className="text-lg font-semibold tracking-tight text-foreground/90">
                               {contract.contract_number}
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-muted-foreground mt-1 font-medium">
                               {getStudentName(contract.student_id)}
                             </p>
                           </div>
                         </div>
+
+                        {/* Status Badge */}
                         <Badge
+                          className="px-2.5 py-0.5 text-xs font-semibold shadow-sm"
                           variant={
                             contract.status === "active"
                               ? "default"
@@ -708,10 +716,14 @@ export default function Groups() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2 pb-4 p-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">
+
+                    <CardContent className="space-y-3 p-5 pt-0">
+                      {/* Ajratuvchi chiziq */}
+                      <div className="h-px w-full bg-border/50 my-2" />
+
+                      <div className="flex items-center gap-3 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <Calendar className="w-4 h-4 text-muted-foreground/70" />
+                        <span className="text-foreground/80 font-medium">
                           {contract.start_date && contract.end_date
                             ? `${new Date(
                                 contract.start_date
@@ -721,9 +733,10 @@ export default function Groups() {
                             : t("noDates")}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <CreditCard className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">
+
+                      <div className="flex items-center gap-3 text-sm">
+                        <CreditCard className="w-4 h-4 text-muted-foreground/70" />
+                        <span className="font-bold text-foreground text-base">
                           {contract.monthly_fee
                             ? `${Number(
                                 contract.monthly_fee
