@@ -82,7 +82,7 @@ export default function Reports() {
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
     enabled: activeTab === "debtors",
   });
 

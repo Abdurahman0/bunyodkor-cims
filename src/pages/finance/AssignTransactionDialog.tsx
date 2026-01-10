@@ -53,7 +53,7 @@ export function AssignTransactionDialog({
 
   const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['students-list'],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }),
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
     enabled: open, // Only fetch when the dialog is open
   });
 

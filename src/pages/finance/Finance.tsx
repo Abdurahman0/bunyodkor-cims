@@ -77,7 +77,7 @@ export default function Finance() {
 
   const { data: studentsData } = useQuery({
     queryKey: ["students-list"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }),
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
   });
 
   const { data: unassignedData } = useQuery({

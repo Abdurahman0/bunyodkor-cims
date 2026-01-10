@@ -57,7 +57,7 @@ const Roles = () => {
   // Fetch all users to compute stats
   const { data: usersData } = useQuery({
     queryKey: ["all-users-for-stats"],
-    queryFn: () => userService.getUsers({ page: 1, page_size: 100 }),
+    queryFn: () => userService.getUsers({ page: 1, page_size: 100000 }),
   });
 
   // Compute stats

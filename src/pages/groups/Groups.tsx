@@ -279,7 +279,7 @@ export default function Groups() {
         const fallbackResponse = await studentService.getStudents({
           group_id: selectedGroupForStudents.id,
           page: 1,
-          page_size: 100,
+          page_size: 100000,
         });
 
         console.log("[DEBUG] Fallback students response:", fallbackResponse);
@@ -306,7 +306,7 @@ export default function Groups() {
     queryFn: () =>
       groupService.getGroupContracts(selectedGroupForContracts!.id, {
         page: 1,
-        page_size: 100,
+        page_size: 100000,
       }),
     enabled: !!selectedGroupForContracts,
   });
@@ -324,7 +324,7 @@ export default function Groups() {
       const response = await studentService.getStudents({
         group_id: selectedGroupForContracts.id,
         page: 1,
-        page_size: 100,
+        page_size: 100000,
       });
       console.log("[DEBUG] Students via /students response:", response);
 

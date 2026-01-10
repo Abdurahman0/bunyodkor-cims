@@ -73,7 +73,7 @@ export default function Coach() {
         from_date: selectedDate,
         to_date: selectedDate,
         page: 1,
-        page_size: 100,
+        page_size: 100000,
       });
     },
     enabled: !!selectedSession,

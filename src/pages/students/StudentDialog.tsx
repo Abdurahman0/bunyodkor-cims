@@ -50,14 +50,13 @@ export function StudentDialog({
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }), // Fetch groups (max allowed by API)
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
   });
 
   // Get student count for each group to check capacity
-  // API allows max page_size of 100, so we fetch with that limit
   const { data: allStudentsData } = useQuery({
     queryKey: ["all-students-for-capacity"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100 }),
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
   });
 
   useEffect(() => {
