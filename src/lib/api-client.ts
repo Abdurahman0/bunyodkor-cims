@@ -201,7 +201,24 @@ apiClient.interceptors.response.use(
         message = error.response.data.message;
       }
 
-      showLimitedToast.error(message);
+      // Check if this is the specific 2000 limit validation error
+      const is2000LimitError =
+        message.includes("Input should be less than or equal to 2000") ||
+        message.includes("less than or equal to 2000") ||
+        (typeof detail === "string" && detail.includes("less than or equal to 2000"));
+
+      if (is2000LimitError) {
+        // Only log this specific error to console, don't show toast
+        console.error("API Validation Error (2000 limit):", {
+          message,
+          detail: error.response?.data?.detail,
+          status: error.response?.status,
+          url: originalRequest?.url,
+        });
+      } else {
+        // Show all other errors as toast in UI
+        showLimitedToast.error(message);
+      }
     }
 
     return Promise.reject(error);

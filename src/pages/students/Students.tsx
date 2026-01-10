@@ -523,11 +523,7 @@ export default function Students() {
                           </p>
                           {student.created_at && (
                             <p className="text-xs text-muted-foreground/70 truncate">
-                              {new Date(student.created_at).toLocaleDateString("uz-UZ", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric"
-                              })}
+                              {format(new Date(student.created_at), "dd-MM-yyyy")}
                             </p>
                           )}
                         </div>
@@ -556,7 +552,7 @@ export default function Students() {
                         {student.date_of_birth &&
                           format(
                             new Date(student.date_of_birth),
-                            "MMM d, yyyy"
+                            "dd-MM-yyyy"
                           )}
                       </div>
                     </TableCell>
