@@ -120,7 +120,9 @@ export function StudentDialog({
   // Helper function to get student count in a group
   const getGroupStudentCount = (groupId: number): number => {
     if (!allStudentsData?.data) return 0;
-    return allStudentsData.data.filter((s) => s.group_id === groupId).length;
+    return allStudentsData.data.filter(
+      (s) => Number(s.group_id) === Number(groupId)
+    ).length;
   };
 
   // Helper function to check if group is full
@@ -133,7 +135,12 @@ export function StudentDialog({
 
   const onSubmit = (data: StudentFormData) => {
     // Check if we're adding a student to a new group (not editing existing student)
-    const selectedGroupId = Number(data.group_id);
+    const selectedGroupId =
+      data.group_id === "" ||
+      data.group_id === null ||
+      data.group_id === undefined
+        ? null
+        : Number(data.group_id);
 
     if (selectedGroupId && (!student || student.group_id !== selectedGroupId)) {
       // Check if the selected group is full
@@ -146,10 +153,14 @@ export function StudentDialog({
         return;
       }
     }
-
     const payload = {
       ...data,
-      group_id: Number(data.group_id),
+      group_id:
+        data.group_id === "" ||
+        data.group_id === null ||
+        data.group_id === undefined
+          ? null
+          : Number(data.group_id),
     };
     mutation.mutate(payload);
   };

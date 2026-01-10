@@ -926,53 +926,97 @@ export default function StudentDetailPage() {
         open={isHardDeleteDialogOpen}
         onOpenChange={setIsHardDeleteDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
-                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 animate-pulse" />
               </div>
-              <DialogTitle className="text-xl text-red-600 dark:text-red-400">
-                {t("permanentDeleteWarning") ||
-                  "OGOHLANTRISH: Butunlay o'chirish"}
+              <DialogTitle className="text-xl font-bold text-red-600 dark:text-red-400">
+                {t("permanentDeleteWarning") || "⚠️ OGOHLANTRISH"}
               </DialogTitle>
             </div>
             <DialogDescription className="text-base mt-4">
-              <p className="font-semibold text-foreground mb-3">
-                {t("permanentDeleteStudent") ||
-                  "Talabani butunlay o'chirasizmi"}
-                :{" "}
-                <span className="text-red-600">
-                  {student.first_name} {student.last_name}
-                </span>
-                ?
-              </p>
-              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-800 dark:text-red-200 font-bold mb-2">
-                  ⚠️{" "}
-                  {t("thisActionCannotBeUndone") ||
-                    "Bu amalni qaytarib bo'lmaydi!"}
-                </p>
-                <p className="text-sm text-red-700 dark:text-red-300 font-medium mb-2">
-                  {t("followingWillBeDeleted") ||
-                    "Quyidagilar butunlay o'chiriladi"}
-                  :
-                </p>
-                <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
-                  <li>{t("studentProfile") || "Talaba profili"}</li>
-                  <li>{t("allContracts") || "Barcha shartnomalar"}</li>
-                  <li>{t("paymentHistory") || "To'lov tarixi"}</li>
-                  <li>{t("attendanceRecords") || "Davomat yozuvlari"}</li>
-                  <li>{t("parentRecords") || "Ota-ona ma'lumotlari"}</li>
-                  <li>{t("gateLogRecords") || "Kirish-chiqish yozuvlari"}</li>
-                  <li>
-                    {t("waitingListEntries") || "Navbat ro'yxati yozuvlari"}
-                  </li>
-                </ul>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-3 font-medium">
-                  {t("contractNumbersWillBeFreed") ||
-                    "Shartnoma raqamlari bo'shab, qayta ishlatilishi mumkin"}
-                </p>
+              <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-l-4 border-red-500 rounded-lg shadow-sm">
+                <div className="space-y-4">
+                  {/* Uzbek */}
+                  <div>
+                    <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
+                      <span>🇺🇿</span>
+                      <span>{t("permanentDeleteStudent") || "Talabani butunlay o'chirasizmi"}?</span>
+                    </p>
+                    <p className="text-xs text-red-800 dark:text-red-300 font-semibold mb-2">
+                      {t("thisActionCannotBeUndone") || "Bu amalni qaytarib bo'lmaydi"}!
+                    </p>
+                    <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-1.5">
+                      {t("followingWillBeDeleted") || "Quyidagilar butunlay o'chiriladi"}:
+                    </p>
+                    <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
+                      <li>Talaba profili</li>
+                      <li>Barcha shartnomalar</li>
+                      <li>To'lov tarixi</li>
+                      <li>Davomat yozuvlari</li>
+                      <li>Ota-ona ma'lumotlari</li>
+                      <li>Kirish-chiqish yozuvlari</li>
+                      <li>Navbat ro'yxati yozuvlari</li>
+                    </ul>
+                    <p className="text-xs text-red-700 dark:text-red-300 mt-2 font-medium italic">
+                      Shartnoma raqamlari bo'shab, qayta ishlatilishi mumkin
+                    </p>
+                  </div>
+
+                  {/* English */}
+                  <div className="border-t border-red-200/50 dark:border-red-800/50 pt-3">
+                    <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
+                      <span>🇬🇧</span>
+                      <span>Are you sure you want to permanently delete this student?</span>
+                    </p>
+                    <p className="text-xs text-red-800 dark:text-red-300 font-semibold mb-2">
+                      This action cannot be undone!
+                    </p>
+                    <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-1.5">
+                      The following will be permanently deleted:
+                    </p>
+                    <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
+                      <li>Student profile</li>
+                      <li>All contracts</li>
+                      <li>Payment history</li>
+                      <li>Attendance records</li>
+                      <li>Parent information</li>
+                      <li>Gate log records</li>
+                      <li>Waiting list entries</li>
+                    </ul>
+                    <p className="text-xs text-red-700 dark:text-red-300 mt-2 font-medium italic">
+                      Contract numbers will be freed and can be reused
+                    </p>
+                  </div>
+
+                  {/* Russian */}
+                  <div className="border-t border-red-200/50 dark:border-red-800/50 pt-3">
+                    <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
+                      <span>🇷🇺</span>
+                      <span>Вы уверены, что хотите навсегда удалить этого студента?</span>
+                    </p>
+                    <p className="text-xs text-red-800 dark:text-red-300 font-semibold mb-2">
+                      Это действие нельзя отменить!
+                    </p>
+                    <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-1.5">
+                      Следующее будет навсегда удалено:
+                    </p>
+                    <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
+                      <li>Профиль студента</li>
+                      <li>Все контракты</li>
+                      <li>История платежей</li>
+                      <li>Записи посещаемости</li>
+                      <li>Информация о родителях</li>
+                      <li>Записи входа-выхода</li>
+                      <li>Записи списка ожидания</li>
+                    </ul>
+                    <p className="text-xs text-red-700 dark:text-red-300 mt-2 font-medium italic">
+                      Номера контрактов будут освобождены и могут быть использованы повторно
+                    </p>
+                  </div>
+                </div>
               </div>
             </DialogDescription>
           </DialogHeader>
