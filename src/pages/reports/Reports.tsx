@@ -36,7 +36,10 @@ import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
 import { exportReport } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
-import { formatCurrency as formatCurrencyUtil, formatNumber } from "@/lib/utils";
+import {
+  formatCurrency as formatCurrencyUtil,
+  formatNumber,
+} from "@/lib/utils";
 
 export default function Reports() {
   const { t } = useLanguageStore();
@@ -694,7 +697,7 @@ export default function Reports() {
                       {t("group")}
                     </label>
                     <select
-                      value={selectedGroupId || ""}
+                      value={selectedGroupId ? String(selectedGroupId) : ""}
                       onChange={(e) => {
                         setSelectedGroupId(
                           e.target.value ? Number(e.target.value) : null
@@ -705,7 +708,7 @@ export default function Reports() {
                     >
                       <option value="">{t("allGroups") || "All Groups"}</option>
                       {groupsData?.data?.map((group: GroupRead) => (
-                        <option key={group.id} value={group.id}>
+                        <option key={group.id} value={String(group.id)}>
                           {group.name}
                         </option>
                       ))}

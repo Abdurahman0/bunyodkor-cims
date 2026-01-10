@@ -19,7 +19,14 @@ import {
 } from "@/services/api.service";
 import type { GroupRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
-import { Loader2, UserPlus, CheckCircle2, Copy, Download, Eye } from "lucide-react";
+import {
+  Loader2,
+  UserPlus,
+  CheckCircle2,
+  Copy,
+  Download,
+  Eye,
+} from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 
@@ -147,7 +154,9 @@ export function StudentWithContractDialog({
   const birthYear = watch("birth_year");
   const primaryAddress = watch("address");
   const dateOfBirth = watch("date_of_birth");
-  const [customerType, setCustomerType] = useState<"father" | "mother" | "other">("other");
+  const [customerType, setCustomerType] = useState<
+    "father" | "mother" | "other"
+  >("other");
 
   // Watch name fields for auto-fill
   const firstName = watch("first_name");
@@ -162,7 +171,7 @@ export function StudentWithContractDialog({
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
     enabled: open,
   });
 
@@ -229,9 +238,10 @@ export function StudentWithContractDialog({
           }
 
           // Get all available numbers (gaps)
-          const availableResponse = await contractService.getAllAvailableNumbers(
-            Number(selectedGroupId)
-          );
+          const availableResponse =
+            await contractService.getAllAvailableNumbers(
+              Number(selectedGroupId)
+            );
 
           if (availableResponse.data?.available_numbers) {
             setAvailableNumbers(availableResponse.data.available_numbers);
@@ -244,69 +254,69 @@ export function StudentWithContractDialog({
     fetchContractNumber();
   }, [selectedGroupId, setValue, groupsData]);
 
-const handleViewContract = async () => {
-  console.log("[DEBUG] handleViewContract called, pdfUrl:", pdfUrl);
+  const handleViewContract = async () => {
+    console.log("[DEBUG] handleViewContract called, pdfUrl:", pdfUrl);
 
-  if (!pdfUrl) {
-    console.error("[DEBUG] No pdfUrl available");
-    toast.error(t("pdfNotFound") || "PDF topilmadi");
-    return;
-  }
-
-  try {
-    console.log("[DEBUG] Attempting to open PDF:", pdfUrl);
-    // Open PDF in new tab/window
-    const opened = window.open(pdfUrl, "_blank");
-    if (opened) {
-      console.log("[DEBUG] PDF opened successfully in new window");
-      toast.success(t("contractOpened") || "Shartnoma ochildi");
-    } else {
-      console.log("[DEBUG] Popup blocked, trying openPdfUrl");
-      // If popup was blocked, try opening with openPdfUrl
-      await openPdfUrl(pdfUrl);
-      toast.success(t("contractOpened") || "Shartnoma ochildi");
+    if (!pdfUrl) {
+      console.error("[DEBUG] No pdfUrl available");
+      toast.error(t("pdfNotFound") || "PDF topilmadi");
+      return;
     }
-  } catch (error) {
-    console.error("[DEBUG] Error opening contract:", error);
-    toast.error(t("errorOpeningContract") || "Shartnomani ochishda xatolik");
-  }
-};
 
-const handleDownloadContract = async () => {
-  console.log("[DEBUG] handleDownloadContract called, pdfUrl:", pdfUrl);
+    try {
+      console.log("[DEBUG] Attempting to open PDF:", pdfUrl);
+      // Open PDF in new tab/window
+      const opened = window.open(pdfUrl, "_blank");
+      if (opened) {
+        console.log("[DEBUG] PDF opened successfully in new window");
+        toast.success(t("contractOpened") || "Shartnoma ochildi");
+      } else {
+        console.log("[DEBUG] Popup blocked, trying openPdfUrl");
+        // If popup was blocked, try opening with openPdfUrl
+        await openPdfUrl(pdfUrl);
+        toast.success(t("contractOpened") || "Shartnoma ochildi");
+      }
+    } catch (error) {
+      console.error("[DEBUG] Error opening contract:", error);
+      toast.error(t("errorOpeningContract") || "Shartnomani ochishda xatolik");
+    }
+  };
 
-  if (!pdfUrl) {
-    console.error("[DEBUG] No pdfUrl available for download");
-    toast.error(t("pdfNotFound") || "PDF topilmadi");
-    return;
-  }
+  const handleDownloadContract = async () => {
+    console.log("[DEBUG] handleDownloadContract called, pdfUrl:", pdfUrl);
 
-  try {
-    console.log("[DEBUG] Fetching PDF for download:", pdfUrl);
-    // Fetch the PDF and trigger download
-    const response = await fetch(pdfUrl);
-    const blob = await response.blob();
-    console.log("[DEBUG] PDF blob created, size:", blob.size);
+    if (!pdfUrl) {
+      console.error("[DEBUG] No pdfUrl available for download");
+      toast.error(t("pdfNotFound") || "PDF topilmadi");
+      return;
+    }
 
-    // Create a temporary link element to trigger download
-    const link = document.createElement('a');
-    const blobUrl = window.URL.createObjectURL(blob);
-    link.href = blobUrl;
-    link.download = `shartnoma-${Date.now()}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      console.log("[DEBUG] Fetching PDF for download:", pdfUrl);
+      // Fetch the PDF and trigger download
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      console.log("[DEBUG] PDF blob created, size:", blob.size);
 
-    // Clean up blob URL
-    window.URL.revokeObjectURL(blobUrl);
+      // Create a temporary link element to trigger download
+      const link = document.createElement("a");
+      const blobUrl = window.URL.createObjectURL(blob);
+      link.href = blobUrl;
+      link.download = `shartnoma-${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-    console.log("[DEBUG] Download triggered successfully");
-    toast.success("Shartnoma yuklandi");
-  } catch (error) {
-    console.error("[DEBUG] Error downloading contract:", error);
-    toast.error("Shartnomani yuklashda xatolik");
-  }
-};
+      // Clean up blob URL
+      window.URL.revokeObjectURL(blobUrl);
+
+      console.log("[DEBUG] Download triggered successfully");
+      toast.success("Shartnoma yuklandi");
+    } catch (error) {
+      console.error("[DEBUG] Error downloading contract:", error);
+      toast.error("Shartnomani yuklashda xatolik");
+    }
+  };
 
   const handleClose = () => {
     setIsSuccess(false);
@@ -317,7 +327,9 @@ const handleDownloadContract = async () => {
     onOpenChange(false);
   };
 
-  const copyAddressToField = (targetField: "student_address" | "buyurtmachi_address") => {
+  const copyAddressToField = (
+    targetField: "student_address" | "buyurtmachi_address"
+  ) => {
     if (primaryAddress) {
       setValue(targetField, primaryAddress);
       toast.success(t("addressCopied") || "Manzil ko'chirildi");
@@ -332,11 +344,15 @@ const handleDownloadContract = async () => {
     if (type === "father") {
       if (dadName) setValue("buyurtmachi_fio", dadName);
       if (dadPhone) setValue("buyurtmachi_phone", dadPhone);
-      toast.success(t("fatherInfoCopied") || "Otaning ma'lumotlari ko'chirildi");
+      toast.success(
+        t("fatherInfoCopied") || "Otaning ma'lumotlari ko'chirildi"
+      );
     } else if (type === "mother") {
       if (momFio) setValue("buyurtmachi_fio", momFio);
       if (momPhone) setValue("buyurtmachi_phone", momPhone);
-      toast.success(t("motherInfoCopied") || "Onaning ma'lumotlari ko'chirildi");
+      toast.success(
+        t("motherInfoCopied") || "Onaning ma'lumotlari ko'chirildi"
+      );
     } else {
       // Clear customer fields when "other" is selected
       setValue("buyurtmachi_fio", "");
@@ -610,7 +626,7 @@ const handleDownloadContract = async () => {
                 ? json.detail
                 : JSON.stringify(json.detail);
           }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
           /* ignore */
         }
@@ -622,7 +638,8 @@ const handleDownloadContract = async () => {
       }
 
       // Check if error is about duplicate/existing contract number
-      const isDuplicateContract = errorMessage.toLowerCase().includes("already exists") ||
+      const isDuplicateContract =
+        errorMessage.toLowerCase().includes("already exists") ||
         errorMessage.toLowerCase().includes("mavjud") ||
         errorMessage.toLowerCase().includes("duplicate") ||
         errorMessage.toLowerCase().includes("contract number");
@@ -630,11 +647,15 @@ const handleDownloadContract = async () => {
       if (isDuplicateContract && data.group_id) {
         // Retry with new contract number
         try {
-          toast(t("retryingWithNewNumber") || "Yangi shartnoma raqami bilan qayta urinilmoqda...");
+          toast(
+            t("retryingWithNewNumber") ||
+              "Yangi shartnoma raqami bilan qayta urinilmoqda..."
+          );
 
-          const year = data.birth_year && data.birth_year.toString().length === 4
-            ? Number(data.birth_year)
-            : new Date().getFullYear();
+          const year =
+            data.birth_year && data.birth_year.toString().length === 4
+              ? Number(data.birth_year)
+              : new Date().getFullYear();
 
           const response = await contractService.getNextAvailableNumber(
             Number(data.group_id),
@@ -645,8 +666,14 @@ const handleDownloadContract = async () => {
             const newContractNumber = response.data.contract_number;
             setSuggestedContractNumber(newContractNumber);
             setValue("contract_number", newContractNumber);
-            toast.success(`${t("newNumberSuggested")}: ${newContractNumber}` || `Yangi raqam taklif qilingan: ${newContractNumber}`);
-            toast(t("pleaseSubmitAgain") || "Iltimos, yana bir bor 'Saqlash' tugmasini bosing");
+            toast.success(
+              `${t("newNumberSuggested")}: ${newContractNumber}` ||
+                `Yangi raqam taklif qilingan: ${newContractNumber}`
+            );
+            toast(
+              t("pleaseSubmitAgain") ||
+                "Iltimos, yana bir bor 'Saqlash' tugmasini bosing"
+            );
           } else {
             toast.error(errorMessage);
           }
@@ -668,7 +695,7 @@ const handleDownloadContract = async () => {
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <UserPlus className="w-6 h-6" />
-{t("createStudentAndContract")}
+            {t("createStudentAndContract")}
           </DialogTitle>
           <DialogDescription>
             {t("fillAllFieldsDocsRequired")}
@@ -684,69 +711,69 @@ const handleDownloadContract = async () => {
                 1. {t("systemStudentInfo")}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label>{t("lastName")} *</Label>
-                <Input
-                  {...register("last_name", { required: true })}
-                  placeholder={t("lastName")}
-                />
+                <div className="space-y-1">
+                  <Label>{t("lastName")} *</Label>
+                  <Input
+                    {...register("last_name", { required: true })}
+                    placeholder={t("lastName")}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t("firstName")} *</Label>
+                  <Input
+                    {...register("first_name", { required: true })}
+                    placeholder={t("firstName")}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t("middleName") || "Sharif"}</Label>
+                  <Input
+                    {...register("middle_name")}
+                    placeholder={t("middleName") || "Otasining ismi"}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t("dateOfBirth")} *</Label>
+                  <Input
+                    type="date"
+                    {...register("date_of_birth", { required: true })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t("phoneNumber")} *</Label>
+                  <Input
+                    {...register("phone", {
+                      required: true,
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        if (!value.startsWith("+998")) {
+                          e.target.value = "+998" + value.replace(/^\+998/, "");
+                        }
+                      },
+                    })}
+                    placeholder="+998901234567"
+                    defaultValue="+998"
+                  />
+                </div>
+                <div className="col-span-1 md:col-span-2 space-y-1">
+                  <Label>{t("address")}</Label>
+                  <Input {...register("address")} placeholder={t("address")} />
+                </div>
+                <div className="space-y-1">
+                  <Label>{t("group")} *</Label>
+                  <select
+                    {...register("group_id", { required: true })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3"
+                  >
+                    <option value="">{t("selectGroupPlaceholder")}</option>
+                    {groupsData?.data?.map((group: GroupRead) => (
+                      <option key={group.id} value={String(group.id)}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="space-y-1">
-                <Label>{t("firstName")} *</Label>
-                <Input
-                  {...register("first_name", { required: true })}
-                  placeholder={t("firstName")}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>{t("middleName") || "Sharif"}</Label>
-                <Input
-                  {...register("middle_name")}
-                  placeholder={t("middleName") || "Otasining ismi"}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>{t("dateOfBirth")} *</Label>
-                <Input
-                  type="date"
-                  {...register("date_of_birth", { required: true })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>{t("phoneNumber")} *</Label>
-                <Input
-                  {...register("phone", {
-                    required: true,
-                    onChange: (e) => {
-                      const value = e.target.value;
-                      if (!value.startsWith('+998')) {
-                        e.target.value = '+998' + value.replace(/^\+998/, '');
-                      }
-                    }
-                  })}
-                  placeholder="+998901234567"
-                  defaultValue="+998"
-                />
-              </div>
-              <div className="col-span-1 md:col-span-2 space-y-1">
-                <Label>{t("address")}</Label>
-                <Input {...register("address")} placeholder={t("address")} />
-              </div>
-              <div className="space-y-1">
-                <Label>{t("group")} *</Label>
-                <select
-                  {...register("group_id", { required: true })}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3"
-                >
-                  <option value="">{t("selectGroupPlaceholder")}</option>
-                  {groupsData?.data?.map((group: GroupRead) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
             </div>
 
             {/* TARBIYALANUVCHI HUJJATLARI */}
@@ -825,14 +852,20 @@ const handleDownloadContract = async () => {
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (g: any) => g.id === Number(selectedGroupId)
                         );
-                        const contractNumber = `${num}-${selectedGroup?.name || ''}`;
+                        const contractNumber = `${num}-${
+                          selectedGroup?.name || ""
+                        }`;
                         return (
                           <button
                             key={num}
                             type="button"
                             onClick={() => {
                               setValue("contract_number", contractNumber);
-                              toast.success(`${t("numberSelected") || "Raqam tanlandi"}: ${contractNumber}`);
+                              toast.success(
+                                `${
+                                  t("numberSelected") || "Raqam tanlandi"
+                                }: ${contractNumber}`
+                              );
                             }}
                             className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors border border-blue-300"
                           >
@@ -882,7 +915,11 @@ const handleDownloadContract = async () => {
                     }
                   }}
                   onKeyDown={(e) => {
-                    if ((e.key === "Tab" || e.key === "Enter") && primaryAddress && !watch("student_address")) {
+                    if (
+                      (e.key === "Tab" || e.key === "Enter") &&
+                      primaryAddress &&
+                      !watch("student_address")
+                    ) {
                       e.preventDefault();
                       copyAddressToField("student_address");
                     }
@@ -946,10 +983,10 @@ const handleDownloadContract = async () => {
                     {...register("dad_phone", {
                       onChange: (e) => {
                         const value = e.target.value;
-                        if (!value.startsWith('+998')) {
-                          e.target.value = '+998' + value.replace(/^\+998/, '');
+                        if (!value.startsWith("+998")) {
+                          e.target.value = "+998" + value.replace(/^\+998/, "");
                         }
-                      }
+                      },
                     })}
                     placeholder="+998 XX XXX XX XX"
                     defaultValue="+998"
@@ -979,10 +1016,10 @@ const handleDownloadContract = async () => {
                     {...register("mom_phone", {
                       onChange: (e) => {
                         const value = e.target.value;
-                        if (!value.startsWith('+998')) {
-                          e.target.value = '+998' + value.replace(/^\+998/, '');
+                        if (!value.startsWith("+998")) {
+                          e.target.value = "+998" + value.replace(/^\+998/, "");
                         }
-                      }
+                      },
                     })}
                     placeholder="+998 XX XXX XX XX"
                     defaultValue="+998"
@@ -1002,7 +1039,11 @@ const handleDownloadContract = async () => {
                     <Label>{t("customerType")} *</Label>
                     <select
                       value={customerType}
-                      onChange={(e) => handleCustomerTypeChange(e.target.value as "father" | "mother" | "other")}
+                      onChange={(e) =>
+                        handleCustomerTypeChange(
+                          e.target.value as "father" | "mother" | "other"
+                        )
+                      }
                       className="h-10 w-full rounded-md border border-input bg-background px-3"
                     >
                       <option value="father">{t("father")}</option>
@@ -1010,9 +1051,15 @@ const handleDownloadContract = async () => {
                       <option value="other">{t("other")}</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
-                      {customerType === "father" && (t("fatherInfoWillBeUsed") || "Ota ma'lumotlari ishlatiladi")}
-                      {customerType === "mother" && (t("motherInfoWillBeUsed") || "Ona ma'lumotlari ishlatiladi")}
-                      {customerType === "other" && (t("enterCustomerInfo") || "Buyurtmachi ma'lumotlarini kiriting")}
+                      {customerType === "father" &&
+                        (t("fatherInfoWillBeUsed") ||
+                          "Ota ma'lumotlari ishlatiladi")}
+                      {customerType === "mother" &&
+                        (t("motherInfoWillBeUsed") ||
+                          "Ona ma'lumotlari ishlatiladi")}
+                      {customerType === "other" &&
+                        (t("enterCustomerInfo") ||
+                          "Buyurtmachi ma'lumotlarini kiriting")}
                     </p>
                   </div>
                   <div>
@@ -1021,7 +1068,11 @@ const handleDownloadContract = async () => {
                       {...register("buyurtmachi_fio", { required: true })}
                       placeholder="Ism Familiya Otasining ismi"
                       readOnly={customerType !== "other"}
-                      className={customerType !== "other" ? "bg-gray-100 dark:bg-gray-800" : ""}
+                      className={
+                        customerType !== "other"
+                          ? "bg-gray-100 dark:bg-gray-800"
+                          : ""
+                      }
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -1040,7 +1091,11 @@ const handleDownloadContract = async () => {
                         {...register("buyurtmachi_phone", { required: true })}
                         placeholder="+998 XX XXX XX XX"
                         readOnly={customerType !== "other"}
-                        className={customerType !== "other" ? "bg-gray-100 dark:bg-gray-800" : ""}
+                        className={
+                          customerType !== "other"
+                            ? "bg-gray-100 dark:bg-gray-800"
+                            : ""
+                        }
                       />
                     </div>
                   </div>
@@ -1050,7 +1105,9 @@ const handleDownloadContract = async () => {
                       {primaryAddress && (
                         <button
                           type="button"
-                          onClick={() => copyAddressToField("buyurtmachi_address")}
+                          onClick={() =>
+                            copyAddressToField("buyurtmachi_address")
+                          }
                           className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
                         >
                           <Copy className="w-3 h-3" />
@@ -1067,7 +1124,11 @@ const handleDownloadContract = async () => {
                         }
                       }}
                       onKeyDown={(e) => {
-                        if ((e.key === "Tab" || e.key === "Enter") && primaryAddress && !watch("buyurtmachi_address")) {
+                        if (
+                          (e.key === "Tab" || e.key === "Enter") &&
+                          primaryAddress &&
+                          !watch("buyurtmachi_address")
+                        ) {
                           e.preventDefault();
                           copyAddressToField("buyurtmachi_address");
                         }
@@ -1093,7 +1154,7 @@ const handleDownloadContract = async () => {
           {/* 3. FAYLLAR */}
           <div className="space-y-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200">
             <h3 className="font-bold text-orange-800 dark:text-orange-200 text-lg border-b border-orange-200 pb-2 mb-4">
-3. {t("documents")} (PNG, JPG, PDF)
+              3. {t("documents")} (PNG, JPG, PDF)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>

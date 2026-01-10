@@ -63,25 +63,31 @@ export default function Students() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCombinedDialogOpen, setIsCombinedDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState<StudentRead | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<StudentRead | null>(
+    null
+  );
   const queryClient = useQueryClient();
 
   const debouncedSearch = useDebounce(search, 500);
 
   // Use global groups store
-  const { groupsData, isLoading: isLoadingGroups, fetchGroups } = useGroupsStore();
+  const {
+    groupsData,
+    isLoading: isLoadingGroups,
+    fetchGroups,
+  } = useGroupsStore();
 
   // Flatten grouped data into single array
-  const allGroups = groupsData?.flatMap(yearGroup => yearGroup.groups) || [];
+  const allGroups = groupsData?.flatMap((yearGroup) => yearGroup.groups) || [];
 
   // Fetch groups on component mount if not already loaded
   useEffect(() => {
     if (!groupsData && !isLoadingGroups) {
-      console.log('[STUDENTS] No groups data, fetching from store...');
+      console.log("[STUDENTS] No groups data, fetching from store...");
       fetchGroups();
     } else if (groupsData) {
-      console.log('[STUDENTS] Groups already loaded:', groupsData);
-      console.log('[STUDENTS] Flattened groups:', allGroups);
+      console.log("[STUDENTS] Groups already loaded:", groupsData);
+      console.log("[STUDENTS] Flattened groups:", allGroups);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupsData, isLoadingGroups, fetchGroups]);
@@ -103,7 +109,9 @@ export default function Students() {
         search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         group_id: groupFilter ? parseInt(groupFilter, 10) : undefined,
-        archive_year: archiveYearFilter ? parseInt(archiveYearFilter, 10) : undefined,
+        archive_year: archiveYearFilter
+          ? parseInt(archiveYearFilter, 10)
+          : undefined,
       }),
   });
 
@@ -178,7 +186,8 @@ export default function Students() {
     setArchiveYearFilter("");
   };
 
-  const hasActiveFilters = search || statusFilter || groupFilter || archiveYearFilter;
+  const hasActiveFilters =
+    search || statusFilter || groupFilter || archiveYearFilter;
 
   const handleExport = () => {
     try {
@@ -188,7 +197,7 @@ export default function Students() {
       }
       exportStudents(data.data);
       toast.success(t("studentsExported"));
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error(t("failedToExportStudents"));
     }
@@ -201,7 +210,7 @@ export default function Students() {
       // Get date range for current year
       const currentYear = new Date().getFullYear();
       const fromDate = `${currentYear}-01-01`;
-      const toDate = new Date().toISOString().split('T')[0];
+      const toDate = new Date().toISOString().split("T")[0];
 
       const blob = await studentService.exportComprehensiveStudentData({
         from_date: fromDate,
@@ -211,9 +220,11 @@ export default function Students() {
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `all_students_comprehensive_${new Date().toISOString().split('T')[0]}.xlsx`;
+      link.download = `all_students_comprehensive_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -293,13 +304,19 @@ export default function Students() {
             size="sm"
             className="gap-2 bg-primary/10 hover:bg-primary/20"
             onClick={handleExportComprehensiveData}
-            title={t("exportAllStudentsData") || "Barcha talabalarni ma'lumotlarini yuklab olish"}
+            title={
+              t("exportAllStudentsData") ||
+              "Barcha talabalarni ma'lumotlarini yuklab olish"
+            }
           >
             <Download className="w-4 h-4" />
             <span className="hidden lg:inline">
-              {t("exportAllStudentsData") || "Barcha talabalarni ma'lumotlarini yuklab olish"}
+              {t("exportAllStudentsData") ||
+                "Barcha talabalarni ma'lumotlarini yuklab olish"}
             </span>
-            <span className="hidden sm:inline lg:hidden">{t("exportAll") || "Barchasi"}</span>
+            <span className="hidden sm:inline lg:hidden">
+              {t("exportAll") || "Barchasi"}
+            </span>
             <span className="sm:hidden font-bold">Full</span>
           </Button>
           <Button onClick={handleCreate} className="gap-2">
@@ -399,7 +416,10 @@ export default function Students() {
                 <Select
                   value={groupFilter}
                   onChange={(e) => {
-                    console.log('[STUDENTS] Group filter changed:', e.target.value);
+                    console.log(
+                      "[STUDENTS] Group filter changed:",
+                      e.target.value
+                    );
                     setGroupFilter(e.target.value);
                   }}
                   className="w-full sm:w-40"
@@ -408,13 +428,16 @@ export default function Students() {
                   <option value="">
                     {isLoadingGroups ? t("loading") : t("allGroups")}
                   </option>
-                  {!isLoadingGroups && allGroups.length > 0 ? (
-                    allGroups.map((group: any) => (
-                      <option key={`group-${group.id}`} value={group.id}>
-                        {group.name}
-                      </option>
-                    ))
-                  ) : null}
+                  {!isLoadingGroups && allGroups.length > 0
+                    ? allGroups.map((group: any) => (
+                        <option
+                          key={`group-${group.id}`}
+                          value={String(group.id)}
+                        >
+                          {group.name}
+                        </option>
+                      ))
+                    : null}
                 </Select>
                 <Input
                   type="number"
@@ -450,9 +473,9 @@ export default function Students() {
                   <Badge variant="secondary">
                     {t("group")}:{" "}
                     {
-                      allGroups
-                        .find((g: any) => g?.id?.toString() === groupFilter)
-                        ?.name
+                      allGroups.find(
+                        (g: any) => g?.id?.toString() === groupFilter
+                      )?.name
                     }
                   </Badge>
                 )}
@@ -523,7 +546,10 @@ export default function Students() {
                           </p>
                           {student.created_at && (
                             <p className="text-xs text-muted-foreground/70 truncate">
-                              {format(new Date(student.created_at), "dd-MM-yyyy")}
+                              {format(
+                                new Date(student.created_at),
+                                "dd-MM-yyyy"
+                              )}
                             </p>
                           )}
                         </div>
@@ -541,19 +567,15 @@ export default function Students() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline">
-                        {allGroups.find(
-                          (g) => g.id === student.group_id
-                        )?.name || t("noGroup")}
+                        {allGroups.find((g) => g.id === student.group_id)
+                          ?.name || t("noGroup")}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" />
                         {student.date_of_birth &&
-                          format(
-                            new Date(student.date_of_birth),
-                            "dd-MM-yyyy"
-                          )}
+                          format(new Date(student.date_of_birth), "dd-MM-yyyy")}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(student.status)}</TableCell>
@@ -656,7 +678,8 @@ export default function Students() {
               {t("deleteStudentWarning") || "Are you sure you want to delete"}{" "}
               <span className="font-semibold text-foreground">
                 {studentToDelete?.first_name} {studentToDelete?.last_name}
-              </span>?
+              </span>
+              ?
               <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                 <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-2">
                   {t("deletionWarning") || "This will permanently delete:"}

@@ -51,12 +51,14 @@ export function StudentDialog({
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
+    enabled: open,
   });
 
   // Get student count for each group to check capacity
   const { data: allStudentsData } = useQuery({
     queryKey: ["all-students-for-capacity"],
     queryFn: () => studentService.getStudents({ page: 1, page_size: 2000 }),
+    enabled: open,
   });
 
   useEffect(() => {
@@ -295,7 +297,11 @@ export function StudentDialog({
                     const studentCount = getGroupStudentCount(group.id);
                     const isFull = studentCount >= group.capacity;
                     return (
-                      <option key={group.id} value={group.id} disabled={isFull}>
+                      <option
+                        key={group.id}
+                        value={String(group.id)}
+                        disabled={isFull}
+                      >
                         {group.name} ({studentCount}/{group.capacity})
                         {isFull ? " - To'liq" : ""}
                       </option>

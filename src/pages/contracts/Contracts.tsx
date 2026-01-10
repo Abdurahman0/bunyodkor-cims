@@ -17,7 +17,11 @@ import {
   TableCell,
   TableEmpty,
 } from "@/components/ui/table";
-import { contractService, studentService, groupService } from "@/services/api.service";
+import {
+  contractService,
+  studentService,
+  groupService,
+} from "@/services/api.service";
 import { useGroupsStore } from "@/store/groupsStore";
 import {
   Plus,
@@ -48,7 +52,9 @@ export default function Contracts() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState<number | undefined>(undefined);
-  const [contractIdFilter, setContractIdFilter] = useState<number | undefined>(undefined);
+  const [contractIdFilter, setContractIdFilter] = useState<number | undefined>(
+    undefined
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<ContractRead | null>(
     null
@@ -56,15 +62,19 @@ export default function Contracts() {
   const queryClient = useQueryClient();
 
   // Use global groups store
-  const { groupsData: allGroupsData, isLoading: isLoadingGroups, fetchGroups } = useGroupsStore();
+  const {
+    groupsData: allGroupsData,
+    isLoading: isLoadingGroups,
+    fetchGroups,
+  } = useGroupsStore();
 
   // Fetch groups on component mount if not already loaded
   useEffect(() => {
     if (!allGroupsData && !isLoadingGroups) {
-      console.log('[CONTRACTS] No groups data, fetching from store...');
+      console.log("[CONTRACTS] No groups data, fetching from store...");
       fetchGroups();
     } else {
-      console.log('[CONTRACTS] Groups already loaded:', allGroupsData);
+      console.log("[CONTRACTS] Groups already loaded:", allGroupsData);
     }
   }, [allGroupsData, isLoadingGroups, fetchGroups]);
 
@@ -84,9 +94,16 @@ export default function Contracts() {
   const debouncedSearch = useDebounce(search, 500);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["contracts", page, debouncedSearch, statusFilter, groupFilter, contractIdFilter],
+    queryKey: [
+      "contracts",
+      page,
+      debouncedSearch,
+      statusFilter,
+      groupFilter,
+      contractIdFilter,
+    ],
     queryFn: async () => {
-      console.log('[CONTRACTS] Fetching contracts with params:', {
+      console.log("[CONTRACTS] Fetching contracts with params:", {
         page,
         page_size: 10,
         contract_number: debouncedSearch || undefined,
@@ -105,13 +122,13 @@ export default function Contracts() {
           contract_id: contractIdFilter,
         });
 
-        console.log('[CONTRACTS] Response:', response);
-        console.log('[CONTRACTS] Data:', response?.data);
-        console.log('[CONTRACTS] Meta:', response?.meta);
+        console.log("[CONTRACTS] Response:", response);
+        console.log("[CONTRACTS] Data:", response?.data);
+        console.log("[CONTRACTS] Meta:", response?.meta);
 
         return response;
       } catch (err) {
-        console.error('[CONTRACTS] Error fetching contracts:', err);
+        console.error("[CONTRACTS] Error fetching contracts:", err);
         throw err;
       }
     },
@@ -119,13 +136,17 @@ export default function Contracts() {
 
   // Log error if exists
   if (error) {
-    console.error('[CONTRACTS] Query error:', error);
+    console.error("[CONTRACTS] Query error:", error);
   }
 
-  const { data: studentsData, error: studentsError, isLoading: isLoadingStudents } = useQuery({
+  const {
+    data: studentsData,
+    error: studentsError,
+    isLoading: isLoadingStudents,
+  } = useQuery({
     queryKey: ["students-list"],
     queryFn: async () => {
-      console.log('[CONTRACTS] Fetching students list with pagination');
+      console.log("[CONTRACTS] Fetching students list with pagination");
       try {
         let allStudents: StudentRead[] = [];
         let currentPage = 1;
@@ -134,7 +155,7 @@ export default function Contracts() {
         while (hasMore) {
           const response = await studentService.getStudents({
             page: currentPage,
-            page_size: 100
+            page_size: 100,
           });
 
           if (response.data && response.data.length > 0) {
@@ -150,10 +171,10 @@ export default function Contracts() {
           }
         }
 
-        console.log('[CONTRACTS] Total students fetched:', allStudents.length);
+        console.log("[CONTRACTS] Total students fetched:", allStudents.length);
         return { data: allStudents };
       } catch (err) {
-        console.error('[CONTRACTS] Error fetching students:', err);
+        console.error("[CONTRACTS] Error fetching students:", err);
         throw err;
       }
     },
@@ -162,12 +183,12 @@ export default function Contracts() {
 
   // Log errors
   if (studentsError) {
-    console.log('[CONTRACTS] Students query error:', studentsError);
+    console.log("[CONTRACTS] Students query error:", studentsError);
   }
 
   // Log loading state
-  console.log('[CONTRACTS] Students loading state:', isLoadingStudents);
-  console.log('[CONTRACTS] Students data available:', !!studentsData);
+  console.log("[CONTRACTS] Students loading state:", isLoadingStudents);
+  console.log("[CONTRACTS] Students data available:", !!studentsData);
 
   // Fetch group details if filtering by group
   const { data: groupData } = useQuery({
@@ -218,16 +239,19 @@ export default function Contracts() {
   const getStudentName = (studentId: number | null | undefined) => {
     if (!studentId) return t("unknown") || "Noma'lum";
 
-    console.log('[CONTRACTS] getStudentName called with studentId:', studentId);
-    console.log('[CONTRACTS] studentsData:', studentsData);
-    console.log('[CONTRACTS] studentsData?.data:', studentsData?.data);
-    console.log('[CONTRACTS] studentsData?.data length:', studentsData?.data?.length);
+    console.log("[CONTRACTS] getStudentName called with studentId:", studentId);
+    console.log("[CONTRACTS] studentsData:", studentsData);
+    console.log("[CONTRACTS] studentsData?.data:", studentsData?.data);
+    console.log(
+      "[CONTRACTS] studentsData?.data length:",
+      studentsData?.data?.length
+    );
 
     const student = studentsData?.data?.find(
       (s: StudentRead) => s.id === studentId
     );
 
-    console.log('[CONTRACTS] Found student:', student);
+    console.log("[CONTRACTS] Found student:", student);
 
     return student
       ? `${student.first_name} ${student.last_name}`
@@ -288,7 +312,8 @@ export default function Contracts() {
     setPage(1);
   };
 
-  const hasActiveFilters = search || statusFilter || groupFilter || contractIdFilter;
+  const hasActiveFilters =
+    search || statusFilter || groupFilter || contractIdFilter;
 
   // --- Pagination Logic ---
   const totalPages = data?.meta?.total_pages || 1;
@@ -326,7 +351,7 @@ export default function Contracts() {
   const paginationItems = getPaginationItems();
 
   // Debug log for render
-  console.log('[CONTRACTS] Rendering with state:', {
+  console.log("[CONTRACTS] Rendering with state:", {
     isLoading,
     hasData: !!data,
     dataLength: data?.data?.length,
@@ -390,37 +415,59 @@ export default function Contracts() {
                 <Select
                   value={groupFilter?.toString() || ""}
                   onChange={(e) => {
-                    console.log('[CONTRACTS] Group filter changed:', e.target.value);
-                    setGroupFilter(e.target.value ? parseInt(e.target.value) : undefined);
+                    console.log(
+                      "[CONTRACTS] Group filter changed:",
+                      e.target.value
+                    );
+                    setGroupFilter(
+                      e.target.value ? parseInt(e.target.value) : undefined
+                    );
                   }}
                   className="w-48"
                 >
                   <option value="">{t("allGroups")}</option>
-                  {allGroupsData && Array.isArray(allGroupsData) ? (
-                    allGroupsData.map((yearGroup: any, yearIndex: number) => {
-                      if (!yearGroup?.groups || !Array.isArray(yearGroup.groups)) {
-                        console.log('[CONTRACTS] Invalid yearGroup at index', yearIndex, yearGroup);
-                        return null;
-                      }
-
-                      return yearGroup.groups
-                        .filter((group: any) => {
-                          const isValid = group && group.id && group.name;
-                          if (!isValid) {
-                            console.log('[CONTRACTS] Filtering out invalid group:', group);
-                          }
-                          return isValid;
-                        })
-                        .map((group: any) => {
-                          console.log('[CONTRACTS] Rendering group option:', group.id, group.name);
-                          return (
-                            <option key={`group-${group.id}`} value={group.id}>
-                              {group.name}
-                            </option>
+                  {allGroupsData && Array.isArray(allGroupsData)
+                    ? allGroupsData.map((yearGroup: any, yearIndex: number) => {
+                        if (
+                          !yearGroup?.groups ||
+                          !Array.isArray(yearGroup.groups)
+                        ) {
+                          console.log(
+                            "[CONTRACTS] Invalid yearGroup at index",
+                            yearIndex,
+                            yearGroup
                           );
-                        });
-                    })
-                  ) : null}
+                          return null;
+                        }
+
+                        return yearGroup.groups
+                          .filter((group: any) => {
+                            const isValid = group && group.id && group.name;
+                            if (!isValid) {
+                              console.log(
+                                "[CONTRACTS] Filtering out invalid group:",
+                                group
+                              );
+                            }
+                            return isValid;
+                          })
+                          .map((group: any) => {
+                            console.log(
+                              "[CONTRACTS] Rendering group option:",
+                              group.id,
+                              group.name
+                            );
+                            return (
+                              <option
+                                key={`group-${group.id}`}
+                                value={String(group.id)}
+                              >
+                                {group.name}
+                              </option>
+                            );
+                          });
+                      })
+                    : null}
                 </Select>
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>
@@ -484,7 +531,9 @@ export default function Contracts() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">
-                {isLoadingStudents ? "Talabalar yuklanmoqda..." : "Shartnomalar yuklanmoqda..."}
+                {isLoadingStudents
+                  ? "Talabalar yuklanmoqda..."
+                  : "Shartnomalar yuklanmoqda..."}
               </span>
             </div>
           ) : (
@@ -538,25 +587,21 @@ export default function Contracts() {
                           <div className="text-sm">
                             <div className="flex items-center gap-1">
                               <CalendarDays className="w-3 h-3 text-muted-foreground" />
-                              {contract.start_date ? (
-                                format(
-                                  new Date(contract.start_date),
-                                  "MMM d, yyyy"
-                                )
-                              ) : (
-                                "-"
-                              )}
+                              {contract.start_date
+                                ? format(
+                                    new Date(contract.start_date),
+                                    "MMM d, yyyy"
+                                  )
+                                : "-"}
                             </div>
                             <div className="text-muted-foreground">
                               to{" "}
-                              {contract.end_date ? (
-                                format(
-                                  new Date(contract.end_date),
-                                  "MMM d, yyyy"
-                                )
-                              ) : (
-                                "-"
-                              )}
+                              {contract.end_date
+                                ? format(
+                                    new Date(contract.end_date),
+                                    "MMM d, yyyy"
+                                  )
+                                : "-"}
                             </div>
                           </div>
                         </TableCell>
@@ -564,13 +609,19 @@ export default function Contracts() {
                           <div className="flex items-center gap-1">
                             <CreditCard className="w-4 h-4 text-muted-foreground" />
                             <span className="font-medium">
-                              {contract.monthly_fee ? formatCurrency(contract.monthly_fee) : "-"}
+                              {contract.monthly_fee
+                                ? formatCurrency(contract.monthly_fee)
+                                : "-"}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          {contract.status ? getStatusBadge(contract.status) : (
-                            <Badge variant="secondary">{t("unknown") || "Noma'lum"}</Badge>
+                          {contract.status ? (
+                            getStatusBadge(contract.status)
+                          ) : (
+                            <Badge variant="secondary">
+                              {t("unknown") || "Noma'lum"}
+                            </Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right">

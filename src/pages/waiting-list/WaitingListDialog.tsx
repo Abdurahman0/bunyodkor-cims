@@ -72,18 +72,28 @@ export function WaitingListDialog({
   });
 
   // Get selected group's capacity for validation
-  const selectedGroup = groupsData?.data?.find((g: any) => g.id === Number(selectedGroupId));
+  const selectedGroup = groupsData?.data?.find(
+    (g: any) => g.id === Number(selectedGroupId)
+  );
   const maxPriority = selectedGroup?.capacity || 100;
 
   // Auto-calculate priority based on group capacity
   useEffect(() => {
     if (selectedGroupId && groupsData?.data && !entry) {
-      const selectedGroup = groupsData.data.find((g: any) => g.id === Number(selectedGroupId));
+      const selectedGroup = groupsData.data.find(
+        (g: any) => g.id === Number(selectedGroupId)
+      );
       if (selectedGroup && selectedGroup.capacity) {
         const currentCount = selectedGroup.current_student_count || 0;
         const capacity = selectedGroup.capacity;
         // Formula: Full group (100%) = priority close to capacity (lowest), Empty group (0%) = priority 1 (highest)
-        const calculatedPriority = Math.max(1, Math.min(capacity, Math.floor(1 + ((currentCount / capacity) * (capacity - 1)))));
+        const calculatedPriority = Math.max(
+          1,
+          Math.min(
+            capacity,
+            Math.floor(1 + (currentCount / capacity) * (capacity - 1))
+          )
+        );
         setValue("priority", calculatedPriority);
       }
     }
@@ -128,14 +138,19 @@ export function WaitingListDialog({
     mutationFn: (data: WaitingListCreate | WaitingListUpdate) => {
       if (entry) {
         // Update
-        return waitingListService.updateWaitingListEntry(entry.id, data as WaitingListUpdate);
+        return waitingListService.updateWaitingListEntry(
+          entry.id,
+          data as WaitingListUpdate
+        );
       }
       // Create
       return waitingListService.addToWaitingList(data as WaitingListCreate);
     },
     onSuccess: () => {
       toast.success(
-        entry ? t("waitingListUpdatedSuccess") || "Waiting list updated" : t("waitingListAddedSuccess") || "Added to waiting list"
+        entry
+          ? t("waitingListUpdatedSuccess") || "Waiting list updated"
+          : t("waitingListAddedSuccess") || "Added to waiting list"
       );
       queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
       onOpenChange(false);
@@ -196,7 +211,9 @@ export function WaitingListDialog({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {entry ? t("editWaitingListEntry") || "Edit Waiting List Entry" : t("addToWaitingList") || "Add to Waiting List"}
+            {entry
+              ? t("editWaitingListEntry") || "Edit Waiting List Entry"
+              : t("addToWaitingList") || "Add to Waiting List"}
           </DialogTitle>
         </DialogHeader>
 
@@ -210,23 +227,28 @@ export function WaitingListDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="student_first_name">
-                  {t("firstName") || "First Name"} <span className="text-red-500">*</span>
+                  {t("firstName") || "First Name"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="student_first_name"
                   {...register("student_first_name", {
-                    required: t("firstNameRequired") || "First name is required",
+                    required:
+                      t("firstNameRequired") || "First name is required",
                   })}
                   placeholder={t("enterFirstName") || "Enter first name"}
                 />
                 {errors.student_first_name && (
-                  <p className="text-sm text-red-500">{errors.student_first_name.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.student_first_name.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="student_last_name">
-                  {t("lastName") || "Last Name"} <span className="text-red-500">*</span>
+                  {t("lastName") || "Last Name"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="student_last_name"
@@ -236,13 +258,16 @@ export function WaitingListDialog({
                   placeholder={t("enterLastName") || "Enter last name"}
                 />
                 {errors.student_last_name && (
-                  <p className="text-sm text-red-500">{errors.student_last_name.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.student_last_name.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="birth_year">
-                  {t("birthYear") || "Birth Year"} <span className="text-red-500">*</span>
+                  {t("birthYear") || "Birth Year"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="birth_year"
@@ -250,20 +275,27 @@ export function WaitingListDialog({
                   min="2000"
                   max={currentYear}
                   {...register("birth_year", {
-                    required: t("birthYearRequired") || "Birth year is required",
+                    required:
+                      t("birthYearRequired") || "Birth year is required",
                     min: {
                       value: 2000,
-                      message: t("birthYearMin") || "Birth year must be at least 2000",
+                      message:
+                        t("birthYearMin") || "Birth year must be at least 2000",
                     },
                     max: {
                       value: currentYear,
-                      message: (t("birthYearMax") || "Birth year cannot be greater than {{year}}").replace("{{year}}", currentYear.toString()),
+                      message: (
+                        t("birthYearMax") ||
+                        "Birth year cannot be greater than {{year}}"
+                      ).replace("{{year}}", currentYear.toString()),
                     },
                   })}
                   placeholder="2015"
                 />
                 {errors.birth_year && (
-                  <p className="text-sm text-red-500">{errors.birth_year.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.birth_year.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -278,67 +310,83 @@ export function WaitingListDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="father_name">
-                  {t("fatherName") || "Father's Name"} <span className="text-red-500">*</span>
+                  {t("fatherName") || "Father's Name"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="father_name"
                   {...register("father_name", {
-                    required: t("fatherNameRequired") || "Father's name is required",
+                    required:
+                      t("fatherNameRequired") || "Father's name is required",
                   })}
                   placeholder={t("enterFatherName") || "Enter father's name"}
                 />
                 {errors.father_name && (
-                  <p className="text-sm text-red-500">{errors.father_name.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.father_name.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="father_phone">
-                  {t("fatherPhone") || "Father's Phone"} <span className="text-red-500">*</span>
+                  {t("fatherPhone") || "Father's Phone"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="father_phone"
                   type="tel"
                   {...register("father_phone", {
-                    required: t("fatherPhoneRequired") || "Father's phone is required",
+                    required:
+                      t("fatherPhoneRequired") || "Father's phone is required",
                   })}
                   placeholder={t("enterFatherPhone") || "+998 XX XXX XX XX"}
                 />
                 {errors.father_phone && (
-                  <p className="text-sm text-red-500">{errors.father_phone.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.father_phone.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="mother_name">
-                  {t("motherName") || "Mother's Name"} <span className="text-red-500">*</span>
+                  {t("motherName") || "Mother's Name"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="mother_name"
                   {...register("mother_name", {
-                    required: t("motherNameRequired") || "Mother's name is required",
+                    required:
+                      t("motherNameRequired") || "Mother's name is required",
                   })}
                   placeholder={t("enterMotherName") || "Enter mother's name"}
                 />
                 {errors.mother_name && (
-                  <p className="text-sm text-red-500">{errors.mother_name.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.mother_name.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="mother_phone">
-                  {t("motherPhone") || "Mother's Phone"} <span className="text-red-500">*</span>
+                  {t("motherPhone") || "Mother's Phone"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="mother_phone"
                   type="tel"
                   {...register("mother_phone", {
-                    required: t("motherPhoneRequired") || "Mother's phone is required",
+                    required:
+                      t("motherPhoneRequired") || "Mother's phone is required",
                   })}
                   placeholder={t("enterMotherPhone") || "+998 XX XXX XX XX"}
                 />
                 {errors.mother_phone && (
-                  <p className="text-sm text-red-500">{errors.mother_phone.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.mother_phone.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -358,19 +406,22 @@ export function WaitingListDialog({
               >
                 <option value="">{t("selectGroup") || "Select group"}</option>
                 {groupsData?.data?.map((group: GroupRead) => (
-                  <option key={group.id} value={group.id}>
+                  <option key={group.id} value={String(group.id)}>
                     {group.name}
                   </option>
                 ))}
               </Select>
               {errors.group_id && (
-                <p className="text-sm text-red-500">{errors.group_id.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.group_id.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="priority">
-                {t("priority") || "Priority"} (1-{maxPriority}) <span className="text-red-500">*</span>
+                {t("priority") || "Priority"} (1-{maxPriority}){" "}
+                <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="priority"
@@ -385,16 +436,21 @@ export function WaitingListDialog({
                   },
                   max: {
                     value: maxPriority,
-                    message: t("priorityMax") || `Priority must be at most ${maxPriority}`,
+                    message:
+                      t("priorityMax") ||
+                      `Priority must be at most ${maxPriority}`,
                   },
                 })}
                 placeholder="1"
               />
               {errors.priority && (
-                <p className="text-sm text-red-500">{errors.priority.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.priority.message}
+                </p>
               )}
               <p className="text-xs text-muted-foreground">
-                {t("priorityHelp") || `1 = Highest priority, ${maxPriority} = Lowest priority`}
+                {t("priorityHelp") ||
+                  `1 = Highest priority, ${maxPriority} = Lowest priority`}
               </p>
             </div>
           </div>
@@ -405,7 +461,9 @@ export function WaitingListDialog({
             <Textarea
               id="notes"
               {...register("notes")}
-              placeholder={t("waitingListNotesPlaceholder") || "Additional notes..."}
+              placeholder={
+                t("waitingListNotesPlaceholder") || "Additional notes..."
+              }
               rows={3}
             />
           </div>
