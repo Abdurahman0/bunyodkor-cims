@@ -42,7 +42,6 @@ import { studentService } from "@/services/api.service";
 import type { StudentRead } from "@/types/api";
 import { StudentDialog } from "./StudentDialog";
 import { StudentWithContractDialog } from "./StudentWithContractDialog";
-import { ImportDialog } from "@/components/import/ImportDialog";
 import { exportStudents } from "@/lib/export-utils";
 import { format } from "date-fns";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -63,7 +62,6 @@ export default function Students() {
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCombinedDialogOpen, setIsCombinedDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<StudentRead | null>(null);
   const queryClient = useQueryClient();
@@ -279,15 +277,6 @@ export default function Students() {
           <p className="text-muted-foreground mt-1">{t("manageStudents")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => setIsImportDialogOpen(true)}
-          >
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("import")}</span>
-          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -649,19 +638,6 @@ export default function Students() {
       <StudentWithContractDialog
         open={isCombinedDialogOpen}
         onOpenChange={setIsCombinedDialogOpen}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["students"] });
-          queryClient.invalidateQueries({ queryKey: ["students-count"] });
-        }}
-      />
-
-      {/* Import Dialog */}
-      <ImportDialog
-        open={isImportDialogOpen}
-        onOpenChange={setIsImportDialogOpen}
-        endpoint="/import/students"
-        title={t("importStudents")}
-        description={t("importStudentsDescription")}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["students"] });
           queryClient.invalidateQueries({ queryKey: ["students-count"] });

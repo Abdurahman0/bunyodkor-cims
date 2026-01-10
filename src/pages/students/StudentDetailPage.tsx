@@ -361,17 +361,6 @@ export default function StudentDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge(student.status!)}
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setIsHardDeleteDialogOpen(true)}
-              className="gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="whitespace-nowrap">
-                {t("permanentlyDelete")}
-              </span>
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
@@ -387,7 +376,7 @@ export default function StudentDetailPage() {
             <Calendar className="w-5 h-5 text-muted-foreground" />
             <span>
               {t("birthDate")}:{" "}
-              {format(new Date(student.date_of_birth!), "dd.MM.yyyy")}
+              {format(new Date(student.date_of_birth!), "dd-MM-yyyy")}
             </span>
           </div>
         </CardContent>
@@ -417,10 +406,10 @@ export default function StudentDetailPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                {t("activeContracts")}
+                {t("contractNumber") || "Shartnoma raqami"}
               </p>
               <p className="text-2xl font-bold">
-                {contracts?.filter((c) => c.status === "active").length || 0}
+                {contracts?.find((c) => c.status === "active")?.contract_number || "-"}
               </p>
             </div>
           </CardContent>
@@ -789,6 +778,29 @@ export default function StudentDetailPage() {
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone - Delete Student */}
+      <Card className="border-red-200 dark:border-red-900">
+        <CardHeader>
+          <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            {t("dangerZone") || "Xavfli zona"}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {t("deleteStudentWarning") || "Talabani butunlay o'chirish qaytarilmas jarayon"}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            onClick={() => setIsHardDeleteDialogOpen(true)}
+            className="gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>{t("permanentlyDelete") || "Butunlay o'chirish"}</span>
+          </Button>
         </CardContent>
       </Card>
 

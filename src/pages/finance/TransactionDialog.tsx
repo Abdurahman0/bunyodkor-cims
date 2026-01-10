@@ -103,7 +103,7 @@ export function TransactionDialog({
   // 2. Barcha talabalarni yuklash (Agar shartnoma ichida student kelmasa)
   const { data: studentsData } = useQuery({
     queryKey: ["students-list-full"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 2000 }),
     enabled: open,
   });
 

@@ -50,13 +50,13 @@ export function StudentDialog({
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
   });
 
   // Get student count for each group to check capacity
   const { data: allStudentsData } = useQuery({
     queryKey: ["all-students-for-capacity"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 2000 }),
   });
 
   useEffect(() => {

@@ -162,7 +162,7 @@ export function StudentWithContractDialog({
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100 }),
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
     enabled: open,
   });
 
@@ -1097,7 +1097,7 @@ const handleDownloadContract = async () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label>Portfolio</Label>
+                <Label>Portfolio *</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
@@ -1105,7 +1105,7 @@ const handleDownloadContract = async () => {
                 />
               </div>
               <div>
-                <Label>086-shakl (Tibbiy ma'lumotnoma)</Label>
+                <Label>086-shakl *</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
@@ -1113,31 +1113,7 @@ const handleDownloadContract = async () => {
                 />
               </div>
               <div>
-                <Label>Yurak tekshiruvi</Label>
-                <Input
-                  type="file"
-                  accept="image/png,image/jpeg,application/pdf"
-                  {...register("heart_checkup")}
-                />
-              </div>
-              <div>
-                <Label>Tug'ilganlik haqidagi guvohnoma (old tomoni)</Label>
-                <Input
-                  type="file"
-                  accept="image/png,image/jpeg,application/pdf"
-                  {...register("birth_certificate")}
-                />
-              </div>
-              <div>
-                <Label>Tug'ilganlik guvohnomasi (orqa tomoni)</Label>
-                <Input
-                  type="file"
-                  accept="image/png,image/jpeg,application/pdf"
-                  {...register("contract_image_1")}
-                />
-              </div>
-              <div>
-                <Label>Otaning pasporti (old tomoni)</Label>
+                <Label>Otaning pasporti *</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
@@ -1145,27 +1121,27 @@ const handleDownloadContract = async () => {
                 />
               </div>
               <div>
-                <Label>Otaning pasporti (orqa tomoni)</Label>
+                <Label>Tug'ilganlik guvohnoma *</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
-                  {...register("contract_image_3")}
+                  {...register("birth_certificate")}
                 />
               </div>
               <div>
-                <Label>Onaning pasporti (old tomoni)</Label>
+                <Label>Yurak tekshiruvi *</Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
+                  {...register("heart_checkup")}
+                />
+              </div>
+              <div>
+                <Label>Onaning pasporti *</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
                   {...register("contract_image_4")}
-                />
-              </div>
-              <div>
-                <Label>Onaning pasporti (orqa tomoni)</Label>
-                <Input
-                  type="file"
-                  accept="image/png,image/jpeg,application/pdf"
-                  {...register("contract_image_5")}
                 />
               </div>
             </div>
