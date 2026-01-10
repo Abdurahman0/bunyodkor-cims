@@ -48,16 +48,23 @@ import type {
 
 const getStatusBadge = (status: string) => {
   const styles: { [key: string]: string } = {
-    active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    present: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    graduated: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    active:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    present:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    success:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    graduated:
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
     dropped: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
     absent: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
     failed: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    suspended: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    cancelled:
+      "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    suspended:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    pending:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     late: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   };
   return (
@@ -97,7 +104,9 @@ export default function StudentDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
-      toast.success(t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi");
+      toast.success(
+        t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi"
+      );
       setIsHardDeleteDialogOpen(false);
       // Navigate after a brief delay to ensure toast is visible
       setTimeout(() => {
@@ -106,7 +115,8 @@ export default function StudentDetailPage() {
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
-      let errorMessage = t("failedToDeleteStudent") || "Talabani o'chirishda xato";
+      let errorMessage =
+        t("failedToDeleteStudent") || "Talabani o'chirishda xato";
 
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
@@ -132,9 +142,13 @@ export default function StudentDetailPage() {
           contract.contract_number
         );
 
-        if (typeof response === 'string') {
+        if (typeof response === "string") {
           pdfUrl = response;
-        } else if (typeof response === 'object' && response !== null && 'pdf_url' in response) {
+        } else if (
+          typeof response === "object" &&
+          response !== null &&
+          "pdf_url" in response
+        ) {
           pdfUrl = (response as any).pdf_url;
         }
       }
@@ -148,7 +162,7 @@ export default function StudentDetailPage() {
       const resp = await fetch(pdfUrl);
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `${contract.contract_number}.pdf`;
       document.body.appendChild(a);
@@ -197,42 +211,45 @@ export default function StudentDetailPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getDisplayParents = (): any[] => {
-    console.log('[STUDENT DETAIL] Getting parent info');
-    console.log('[STUDENT DETAIL] Parents from API:', parents);
-    console.log('[STUDENT DETAIL] Contracts:', contracts);
+    console.log("[STUDENT DETAIL] Getting parent info");
+    console.log("[STUDENT DETAIL] Parents from API:", parents);
+    console.log("[STUDENT DETAIL] Contracts:", contracts);
 
     if (parents && parents.length > 0) {
-      console.log('[STUDENT DETAIL] Using parents from API');
+      console.log("[STUDENT DETAIL] Using parents from API");
       return parents;
     }
 
     if (contracts && contracts.length > 0) {
       const sortedContracts = [...contracts].sort((a, b) => b.id - a.id);
-      console.log('[STUDENT DETAIL] Sorted contracts:', sortedContracts);
+      console.log("[STUDENT DETAIL] Sorted contracts:", sortedContracts);
 
       // Try to extract parent info from ALL contracts, collect all unique parents
       const allParents: any[] = [];
 
       for (const contract of sortedContracts) {
-        console.log('[STUDENT DETAIL] Processing contract:', contract.id);
+        console.log("[STUDENT DETAIL] Processing contract:", contract.id);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let customFields: any = contract.custom_fields;
 
         if (!customFields) {
-          console.log('[STUDENT DETAIL] No custom_fields in contract', contract.id);
+          console.log(
+            "[STUDENT DETAIL] No custom_fields in contract",
+            contract.id
+          );
           continue;
         }
 
         if (typeof customFields === "string") {
           try {
             customFields = JSON.parse(customFields);
-            console.log('[STUDENT DETAIL] Parsed custom_fields:', customFields);
+            console.log("[STUDENT DETAIL] Parsed custom_fields:", customFields);
           } catch (e) {
             console.error("[STUDENT DETAIL] Custom fields parse error", e);
             continue;
           }
         } else {
-          console.log('[STUDENT DETAIL] Custom fields (object):', customFields);
+          console.log("[STUDENT DETAIL] Custom fields (object):", customFields);
         }
 
         // Extract buyurtmachi
@@ -240,8 +257,9 @@ export default function StudentDetailPage() {
           customFields.buyurtmachi &&
           (customFields.buyurtmachi.fio || customFields.buyurtmachi.name)
         ) {
-          const buyurtmachiName = customFields.buyurtmachi.fio || customFields.buyurtmachi.name;
-          console.log('[STUDENT DETAIL] Found buyurtmachi:', buyurtmachiName);
+          const buyurtmachiName =
+            customFields.buyurtmachi.fio || customFields.buyurtmachi.name;
+          console.log("[STUDENT DETAIL] Found buyurtmachi:", buyurtmachiName);
 
           allParents.push({
             id: `contract-${contract.id}-buyurtmachi`,
@@ -259,12 +277,27 @@ export default function StudentDetailPage() {
 
         // Extract mom info
         const st = customFields.student || {};
-        console.log('[STUDENT DETAIL] Student fields:', st);
-        const momName = st.mom_fullname || st.mom_fio || st.mom_name || customFields.mom_fio || customFields.mom_fullname;
-        const momPhone = st.mom_phone_number || st.mom_phone || customFields.mom_phone || customFields.mom_phone_number || "";
-        console.log('[STUDENT DETAIL] Checking mom - name:', momName, 'phone:', momPhone);
+        console.log("[STUDENT DETAIL] Student fields:", st);
+        const momName =
+          st.mom_fullname ||
+          st.mom_fio ||
+          st.mom_name ||
+          customFields.mom_fio ||
+          customFields.mom_fullname;
+        const momPhone =
+          st.mom_phone_number ||
+          st.mom_phone ||
+          customFields.mom_phone ||
+          customFields.mom_phone_number ||
+          "";
+        console.log(
+          "[STUDENT DETAIL] Checking mom - name:",
+          momName,
+          "phone:",
+          momPhone
+        );
         if (momName) {
-          console.log('[STUDENT DETAIL] Found mom:', momName, momPhone);
+          console.log("[STUDENT DETAIL] Found mom:", momName, momPhone);
           allParents.push({
             id: `contract-${contract.id}-mom`,
             first_name: momName,
@@ -277,11 +310,26 @@ export default function StudentDetailPage() {
         }
 
         // Extract dad info
-        const dadName = st.dad_fullname || st.dad_name || st.dad_fio || customFields.dad_name || customFields.dad_fullname;
-        const dadPhone = st.dad_phone_number || st.dad_phone || customFields.dad_phone || customFields.dad_phone_number || "";
-        console.log('[STUDENT DETAIL] Checking dad - name:', dadName, 'phone:', dadPhone);
+        const dadName =
+          st.dad_fullname ||
+          st.dad_name ||
+          st.dad_fio ||
+          customFields.dad_name ||
+          customFields.dad_fullname;
+        const dadPhone =
+          st.dad_phone_number ||
+          st.dad_phone ||
+          customFields.dad_phone ||
+          customFields.dad_phone_number ||
+          "";
+        console.log(
+          "[STUDENT DETAIL] Checking dad - name:",
+          dadName,
+          "phone:",
+          dadPhone
+        );
         if (dadName) {
-          console.log('[STUDENT DETAIL] Found dad:', dadName, dadPhone);
+          console.log("[STUDENT DETAIL] Found dad:", dadName, dadPhone);
           allParents.push({
             id: `contract-${contract.id}-dad`,
             first_name: dadName,
@@ -292,48 +340,64 @@ export default function StudentDetailPage() {
             is_from_contract: true,
           });
         } else {
-          console.log('[STUDENT DETAIL] No dad name found in contract', contract.id);
-          console.log('[STUDENT DETAIL] Checked fields - st.dad_fullname:', st.dad_fullname, 'st.dad_name:', st.dad_name, 'st.dad_fio:', st.dad_fio, 'customFields.dad_name:', customFields.dad_name);
+          console.log(
+            "[STUDENT DETAIL] No dad name found in contract",
+            contract.id
+          );
+          console.log(
+            "[STUDENT DETAIL] Checked fields - st.dad_fullname:",
+            st.dad_fullname,
+            "st.dad_name:",
+            st.dad_name,
+            "st.dad_fio:",
+            st.dad_fio,
+            "customFields.dad_name:",
+            customFields.dad_name
+          );
         }
       }
 
       // Deduplicate by name and relationship_type
-      const uniqueParents = allParents.filter((parent, index, self) =>
-        index === self.findIndex((p) =>
-          p.first_name === parent.first_name && p.relationship_type === parent.relationship_type
-        )
+      const uniqueParents = allParents.filter(
+        (parent, index, self) =>
+          index ===
+          self.findIndex(
+            (p) =>
+              p.first_name === parent.first_name &&
+              p.relationship_type === parent.relationship_type
+          )
       );
 
-      console.log('[STUDENT DETAIL] All parents found:', allParents);
-      console.log('[STUDENT DETAIL] Unique parents:', uniqueParents);
+      console.log("[STUDENT DETAIL] All parents found:", allParents);
+      console.log("[STUDENT DETAIL] Unique parents:", uniqueParents);
 
       if (uniqueParents.length > 0) {
         return uniqueParents;
       }
     }
 
-    console.log('[STUDENT DETAIL] No parent info found');
+    console.log("[STUDENT DETAIL] No parent info found");
     return [];
   };
 
   const displayParents = getDisplayParents();
 
-  console.log('[STUDENT DETAIL] Display parents:', displayParents);
+  console.log("[STUDENT DETAIL] Display parents:", displayParents);
 
   // Separate parents and guardians
   // Parents: Ota and Ona
-  const parentsList = displayParents.filter((p) =>
-    p.relationship_type === "Ota" || p.relationship_type === "Ona"
+  const parentsList = displayParents.filter(
+    (p) => p.relationship_type === "Ota" || p.relationship_type === "Ona"
   );
 
   // Guardians: Everyone else (Buyurtmachi, etc.)
   // BUT also show Buyurtmachi separately if they are ALSO listed as parent
-  const guardiansList = displayParents.filter((p) =>
-    p.relationship_type !== "Ota" && p.relationship_type !== "Ona"
+  const guardiansList = displayParents.filter(
+    (p) => p.relationship_type !== "Ota" && p.relationship_type !== "Ona"
   );
 
-  console.log('[STUDENT DETAIL] Parents list:', parentsList);
-  console.log('[STUDENT DETAIL] Guardians list:', guardiansList);
+  console.log("[STUDENT DETAIL] Parents list:", parentsList);
+  console.log("[STUDENT DETAIL] Guardians list:", guardiansList);
 
   return (
     <div className="space-y-6">
@@ -392,12 +456,17 @@ export default function StudentDetailPage() {
               </p>
               <p className="text-2xl font-bold">
                 {new Intl.NumberFormat("en-US").format(
-                  transactions?.filter((t) => t.status?.toLowerCase() === "success").reduce((sum, t) => sum + (t.amount || 0), 0) || 0
+                  transactions
+                    ?.filter((t) => t.status?.toLowerCase() === "success")
+                    .reduce((sum, t) => sum + (t.amount || 0), 0) || 0
                 )}{" "}
                 UZS
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {transactions?.filter((t) => t.status?.toLowerCase() === "success").length || 0} {t("successfulPayments") || "muvaffaqiyatli"}
+                {transactions?.filter(
+                  (t) => t.status?.toLowerCase() === "success"
+                ).length || 0}{" "}
+                {t("successfulPayments") || "muvaffaqiyatli"}
               </p>
             </div>
           </CardContent>
@@ -409,7 +478,8 @@ export default function StudentDetailPage() {
                 {t("contractNumber") || "Shartnoma raqami"}
               </p>
               <p className="text-2xl font-bold">
-                {contracts?.find((c) => c.status === "active")?.contract_number || "-"}
+                {contracts?.find((c) => c.status === "active")
+                  ?.contract_number || "-"}
               </p>
             </div>
           </CardContent>
@@ -713,8 +783,11 @@ export default function StudentDetailPage() {
                       <TableCell>{format(paidDate, "dd.MM.yyyy")}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-mono">
-                          {t.payment_year}-{t.payment_months && t.payment_months.length > 0
-                            ? t.payment_months.map(m => String(m).padStart(2, '0')).join(',')
+                          {t.payment_year}-
+                          {t.payment_months && t.payment_months.length > 0
+                            ? t.payment_months
+                                .map((m) => String(m).padStart(2, "0"))
+                                .join(",")
                             : format(paidDate, "MM")}
                         </Badge>
                       </TableCell>
@@ -782,110 +855,77 @@ export default function StudentDetailPage() {
       </Card>
 
       {/* Critical Actions Section */}
-      <Card className="relative overflow-hidden border-2 border-red-500/20 dark:border-red-500/30 shadow-lg hover:shadow-red-500/20 dark:hover:shadow-red-500/30 transition-all duration-300 group">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-red-50/50 to-transparent dark:from-red-950/20 dark:via-red-950/10 dark:to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
+      <Card className="relative overflow-hidden border-none bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] group">
+        {/* Yuqoridagi qizil urg'u chizig'i */}
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 via-rose-500 to-red-600" />
 
-        {/* Animated border effect */}
-        <div className="absolute inset-0 border-2 border-red-500/0 group-hover:border-red-500/30 transition-all duration-300 rounded-lg" />
-
-        <CardHeader className="relative pb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              {/* Warning icon with pulse animation */}
-              <div className="relative">
-                <div className="absolute inset-0 bg-red-500 rounded-full blur-md opacity-40 animate-pulse" />
-                <div className="relative p-3 rounded-full bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
-                  <AlertTriangle className="w-6 h-6 text-white animate-pulse" />
-                </div>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-4">
+            {/* Icon qismi: Pulsatsiya bilan */}
+            <div className="relative flex-shrink-0">
+              <div className="absolute inset-0 bg-red-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-500" />
               </div>
+            </div>
 
-              <div>
-                <CardTitle className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-700 dark:from-red-400 dark:to-red-500 bg-clip-text text-transparent">
-                  {t("criticalAction") || "Muhim harakat"}
-                </CardTitle>
-                <p className="text-sm text-red-600/80 dark:text-red-400/80 font-medium mt-1">
+            <div className="space-y-1">
+              <CardTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                {t("criticalAction") || "Muhim harakat"}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                <p className="text-sm font-medium text-red-600 dark:text-red-400">
                   {t("irreversibleAction") || "Qaytarib bo'lmaydigan amal"}
                 </p>
               </div>
             </div>
-
-            {/* Warning badge with 3 languages */}
-            <div className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700">
-              <span className="text-xs font-bold text-red-700 dark:text-red-300">
-                ⚠️ CAUTION | EHTIYOT | ВНИМАНИЕ
-              </span>
-            </div>
           </div>
         </CardHeader>
 
-        <CardContent className="relative space-y-4">
-          {/* Warning message box with 3 languages */}
-          <div className="p-4 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-l-4 border-red-500 shadow-sm">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-              <div className="space-y-3">
-                {/* Uzbek */}
-                <div>
-                  <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1.5">
-                    🇺🇿 {t("deleteStudentWarning") || "Talabani butunlay o'chirish qaytarilmas jarayon"}
-                  </p>
-                  <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
-                    <li>Talaba profili o'chiriladi</li>
-                    <li>Barcha shartnomalar o'chiriladi</li>
-                    <li>To'lov tarixi o'chiriladi</li>
-                    <li>Davomat yozuvlari o'chiriladi</li>
-                  </ul>
-                </div>
-
-                {/* English */}
-                <div className="border-t border-red-200/50 dark:border-red-800/50 pt-2">
-                  <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1.5">
-                    🇬🇧 Permanently deleting a student is an irreversible action
-                  </p>
-                  <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
-                    <li>Student profile will be deleted</li>
-                    <li>All contracts will be removed</li>
-                    <li>Payment history will be erased</li>
-                    <li>Attendance records will be lost</li>
-                  </ul>
-                </div>
-
-                {/* Russian */}
-                <div className="border-t border-red-200/50 dark:border-red-800/50 pt-2">
-                  <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1.5">
-                    🇷🇺 Полное удаление студента - необратимое действие
-                  </p>
-                  <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
-                    <li>Профиль студента будет удален</li>
-                    <li>Все контракты будут удалены</li>
-                    <li>История платежей будет стерта</li>
-                    <li>Записи посещаемости будут потеряны</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+        <CardContent className="space-y-6">
+          {/* Ogohlantirish matni: 3ta til olib tashlandi, faqat bitta asosiy xabar qoldi */}
+          <div className="relative p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              <span className="font-semibold text-slate-900 dark:text-slate-200">
+                {t("deleteStudentWarning") ||
+                  "Talabani butunlay o'chirish barcha ma'lumotlarni yo'q qiladi."}
+              </span>{" "}
+              Bu jarayon yakunlangach, profil, to'lovlar va davomat tarixini
+              qayta tiklab bo'lmaydi.
+            </p>
           </div>
 
-          {/* Delete button with enhanced styling */}
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground italic">
-              {t("clickButtonToConfirm") || "Tasdiqlash uchun tugmani bosing"}
+          {/* Pastki qism: Tugma va tasdiq xabari */}
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium max-w-[180px]">
+              {t("clickButtonToConfirm") ||
+                "Davom etish uchun tasdiqlash tugmasini bosing"}
             </p>
+
             <Button
               variant="destructive"
               onClick={() => setIsHardDeleteDialogOpen(true)}
-              className="gap-2 px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 font-semibold"
+              className="relative overflow-hidden group/btn px-8 py-6 rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-[0_4px_14px_0_rgba(220,38,38,0.39)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Trash2 className="w-4 h-4" />
-              <span>{t("permanentlyDelete") || "Butunlay o'chirish"}</span>
+              <div className="flex items-center gap-2 relative z-10">
+                <Trash2 className="w-5 h-5" />
+                <span className="font-bold tracking-wide">
+                  {t("permanentlyDelete") || "O'chirish"}
+                </span>
+              </div>
+              {/* Tugma ichidagi nurli effekt */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] transition-transform" />
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Hard Delete Confirmation Dialog */}
-      <Dialog open={isHardDeleteDialogOpen} onOpenChange={setIsHardDeleteDialogOpen}>
+      <Dialog
+        open={isHardDeleteDialogOpen}
+        onOpenChange={setIsHardDeleteDialogOpen}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
@@ -893,22 +933,30 @@ export default function StudentDetailPage() {
                 <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
               <DialogTitle className="text-xl text-red-600 dark:text-red-400">
-                {t("permanentDeleteWarning") || "OGOHLANTRISH: Butunlay o'chirish"}
+                {t("permanentDeleteWarning") ||
+                  "OGOHLANTRISH: Butunlay o'chirish"}
               </DialogTitle>
             </div>
             <DialogDescription className="text-base mt-4">
               <p className="font-semibold text-foreground mb-3">
-                {t("permanentDeleteStudent") || "Talabani butunlay o'chirasizmi"}:{" "}
+                {t("permanentDeleteStudent") ||
+                  "Talabani butunlay o'chirasizmi"}
+                :{" "}
                 <span className="text-red-600">
                   {student.first_name} {student.last_name}
-                </span>?
+                </span>
+                ?
               </p>
               <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                 <p className="text-sm text-red-800 dark:text-red-200 font-bold mb-2">
-                  ⚠️ {t("thisActionCannotBeUndone") || "Bu amalni qaytarib bo'lmaydi!"}
+                  ⚠️{" "}
+                  {t("thisActionCannotBeUndone") ||
+                    "Bu amalni qaytarib bo'lmaydi!"}
                 </p>
                 <p className="text-sm text-red-700 dark:text-red-300 font-medium mb-2">
-                  {t("followingWillBeDeleted") || "Quyidagilar butunlay o'chiriladi"}:
+                  {t("followingWillBeDeleted") ||
+                    "Quyidagilar butunlay o'chiriladi"}
+                  :
                 </p>
                 <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
                   <li>{t("studentProfile") || "Talaba profili"}</li>
@@ -917,10 +965,13 @@ export default function StudentDetailPage() {
                   <li>{t("attendanceRecords") || "Davomat yozuvlari"}</li>
                   <li>{t("parentRecords") || "Ota-ona ma'lumotlari"}</li>
                   <li>{t("gateLogRecords") || "Kirish-chiqish yozuvlari"}</li>
-                  <li>{t("waitingListEntries") || "Navbat ro'yxati yozuvlari"}</li>
+                  <li>
+                    {t("waitingListEntries") || "Navbat ro'yxati yozuvlari"}
+                  </li>
                 </ul>
                 <p className="text-sm text-red-700 dark:text-red-300 mt-3 font-medium">
-                  {t("contractNumbersWillBeFreed") || "Shartnoma raqamlari bo'shab, qayta ishlatilishi mumkin"}
+                  {t("contractNumbersWillBeFreed") ||
+                    "Shartnoma raqamlari bo'shab, qayta ishlatilishi mumkin"}
                 </p>
               </div>
             </DialogDescription>
@@ -942,8 +993,8 @@ export default function StudentDetailPage() {
             >
               <Trash2 className="w-4 h-4" />
               {hardDeleteMutation.isPending
-                ? (t("deleting") || "O'chirilmoqda...")
-                : (t("permanentlyDelete") || "Butunlay o'chirish")}
+                ? t("deleting") || "O'chirilmoqda..."
+                : t("permanentlyDelete") || "Butunlay o'chirish"}
             </Button>
           </div>
         </DialogContent>
