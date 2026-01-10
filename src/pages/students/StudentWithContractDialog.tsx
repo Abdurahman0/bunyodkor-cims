@@ -520,46 +520,45 @@ export function StudentWithContractDialog({
       formData.append("student_data", JSON.stringify(student_data));
       formData.append("contract_data", JSON.stringify(contract_data));
 
-      // Hujjatlar backend ga yuborilmaydi (commented out)
       // Required file fields
-      // const requiredFileFields: (keyof StudentFormData)[] = [
-      //   "passport_copy",
-      //   "form_086",
-      //   "heart_checkup",
-      //   "birth_certificate",
-      //   "contract_image_2",
-      //   "contract_image_4",
-      // ];
+      const requiredFileFields: (keyof StudentFormData)[] = [
+        "passport_copy",
+        "form_086",
+        "heart_checkup",
+        "birth_certificate",
+        "contract_image_2",
+        "contract_image_4",
+      ];
 
       // Optional file fields
-      // const optionalFileFields: (keyof StudentFormData)[] = [
-      //   "contract_image_1",
-      //   "contract_image_3",
-      //   "contract_image_5",
-      // ];
+      const optionalFileFields: (keyof StudentFormData)[] = [
+        "contract_image_1",
+        "contract_image_3",
+        "contract_image_5",
+      ];
 
-      // let filesMissing = false;
+      let filesMissing = false;
 
       // Check required files
-      // for (const field of requiredFileFields) {
-      //   if (data[field]?.[0]) {
-      //     formData.append(field, data[field][0]);
-      //   } else {
-      //     filesMissing = true;
-      //     toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
-      //   }
-      // }
+      for (const field of requiredFileFields) {
+        if (data[field]?.[0]) {
+          formData.append(field, data[field][0]);
+        } else {
+          filesMissing = true;
+          toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
+        }
+      }
 
       // Add optional files if provided
-      // for (const field of optionalFileFields) {
-      //   if (data[field]?.[0]) {
-      //     formData.append(field, data[field][0]);
-      //   }
-      // }
-      // if (filesMissing) {
-      //   setIsSubmitting(false);
-      //   return;
-      // }
+      for (const field of optionalFileFields) {
+        if (data[field]?.[0]) {
+          formData.append(field, data[field][0]);
+        }
+      }
+      if (filesMissing) {
+        setIsSubmitting(false);
+        return;
+      }
 
       // Step 1: Generating contract
       await simulateProgress(1, 1000);
