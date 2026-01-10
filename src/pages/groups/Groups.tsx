@@ -279,7 +279,7 @@ export default function Groups() {
         const fallbackResponse = await studentService.getStudents({
           group_id: selectedGroupForStudents.id,
           page: 1,
-          page_size: 100000,
+          page_size: 100,
         });
 
         console.log("[DEBUG] Fallback students response:", fallbackResponse);
@@ -306,7 +306,7 @@ export default function Groups() {
     queryFn: () =>
       groupService.getGroupContracts(selectedGroupForContracts!.id, {
         page: 1,
-        page_size: 100000,
+        page_size: 100,
       }),
     enabled: !!selectedGroupForContracts,
   });
@@ -318,17 +318,35 @@ export default function Groups() {
       if (!selectedGroupForContracts) return { data: [], meta: {} };
 
       console.log(
-        "[DEBUG] Fetching students via /students for group:",
+        "[DEBUG] Fetching all students with pagination for group:",
         selectedGroupForContracts.id
       );
-      const response = await studentService.getStudents({
-        group_id: selectedGroupForContracts.id,
-        page: 1,
-        page_size: 100000,
-      });
-      console.log("[DEBUG] Students via /students response:", response);
 
-      return response;
+      let allStudents: StudentRead[] = [];
+      let currentPage = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await studentService.getStudents({
+          group_id: selectedGroupForContracts.id,
+          page: currentPage,
+          page_size: 100,
+        });
+
+        if (response.data && response.data.length > 0) {
+          allStudents = [...allStudents, ...response.data];
+          currentPage++;
+
+          if (response.data.length < 100) {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      console.log("[DEBUG] Total students fetched:", allStudents.length);
+      return { data: allStudents };
     },
     enabled: !!selectedGroupForContracts,
   });
