@@ -257,14 +257,6 @@ export function StudentWithContractDialog({
   }, [selectedGroupId, setValue, groupsData]);
 
   // Use direct link for view/download, camelCase
-  const handleViewContract = () => {
-    if (!pdfUrl) {
-      toast.error(t("pdfNotFound") || "PDF topilmadi");
-      return;
-    }
-
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
-  };
 
   const handleDownloadContract = () => {
     if (!pdfUrl) {
