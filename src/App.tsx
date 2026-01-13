@@ -26,6 +26,7 @@ import WaitingList from "./pages/waiting-list/WaitingList";
 import Archive from "./pages/archive/Archive"; // Yangi qo'shilgan sahifa
 import PublicContractCheck from "./pages/public/PublicContractCheck"; // Yangi qo'shilgan
 import Attendance from "./pages/attendance/Attendance";
+import HeadCoach from "./pages/head-coach/HeadCoach"; 
 
 // Dev Tools
 import { DevTools } from "./components/DevTools";
@@ -67,7 +68,8 @@ const routesConfig = [
   { path: "/users", permission: "users:manage" },
   { path: "/roles", permission: "roles:view" },
   { path: "/settings", permission: "settings:system:view" },
-  { path: "/archive", permission: "settings:system:view" }, // Archive uchun permission
+  { path: "/archive", permission: "settings:system:view" },
+  { path: "/head-coach", permission: "head-coach:dashboard:view" },
 ];
 
 // Foydalanuvchi uchun birinchi ruxsat etilgan sahifani topish
@@ -225,6 +227,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="head-coach" element={<HeadCoach />} />
 
             <Route
               path="attendance"

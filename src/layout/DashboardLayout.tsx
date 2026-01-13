@@ -26,6 +26,7 @@ import {
   Clock,
   LogOut,
   Archive,
+  Trophy,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -101,6 +102,17 @@ const DashboardLayout = () => {
       label: t("coachPanel"),
       icon: Shield,
       permission: "attendance:coach:mark",
+    },
+    // --- MANA BU QISMNI QO'SHING: ---
+    {
+      path: "/head-coach",
+      label: "Bosh Murabbiy", // Yoki t("headCoach") agar tarjimada bo'lsa
+      icon: Trophy,
+      // permission: "head_coach:view", // Agar ruxsatlar bilan ishlasa
+      // Yoki agar ruxsat shart bo'lmasa, shunchaki qoldiring
+      // Lekin odatda permission kerak bo'ladi. Hozircha bo'sh qoldirsangiz ham bo'ladi
+      // yoki "dashboard:view" kabi umumiy ruxsat ishlating.
+      permission: "dashboard:view", // Vaqtincha hammaga ko'rinib turishi uchun
     },
     {
       path: "/attendance",
@@ -238,7 +250,9 @@ const DashboardLayout = () => {
               <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
                 Bunyodkor
               </h1>
-              <p className="text-xs text-slate-400 font-medium leading-tight">Academy</p>
+              <p className="text-xs text-slate-400 font-medium leading-tight">
+                Academy
+              </p>
             </div>
           </Link>
           <Button
@@ -270,7 +284,10 @@ const DashboardLayout = () => {
                   )}
                 >
                   <Icon
-                    className={cn("w-5 h-5 flex-shrink-0", isActive && "drop-shadow-sm")}
+                    className={cn(
+                      "w-5 h-5 flex-shrink-0",
+                      isActive && "drop-shadow-sm"
+                    )}
                   />
                   <span className="font-medium text-sm">{item.label}</span>
                   {isActive && (

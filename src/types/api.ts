@@ -490,6 +490,17 @@ export interface SessionUpdateRequest {
 }
 
 // ============================================================================
+// Head Coach Types
+// ============================================================================
+
+export interface HeadCoachStats {
+  active_groups_count: number;
+  active_students_count: number;
+  today_sessions_count: number;
+  this_month_attendance_percentage: number;
+}
+
+// ============================================================================
 // Gate Types
 // ============================================================================
 

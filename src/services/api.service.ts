@@ -1216,6 +1216,7 @@ export const coachService = {
    */
   getCoachSessions: async (params?: {
     date?: string;
+    group_id?: number;
   }): Promise<ApiResponse<SessionRead[]>> => {
     const response = await apiClient.get<ApiResponse<SessionRead[]>>(
       "/coach/sessions",
@@ -1233,20 +1234,6 @@ export const coachService = {
   ): Promise<ApiResponse<StudentWithDebtInfo[]>> => {
     const response = await apiClient.get<ApiResponse<StudentWithDebtInfo[]>>(
       `/coach/sessions/${sessionId}/students-with-debt-info`
-    );
-    return response.data;
-  },
-
-  /**
-   * Create a new session/lesson for a group
-   * POST /coach/sessions
-   */
-  createSession: async (
-    data: SessionCreateRequest
-  ): Promise<ApiResponse<SessionRead>> => {
-    const response = await apiClient.post<ApiResponse<SessionRead>>(
-      "/coach/sessions",
-      data
     );
     return response.data;
   },
@@ -1465,6 +1452,17 @@ export const headCoachService = {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
     >(`/head-coach/sessions/${sessionId}`);
+    return response.data;
+  },
+
+  /**
+   * Get head coach statistics
+   * GET /head-coach/stats
+   */
+  getHeadCoachStats: async (): Promise<ApiResponse<HeadCoachStats>> => {
+    const response = await apiClient.get<ApiResponse<HeadCoachStats>>(
+      "/head-coach/stats"
+    );
     return response.data;
   },
 };
