@@ -34,10 +34,12 @@ import {
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { useLanguageStore } from '@/store/languageStore'
+import { useAuthStore } from '@/store/authStore'
 import { SessionDialog } from './SessionDialog'
 
 export default function CoachPanel() {
   const { t } = useLanguageStore()
+  const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const [selectedGroup, setSelectedGroup] = useState<number | null>(null)
   const [selectedSession, setSelectedSession] = useState<number | null>(null)
@@ -315,9 +317,11 @@ export default function CoachPanel() {
               <Calendar className="w-8 h-6" />
               {t('sessionsForDate')} {format(new Date(selectedDate), 'MMMM d, yyyy')}
             </CardTitle>
-            <Button size="sm" onClick={() => setIsSessionDialogOpen(true)}>
-              {t('createSession')}
-            </Button>
+            {user?.role === 'head-coach' && (
+              <Button size="sm" onClick={() => setIsSessionDialogOpen(true)}>
+                {t('createSession')}
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             {sessionsLoading ? (

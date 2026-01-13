@@ -79,6 +79,7 @@ import type {
   WaitingListUpdate,
   // Common
   ApiResponse,
+  SessionUpdateRequest,
 } from "@/types/api";
 
 // ============================================================================
@@ -252,11 +253,7 @@ export const roleService = {
    * GET /roles
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getRoles: async (params: {
-    page: number;
-    page_size: number;
-    search: string | undefined;
-  }): Promise<ApiResponse<RoleWithPermissions[]>> => {
+  getRoles: async (): Promise<ApiResponse<RoleWithPermissions[]>> => {
     const response = await apiClient.get<ApiResponse<RoleWithPermissions[]>>(
       "/roles"
     );
@@ -592,10 +589,13 @@ export const studentService = {
     group_id?: number;
     status?: string;
   }): Promise<Blob> => {
-    const response = await apiClient.get<Blob>("/students/comprehensive-export", {
-      params,
-      responseType: "blob",
-    });
+    const response = await apiClient.get<Blob>(
+      "/students/comprehensive-export",
+      {
+        params,
+        responseType: "blob",
+      }
+    );
     return response.data;
   },
 };
@@ -1018,9 +1018,7 @@ export const contractService = {
    * GET /contracts/next-available/{group_id}/{birth_year}
    */
   getNextAvailableNumber: async (
-    groupId: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    birthYear: number
+    groupId: number
   ): Promise<
     ApiResponse<{
       next_available: number;
@@ -1439,9 +1437,7 @@ export const headCoachService = {
   getSessionDetails: async (
     sessionId: number
   ): Promise<ApiResponse<SessionRead & { attendances: AttendanceRead[] }>> => {
-    const response = await apiClient.get(
-      `/head-coach/sessions/${sessionId}`
-    );
+    const response = await apiClient.get(`/head-coach/sessions/${sessionId}`);
     return response.data;
   },
 
@@ -1467,9 +1463,9 @@ export const headCoachService = {
   deleteSession: async (
     sessionId: number
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(
-      `/head-coach/sessions/${sessionId}`
-    );
+    const response = await apiClient.delete<
+      ApiResponse<Record<string, unknown>>
+    >(`/head-coach/sessions/${sessionId}`);
     return response.data;
   },
 };

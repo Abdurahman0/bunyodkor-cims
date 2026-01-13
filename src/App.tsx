@@ -20,7 +20,7 @@ import Reports from "./pages/reports/Reports";
 import Contracts from "./pages/contracts/Contracts";
 import Settings from "./pages/settings/Settings";
 import GateLogs from "./pages/gate/GateLogs";
-import CoachPanel from "./pages/coach/CoachPanel";
+import CoachOrHeadCoachPanel from "./pages/coach/CoachOrHeadCoachPanel";
 import StudentDetailPage from "./pages/students/StudentDetailPage";
 import WaitingList from "./pages/waiting-list/WaitingList";
 import Archive from "./pages/archive/Archive"; // Yangi qo'shilgan sahifa
@@ -221,7 +221,7 @@ function App() {
               path="coach"
               element={
                 <ProtectedRoute permission="attendance:coach:mark">
-                  <CoachPanel />
+                  <CoachOrHeadCoachPanel />
                 </ProtectedRoute>
               }
             />
