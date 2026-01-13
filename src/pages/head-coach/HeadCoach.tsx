@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  coachService,
   publicService,
   contractService,
   groupService,
@@ -49,8 +48,6 @@ import {
   Trophy,
   TrendingUp,
   Eye,
-  Edit,
-  Trash2,
   UserCog,
 } from "lucide-react";
 
@@ -176,6 +173,13 @@ export default function HeadCoach() {
     [stats, totalCapacity]
   );
 
+  const filteredGroups = useMemo(() => {
+    if (filterGroupId === "all") {
+      return groups;
+    }
+    return groups.filter((g) => g.id.toString() === filterGroupId);
+  }, [groups, filterGroupId]);
+
   const upcomingSessions = useMemo(
     () => sessions.filter((s) => new Date(s.session_date) > new Date()).length,
     [sessions]
@@ -197,8 +201,7 @@ export default function HeadCoach() {
     setSessionDialogOpen(true);
   };
 
-  const handleCheckContract = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCheckContract = () => {
     if (!contractNumber.trim()) return;
     searchContractMutation.mutate(contractNumber);
   };
@@ -396,7 +399,7 @@ export default function HeadCoach() {
             </Card>
           </motion.div>
 
-          {/* Quick Actions & Recent Activity */}
+          {/* Quick Actions & System Info */}
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Quick Actions */}
             <Card className="shadow-lg border-slate-200 dark:border-slate-700">
@@ -500,12 +503,28 @@ export default function HeadCoach() {
 
         {/* GROUPS TAB */}
         <TabsContent value="groups" className="space-y-4">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+            <h2 className="text-xl font-semibold">Guruhlar</h2>
+            <Select value={filterGroupId} onValueChange={setFilterGroupId}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Guruhni tanlang" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Barcha Guruhlar</SelectItem>
+                {groups.map((g) => (
+                  <SelectItem key={g.id} value={g.id.toString()}>
+                    {g.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
-            {groups.map((group) => (
+            {filteredGroups.map((group) => (
               <Card
                 key={group.id}
                 className="group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-700 overflow-hidden"
@@ -573,18 +592,23 @@ export default function HeadCoach() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleCheckContract} className="space-y-4">
+                <div className="space-y-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <Input
                       placeholder="Shartnoma raqami (21-2015C2)"
                       value={contractNumber}
                       onChange={(e) => setContractNumber(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleCheckContract();
+                        }
+                      }}
                       className="pl-10"
                     />
                   </div>
                   <Button
-                    type="submit"
+                    onClick={handleCheckContract}
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     disabled={
                       searchContractMutation.isPending || !contractNumber
@@ -596,7 +620,7 @@ export default function HeadCoach() {
                     <Search className="w-4 h-4 mr-2" />
                     Qidirish
                   </Button>
-                </form>
+                </div>
                 {contractError && (
                   <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
                     <AlertCircle className="w-4 h-4" />
@@ -650,7 +674,7 @@ export default function HeadCoach() {
                     <p className="font-medium">
                       {format(
                         new Date(contractResult.start_date),
-                        "dd MMMM yyyy"
+                        "dd.MM.yyyy"
                       )}
                     </p>
                   </div>
