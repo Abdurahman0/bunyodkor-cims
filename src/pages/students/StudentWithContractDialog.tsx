@@ -143,7 +143,6 @@ export function StudentWithContractDialog({
     watch,
     getValues,
     setValue,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     formState: { errors },
   } = useForm<StudentFormData>({
     defaultValues: {
