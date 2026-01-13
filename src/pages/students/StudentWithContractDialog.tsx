@@ -141,8 +141,8 @@ export function StudentWithContractDialog({
     handleSubmit,
     reset,
     watch,
-    getValues,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<StudentFormData>({
     defaultValues: {
