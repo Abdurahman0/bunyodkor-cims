@@ -248,6 +248,9 @@ export interface ParentUpdateRequest {
 // ============================================================================
 
 export interface GroupRead {
+  coach_last_name: ReactNode;
+  coach_first_name: ReactNode;
+  coach_last_name: ReactNode;
   id: number;
   name: string;
   identifier: string;

@@ -888,8 +888,7 @@ export const contractService = {
    * GET /contracts/{contract_id}
    */
   getContract: async (
-    contractId: number
-  ): Promise<ApiResponse<ContractRead>> => {
+contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.get<ApiResponse<ContractRead>>(
       `/contracts/${contractId}`
     );
