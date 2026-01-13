@@ -13,6 +13,7 @@ export interface ApiMeta {
 }
 
 export interface ApiResponse<T> {
+  pdf_url: ApiResponse<ContractRead>;
   data: T;
   meta: ApiMeta | null;
 }

@@ -195,9 +195,9 @@ export default function StudentDetailPage() {
       const toastId = toast.loading("Shartnoma fayli yuklanmoqda...");
 
       // API ga so'rov
-      const response = await contractService.getContract(
-        year,
-        contract.contract_number
+      const response = await contractService.getContractPdfUrl(
+ year,
+ contract.contract_number
       );
       toast.dismiss(toastId);
       if (response && response.pdf_url) {
