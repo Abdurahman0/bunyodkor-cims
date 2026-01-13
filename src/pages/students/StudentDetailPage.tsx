@@ -177,30 +177,27 @@ export default function StudentDetailPage() {
     }
   };
 
-  const handleViewContract = async () => {
+  const handleViewContract = async (contract: ContractRead) => {
     try {
-      // Formadagi ma'lumotlarni olamiz
-      const values = getValues();
-
       // Shartnoma raqami borligini tekshiramiz
-      if (!values.contract_number) {
+      if (!contract.contract_number) {
         toast.error("Shartnoma raqami hali shakllanmagan");
         return;
       }
 
       // Yilni aniqlash (start_date dan)
-      const startDate = values.contract_start_date
-        ? new Date(values.contract_start_date)
+      const startDate = contract.start_date
+        ? new Date(contract.start_date)
         : new Date();
       const year = startDate.getFullYear();
 
       // Loading holatini bildirish
       const toastId = toast.loading("Shartnoma fayli yuklanmoqda...");
 
-      // API ga so'rov (api.service.ts da getContractPdf bo'lishi shart)
-      const response = await contractService.getContractPdf(
+      // API ga so'rov
+      const response = await contractService.getContract(
         year,
-        values.contract_number
+        contract.contract_number
       );
       toast.dismiss(toastId);
       if (response && response.pdf_url) {
