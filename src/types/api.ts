@@ -455,6 +455,9 @@ export interface SessionRead {
   topic: string;
   start_time: string;
   end_time: string;
+  station: string;
+  description?: string;
+  konspekt_url?: string;
   group_id: number;
   created_by_user_id: number;
   created_at: string;
@@ -469,7 +472,17 @@ export interface SessionCreateRequest {
   topic: string;
   start_time: string;
   end_time: string;
+  station: string;
   group_id: number;
+}
+
+export interface SessionUpdateRequest {
+  session_date?: string;
+  topic?: string;
+  start_time?: string;
+  end_time?: string;
+  station?: string;
+  group_id?: number;
 }
 
 // ============================================================================

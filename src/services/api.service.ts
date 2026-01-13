@@ -1444,6 +1444,34 @@ export const headCoachService = {
     );
     return response.data;
   },
+
+  /**
+   * Update training session
+   * PUT /head-coach/sessions/{session_id}
+   */
+  updateSession: async (
+    sessionId: number,
+    data: SessionUpdateRequest
+  ): Promise<ApiResponse<SessionRead>> => {
+    const response = await apiClient.put<ApiResponse<SessionRead>>(
+      `/head-coach/sessions/${sessionId}`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Delete training session
+   * DELETE /head-coach/sessions/{session_id}
+   */
+  deleteSession: async (
+    sessionId: number
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.delete<ApiResponse<Record<string, unknown>>>(
+      `/head-coach/sessions/${sessionId}`
+    );
+    return response.data;
+  },
 };
 
 // ============================================================================

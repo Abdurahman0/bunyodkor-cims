@@ -51,10 +51,14 @@ import {
   FileText,
   History,
   TrendingUp,
+  CalendarDays,
+  List as ListIcon,
 } from "lucide-react";
-import { format, addDays, subDays } from "date-fns";
+import { format, addDays, subDays, startOfWeek, endOfWeek } from "date-fns";
 import { toast } from "sonner";
 import { useLanguageStore } from "@/store/languageStore";
+import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
+import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog";
 
 export default function Coach() {
   const { t } = useLanguageStore();
@@ -68,6 +72,9 @@ export default function Coach() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentTab, setCurrentTab] = useState("attendance");
+  const [viewMode, setViewMode] = useState<"timetable" | "list">("timetable");
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedSessionForDetails, setSelectedSessionForDetails] = useState<SessionRead | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -76,9 +83,29 @@ export default function Coach() {
     queryFn: () => coachService.getCoachGroups(),
   });
 
+  // For timetable view, fetch sessions for the entire week
+  const weekStart = startOfWeek(new Date(selectedDate), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(new Date(selectedDate), { weekStartsOn: 1 });
+
   const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
     queryKey: ["coach-sessions", selectedDate],
     queryFn: () => coachService.getCoachSessions({ date: selectedDate }),
+  });
+
+  // Fetch all sessions for the current week for timetable view
+  const { data: weekSessionsData } = useQuery({
+    queryKey: ["coach-week-sessions", format(weekStart, "yyyy-MM-dd"), format(weekEnd, "yyyy-MM-dd")],
+    queryFn: async () => {
+      // Fetch sessions for each day of the week
+      const days = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), "yyyy-MM-dd"));
+      const allSessions = await Promise.all(
+        days.map((date) => coachService.getCoachSessions({ date }))
+      );
+      return {
+        data: allSessions.flatMap((response) => response.data || []),
+      };
+    },
+    enabled: viewMode === "timetable",
   });
 
   // Fetch my attendances for history view
@@ -260,6 +287,11 @@ export default function Coach() {
     }
   };
 
+  const handleSessionClickInTimetable = (session: SessionRead) => {
+    setSelectedSessionForDetails(session);
+    setDetailsDialogOpen(true);
+  };
+
   // Calculate stats
   const totalSessions = sessionsData?.data?.length || 0;
   const totalGroups = groupsData?.data?.length || 0;
@@ -382,7 +414,11 @@ export default function Coach() {
         transition={{ delay: 0.3 }}
       >
         <Tabs value={currentTab} onValueChange={setCurrentTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="timetable" className="gap-2">
+              <CalendarDays className="w-4 h-4" />
+              {t("timetable") || "Timetable"}
+            </TabsTrigger>
             <TabsTrigger value="attendance" className="gap-2">
               <Users className="w-4 h-4" />
               {t("markAttendance") || "Mark Attendance"}
@@ -392,6 +428,28 @@ export default function Coach() {
               {t("attendanceHistory") || "Attendance History"}
             </TabsTrigger>
           </TabsList>
+
+          {/* Timetable Tab */}
+          <TabsContent value="timetable" className="mt-0">
+            <div className="space-y-4">
+              {weekSessionsData ? (
+                <WeeklyTimeTable
+                  sessions={weekSessionsData.data || []}
+                  groups={groupsData?.data || []}
+                  onSessionClick={handleSessionClickInTimetable}
+                  showCreateButton={false}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
 
           {/* Attendance Tab */}
           <TabsContent value="attendance" className="mt-0">
@@ -713,6 +771,14 @@ export default function Coach() {
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {/* Session Details Dialog */}
+      <SessionDetailsDialog
+        session={selectedSessionForDetails}
+        group={groupsData?.data?.find((g) => g.id === selectedSessionForDetails?.group_id)}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+      />
 
       {/* Upload Konspekt Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
