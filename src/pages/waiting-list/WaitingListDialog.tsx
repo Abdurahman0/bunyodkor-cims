@@ -403,6 +403,7 @@ export function WaitingListDialog({
                 {...register("group_id", {
                   required: t("groupRequired") || "Group is required",
                 })}
+                className="[&_option]:bg-white dark:[&_option]:bg-slate-900"
               >
                 <option value="">{t("selectGroup") || "Select group"}</option>
                 {groupsData?.data?.map((group: GroupRead) => (

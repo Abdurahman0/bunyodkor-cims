@@ -1,1010 +1,796 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-nocheck
-import { useState, useMemo, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  publicService,
+  contractService,
+  headCoachService,
+} from "@/services/api.service";
 import { motion } from "framer-motion";
+
+// UI Components
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  coachService,
-  groupService,
-  studentService,
-} from "@/services/api.service";
-import type {
-  GroupRead,
-  SessionRead,
-  AttendanceCreateRequest,
-} from "@/types/api";
-import {
-  Calendar,
-  Users,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Upload,
-  History,
-  GraduationCap,
-  List,
-  BarChart2,
-} from "lucide-react";
-import { format, addDays, subDays } from "date-fns";
-import { toast } from "react-hot-toast";
-import { useLanguageStore } from "@/store/languageStore";
+// FAQAT Select ni import qilamiz (siz bergan faylga asosan)
+import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { DonutChart, StatsCard } from "@/components/ui/charts";
-import { cn } from "@/lib/utils"; // cn utility kerak bo'ladi
 
-export default function CoachPanel() {
-  const { t } = useLanguageStore();
+// Icons
+import {
+  CalendarDays,
+  Users,
+  Plus,
+  BarChart2,
+  FileText,
+  Loader2,
+  Search,
+  CheckCircle,
+  AlertCircle,
+  Download,
+  Activity,
+  UserCheck,
+  Clock,
+  Trophy,
+  TrendingUp,
+  Eye,
+  UserCog,
+  Trash2,
+} from "lucide-react";
+
+import { format } from "date-fns";
+import { toast } from "react-hot-toast";
+import type {
+  SessionCreateRequest,
+  SessionRead,
+  ContractInfoPublic,
+} from "@/types/api";
+
+// Reusable Components
+import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
+import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog";
+import { SessionDialog } from "@/pages/coach/SessionDialog";
+
+export default function HeadCoach() {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(
-    format(new Date(), "yyyy-MM-dd")
-  );
+
+  // --- States ---
+  const [activeTab, setActiveTab] = useState("overview");
+  const [filterGroupId, setFilterGroupId] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<SessionRead | null>(
     null
   );
-  const [selectedGroupForStats, setSelectedGroupForStats] =
-    useState<string>("");
-  const [selectedStudentForStats, setSelectedStudentForStats] =
-    useState<string>("");
-  const [selectedGroup, setSelectedGroup] = useState<GroupRead | null>(null);
-  const [attendanceStatus, setAttendanceStatus] = useState<
-    Record<number, "present" | "absent" | "late">
-  >({});
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  // Select uchun stil klasslari (Shadcn dizayniga o'xshash)
-  const selectClass =
-    "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-
-  useEffect(() => {
-    setSelectedSession(null);
-    setAttendanceStatus({});
-  }, [selectedDate]);
-
-  const { data: groupsData, isLoading: groupsLoading } = useQuery({
-    queryKey: ["coach-groups"],
-    queryFn: () => coachService.getCoachGroups(),
-    select: (res) => res.data,
-  });
-
-  const { data: allStudents, isLoading: allStudentsLoading } = useQuery({
-    queryKey: ["all-students"],
-    queryFn: () => studentService.getStudents({ page_size: 10000 }),
-    select: (res) => res.data,
-  });
-
-  const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
-    queryKey: ["coach-sessions", selectedDate],
-    queryFn: () => coachService.getCoachSessions({ date: selectedDate }),
-    select: (res) => res.data,
-  });
-
-  const { data: allSessions, isLoading: allSessionsLoading } = useQuery({
-    queryKey: ["all-sessions"],
-    queryFn: () => coachService.getCoachSessions({}),
-    select: (res) => res.data,
-  });
-
-  const { data: studentsData, isLoading: studentsLoading } = useQuery({
-    queryKey: ["session-students", selectedSession?.id],
-    queryFn: () => {
-      if (!selectedSession) return null;
-      return coachService
-        .getSessionStudentsWithDebt(selectedSession.id)
-        .then((res) => res.data);
-    },
-    enabled: !!selectedSession,
-  });
-
-  const { data: groupStudentsData, isLoading: groupStudentsLoading } = useQuery(
-    {
-      queryKey: ["group-students", selectedGroup?.id],
-      queryFn: () => {
-        if (!selectedGroup) return Promise.resolve({ data: [] });
-        return groupService.getGroupStudents(selectedGroup.id);
-      },
-      select: (res) => res.data,
-      enabled: !!selectedGroup,
-    }
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
+  const [sessionDialogInitialData, setSessionDialogInitialData] = useState<
+    Partial<SessionCreateRequest> | undefined
+  >(undefined);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<SessionRead | null>(
+    null
   );
 
-  const { data: myAttendancesData, isLoading: myAttendancesLoading } = useQuery(
-    {
-      queryKey: ["my-attendances"],
-      queryFn: () => coachService.getMyAttendances({}),
-      select: (res) => res.data,
-    }
+  // Contract Search States
+  const [contractNumber, setContractNumber] = useState("");
+  const [contractResult, setContractResult] =
+    useState<ContractInfoPublic | null>(null);
+  const [contractError, setContractError] = useState<string | null>(null);
+
+  // --- API Queries ---
+  const { data: groups = [], isLoading: isGroupsLoading } = useQuery({
+    queryKey: ["headCoachGroups"],
+    queryFn: () => headCoachService.getAllGroups(),
+    select: (data) => data.data,
+  });
+
+  const { data: sessions = [], isLoading: isSessionsLoading } = useQuery({
+    queryKey: ["sessions", filterGroupId],
+    queryFn: () =>
+      headCoachService.getAllSessions(
+        filterGroupId === "all"
+          ? undefined
+          : { group_id: Number(filterGroupId) }
+      ),
+    select: (data) => data.data,
+  });
+
+  const { data: stats, isLoading: isStatsLoading } = useQuery({
+    queryKey: ["headCoachStats"],
+    queryFn: async () => {
+      const response = await headCoachService.getHeadCoachStats();
+      return response.data;
+    },
+  });
+
+  // --- Mutations ---
+  const searchContractMutation = useMutation({
+    mutationFn: (number: string) => publicService.getContractInfo(number),
+    onSuccess: (data) => {
+      setContractResult(data);
+      setContractError(null);
+      toast.success("Shartnoma ma'lumotlari topildi");
+    },
+    onError: (err: any) => {
+      setContractResult(null);
+      setContractError(err.response?.data?.detail || "Shartnoma topilmadi");
+      toast.error("Shartnoma topilmadi");
+    },
+  });
+
+  const downloadPdfMutation = useMutation({
+    mutationFn: (data: { year: number; number: string }) =>
+      contractService.getContractPdf(data.year, data.number),
+    onSuccess: (data) => {
+      if (data?.pdf_url) {
+        window.open(data.pdf_url, "_blank");
+        toast.success("PDF ochilmoqda...");
+      } else {
+        toast.error("PDF havolasi topilmadi");
+      }
+    },
+    onError: () => toast.error("Faylni yuklashda xatolik"),
+  });
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: (sessionId: number) =>
+      headCoachService.deleteSession(sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["headCoachStats"] });
+      toast.success("Mashg'ulot muvaffaqiyatli o'chirildi");
+      setDetailsDialogOpen(false);
+    },
+    onError: (err: any) => {
+      toast.error(
+        err.response?.data?.detail || "Mashg'ulotni o'chirishda xatolik"
+      );
+    },
+  });
+
+  // --- Memoized Values ---
+  const selectedGroupForDialog = useMemo(() => {
+    return groups.find((g) => g.id === selectedSession?.group_id);
+  }, [selectedSession, groups]);
+
+  const groupColorMap = useMemo(() => {
+    const colorClasses = [
+      "bg-blue-500",
+      "bg-emerald-500",
+      "bg-purple-500",
+      "bg-orange-500",
+      "bg-pink-500",
+      "bg-cyan-500",
+      "bg-rose-500",
+      "bg-indigo-500",
+    ];
+    const map = new Map<number, string>();
+    groups.forEach((group, index) => {
+      map.set(group.id, colorClasses[index % colorClasses.length]);
+    });
+    return map;
+  }, [groups]);
+
+  const totalCapacity = useMemo(
+    () => groups.reduce((sum, g) => sum + g.capacity, 0),
+    [groups]
   );
 
-  const { data: groupStats, isLoading: groupStatsLoading } = useQuery({
-    queryKey: ["group-stats", selectedGroupForStats],
-    queryFn: () => {
-      if (!selectedGroupForStats) return null;
-      return coachService.getGroupAttendanceStats(
-        Number(selectedGroupForStats)
-      );
-    },
-    enabled: !!selectedGroupForStats,
-    select: (res) => res?.data,
-  });
+  const occupancyRate = useMemo(
+    () =>
+      totalCapacity > 0
+        ? (((stats?.active_students_count || 0) / totalCapacity) * 100).toFixed(
+            1
+          )
+        : "0",
+    [stats, totalCapacity]
+  );
 
-  const { data: studentStats, isLoading: studentStatsLoading } = useQuery({
-    queryKey: ["student-stats", selectedStudentForStats],
-    queryFn: () => {
-      if (!selectedStudentForStats) return null;
-      return coachService.getStudentAttendanceStats(
-        Number(selectedStudentForStats)
-      );
-    },
-    enabled: !!selectedStudentForStats,
-    select: (res) => res?.data,
-  });
-
-  const bulkAttendanceMutation = useMutation({
-    mutationFn: (data: {
-      session_id: number;
-      attendances: AttendanceCreateRequest[];
-    }) => coachService.bulkAttendance(data),
-    onSuccess: () => {
-      toast.success(
-        t("attendanceSubmittedSuccessfully") ||
-          "Attendance submitted successfully"
-      );
-      setAttendanceStatus({});
-      queryClient.invalidateQueries({
-        queryKey: ["session-students", selectedSession?.id],
-      });
-      queryClient.invalidateQueries({ queryKey: ["my-attendances"] });
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.detail ||
-          t("failedToSubmitAttendance") ||
-          "Failed to submit attendance"
-      );
-    },
-  });
-
-  const uploadKonspektMutation = useMutation({
-    mutationFn: ({ sessionId, file }: { sessionId: number; file: File }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      return coachService.uploadKonspekt(sessionId, formData);
-    },
-    onSuccess: () => {
-      toast.success(t("konspektUploaded") || "Konspekt uploaded successfully!");
-      setUploadDialogOpen(false);
-      setSelectedFile(null);
-      queryClient.invalidateQueries({
-        queryKey: ["coach-sessions", selectedDate],
-      });
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.detail ||
-          t("errorUploadingKonspekt") ||
-          "Error uploading konspekt"
-      );
-    },
-  });
-
-  const handleDateChange = (days: number) => {
-    const newDate =
-      days > 0
-        ? addDays(new Date(selectedDate), days)
-        : subDays(new Date(selectedDate), Math.abs(days));
-    setSelectedDate(format(newDate, "yyyy-MM-dd"));
-  };
-
-  const handleMarkAttendance = (
-    studentId: number,
-    status: "present" | "absent" | "late"
-  ) => {
-    setAttendanceStatus((prev) => ({ ...prev, [studentId]: status }));
-  };
-
-  const handleSubmitAttendance = () => {
-    if (!selectedSession || Object.keys(attendanceStatus).length === 0) {
-      toast.error(
-        t("noAttendanceChangesToSubmit") || "No attendance changes to submit"
-      );
-      return;
+  const filteredGroups = useMemo(() => {
+    if (filterGroupId === "all") {
+      return groups;
     }
-    const attendances: AttendanceCreateRequest[] = Object.entries(
-      attendanceStatus
-    ).map(([student_id, status]) => ({
-      student_id: parseInt(student_id, 10),
-      status,
-      comment: "",
-    }));
-    bulkAttendanceMutation.mutate({
-      session_id: selectedSession.id,
-      attendances,
+    return groups.filter((g) => g.id.toString() === filterGroupId);
+  }, [groups, filterGroupId]);
+
+  const upcomingSessions = useMemo(
+    () => sessions.filter((s) => new Date(s.session_date) > new Date()).length,
+    [sessions]
+  );
+
+  // --- Handlers ---
+  const handleSessionClick = (session: SessionRead) => {
+    setSelectedSession(session);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleTimeSlotClick = (date: string, time: string) => {
+    setSessionDialogInitialData({ session_date: date, start_time: time });
+    setSessionDialogOpen(true);
+  };
+
+  const handleCreateNewSession = () => {
+    setSessionDialogInitialData(undefined);
+    setSessionDialogOpen(true);
+  };
+
+  const handleCheckContract = () => {
+    if (!contractNumber.trim()) return;
+    searchContractMutation.mutate(contractNumber);
+  };
+
+  const handleDownloadPdf = () => {
+    if (!contractResult) return;
+    const year = new Date(contractResult.start_date).getFullYear();
+    downloadPdfMutation.mutate({
+      year,
+      number: contractResult.contract_number,
     });
   };
 
-  const handleUploadKonspekt = () => {
-    if (!selectedSession || !selectedFile) {
-      toast.error(t("pleaseSelectFile") || "Please select a file");
-      return;
+  const handleDeleteRequest = (session: SessionRead) => {
+    setSessionToDelete(session);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (sessionToDelete) {
+      deleteSessionMutation.mutate(sessionToDelete.id);
+      setDeleteConfirmOpen(false);
+      setSessionToDelete(null);
     }
-    uploadKonspektMutation.mutate({
-      sessionId: selectedSession.id,
-      file: selectedFile,
-    });
   };
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
 
-  const getStatusBadge = (status: "present" | "absent" | "late") => {
-    switch (status) {
-      case "present":
-        return (
-          <Badge variant="default" className="bg-green-500">
-            {t("present")}
-          </Badge>
-        );
-      case "absent":
-        return <Badge variant="destructive">{t("absent")}</Badge>;
-      case "late":
-        return <Badge variant="secondary">{t("late")}</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const studentMap = useMemo(() => {
-    if (!allStudents) return new Map();
-    return new Map(allStudents.map((s) => [s.id, s]));
-  }, [allStudents]);
-
-  const sessionMap = useMemo(() => {
-    if (!allSessions) return new Map();
-    return new Map(allSessions.map((s) => [s.id, s]));
-  }, [allSessions]);
-
-  const groupMap = useMemo(() => {
-    if (!groupsData) return new Map();
-    return new Map(groupsData.map((g) => [g.id, g]));
-  }, [groupsData]);
-
-  const groupStatsChartData = useMemo(() => {
-    if (!groupStats) return [];
-    return [
-      {
-        label: t("present"),
-        value: groupStats.present_count,
-        color: "hsl(142, 71%, 45%)",
-      },
-      {
-        label: t("absent"),
-        value: groupStats.absent_count,
-        color: "hsl(0, 84%, 60%)",
-      },
-      {
-        label: t("late"),
-        value: groupStats.late_count,
-        color: "hsl(48, 96%, 53%)",
-      },
-    ];
-  }, [groupStats, t]);
-
-  const studentStatsChartData = useMemo(() => {
-    if (!studentStats) return [];
-    return [
-      {
-        label: t("present"),
-        value: studentStats.present_count,
-        color: "hsl(142, 71%, 45%)",
-      },
-      {
-        label: t("absent"),
-        value: studentStats.absent_count,
-        color: "hsl(0, 84%, 60%)",
-      },
-      {
-        label: t("late"),
-        value: studentStats.late_count,
-        color: "hsl(48, 96%, 53%)",
-      },
-    ];
-  }, [studentStats, t]);
-
+  // --- Render ---
   return (
-    // ASOSIY WRAPPER: Paddinglar olib tashlandi, w-full qo'shildi
-    <div className="w-full space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* HEADER */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden"
       >
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-          {t("coachPanel") || "Coach Panel"}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {t("manageSessionsAndAttendance") ||
-            "Manage your sessions and student attendance."}
-        </p>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-10 rounded-2xl" />
+        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Bosh Murabbiy Paneli
+                </h1>
+                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+                  To'liq nazorat va boshqaruv tizimi
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              onClick={handleCreateNewSession}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Yangi Mashg'ulot
+            </Button>
+          </div>
+        </div>
       </motion.div>
 
-      <Tabs defaultValue="attendance" className="space-y-6 w-full">
-        <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:grid-cols-4 h-auto">
-          <TabsTrigger value="attendance" className="py-2">
-            <Calendar className="w-4 h-4 mr-2" />
-            {t("attendance") || "Attendance"}
+      {/* MAIN TABS */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
+        <TabsList className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+          <TabsTrigger
+            value="overview"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+          >
+            <BarChart2 className="w-4 h-4 mr-2" /> Umumiy Ko'rinish
           </TabsTrigger>
-          <TabsTrigger value="groups" className="py-2">
-            <GraduationCap className="w-4 h-4 mr-2" />
-            {t("myGroups") || "My Groups"}
+          <TabsTrigger
+            value="timetable"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+          >
+            <CalendarDays className="w-4 h-4 mr-2" /> Jadval
           </TabsTrigger>
-          <TabsTrigger value="history" className="py-2">
-            <History className="w-4 h-4 mr-2" />
-            {t("history") || "History"}
+          <TabsTrigger
+            value="groups"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+          >
+            <Users className="w-4 h-4 mr-2" /> Guruhlar
           </TabsTrigger>
-          <TabsTrigger value="stats" className="py-2">
-            <BarChart2 className="w-4 h-4 mr-2" />
-            {t("statistics") || "Statistics"}
+          <TabsTrigger
+            value="contract"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
+          >
+            <FileText className="w-4 h-4 mr-2" /> Shartnomalar
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="attendance" className="space-y-6">
-          <Card className="w-full">
-            <CardContent className="p-4 flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleDateChange(-1)}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-muted-foreground" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-2 rounded-lg border bg-background text-foreground"
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleDateChange(1)}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </CardContent>
-          </Card>
+        {/* OVERVIEW TAB */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Stats Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+          >
+            <Card className="border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Faol Guruhlar
+                  </CardTitle>
+                  <Users className="h-5 w-5 text-blue-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {isStatsLoading ? (
+                    <Loader2 className="animate-spin w-8 h-8" />
+                  ) : (
+                    stats?.active_groups_count ?? 0
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> Barcha mavjud guruhlar
+                </p>
+              </CardContent>
+            </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
-            <Card className="lg:col-span-1 h-full w-full">
+            <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Faol Studentlar
+                  </CardTitle>
+                  <UserCheck className="h-5 w-5 text-emerald-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-emerald-600">
+                  {isStatsLoading ? (
+                    <Loader2 className="animate-spin w-8 h-8" />
+                  ) : (
+                    stats?.active_students_count ?? 0
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  To'ldirish:{" "}
+                  <span className="font-semibold text-emerald-600">
+                    {occupancyRate}%
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Bugungi Mashg'ulotlar
+                  </CardTitle>
+                  <CalendarDays className="h-5 w-5 text-purple-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-purple-600">
+                  {isStatsLoading ? (
+                    <Loader2 className="animate-spin w-8 h-8" />
+                  ) : (
+                    stats?.today_sessions_count ?? 0
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Kelayotgan:{" "}
+                  <span className="font-semibold">{upcomingSessions}</span>
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-orange-500 bg-gradient-to-br from-orange-50 to-white dark:from-orange-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    O'rtacha Davomat
+                  </CardTitle>
+                  <Activity className="h-5 w-5 text-orange-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-600">
+                  {isStatsLoading ? (
+                    <Loader2 className="animate-spin w-8 h-8" />
+                  ) : (
+                    `${stats?.this_month_attendance_percentage ?? 0}%`
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Shu oylik ko'rsatkich
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Quick Actions & System Info */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Card className="shadow-lg border-slate-200 dark:border-slate-700">
               <CardHeader>
-                <CardTitle>
-                  {format(new Date(selectedDate), "MMMM d, yyyy")}
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-500" /> Tezkor Amallar
                 </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  onClick={handleCreateNewSession}
+                  variant="outline"
+                  className="w-full justify-start hover:bg-blue-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Yangi Mashg'ulot Qo'shish
+                </Button>
+                <Button
+                  onClick={() => setActiveTab("groups")}
+                  variant="outline"
+                  className="w-full justify-start hover:bg-emerald-50"
+                >
+                  <Users className="w-4 h-4 mr-2" /> Guruhlarni Ko'rish
+                </Button>
+                <Button
+                  onClick={() => setActiveTab("contract")}
+                  variant="outline"
+                  className="w-full justify-start hover:bg-purple-50"
+                >
+                  <FileText className="w-4 h-4 mr-2" /> Shartnomani Tekshirish
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-slate-200 dark:border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart2 className="w-5 h-5 text-indigo-500" /> Tizim Holati
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Jami Sig'im</span>
+                  <span className="font-semibold">{totalCapacity} o'rin</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">To'ldirilgan</span>
+                  <Badge variant="outline" className="bg-emerald-50">
+                    {stats?.active_students_count ?? 0} / {totalCapacity}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Bo'sh O'rinlar</span>
+                  <span className="font-semibold text-orange-600">
+                    {totalCapacity - (stats?.active_students_count ?? 0)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* TIMETABLE TAB */}
+        <TabsContent value="timetable" className="space-y-4">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+            <h2 className="text-xl font-semibold">Mashg'ulotlar Jadvali</h2>
+
+            {/* SIZNING MAXSUS SELECT KOMPONENTINGIZ ISHLATILMOQDA */}
+            <Select
+              value={filterGroupId}
+              onChange={(e) => setFilterGroupId(e.target.value)}
+              className="w-[200px]"
+            >
+              <option value="all">Barcha Guruhlar</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id.toString()}>
+                  {g.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {isSessionsLoading || isGroupsLoading ? (
+            <div className="flex justify-center items-center h-96 bg-white/80 rounded-xl">
+              <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+            </div>
+          ) : (
+            <WeeklyTimeTable
+              sessions={sessions}
+              groups={groups}
+              onSessionClick={handleSessionClick}
+              onTimeSlotClick={handleTimeSlotClick}
+              showCreateButton
+            />
+          )}
+        </TabsContent>
+
+        {/* GROUPS TAB */}
+        <TabsContent value="groups" className="space-y-4">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+            <h2 className="text-xl font-semibold">Guruhlar</h2>
+
+            {/* SIZNING MAXSUS SELECT KOMPONENTINGIZ ISHLATILMOQDA */}
+            <Select
+              value={filterGroupId}
+              onChange={(e) => setFilterGroupId(e.target.value)}
+              className="w-[200px]"
+            >
+              <option value="all">Barcha Guruhlar</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id.toString()}>
+                  {g.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            {filteredGroups.map((group) => (
+              <Card
+                key={group.id}
+                className="group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-700 overflow-hidden"
+              >
+                <div className={`h-2 ${groupColorMap.get(group.id)}`} />
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg">{group.name}</CardTitle>
+                    <Badge variant="secondary">
+                      {group.active_students_count}/{group.capacity}
+                    </Badge>
+                  </div>
+                  <CardDescription className="flex items-center gap-1">
+                    <UserCog className="w-3 h-3" />
+                    {group.coach_first_name} {group.coach_last_name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600">Jadval:</span>
+                      <span className="font-medium">{group.schedule_days}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600">Vaqt:</span>
+                      <span className="font-medium">{group.schedule_time}</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full ${groupColorMap.get(
+                          group.id
+                        )} transition-all duration-500`}
+                        style={{
+                          width: `${
+                            (group.active_students_count / group.capacity) * 100
+                          }%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="bg-slate-50 dark:bg-slate-900/50 border-t pt-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full group-hover:bg-blue-50"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Batafsil
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </motion.div>
+        </TabsContent>
+
+        {/* CONTRACT TAB */}
+        <TabsContent value="contract" className="space-y-6">
+          <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-6">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle>Shartnoma Qidirish</CardTitle>
                 <CardDescription>
-                  {t("todaysSessions") || "Today's training sessions"}
+                  Student shartnoma raqamini kiriting
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {sessionsLoading ? (
-                  <div className="flex justify-center items-center py-10">
-                    <Loader2 className="animate-spin text-primary" />
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Shartnoma raqami (21-2015C2)"
+                      value={contractNumber}
+                      onChange={(e) => setContractNumber(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleCheckContract();
+                        }
+                      }}
+                      className="pl-10"
+                    />
                   </div>
-                ) : sessionsData && sessionsData.length > 0 ? (
-                  <div className="space-y-3">
-                    {sessionsData.map((session) => {
-                      const group = groupsData?.find(
-                        (g) => g.id === session.group_id
-                      );
-                      return (
-                        <button
-                          key={session.id}
-                          onClick={() => setSelectedSession(session)}
-                          className={`w-full text-left p-4 rounded-lg border transition-all ${
-                            selectedSession?.id === session.id
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-card hover:border-slate-300 dark:hover:border-slate-700"
-                          }`}
-                        >
-                          <p className="font-semibold">
-                            {group?.name || t("unknownGroup")}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {session.topic}
-                          </p>
-                          <p className="text-sm font-mono mt-1">
-                            {session.start_time} - {session.end_time}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-10">
-                    <p>
-                      {t("noSessionsForDate") || "No sessions for this date."}
-                    </p>
+                  <Button
+                    onClick={handleCheckContract}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    disabled={
+                      searchContractMutation.isPending || !contractNumber
+                    }
+                  >
+                    {searchContractMutation.isPending && (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    )}
+                    <Search className="w-4 h-4 mr-2" />
+                    Qidirish
+                  </Button>
+                </div>
+                {contractError && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    {contractError}
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            <div className="lg:col-span-2 w-full">
-              {selectedSession ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="w-full"
-                >
-                  <Card className="w-full">
-                    <CardHeader>
-                      <div className="flex justify-between items-center flex-wrap gap-2">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            <List className="w-5 h-5" />
-                            {t("attendanceList") || "Attendance List"}
-                          </CardTitle>
-                          <CardDescription>
-                            {selectedSession.topic} (
-                            {
-                              groupsData?.find(
-                                (g) => g.id === selectedSession.group_id
-                              )?.name
-                            }
-                            )
-                          </CardDescription>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setUploadDialogOpen(true)}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          {t("uploadKonspekt") || "Upload Konspekt"}
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="border rounded-lg overflow-hidden w-full">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t("student")}</TableHead>
-                              <TableHead>{t("debtStatus")}</TableHead>
-                              <TableHead className="text-right">
-                                {t("markAttendance")}
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {studentsLoading ? (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={3}
-                                  className="h-24 text-center"
-                                >
-                                  <Loader2 className="mx-auto animate-spin text-primary" />
-                                </TableCell>
-                              </TableRow>
-                            ) : studentsData && studentsData.length > 0 ? (
-                              studentsData.map((student) => (
-                                <TableRow key={student.student_id}>
-                                  <TableCell className="font-medium">
-                                    {student.first_name} {student.last_name}
-                                  </TableCell>
-                                  <TableCell>
-                                    {student.has_debt ? (
-                                      <Badge
-                                        variant="destructive"
-                                        className="gap-1.5"
-                                      >
-                                        <AlertTriangle className="h-3 w-3" />
-                                        {formatCurrency(student.debt_amount)}
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="secondary">
-                                        {t("noDebt")}
-                                      </Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div
-                                      className="inline-flex rounded-md shadow-sm flex-nowrap"
-                                      role="group"
-                                    >
-                                      <Button
-                                        size="sm"
-                                        variant={
-                                          attendanceStatus[
-                                            student.student_id
-                                          ] === "present"
-                                            ? "default"
-                                            : "outline"
-                                        }
-                                        className="rounded-r-none px-2 sm:px-3"
-                                        onClick={() =>
-                                          handleMarkAttendance(
-                                            student.student_id,
-                                            "present"
-                                          )
-                                        }
-                                      >
-                                        {" "}
-                                        <CheckCircle className="w-4 h-4" />{" "}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant={
-                                          attendanceStatus[
-                                            student.student_id
-                                          ] === "late"
-                                            ? "secondary"
-                                            : "outline"
-                                        }
-                                        className="rounded-none px-2 sm:px-3"
-                                        onClick={() =>
-                                          handleMarkAttendance(
-                                            student.student_id,
-                                            "late"
-                                          )
-                                        }
-                                      >
-                                        {" "}
-                                        <Clock className="w-4 h-4" />{" "}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant={
-                                          attendanceStatus[
-                                            student.student_id
-                                          ] === "absent"
-                                            ? "destructive"
-                                            : "outline"
-                                        }
-                                        className="rounded-l-none px-2 sm:px-3"
-                                        onClick={() =>
-                                          handleMarkAttendance(
-                                            student.student_id,
-                                            "absent"
-                                          )
-                                        }
-                                      >
-                                        {" "}
-                                        <XCircle className="w-4 h-4" />{" "}
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            ) : (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={3}
-                                  className="h-24 text-center"
-                                >
-                                  {t("noStudentsInSession") ||
-                                    "No students in this session."}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end">
-                      <Button
-                        onClick={handleSubmitAttendance}
-                        disabled={bulkAttendanceMutation.isPending}
-                      >
-                        {bulkAttendanceMutation.isPending && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        )}
-                        {t("submitAttendance") || "Submit Attendance"}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg h-full w-full">
-                  <Users className="w-12 h-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-semibold">
-                    {t("selectSession")}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t("selectSessionToViewStudents") ||
-                      "Select a session from the list to view students and mark attendance."}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="groups" className="w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
-            <Card className="lg:col-span-1 h-full w-full">
-              <CardHeader>
-                <CardTitle>{t("myGroups")}</CardTitle>
-                <CardDescription>{t("groupsAssignedToYou")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {groupsLoading ? (
-                  <div className="flex justify-center items-center py-10">
-                    <Loader2 className="animate-spin text-primary" />
+            {contractResult && (
+              <Card className="shadow-lg border-t-4 border-t-emerald-500">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                    <CardTitle>
+                      {contractResult.student_first_name}{" "}
+                      {contractResult.student_last_name}
+                    </CardTitle>
                   </div>
-                ) : groupsData && groupsData.length > 0 ? (
-                  <div className="space-y-3">
-                    {groupsData.map((group) => (
-                      <button
-                        key={group.id}
-                        onClick={() => setSelectedGroup(group)}
-                        className={`w-full text-left p-4 rounded-lg border transition-all ${
-                          selectedGroup?.id === group.id
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card hover:border-slate-300 dark:hover:border-slate-700"
+                  <CardDescription className="font-mono">
+                    {contractResult.contract_number}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-xs text-slate-500">
+                        Oylik To'lov
+                      </span>
+                      <p className="font-semibold text-blue-600">
+                        {formatCurrency(contractResult.monthly_fee)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs text-slate-500">Joriy Qarz</span>
+                      <p
+                        className={`font-semibold ${
+                          contractResult.current_debt > 0
+                            ? "text-red-500"
+                            : "text-emerald-500"
                         }`}
                       >
-                        <p className="font-semibold">{group.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {group.schedule_days} {group.schedule_time}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10">
-                    <p>{t("noGroupsAssigned")}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="lg:col-span-2 w-full">
-              {selectedGroup ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="w-full"
-                >
-                  <Card className="w-full">
-                    <CardHeader>
-                      <CardTitle>{selectedGroup.name}</CardTitle>
-                      <CardDescription>{t("studentsInGroup")}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{t("studentName")}</TableHead>
-                            <TableHead>{t("dateOfBirth")}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {groupStudentsLoading ? (
-                            <TableRow>
-                              <TableCell
-                                colSpan={2}
-                                className="h-24 text-center"
-                              >
-                                <Loader2 className="mx-auto animate-spin text-primary" />
-                              </TableCell>
-                            </TableRow>
-                          ) : groupStudentsData &&
-                            groupStudentsData.length > 0 ? (
-                            groupStudentsData.map((student) => (
-                              <TableRow key={student.id}>
-                                <TableCell className="font-medium">
-                                  {student.first_name} {student.last_name}
-                                </TableCell>
-                                <TableCell>
-                                  {format(
-                                    new Date(student.date_of_birth),
-                                    "dd.MM.yyyy"
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell
-                                colSpan={2}
-                                className="h-24 text-center"
-                              >
-                                {t("noStudentsInGroup")}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center p-12 border-2 border-dashed rounded-lg h-full w-full">
-                  <GraduationCap className="w-12 h-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-semibold">
-                    {t("selectGroup")}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t("selectGroupToViewStudents")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="history" className="w-full">
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle>{t("attendanceHistory")}</CardTitle>
-              <CardDescription>
-                {t("allAttendancesMarkedByYou")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("date")}</TableHead>
-                    <TableHead>{t("student")}</TableHead>
-                    <TableHead>{t("group")}</TableHead>
-                    <TableHead>{t("status")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {myAttendancesLoading ||
-                  allStudentsLoading ||
-                  allSessionsLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
-                        <Loader2 className="mx-auto animate-spin text-primary" />
-                      </TableCell>
-                    </TableRow>
-                  ) : myAttendancesData && myAttendancesData.length > 0 ? (
-                    myAttendancesData.map((attendance) => {
-                      const student = studentMap.get(attendance.student_id);
-                      const session = sessionMap.get(attendance.session_id);
-                      const group = session
-                        ? groupMap.get(session.group_id)
-                        : null;
-                      return (
-                        <TableRow key={attendance.id}>
-                          <TableCell>
-                            {format(
-                              new Date(attendance.created_at),
-                              "dd.MM.yyyy HH:mm"
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {student
-                              ? `${student.first_name} ${student.last_name}`
-                              : t("unknownStudent")}
-                          </TableCell>
-                          <TableCell>
-                            {group ? group.name : t("unknownGroup")}
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(attendance.status)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
-                        {t("noAttendanceHistory")}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="stats" className="w-full">
-          <div className="space-y-6 w-full">
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle>{t("statistics")}</CardTitle>
-                <CardDescription>{t("selectGroupToSeeStats")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* HTML SELECT (Shadcn stilida) */}
-                <select
-                  className={selectClass}
-                  value={selectedGroupForStats}
-                  onChange={(e) => setSelectedGroupForStats(e.target.value)}
-                >
-                  <option value="" disabled>
-                    {t("selectGroup")}
-                  </option>
-                  {groupsData?.map((group) => (
-                    <option key={group.id} value={group.id.toString()}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
-              </CardContent>
-            </Card>
-
-            {groupStatsLoading && (
-              <div className="flex justify-center items-center py-10">
-                <Loader2 className="animate-spin text-primary" />
-              </div>
-            )}
-
-            {groupStats && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="w-full"
-              >
-                <Card className="w-full">
-                  <CardHeader>
-                    <CardTitle>
-                      {groupMap.get(Number(selectedGroupForStats))?.name} -{" "}
-                      {t("groupAttendance")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <DonutChart
-                      data={groupStatsChartData}
-                      centerLabel={t("attendanceRate")}
-                      centerValue={`${groupStats.attendance_rate}%`}
-                    />
-                    <div className="space-y-4">
-                      <StatsCard
-                        title={t("totalSessions")}
-                        value={groupStats.total_sessions}
-                      />
-                      <StatsCard
-                        title={t("present")}
-                        value={groupStats.present_count}
-                      />
-                      <StatsCard
-                        title={t("absent")}
-                        value={groupStats.absent_count}
-                      />
-                      <StatsCard
-                        title={t("late")}
-                        value={groupStats.late_count}
-                      />
+                        {formatCurrency(contractResult.current_debt)}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {selectedGroupForStats && (
-              <Card className="w-full">
-                <CardHeader>
-                  <CardTitle>{t("studentStatistics")}</CardTitle>
-                  {/* HTML SELECT (Shadcn stilida) */}
-                  <select
-                    className={`${selectClass} w-full md:w-1/3`}
-                    value={selectedStudentForStats}
-                    onChange={(e) => setSelectedStudentForStats(e.target.value)}
+                  </div>
+                  <div className="pt-3 border-t">
+                    <span className="text-xs text-slate-500">
+                      Boshlanish Sanasi
+                    </span>
+                    <p className="font-medium">
+                      {format(
+                        new Date(contractResult.start_date),
+                        "dd.MM.yyyy"
+                      )}
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    onClick={handleDownloadPdf}
+                    disabled={downloadPdfMutation.isPending}
+                    variant="outline"
+                    className="w-full"
                   >
-                    <option value="" disabled>
-                      {t("selectStudent")}
-                    </option>
-                    {allStudents
-                      ?.filter(
-                        (s) => s.group_id === Number(selectedGroupForStats)
-                      )
-                      .map((student) => (
-                        <option key={student.id} value={student.id.toString()}>
-                          {student.first_name} {student.last_name}
-                        </option>
-                      ))}
-                  </select>
-                </CardHeader>
-                {studentStatsLoading && (
-                  <div className="flex justify-center items-center py-10">
-                    <Loader2 className="animate-spin text-primary" />
-                  </div>
-                )}
-                {studentStats && (
-                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <DonutChart
-                      data={studentStatsChartData}
-                      centerLabel={t("attendanceRate")}
-                      centerValue={`${studentStats.attendance_rate}%`}
-                    />
-                    <div className="space-y-4">
-                      <StatsCard
-                        title={t("totalSessions")}
-                        value={studentStats.total_sessions}
-                      />
-                      <StatsCard
-                        title={t("present")}
-                        value={studentStats.present_count}
-                      />
-                      <StatsCard
-                        title={t("absent")}
-                        value={studentStats.absent_count}
-                      />
-                      <StatsCard
-                        title={t("late")}
-                        value={studentStats.late_count}
-                      />
-                    </div>
-                  </CardContent>
-                )}
+                    {downloadPdfMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    PDF Yuklash
+                  </Button>
+                </CardFooter>
               </Card>
             )}
           </div>
         </TabsContent>
       </Tabs>
 
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+      {/* DIALOGS */}
+      <SessionDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        session={selectedSession}
+        group={selectedGroupForDialog}
+        groupColorClass={
+          selectedSession
+            ? groupColorMap.get(selectedSession.group_id)
+            : undefined
+        }
+        showActions
+        onEdit={(session) => {
+          setSessionDialogInitialData(session);
+          setSessionDialogOpen(true);
+        }}
+        onDelete={handleDeleteRequest}
+      />
+
+      <SessionDialog
+        open={sessionDialogOpen}
+        onOpenChange={setSessionDialogOpen}
+        groups={groups}
+        initialData={sessionDialogInitialData}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["sessions"] });
+          queryClient.invalidateQueries({ queryKey: ["headCoachStats"] });
+        }}
+      />
+
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("uploadKonspekt")}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-500" />
+              Mashg'ulotni o'chirishni tasdiqlang
+            </DialogTitle>
             <DialogDescription>
-              {t("uploadKonspektDescription")}
+              Bu amalni qaytarib bo'lmaydi. Bu{" "}
+              <strong>{sessionToDelete?.topic}</strong> mashg'ulotini va unga
+              bog'liq barcha davomat yozuvlarini butunlay o'chiradi.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <input
-              type="file"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-            />
-            {selectedFile && (
-              <p className="text-sm text-muted-foreground">
-                {selectedFile.name}
-              </p>
-            )}
-          </div>
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button
               variant="outline"
-              onClick={() => setUploadDialogOpen(false)}
+              onClick={() => setDeleteConfirmOpen(false)}
+              disabled={deleteSessionMutation.isPending}
             >
-              {t("cancel")}
+              Bekor qilish
             </Button>
             <Button
-              onClick={handleUploadKonspekt}
-              disabled={!selectedFile || uploadKonspektMutation.isPending}
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteSessionMutation.isPending}
             >
-              {uploadKonspektMutation.isPending ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                t("upload")
+              {deleteSessionMutation.isPending && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
+              O'chirish
             </Button>
           </DialogFooter>
         </DialogContent>

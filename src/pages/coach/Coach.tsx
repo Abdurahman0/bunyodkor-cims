@@ -65,6 +65,7 @@ export default function Coach() {
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
   );
+  const [filterGroupId, setFilterGroupId] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<number | null>(null);
   const [attendanceStatus, setAttendanceStatus] = useState<
     Record<number, string>
