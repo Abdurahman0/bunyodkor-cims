@@ -177,6 +177,45 @@ export default function StudentDetailPage() {
     }
   };
 
+  const handleViewContract = async () => {
+    try {
+      // Formadagi ma'lumotlarni olamiz
+      const values = getValues();
+
+      // Shartnoma raqami borligini tekshiramiz
+      if (!values.contract_number) {
+        toast.error("Shartnoma raqami hali shakllanmagan");
+        return;
+      }
+
+      // Yilni aniqlash (start_date dan)
+      const startDate = values.contract_start_date
+        ? new Date(values.contract_start_date)
+        : new Date();
+      const year = startDate.getFullYear();
+
+      // Loading holatini bildirish
+      const toastId = toast.loading("Shartnoma fayli yuklanmoqda...");
+
+      // API ga so'rov (api.service.ts da getContractPdf bo'lishi shart)
+      const response = await contractService.getContractPdf(
+        year,
+        values.contract_number
+      );
+      toast.dismiss(toastId);
+      if (response && response.pdf_url) {
+        // PDF ni yangi oynada ochish
+        window.open(response.pdf_url, "_blank");
+      } else {
+        toast.error("PDF havolasi topilmadi");
+      }
+    } catch (error) {
+      console.error("PDF xatolik:", error);
+      toast.dismiss();
+      toast.error("Shartnoma faylini ochishda xatolik yuz berdi");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -943,13 +982,21 @@ export default function StudentDetailPage() {
                   <div>
                     <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
                       <span>🇺🇿</span>
-                      <span>{t("permanentDeleteStudent") || "Talabani butunlay o'chirasizmi"}?</span>
+                      <span>
+                        {t("permanentDeleteStudent") ||
+                          "Talabani butunlay o'chirasizmi"}
+                        ?
+                      </span>
                     </p>
                     <p className="text-xs text-red-800 dark:text-red-300 font-semibold mb-2">
-                      {t("thisActionCannotBeUndone") || "Bu amalni qaytarib bo'lmaydi"}!
+                      {t("thisActionCannotBeUndone") ||
+                        "Bu amalni qaytarib bo'lmaydi"}
+                      !
                     </p>
                     <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-1.5">
-                      {t("followingWillBeDeleted") || "Quyidagilar butunlay o'chiriladi"}:
+                      {t("followingWillBeDeleted") ||
+                        "Quyidagilar butunlay o'chiriladi"}
+                      :
                     </p>
                     <ul className="text-xs text-red-700 dark:text-red-300 space-y-0.5 list-disc list-inside ml-1">
                       <li>Talaba profili</li>
@@ -969,7 +1016,10 @@ export default function StudentDetailPage() {
                   <div className="border-t border-red-200/50 dark:border-red-800/50 pt-3">
                     <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
                       <span>🇬🇧</span>
-                      <span>Are you sure you want to permanently delete this student?</span>
+                      <span>
+                        Are you sure you want to permanently delete this
+                        student?
+                      </span>
                     </p>
                     <p className="text-xs text-red-800 dark:text-red-300 font-semibold mb-2">
                       This action cannot be undone!
@@ -995,7 +1045,9 @@ export default function StudentDetailPage() {
                   <div className="border-t border-red-200/50 dark:border-red-800/50 pt-3">
                     <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
                       <span>🇷🇺</span>
-                      <span>Вы уверены, что хотите навсегда удалить этого студента?</span>
+                      <span>
+                        Вы уверены, что хотите навсегда удалить этого студента?
+                      </span>
                     </p>
                     <p className="text-xs text-red-800 dark:text-red-300 font-semibold mb-2">
                       Это действие нельзя отменить!
@@ -1013,7 +1065,8 @@ export default function StudentDetailPage() {
                       <li>Записи списка ожидания</li>
                     </ul>
                     <p className="text-xs text-red-700 dark:text-red-300 mt-2 font-medium italic">
-                      Номера контрактов будут освобождены и могут быть использованы повторно
+                      Номера контрактов будут освобождены и могут быть
+                      использованы повторно
                     </p>
                   </div>
                 </div>

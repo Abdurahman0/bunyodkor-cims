@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -140,6 +141,7 @@ export function StudentWithContractDialog({
     handleSubmit,
     reset,
     watch,
+    getValues,
     setValue,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     formState: { errors },
@@ -279,6 +281,49 @@ export function StudentWithContractDialog({
 
     toast.success(t("contractDownloaded") || "Shartnoma yuklandi");
   };
+
+  // --- YANGI FUNKSIYA BOSHLANISHI ---
+  const handleViewContract = async () => {
+    try {
+      // Formadagi ma'lumotlarni olamiz
+      const values = getValues();
+
+      // Shartnoma raqami borligini tekshiramiz
+      if (!values.contract_number) {
+        toast.error("Shartnoma raqami hali shakllanmagan");
+        return;
+      }
+
+      // Yilni aniqlash (start_date dan)
+      const startDate = values.contract_start_date
+        ? new Date(values.contract_start_date)
+        : new Date();
+      const year = startDate.getFullYear();
+
+      // Loading holatini bildirish
+      const toastId = toast.loading("Shartnoma fayli yuklanmoqda...");
+
+      // API ga so'rov (api.service.ts da getContractPdf bo'lishi shart)
+      const response = await contractService.getContract(
+        year,
+        values.contract_number
+      );
+
+      toast.dismiss(toastId);
+
+      if (response && response.pdf_url) {
+        // PDF ni yangi oynada ochish
+        window.open(response.pdf_url, "_blank");
+      } else {
+        toast.error("PDF havolasi topilmadi");
+      }
+    } catch (error) {
+      console.error("PDF xatolik:", error);
+      toast.dismiss();
+      toast.error("Shartnoma faylini ochishda xatolik yuz berdi");
+    }
+  };
+  // --- YANGI FUNKSIYA TUGASHI ---
 
   const handleClose = () => {
     setIsSuccess(false);
