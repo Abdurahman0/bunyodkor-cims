@@ -13,12 +13,6 @@ export default defineConfig({
     include: ["set-cookie-parser"], // 🔥 MUHIM
   },
   server: {
-    allowedHosts: ["uncanonical-chantelle-winningly.ngrok-free.dev"],
-    hmr: {
-      clientPort: 443,
-      protocol: "wss",
-      host: "uncanonical-chantelle-winningly.ngrok-free.dev",
-    },
     proxy: {
       "/api": {
         target: "https://reduces-test-commitments-choosing.trycloudflare.com",

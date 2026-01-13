@@ -112,7 +112,7 @@ const DashboardLayout = () => {
       // Yoki agar ruxsat shart bo'lmasa, shunchaki qoldiring
       // Lekin odatda permission kerak bo'ladi. Hozircha bo'sh qoldirsangiz ham bo'ladi
       // yoki "dashboard:view" kabi umumiy ruxsat ishlating.
-      permission: "dashboard:view", // Vaqtincha hammaga ko'rinib turishi uchun
+      permission: "session:create", // Vaqtincha hammaga ko'rinib turishi uchun
     },
     {
       path: "/attendance",
