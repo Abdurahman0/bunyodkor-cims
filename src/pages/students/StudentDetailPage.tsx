@@ -196,8 +196,8 @@ export default function StudentDetailPage() {
 
       // API ga so'rov
       const response = await contractService.getContractPdfUrl(
- year,
- contract.contract_number
+        year,
+        contract.contract_number
       );
       toast.dismiss(toastId);
       if (response && response.pdf_url) {
@@ -891,69 +891,26 @@ export default function StudentDetailPage() {
       </Card>
 
       {/* Critical Actions Section */}
-      <Card className="relative overflow-hidden border-none bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] group">
-        {/* Yuqoridagi qizil urg'u chizig'i */}
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 via-rose-500 to-red-600" />
-
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-4">
-            {/* Icon qismi: Pulsatsiya bilan */}
-            <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 bg-red-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
-              <div className="relative p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20">
-                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-500" />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <CardTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                {t("criticalAction") || "Muhim harakat"}
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                  {t("irreversibleAction") || "Qaytarib bo'lmaydigan amal"}
-                </p>
-              </div>
-            </div>
-          </div>
+      <Card className="border-red-500/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3 text-red-600 dark:text-red-500">
+            <AlertTriangle className="w-5 h-5" />
+            {t("criticalAction")}
+          </CardTitle>
         </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Ogohlantirish matni: 3ta til olib tashlandi, faqat bitta asosiy xabar qoldi */}
-          <div className="relative p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              <span className="font-semibold text-slate-900 dark:text-slate-200">
-                {t("deleteStudentWarning") ||
-                  "Talabani butunlay o'chirish barcha ma'lumotlarni yo'q qiladi."}
-              </span>{" "}
-              Bu jarayon yakunlangach, profil, to'lovlar va davomat tarixini
-              qayta tiklab bo'lmaydi.
-            </p>
-          </div>
-
-          {/* Pastki qism: Tugma va tasdiq xabari */}
-          <div className="flex items-center justify-between gap-4 pt-2">
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium max-w-[180px]">
-              {t("clickButtonToConfirm") ||
-                "Davom etish uchun tasdiqlash tugmasini bosing"}
-            </p>
-
-            <Button
-              variant="destructive"
-              onClick={() => setIsHardDeleteDialogOpen(true)}
-              className="relative overflow-hidden group/btn px-8 py-6 rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-[0_4px_14px_0_rgba(220,38,38,0.39)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-2 relative z-10">
-                <Trash2 className="w-5 h-5" />
-                <span className="font-bold tracking-wide">
-                  {t("permanentlyDelete") || "O'chirish"}
-                </span>
-              </div>
-              {/* Tugma ichidagi nurli effekt */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] transition-transform" />
-            </Button>
-          </div>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            {t("studentDeletionWarning_line1")}
+            <br />
+            <span className="font-semibold">{t("studentDeletionWarning_line2")}</span>
+          </p>
+          <Button
+            variant="destructive"
+            onClick={() => setIsHardDeleteDialogOpen(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {t("permanentlyDelete")}
+          </Button>
         </CardContent>
       </Card>
 
