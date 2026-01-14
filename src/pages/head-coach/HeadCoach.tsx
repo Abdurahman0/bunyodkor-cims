@@ -27,7 +27,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// FAQAT Select ni import qilamiz (siz bergan faylga asosan)
+// Select (Custom wrapping qilingan versiyangiz)
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +52,7 @@ import {
   Eye,
   UserCog,
   Trash2,
+  MapPin, // Stadion uchun icon
 } from "lucide-react";
 
 import { format } from "date-fns";
@@ -256,6 +257,12 @@ export default function HeadCoach() {
     }
   };
 
+  const handleGroupDetailsClick = (groupId: number) => {
+    setFilterGroupId(groupId.toString());
+    setActiveTab("timetable");
+    toast.success("Guruh jadvali ochildi");
+  };
+
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
 
@@ -444,24 +451,25 @@ export default function HeadCoach() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* 2-MUAMMO YECHIMI: Hover stillarini to'g'irladik */}
                 <Button
                   onClick={handleCreateNewSession}
                   variant="outline"
-                  className="w-full justify-start hover:bg-blue-50"
+                  className="w-full justify-start hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                 >
                   <Plus className="w-4 h-4 mr-2" /> Yangi Mashg'ulot Qo'shish
                 </Button>
                 <Button
                   onClick={() => setActiveTab("groups")}
                   variant="outline"
-                  className="w-full justify-start hover:bg-emerald-50"
+                  className="w-full justify-start hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                 >
                   <Users className="w-4 h-4 mr-2" /> Guruhlarni Ko'rish
                 </Button>
                 <Button
                   onClick={() => setActiveTab("contract")}
                   variant="outline"
-                  className="w-full justify-start hover:bg-purple-50"
+                  className="w-full justify-start hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   <FileText className="w-4 h-4 mr-2" /> Shartnomani Tekshirish
                 </Button>
@@ -501,7 +509,6 @@ export default function HeadCoach() {
           <div className="flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
             <h2 className="text-xl font-semibold">Mashg'ulotlar Jadvali</h2>
 
-            {/* SIZNING MAXSUS SELECT KOMPONENTINGIZ ISHLATILMOQDA */}
             <Select
               value={filterGroupId}
               onChange={(e) => setFilterGroupId(e.target.value)}
@@ -536,7 +543,6 @@ export default function HeadCoach() {
           <div className="flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
             <h2 className="text-xl font-semibold">Guruhlar</h2>
 
-            {/* SIZNING MAXSUS SELECT KOMPONENTINGIZ ISHLATILMOQDA */}
             <Select
               value={filterGroupId}
               onChange={(e) => setFilterGroupId(e.target.value)}
@@ -598,10 +604,12 @@ export default function HeadCoach() {
                   </div>
                 </CardContent>
                 <CardFooter className="bg-slate-50 dark:bg-slate-900/50 border-t pt-3">
+                  {/* 1-MUAMMO YECHIMI: onClick qo'shildi */}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full group-hover:bg-blue-50"
+                    className="w-full hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    onClick={() => handleGroupDetailsClick(group.id)}
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     Batafsil
