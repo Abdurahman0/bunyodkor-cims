@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogDescription,
+// } from "@/components/ui/dialog";
 import {
   Table,
   TableHeader,
@@ -28,13 +28,16 @@ import {
   Plus,
   Search,
   Edit,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Trash2,
   Users as UsersIcon,
   Calendar,
   Filter,
   Download,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Upload,
   X,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -62,7 +65,9 @@ export default function Students() {
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCombinedDialogOpen, setIsCombinedDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [studentToDelete, setStudentToDelete] = useState<StudentRead | null>(
     null
   );
@@ -139,44 +144,44 @@ export default function Students() {
   });
 
   // Use DELETE /students/{student_id} for soft delete
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => studentService.deleteStudent(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["students-count"] });
-      queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["finance"] });
-      queryClient.invalidateQueries({ queryKey: ["attendances"] });
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      toast.success(t("studentDeleted") || "Talaba o'chirildi");
-    },
-    onError: (error: any) => {
-      const detail = error?.response?.data?.detail;
-      let errorMessage =
-        t("failedToDeleteStudent") || "Talabani o'chirishda xato";
-      if (Array.isArray(detail) && detail.length > 0) {
-        errorMessage = detail[0].msg || detail[0].message || errorMessage;
-      } else if (typeof detail === "string") {
-        errorMessage = detail;
-      }
-      toast.error(errorMessage);
-    },
-  });
+  // const deleteMutation = useMutation({
+  //   mutationFn: (id: number) => studentService.deleteStudent(id),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["students"] });
+  //     queryClient.invalidateQueries({ queryKey: ["students-count"] });
+  //     queryClient.invalidateQueries({ queryKey: ["contracts"] });
+  //     queryClient.invalidateQueries({ queryKey: ["transactions"] });
+  //     queryClient.invalidateQueries({ queryKey: ["finance"] });
+  //     queryClient.invalidateQueries({ queryKey: ["attendances"] });
+  //     queryClient.invalidateQueries({ queryKey: ["groups"] });
+  //     toast.success(t("studentDeleted") || "Talaba o'chirildi");
+  //   },
+  //   onError: (error: any) => {
+  //     const detail = error?.response?.data?.detail;
+  //     let errorMessage =
+  //       t("failedToDeleteStudent") || "Talabani o'chirishda xato";
+  //     if (Array.isArray(detail) && detail.length > 0) {
+  //       errorMessage = detail[0].msg || detail[0].message || errorMessage;
+  //     } else if (typeof detail === "string") {
+  //       errorMessage = detail;
+  //     }
+  //     toast.error(errorMessage);
+  //   },
+  // });
 
-  // Professional UI: open dialog, confirm, then delete
-  const handleDelete = (student: StudentRead) => {
-    setStudentToDelete(student);
-    setIsDeleteDialogOpen(true);
-  };
+  // // Professional UI: open dialog, confirm, then delete
+  // const handleDelete = (student: StudentRead) => {
+  //   setStudentToDelete(student);
+  //   setIsDeleteDialogOpen(true);
+  // };
 
-  const confirmDelete = () => {
-    if (studentToDelete) {
-      deleteMutation.mutate(studentToDelete.id);
-      setIsDeleteDialogOpen(false);
-      setStudentToDelete(null);
-    }
-  };
+  // const confirmDelete = () => {
+  //   if (studentToDelete) {
+  //     deleteMutation.mutate(studentToDelete.id);
+  //     setIsDeleteDialogOpen(false);
+  //     setStudentToDelete(null);
+  //   }
+  // };
 
   const handleEdit = (student: StudentRead) => {
     setSelectedStudent(student);
@@ -601,7 +606,7 @@ export default function Students() {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
@@ -613,7 +618,7 @@ export default function Students() {
                           title={t("deleteStudent")}
                         >
                           <Trash2 className="w-4 h-4" />
-                        </Button>
+                        </Button> */}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -673,7 +678,7 @@ export default function Students() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {/* <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
@@ -735,7 +740,7 @@ export default function Students() {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 }

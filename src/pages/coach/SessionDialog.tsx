@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { headCoachService } from "@/services/api.service";
+import { Button } from "@/components/ui/button";
 
 import {
   Dialog,
@@ -9,149 +9,261 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
-import { coachService } from '@/services/api.service';
-import type { SessionCreateRequest, GroupRead } from '@/types/api';
-import { useLanguageStore } from '@/store/languageStore';
-import { Loader2 } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import type { GroupRead, SessionCreateRequest } from "@/types/api";
+
 
 interface SessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  groups: GroupRead[] | undefined;
-  sessionDate: string;
-  onSuccess?: () => void;
+  groups: GroupRead[];
+  initialData?: Partial<SessionCreateRequest>;
+  onSuccess: () => void;
 }
 
-type SessionFormData = Omit<SessionCreateRequest, 'group_id'> & {
-  group_id: string;
-};
+
+
+
 
 export function SessionDialog({
   open,
   onOpenChange,
   groups,
-  sessionDate,
+  initialData,
   onSuccess,
 }: SessionDialogProps) {
-  const { t } = useLanguageStore();
-  const queryClient = useQueryClient();
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<SessionFormData>();
+  const [formData, setFormData] = useState<Partial<SessionCreateRequest>>({
+    group_id: 0,
+    session_date: "",
+    start_time: "",
+    end_time: "",
+    topic: "",
+    description: "",
+    location: "Stadion", // Default location
+  });
 
   useEffect(() => {
     if (open) {
-      reset({
-        session_date: sessionDate,
-        topic: '',
-        start_time: '09:00',
-        end_time: '11:00',
-        group_id: '',
-      });
+      if (initialData) {
+        setFormData({
+          ...initialData,
+          location: initialData.location || "Stadion",
+        });
+      } else {
+        setFormData({
+          group_id: groups.length > 0 ? groups[0].id : 0,
+          session_date: new Date().toISOString().split("T")[0],
+          start_time: "09:00",
+          end_time: "10:30",
+          topic: "",
+          description: "",
+          location: "Stadion",
+        });
+      }
     }
-  }, [open, sessionDate, reset]);
+  }, [open, initialData, groups]);
 
-  const mutation = useMutation({
-    mutationFn: (data: SessionCreateRequest) => coachService.createSession(data),
+  const createSessionMutation = useMutation({
+    mutationFn: (data: SessionCreateRequest) =>
+      headCoachService.createSession(data),
     onSuccess: () => {
-      toast.success(t('sessionCreatedSuccess'));
+      toast.success("Mashg'ulot muvaffaqiyatli yaratildi");
+      onSuccess();
       onOpenChange(false);
-      if (onSuccess) onSuccess();
+
     },
     onError: (error: any) => {
-      const detail = error.response?.data?.detail;
-      let errorMessage = t('failedToCreateSession');
-
-      if (Array.isArray(detail) && detail.length > 0) {
-        errorMessage = detail[0].msg || detail[0].message || errorMessage;
-      } else if (typeof detail === 'string') {
-        errorMessage = detail;
-      }
-
-      toast.error(errorMessage);
+      toast.error(
+        error.response?.data?.detail || "Mashg'ulot yaratishda xatolik"
+      );
     },
   });
 
-  const onSubmit = (data: SessionFormData) => {
-    mutation.mutate({
-      ...data,
-      group_id: parseInt(data.group_id, 10),
-    });
+
+
+
+  const updateSessionMutation = useMutation({
+    mutationFn: (data: { id: number; data: SessionCreateRequest }) =>
+      headCoachService.updateSession(data.id, data.data),
+    onSuccess: () => {
+      toast.success("Mashg'ulot muvaffaqiyatli yangilandi");
+      onSuccess();
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.detail || "Mashg'ulotni yangilashda xatolik"
+      );
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !formData.group_id ||
+      !formData.session_date ||
+      !formData.start_time ||
+      !formData.end_time ||
+      !formData.topic
+    ) {
+      toast.error("Iltimos, barcha majburiy maydonlarni to'ldiring");
+      return;
+    }
+
+    const payload: SessionCreateRequest = {
+      group_id: Number(formData.group_id),
+      session_date: formData.session_date!,
+      start_time: formData.start_time!,
+      end_time: formData.end_time!,
+      topic: formData.topic!,
+      description: formData.description || "",
+      location: formData.location || "Stadion",
+    };
+
+    // Agar initialData da 'id' bo'lsa (lekin SessionCreateRequest da id yo'q),
+    // demak bu update. Type assertion ishlatamiz.
+    const editId = (initialData as any)?.id;
+
+    if (editId) {
+      updateSessionMutation.mutate({ id: editId, data: payload });
+    } else {
+      createSessionMutation.mutate(payload);
+    }
   };
+
+  const isPending =
+    createSessionMutation.isPending || updateSessionMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[450px] max-w-[95vw] border-2 border-primary/30" onClose={() => onOpenChange(false)}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{t('createNewSession')}</DialogTitle>
+          <DialogTitle>
+            {(initialData as any)?.id
+              ? "Mashg'ulotni Tahrirlash"
+              : "Yangi Mashg'ulot"}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="group_id">{t('group')}</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="group">Guruh</Label>
             <Select
-              id="group_id"
-              {...register('group_id', { required: t('selectGroupRequired') })}
+              id="group"
+              value={formData.group_id?.toString()}
+              onChange={(e) =>
+                setFormData({ ...formData, group_id: Number(e.target.value) })
+              }
             >
-              <option value="">{t('selectGroup')}</option>
-              {groups?.map((group) => (
+              {groups.map((group) => (
+
                 <option key={group.id} value={group.id}>
                   {group.name}
                 </option>
               ))}
             </Select>
-            {errors.group_id && <p className="text-sm text-red-500">{errors.group_id.message}</p>}
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="topic">{t('sessionTopic')}</Label>
-            <Input
-              id="topic"
-              {...register('topic', { required: t('topicRequired') })}
-              placeholder="e.g., Dribbling Drills"
-            />
-            {errors.topic && <p className="text-sm text-red-500">{errors.topic.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="start_time">{t('startTime')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="date">Sana</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.session_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, session_date: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Joy (Stadion)</Label>
+              <Input
+                id="location"
+                placeholder="Masalan: Bunyodkor stadioni"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="start_time">Boshlanish</Label>
               <Input
                 id="start_time"
                 type="time"
-                {...register('start_time', { required: t('startTimeRequired') })}
+                value={formData.start_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, start_time: e.target.value })
+                }
+                required
               />
-              {errors.start_time && <p className="text-sm text-red-500">{errors.start_time.message}</p>}
+
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="end_time">{t('endTime')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="end_time">Tugash</Label>
               <Input
                 id="end_time"
                 type="time"
-                {...register('end_time', { required: t('endTimeRequired') })}
+                value={formData.end_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, end_time: e.target.value })
+                }
+                required
               />
-              {errors.end_time && <p className="text-sm text-red-500">{errors.end_time.message}</p>}
+
             </div>
           </div>
 
-          <input type="hidden" {...register('session_date')} value={sessionDate} />
-
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {t('cancel')}
-            </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {t('createSession')}
-            </Button>
+          <div className="space-y-2">
+            <Label htmlFor="topic">Mavzu</Label>
+            <Input
+              id="topic"
+              placeholder="Mashg'ulot mavzusi"
+              value={formData.topic}
+              onChange={(e) =>
+                setFormData({ ...formData, topic: e.target.value })
+              }
+              required
+            />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Qo'shimcha Izoh</Label>
+            <Textarea
+              id="description"
+              placeholder="Mashg'ulot haqida batafsil..."
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Saqlash
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
