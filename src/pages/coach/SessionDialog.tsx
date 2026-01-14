@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { headCoachService } from "@/services/api.service";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
 import {
   Dialog,
   DialogContent,
@@ -17,7 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import type { GroupRead, SessionCreateRequest } from "@/types/api";
+<<<<<<< HEAD
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
 
 interface SessionDialogProps {
   open: boolean;
@@ -27,10 +33,13 @@ interface SessionDialogProps {
   onSuccess: () => void;
 }
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
 export function SessionDialog({
   open,
   onOpenChange,
@@ -76,7 +85,10 @@ export function SessionDialog({
       toast.success("Mashg'ulot muvaffaqiyatli yaratildi");
       onSuccess();
       onOpenChange(false);
+<<<<<<< HEAD
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
     },
     onError: (error: any) => {
       toast.error(
@@ -85,9 +97,12 @@ export function SessionDialog({
     },
   });
 
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
   const updateSessionMutation = useMutation({
     mutationFn: (data: { id: number; data: SessionCreateRequest }) =>
       headCoachService.updateSession(data.id, data.data),
@@ -161,13 +176,19 @@ export function SessionDialog({
               }
             >
               {groups.map((group) => (
+<<<<<<< HEAD
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
                 <option key={group.id} value={group.id}>
                   {group.name}
                 </option>
               ))}
             </Select>
+<<<<<<< HEAD
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -208,7 +229,10 @@ export function SessionDialog({
                 }
                 required
               />
+<<<<<<< HEAD
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
             </div>
             <div className="space-y-2">
               <Label htmlFor="end_time">Tugash</Label>
@@ -221,7 +245,10 @@ export function SessionDialog({
                 }
                 required
               />
+<<<<<<< HEAD
 
+=======
+>>>>>>> f957ca79ce495951f9b7c83a7e4a7cfcfdfe6977
             </div>
           </div>
 
