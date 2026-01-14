@@ -24,6 +24,7 @@ import {
 } from "@/services/api.service";
 import { useGroupsStore } from "@/store/groupsStore";
 import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Plus,
   Search,
   Edit,
@@ -197,44 +198,44 @@ export default function Contracts() {
     enabled: !!groupFilter,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => contractService.deleteContract(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      toast.success(
-        t("contractDeletedSuccess" as any) || "Contract deleted successfully"
-      );
-    },
-    onError: (error: any) => {
-      const detail = error.response?.data?.detail;
-      let errorMessage = "Failed to delete contract";
+  // const deleteMutation = useMutation({
+  //   mutationFn: (id: number) => contractService.deleteContract(id),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["contracts"] });
+  //     toast.success(
+  //       t("contractDeletedSuccess" as any) || "Contract deleted successfully"
+  //     );
+  //   },
+  //   onError: (error: any) => {
+  //     const detail = error.response?.data?.detail;
+  //     let errorMessage = "Failed to delete contract";
 
-      if (Array.isArray(detail) && detail.length > 0) {
-        errorMessage = detail[0].msg || detail[0].message || errorMessage;
-      } else if (typeof detail === "string") {
-        errorMessage = detail;
-      }
+  //     if (Array.isArray(detail) && detail.length > 0) {
+  //       errorMessage = detail[0].msg || detail[0].message || errorMessage;
+  //     } else if (typeof detail === "string") {
+  //       errorMessage = detail;
+  //     }
 
-      toast.error(errorMessage);
-    },
-  });
+  //     toast.error(errorMessage);
+  //   },
+  // });
 
   const handleOpenDialog = (contract?: ContractRead) => {
     setSelectedContract(contract || null);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (contract: ContractRead) => {
-    if (
-      confirm(
-        t("confirmDeleteContract", {
-          number: contract.contract_number,
-        }) as string
-      )
-    ) {
-      deleteMutation.mutate(contract.id);
-    }
-  };
+  // const handleDelete = (contract: ContractRead) => {
+  //   if (
+  //     confirm(
+  //       t("confirmDeleteContract", {
+  //         number: contract.contract_number,
+  //       }) as string
+  //     )
+  //   ) {
+  //     deleteMutation.mutate(contract.id);
+  //   }
+  // };
 
   const getStudentName = (studentId: number | null | undefined) => {
     if (!studentId) return t("unknown") || "Noma'lum";
@@ -634,14 +635,14 @@ export default function Contracts() {
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button
+                            {/* <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDelete(contract)}
                               className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                             >
                               <Trash2 className="w-4 h-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
