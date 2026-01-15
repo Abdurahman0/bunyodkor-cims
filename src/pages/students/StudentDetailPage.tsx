@@ -108,24 +108,36 @@ export default function StudentDetailPage() {
   const hardDeleteMutation = useMutation({
     mutationFn: () => studentService.hardDeleteStudent(studentId),
     onSuccess: () => {
+      // 1. Ro'yxatlarni yangilaymiz (List sahifalar uchun)
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+
+      // ⚠️ MUHIM: Quyidagi qatorni O'CHIRIB TASHLANG yoki Commentga oling:
+      // queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+      // Sababi: Student o'chdi, uning infosini qayta so'rash xato (404) beradi.
+
+      // 2. Cache dan bu studentni qo'lda o'chiramiz (Xatolik chiqmasligi uchun)
+      queryClient.removeQueries({ queryKey: ["student-full-info", studentId] });
+
       toast.success(
         t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi"
       );
       setIsHardDeleteDialogOpen(false);
-      setTimeout(() => navigate("/students", { replace: true }), 500);
+
+      // 3. Sahifadan chiqib ketamiz
+      navigate("/students", { replace: true });
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
       let errorMessage =
         t("failedToDeleteStudent") || "Talabani o'chirishda xato";
+
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
       } else if (typeof detail === "string") {
         errorMessage = detail;
       }
+
       toast.error(errorMessage);
     },
   });
