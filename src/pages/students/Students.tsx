@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -313,7 +314,7 @@ export default function Students() {
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">{t("export")}</span>
             <span className="sm:hidden">1</span>
-          </Button>
+          </Button> */}
           <Button
             variant="outline"
             size="sm"
@@ -333,7 +334,7 @@ export default function Students() {
               {t("exportAll") || "Barchasi"}
             </span>
             <span className="sm:hidden font-bold">Full</span>
-          </Button> */}
+          </Button>
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">{t("addStudent")}</span>
