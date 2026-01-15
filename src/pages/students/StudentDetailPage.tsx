@@ -1,8 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { studentService, contractService } from "@/services/api.service";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,9 +27,10 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
-  Home,
   Calendar,
   Clock,
   Phone,
@@ -33,10 +41,13 @@ import {
   AlertTriangle,
   Download,
   Eye,
+  Wallet,
+  MapPin,
+  ShieldCheck,
+  Percent,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
-import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 import { useLanguageStore } from "@/store/languageStore";
 import type {
   StudentFullInfo,
@@ -49,34 +60,30 @@ import type {
 const getStatusBadge = (status: string) => {
   const styles: { [key: string]: string } = {
     active:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    present:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    success:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    graduated:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    dropped: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    absent: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    failed: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    cancelled:
-      "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    suspended:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    pending:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    late: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+    present: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    success: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    graduated: "bg-purple-50 text-purple-700 border-purple-200",
+    dropped: "bg-rose-50 text-rose-700 border-rose-200",
+    absent: "bg-rose-50 text-rose-700 border-rose-200",
+    failed: "bg-rose-50 text-rose-700 border-rose-200",
+    cancelled: "bg-gray-50 text-gray-700 border-gray-200",
+    suspended: "bg-amber-50 text-amber-700 border-amber-200",
+    pending: "bg-amber-50 text-amber-700 border-amber-200",
+    late: "bg-orange-50 text-orange-700 border-orange-200",
   };
   return (
     <Badge
-      className={`${styles[status] || "bg-gray-100 text-gray-700"} border-0`}
+      variant="outline"
+      className={`${
+        styles[status] || "bg-gray-50 text-gray-700 border-gray-200"
+      } px-2.5 py-0.5 capitalize`}
     >
       {status}
     </Badge>
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatSource = (source: any) => {
   const cleanSource =
     source?.toString().replace(/^.*\./, "").toLowerCase() || "";
@@ -108,31 +115,24 @@ export default function StudentDetailPage() {
         t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi"
       );
       setIsHardDeleteDialogOpen(false);
-      // Navigate after a brief delay to ensure toast is visible
-      setTimeout(() => {
-        navigate("/students", { replace: true });
-      }, 500);
+      setTimeout(() => navigate("/students", { replace: true }), 500);
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
       let errorMessage =
         t("failedToDeleteStudent") || "Talabani o'chirishda xato";
-
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
       } else if (typeof detail === "string") {
         errorMessage = detail;
       }
-
       toast.error(errorMessage);
     },
   });
 
   const handleDownloadPdf = async (contract: ContractRead) => {
-    // Same logic but for download
     try {
       let pdfUrl: string | null = null;
-
       if (contract.final_pdf_url) {
         pdfUrl = contract.final_pdf_url;
       } else {
@@ -141,16 +141,9 @@ export default function StudentDetailPage() {
           year,
           contract.contract_number
         );
-
-        if (typeof response === "string") {
-          pdfUrl = response;
-        } else if (
-          typeof response === "object" &&
-          response !== null &&
-          "pdf_url" in response
-        ) {
+        if (typeof response === "string") pdfUrl = response;
+        else if (response && "pdf_url" in response)
           pdfUrl = (response as any).pdf_url;
-        }
       }
 
       if (!pdfUrl) {
@@ -158,7 +151,6 @@ export default function StudentDetailPage() {
         return;
       }
 
-      // Download the PDF
       const resp = await fetch(pdfUrl);
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);
@@ -169,7 +161,6 @@ export default function StudentDetailPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
       toast.success("Yuklandi");
     } catch (error) {
       console.error("Error downloading PDF:", error);
@@ -179,29 +170,21 @@ export default function StudentDetailPage() {
 
   const handleViewContract = async (contract: ContractRead) => {
     try {
-      // Shartnoma raqami borligini tekshiramiz
       if (!contract.contract_number) {
         toast.error("Shartnoma raqami hali shakllanmagan");
         return;
       }
-
-      // Yilni aniqlash (start_date dan)
       const startDate = contract.start_date
         ? new Date(contract.start_date)
         : new Date();
       const year = startDate.getFullYear();
-
-      // Loading holatini bildirish
       const toastId = toast.loading("Shartnoma fayli yuklanmoqda...");
-
-      // API ga so'rov
       const response = await contractService.getContractPdfUrl(
         year,
         contract.contract_number
       );
       toast.dismiss(toastId);
       if (response && response.pdf_url) {
-        // PDF ni yangi oynada ochish
         window.open(response.pdf_url, "_blank");
       } else {
         toast.error("PDF havolasi topilmadi");
@@ -215,20 +198,21 @@ export default function StudentDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Clock className="animate-spin text-primary w-8 h-8" />
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Clock className="animate-spin text-primary w-10 h-10" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-red-500">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <AlertTriangle className="w-12 h-12 text-red-500" />
+        <h2 className="text-xl font-semibold text-foreground">
           {t("loadingError")}
         </h2>
         <p className="text-muted-foreground">{t("studentNotFoundOrError")}</p>
-        <Button asChild variant="link" className="mt-4">
+        <Button asChild variant="outline">
           <Link to="/students">{t("backToStudents")}</Link>
         </Button>
       </div>
@@ -245,156 +229,65 @@ export default function StudentDetailPage() {
     attendances,
   } = data.data as StudentFullInfo;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Logic to extract parents (kept same as original)
   const getDisplayParents = (): any[] => {
-    console.log("[STUDENT DETAIL] Getting parent info");
-    console.log("[STUDENT DETAIL] Parents from API:", parents);
-    console.log("[STUDENT DETAIL] Contracts:", contracts);
-
-    if (parents && parents.length > 0) {
-      console.log("[STUDENT DETAIL] Using parents from API");
-      return parents;
-    }
-
+    if (parents && parents.length > 0) return parents;
     if (contracts && contracts.length > 0) {
       const sortedContracts = [...contracts].sort((a, b) => b.id - a.id);
-      console.log("[STUDENT DETAIL] Sorted contracts:", sortedContracts);
-
-      // Try to extract parent info from ALL contracts, collect all unique parents
       const allParents: any[] = [];
-
       for (const contract of sortedContracts) {
-        console.log("[STUDENT DETAIL] Processing contract:", contract.id);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let customFields: any = contract.custom_fields;
-
-        if (!customFields) {
-          console.log(
-            "[STUDENT DETAIL] No custom_fields in contract",
-            contract.id
-          );
-          continue;
-        }
-
+        if (!customFields) continue;
         if (typeof customFields === "string") {
           try {
             customFields = JSON.parse(customFields);
-            console.log("[STUDENT DETAIL] Parsed custom_fields:", customFields);
           } catch (e) {
-            console.error("[STUDENT DETAIL] Custom fields parse error", e);
             continue;
           }
-        } else {
-          console.log("[STUDENT DETAIL] Custom fields (object):", customFields);
         }
 
-        // Extract buyurtmachi
         if (
           customFields.buyurtmachi &&
           (customFields.buyurtmachi.fio || customFields.buyurtmachi.name)
         ) {
-          const buyurtmachiName =
-            customFields.buyurtmachi.fio || customFields.buyurtmachi.name;
-          console.log("[STUDENT DETAIL] Found buyurtmachi:", buyurtmachiName);
-
           allParents.push({
             id: `contract-${contract.id}-buyurtmachi`,
-            first_name: buyurtmachiName,
+            first_name:
+              customFields.buyurtmachi.fio || customFields.buyurtmachi.name,
             last_name: "",
             relationship_type: "Buyurtmachi",
             phone:
               customFields.buyurtmachi.telefon ||
               customFields.buyurtmachi.phone ||
               "",
-            email: "",
             is_from_contract: true,
           });
         }
-
-        // Extract mom info
         const st = customFields.student || {};
-        console.log("[STUDENT DETAIL] Student fields:", st);
-        const momName =
-          st.mom_fullname ||
-          st.mom_fio ||
-          st.mom_name ||
-          customFields.mom_fio ||
-          customFields.mom_fullname;
-        const momPhone =
-          st.mom_phone_number ||
-          st.mom_phone ||
-          customFields.mom_phone ||
-          customFields.mom_phone_number ||
-          "";
-        console.log(
-          "[STUDENT DETAIL] Checking mom - name:",
-          momName,
-          "phone:",
-          momPhone
-        );
+        const momName = st.mom_fullname || st.mom_fio || customFields.mom_fio;
         if (momName) {
-          console.log("[STUDENT DETAIL] Found mom:", momName, momPhone);
           allParents.push({
             id: `contract-${contract.id}-mom`,
             first_name: momName,
             last_name: "",
             relationship_type: "Ona",
-            phone: momPhone,
-            email: "",
+            phone: st.mom_phone_number || customFields.mom_phone || "",
             is_from_contract: true,
           });
         }
-
-        // Extract dad info
-        const dadName =
-          st.dad_fullname ||
-          st.dad_name ||
-          st.dad_fio ||
-          customFields.dad_name ||
-          customFields.dad_fullname;
-        const dadPhone =
-          st.dad_phone_number ||
-          st.dad_phone ||
-          customFields.dad_phone ||
-          customFields.dad_phone_number ||
-          "";
-        console.log(
-          "[STUDENT DETAIL] Checking dad - name:",
-          dadName,
-          "phone:",
-          dadPhone
-        );
+        const dadName = st.dad_fullname || st.dad_fio || customFields.dad_name;
         if (dadName) {
-          console.log("[STUDENT DETAIL] Found dad:", dadName, dadPhone);
           allParents.push({
             id: `contract-${contract.id}-dad`,
             first_name: dadName,
             last_name: "",
             relationship_type: "Ota",
-            phone: dadPhone,
-            email: "",
+            phone: st.dad_phone_number || customFields.dad_phone || "",
             is_from_contract: true,
           });
-        } else {
-          console.log(
-            "[STUDENT DETAIL] No dad name found in contract",
-            contract.id
-          );
-          console.log(
-            "[STUDENT DETAIL] Checked fields - st.dad_fullname:",
-            st.dad_fullname,
-            "st.dad_name:",
-            st.dad_name,
-            "st.dad_fio:",
-            st.dad_fio,
-            "customFields.dad_name:",
-            customFields.dad_name
-          );
         }
       }
-
-      // Deduplicate by name and relationship_type
-      const uniqueParents = allParents.filter(
+      return allParents.filter(
         (parent, index, self) =>
           index ===
           self.findIndex(
@@ -403,550 +296,591 @@ export default function StudentDetailPage() {
               p.relationship_type === parent.relationship_type
           )
       );
-
-      console.log("[STUDENT DETAIL] All parents found:", allParents);
-      console.log("[STUDENT DETAIL] Unique parents:", uniqueParents);
-
-      if (uniqueParents.length > 0) {
-        return uniqueParents;
-      }
     }
-
-    console.log("[STUDENT DETAIL] No parent info found");
     return [];
   };
 
   const displayParents = getDisplayParents();
-
-  console.log("[STUDENT DETAIL] Display parents:", displayParents);
-
-  // Separate parents and guardians
-  // Parents: Ota and Ona
   const parentsList = displayParents.filter(
     (p) => p.relationship_type === "Ota" || p.relationship_type === "Ona"
   );
-
-  // Guardians: Everyone else (Buyurtmachi, etc.)
-  // BUT also show Buyurtmachi separately if they are ALSO listed as parent
   const guardiansList = displayParents.filter(
     (p) => p.relationship_type !== "Ota" && p.relationship_type !== "Ona"
   );
 
-  console.log("[STUDENT DETAIL] Parents list:", parentsList);
-  console.log("[STUDENT DETAIL] Guardians list:", guardiansList);
-
   return (
-    <div className="space-y-6">
-      <Link
-        to="/students"
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t("backToStudents")}
-      </Link>
+    <div className="min-h-screen bg-muted/20 p-4 sm:p-6 lg:p-8 space-y-8">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col gap-4">
+        <Link
+          to="/students"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          {t("backToStudents")}
+        </Link>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-3xl shadow-lg shadow-primary/20">
               {student.first_name?.[0]}
               {student.last_name?.[0]}
             </div>
             <div>
-              <CardTitle className="text-2xl">
+              <h1 className="text-3xl font-bold tracking-tight">
                 {student.first_name} {student.last_name}
-              </CardTitle>
-              <p className="text-muted-foreground">{student.phone}</p>
+              </h1>
+              <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+                <Phone className="w-4 h-4" />
+                <span>{student.phone}</span>
+                <Separator orientation="vertical" className="h-4 mx-1" />
+                {getStatusBadge(student.status!)}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {getStatusBadge(student.status!)}
-          </div>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-          <div className="flex items-center gap-3">
-            <Phone className="w-5 h-5 text-muted-foreground" />
-            <span>{student.phone}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Home className="w-5 h-5 text-muted-foreground" />
-            <span>{student.address}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-muted-foreground" />
-            <span>
-              {t("birthDate")}:{" "}
-              {format(new Date(student.date_of_birth!), "dd-MM-yyyy")}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Summary Cards */}
+          <div className="flex gap-2">
+            {/* Quick Actions can go here if needed */}
+          </div>
+        </div>
+      </div>
+
+      {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
+        <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-slate-950 dark:to-slate-900 border-none shadow-sm ring-1 ring-inset ring-gray-200 dark:ring-gray-800">
+          <CardContent className="p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">
                 {t("totalPayments")}
               </p>
-              <p className="text-2xl font-bold">
-                {new Intl.NumberFormat("en-US").format(
-                  transactions
-                    ?.filter((t) => t.status?.toLowerCase() === "success")
-                    .reduce((sum, t) => sum + (t.amount || 0), 0) || 0
-                )}{" "}
-                UZS
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold">
+                  {new Intl.NumberFormat("en-US").format(
+                    transactions
+                      ?.filter((t) => t.status?.toLowerCase() === "success")
+                      .reduce((sum, t) => sum + (t.amount || 0), 0) || 0
+                  )}
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  UZS
+                </span>
+              </div>
+              <Badge variant="secondary" className="mt-1">
                 {transactions?.filter(
                   (t) => t.status?.toLowerCase() === "success"
                 ).length || 0}{" "}
-                {t("successfulPayments") || "muvaffaqiyatli"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                {t("contractNumber") || "Shartnoma raqami"}
-              </p>
-              <p className="text-2xl font-bold">
-                {contracts?.find((c) => c.status === "active")
-                  ?.contract_number || "-"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                {t("attendancePercentage")}
-              </p>
-              <p className="text-2xl font-bold">
-                {attendances && attendances.length > 0
-                  ? Math.round(
-                      (attendances.filter((a) => a.status === "present")
-                        .length /
-                        attendances.length) *
-                        100
-                    )
-                  : 0}
-                %
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>{t("information")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("group")}</span>
-              <span className="font-medium">
-                {group?.name || t("notAssigned")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("coach")}</span>
-              <span className="font-medium">
-                {coach?.full_name || t("notAssigned")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Face ID</span>
-              <Badge variant="secondary">
-                {student.face_id || t("notSet")}
+                {t("successfulPayments")}
               </Badge>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("joinedDate")}</span>
-              <span className="font-medium">
-                {format(new Date(student.created_at!), "dd.MM.yyyy")}
-              </span>
+            <div className="p-3 bg-emerald-100/50 dark:bg-emerald-900/20 rounded-full text-emerald-600 dark:text-emerald-400">
+              <Wallet className="w-6 h-6" />
             </div>
           </CardContent>
         </Card>
 
-        {/* PARENTS SECTION */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" /> {t("parents") || "Ota-onalar"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {parentsList.length > 0 ? (
-              <div className="space-y-3">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {parentsList.map((parent: ParentRead | any, index) => (
-                  <div
-                    key={parent.id || index}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-muted/50 gap-2"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 mt-1">
-                        <User className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-lg">
-                          {parent.first_name} {parent.last_name}
-                        </p>
-                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                          {parent.relationship_type}
-                        </p>
-                        {parent.email && (
-                          <p className="text-sm text-muted-foreground">
-                            {parent.email}
-                          </p>
-                        )}
-                        {parent.is_from_contract && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] mt-1 h-5"
-                          >
-                            {t("fromContract")}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-sm flex items-center gap-2 bg-background dark:bg-muted/30 px-3 py-1.5 rounded border">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-mono text-foreground">
-                        {parent.phone || t("noPhone")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("noParentInfo") || "Ota-ona ma'lumoti yo'q"}</p>
-              </div>
-            )}
+        <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-slate-950 dark:to-slate-900 border-none shadow-sm ring-1 ring-inset ring-gray-200 dark:ring-gray-800">
+          <CardContent className="p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t("contractNumber")}
+              </p>
+              <span className="text-2xl font-bold tracking-tight">
+                {contracts?.find((c) => c.status === "active")
+                  ?.contract_number || "-"}
+              </span>
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                {contracts?.length || 0} {t("contracts")}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-100/50 dark:bg-blue-900/20 rounded-full text-blue-600 dark:text-blue-400">
+              <FileText className="w-6 h-6" />
+            </div>
           </CardContent>
         </Card>
 
-        {/* GUARDIANS SECTION */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" /> {t("guardian") || "Vasiy"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {guardiansList.length > 0 ? (
-              <div className="space-y-3">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {guardiansList.map((guardian: ParentRead | any, index) => (
-                  <div
-                    key={guardian.id || index}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 gap-2"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 mt-1">
-                        <User className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-lg">
-                          {guardian.first_name} {guardian.last_name}
-                        </p>
-                        <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                          {guardian.relationship_type}
-                        </p>
-                        {guardian.email && (
-                          <p className="text-sm text-muted-foreground">
-                            {guardian.email}
-                          </p>
-                        )}
-                        {guardian.is_from_contract && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] mt-1 h-5"
-                          >
-                            {t("fromContract")}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-sm flex items-center gap-2 bg-background dark:bg-muted/30 px-3 py-1.5 rounded border">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-mono text-foreground">
-                        {guardian.phone || t("noPhone")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+        <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-slate-950 dark:to-slate-900 border-none shadow-sm ring-1 ring-inset ring-gray-200 dark:ring-gray-800">
+          <CardContent className="p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t("attendancePercentage")}
+              </p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold">
+                  {attendances && attendances.length > 0
+                    ? Math.round(
+                        (attendances.filter((a) => a.status === "present")
+                          .length /
+                          attendances.length) *
+                          100
+                      )
+                    : 0}
+                  %
+                </span>
               </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <User className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("noGuardianInfo") || "Vasiy ma'lumoti yo'q"}</p>
-              </div>
-            )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Jami: {attendances?.length || 0} dars
+              </p>
+            </div>
+            <div className="p-3 bg-violet-100/50 dark:bg-violet-900/20 rounded-full text-violet-600 dark:text-violet-400">
+              <Percent className="w-6 h-6" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("contracts")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>{t("contractNumber")}</TableHead>
-                <TableHead>{t("status")}</TableHead>
-                <TableHead>{t("monthlyFee")}</TableHead>
-                <TableHead>{t("period")}</TableHead>
-                <TableHead>{t("duration")}</TableHead>
-                <TableHead className="text-right [&>div]:justify-end">
-                  {t("contract")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contracts && contracts.length > 0 ? (
-                contracts.map((c: ContractRead, index: number) => {
-                  const startDate = new Date(c.start_date!);
-                  const endDate = new Date(c.end_date!);
-                  const monthsDiff = Math.round(
-                    (endDate.getTime() - startDate.getTime()) /
-                      (1000 * 60 * 60 * 24 * 30)
-                  );
-                  return (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{index + 1}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-muted-foreground" />
-                          {c.contract_number}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(c.status!)}</TableCell>
-                      <TableCell>
-                        {new Intl.NumberFormat("en-US").format(c.monthly_fee)}{" "}
-                        UZS
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-sm">
-                            {format(startDate, "dd.MM.yyyy")}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            - {format(endDate, "dd.MM.yyyy")}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {monthsDiff} {t("months")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewContract(c)}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            {t("viewContract")}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadPdf(c)}
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            {t("downloadContract")}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
-                    {t("noContracts")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* MAIN CONTENT TABS */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="bg-background border p-1 h-auto">
+          <TabsTrigger value="overview" className="px-4 py-2">
+            {t("information") || "Umumiy"}
+          </TabsTrigger>
+          <TabsTrigger value="finance" className="px-4 py-2">
+            {t("finance") || "Moliya"}
+          </TabsTrigger>
+          <TabsTrigger value="attendance" className="px-4 py-2">
+            {t("attendanceHistory") || "Davomat"}
+          </TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("paymentHistory")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>{t("date")}</TableHead>
-                <TableHead>{t("yearMonth")}</TableHead>
-                <TableHead>{t("sum")}</TableHead>
-                <TableHead>{t("source")}</TableHead>
-                <TableHead>{t("status")}</TableHead>
-                <TableHead>{t("comment")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions && transactions.length > 0 ? (
-                transactions.map((t: TransactionRead, index: number) => {
-                  const paidDate = new Date(t.paid_at!);
-                  return (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{index + 1}
-                      </TableCell>
-                      <TableCell>{format(paidDate, "dd.MM.yyyy")}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono">
-                          {t.payment_year}-
-                          {t.payment_months && t.payment_months.length > 0
-                            ? t.payment_months
-                                .map((m) => String(m).padStart(2, "0"))
-                                .join(",")
-                            : format(paidDate, "MM")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {new Intl.NumberFormat("en-US").format(t.amount)} UZS
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {formatSource(t.source)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(t.status!)}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {t.comment || "-"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
-                    {t("noPayments")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        {/* --- OVERVIEW TAB --- */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Student Details Card */}
+            <Card className="lg:col-span-1 h-fit">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="w-5 h-5 text-primary" />
+                  {t("personalInfo")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        {t("address")}
+                      </p>
+                      <p className="font-medium text-sm">
+                        {student.address || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        {t("birthDate")}
+                      </p>
+                      <p className="font-medium text-sm">
+                        {student.date_of_birth
+                          ? format(
+                              new Date(student.date_of_birth),
+                              "dd.MM.yyyy"
+                            )
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <Users className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        {t("group")}
+                      </p>
+                      <p className="font-medium text-sm">
+                        {group?.name || t("notAssigned")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <User className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        {t("coach")}
+                      </p>
+                      <p className="font-medium text-sm">
+                        {coach?.full_name || t("notAssigned")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-t">
+                    <span className="text-sm text-muted-foreground">
+                      Face ID
+                    </span>
+                    <Badge variant={student.face_id ? "default" : "secondary"}>
+                      {student.face_id ? "Bor" : t("notSet")}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-t border-b">
+                    <span className="text-sm text-muted-foreground">
+                      {t("joinedDate")}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {student.created_at
+                        ? format(new Date(student.created_at), "dd.MM.yyyy")
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("attendanceHistory")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("date")}</TableHead>
-                <TableHead>{t("status")}</TableHead>
-                <TableHead>{t("comment")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {attendances && attendances.length > 0 ? (
-                attendances.map((a: AttendanceRead) => (
-                  <TableRow key={a.id}>
-                    <TableCell>
-                      {format(new Date(a.created_at!), "dd.MM.yyyy HH:mm")}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(a.status!)}</TableCell>
-                    <TableCell>{a.comment}</TableCell>
+            {/* Parents & Guardians */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Parents */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="w-5 h-5 text-blue-500" />
+                    {t("parents") || "Ota-onalar"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {parentsList.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {parentsList.map((parent: any, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start gap-3 p-4 rounded-xl border bg-card hover:shadow-sm transition-shadow"
+                        >
+                          <div className="p-2.5 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                            <User className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">
+                              {parent.first_name} {parent.last_name}
+                            </p>
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">
+                              {parent.relationship_type}
+                            </p>
+                            <a
+                              href={`tel:${parent.phone}`}
+                              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                            >
+                              <Phone className="w-3 h-3" /> {parent.phone}
+                            </a>
+                            {parent.is_from_contract && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] h-4 px-1 mt-2"
+                              >
+                                {t("fromContract")}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg border border-dashed">
+                      <p>{t("noParentInfo")}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Guardians */}
+              {guardiansList.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-amber-500" />
+                      {t("guardian") || "Vasiy / Buyurtmachi"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {guardiansList.map((guardian: any, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900/50"
+                        >
+                          <div className="p-2.5 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                            <User className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">
+                              {guardian.first_name} {guardian.last_name}
+                            </p>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-1">
+                              {guardian.relationship_type}
+                            </p>
+                            <a
+                              href={`tel:${guardian.phone}`}
+                              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                            >
+                              <Phone className="w-3 h-3" /> {guardian.phone}
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
+          {/* DANGER ZONE */}
+          <Card className="border-red-200 bg-red-50/30 dark:bg-red-950/10 dark:border-red-900/50">
+            <CardHeader>
+              <CardTitle className="text-red-600 dark:text-red-500 text-base flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                {t("criticalAction")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between flex-wrap gap-4">
+              <div className="text-sm text-muted-foreground max-w-2xl">
+                <p>{t("studentDeletionWarning_line1")}</p>
+                <p className="font-medium mt-1">
+                  {t("studentDeletionWarning_line2")}
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={() => setIsHardDeleteDialogOpen(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t("permanentlyDelete")}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* --- FINANCE TAB --- */}
+        <TabsContent value="finance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                {t("contracts")}
+              </CardTitle>
+              <CardDescription>
+                Barcha tuzilgan shartnomalar tarixi
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">#</TableHead>
+                    <TableHead>{t("contractNumber")}</TableHead>
+                    <TableHead>{t("status")}</TableHead>
+                    <TableHead>{t("monthlyFee")}</TableHead>
+                    <TableHead>{t("period")}</TableHead>
+                    <TableHead className="text-right">{t("action")}</TableHead>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center h-24">
-                    {t("noAttendanceData")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {contracts && contracts.length > 0 ? (
+                    contracts.map((c, idx) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-mono text-muted-foreground">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {c.contract_number}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(c.status!)}</TableCell>
+                        <TableCell>
+                          {new Intl.NumberFormat("en-US").format(c.monthly_fee)}{" "}
+                          UZS
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {format(new Date(c.start_date), "dd.MM.yyyy")} -{" "}
+                          {format(new Date(c.end_date), "dd.MM.yyyy")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleViewContract(c)}
+                              title={t("viewContract")}
+                            >
+                              <Eye className="w-4 h-4 text-blue-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownloadPdf(c)}
+                              title={t("downloadContract")}
+                            >
+                              <Download className="w-4 h-4 text-green-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center h-24 text-muted-foreground"
+                      >
+                        {t("noContracts")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-      {/* Critical Actions Section */}
-      <Card className="border-red-500/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-red-600 dark:text-red-500">
-            <AlertTriangle className="w-5 h-5" />
-            {t("criticalAction")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            {t("studentDeletionWarning_line1")}
-            <br />
-            <span className="font-semibold">{t("studentDeletionWarning_line2")}</span>
-          </p>
-          <Button
-            variant="destructive"
-            onClick={() => setIsHardDeleteDialogOpen(true)}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {t("permanentlyDelete")}
-          </Button>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-emerald-500" />
+                {t("paymentHistory")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">#</TableHead>
+                    <TableHead>{t("date")}</TableHead>
+                    <TableHead>{t("sum")}</TableHead>
+                    <TableHead>{t("yearMonth")}</TableHead>
+                    <TableHead>{t("source")}</TableHead>
+                    <TableHead>{t("status")}</TableHead>
+                    <TableHead>{t("comment")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {transactions && transactions.length > 0 ? (
+                    transactions.map((t, idx) => (
+                      <TableRow key={t.id}>
+                        <TableCell className="font-mono text-muted-foreground">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell>
+                          {t.paid_at
+                            ? format(new Date(t.paid_at), "dd.MM.yyyy")
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="font-bold text-emerald-600 dark:text-emerald-400">
+                          +{new Intl.NumberFormat("en-US").format(t.amount)} UZS
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="font-mono bg-background"
+                          >
+                            {t.payment_year}-
+                            {t.payment_months
+                              ?.map((m) => String(m).padStart(2, "0"))
+                              .join(", ") || format(new Date(t.paid_at!), "MM")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {formatSource(t.source)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(t.status!)}</TableCell>
+                        <TableCell
+                          className="text-muted-foreground text-sm max-w-[200px] truncate"
+                          title={t.comment || ""}
+                        >
+                          {t.comment || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center h-24 text-muted-foreground"
+                      >
+                        {t("noPayments")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Hard Delete Confirmation Dialog */}
+        {/* --- ATTENDANCE TAB --- */}
+        <TabsContent value="attendance">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-violet-500" />
+                {t("attendanceHistory")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("date")}</TableHead>
+                    <TableHead>{t("status")}</TableHead>
+                    <TableHead>{t("comment")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {attendances && attendances.length > 0 ? (
+                    attendances.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="font-medium">
+                          {format(new Date(a.created_at!), "dd.MM.yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(a.status!)}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {a.comment || "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={3}
+                        className="text-center h-24 text-muted-foreground"
+                      >
+                        {t("noAttendanceData")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* DELETE CONFIRMATION DIALOG */}
       <Dialog
         open={isHardDeleteDialogOpen}
         onOpenChange={setIsHardDeleteDialogOpen}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-red-600 dark:text-red-500">
-              <AlertTriangle />
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-center">
               {t("permanentDeleteWarning")}
             </DialogTitle>
-            <DialogDescription className="pt-4 text-left">
-              <p>
-                {t("permanentDeleteStudent")}
-                <span className="font-bold text-foreground">
-                  {` ${student.first_name} ${student.last_name}`}
-                </span>
-                ?
-              </p>
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t("studentDeletionWarning_line1")}
-              </p>
-              <p className="mt-2 font-semibold text-red-600 dark:text-red-500">
+            <DialogDescription className="text-center pt-2">
+              {t("permanentDeleteStudent")}{" "}
+              <span className="font-bold text-foreground">
+                {student.first_name} {student.last_name}
+              </span>
+              ?
+              <br />
+              <span className="text-red-600 font-medium mt-2 block">
                 {t("thisActionCannotBeUndone")}!
-              </p>
+              </span>
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-3 mt-4 justify-center">
             <Button
               variant="outline"
               onClick={() => setIsHardDeleteDialogOpen(false)}
-              className="flex-1"
               disabled={hardDeleteMutation.isPending}
             >
               {t("cancel")}
@@ -955,16 +889,10 @@ export default function StudentDetailPage() {
               variant="destructive"
               onClick={() => hardDeleteMutation.mutate()}
               disabled={hardDeleteMutation.isPending}
-              className="flex-1 gap-2"
             >
-              {hardDeleteMutation.isPending ? (
-                t("deleting")
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4" />
-                  {t("confirmPermanentDelete")}
-                </>
-              )}
+              {hardDeleteMutation.isPending
+                ? t("deleting")
+                : t("confirmPermanentDelete")}
             </Button>
           </div>
         </DialogContent>

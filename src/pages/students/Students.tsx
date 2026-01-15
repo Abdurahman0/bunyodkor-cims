@@ -302,7 +302,7 @@ export default function Students() {
           <p className="text-muted-foreground mt-1">{t("manageStudents")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             className="gap-2"
@@ -332,7 +332,7 @@ export default function Students() {
               {t("exportAll") || "Barchasi"}
             </span>
             <span className="sm:hidden font-bold">Full</span>
-          </Button>
+          </Button> */}
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">{t("addStudent")}</span>
@@ -694,7 +694,6 @@ export default function Students() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm font-bold text-red-900 dark:text-red-200 mb-2 flex items-center gap-2">
-                      <span>⚠️</span>
                       <span>
                         {t("deleteStudentWarning") || "Talabani o'chirasizmi?"}
                       </span>
