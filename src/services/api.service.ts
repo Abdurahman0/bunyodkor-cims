@@ -888,6 +888,7 @@ export const contractService = {
    * GET /contracts/{contract_id}
    */
   getContract: async (
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.get<ApiResponse<ContractRead>>(
       `/contracts/${contractId}`
@@ -1459,12 +1460,12 @@ export const headCoachService = {
    * Get head coach statistics
    * GET /head-coach/stats
    */
-  getHeadCoachStats: async (): Promise<ApiResponse<HeadCoachStats>> => {
-    const response = await apiClient.get<ApiResponse<HeadCoachStats>>(
-      "/head-coach/stats"
-    );
-    return response.data;
-  },
+  // getHeadCoachStats: async (): Promise<ApiResponse<HeadCoachStats>> => {
+  //   const response = await apiClient.get<ApiResponse<HeadCoachStats>>(
+  //     "/head-coach/stats"
+  //   );
+  //   return response.data;
+  // },
 };
 
 // ============================================================================

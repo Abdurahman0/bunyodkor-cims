@@ -203,6 +203,7 @@ export default function Students() {
   const hasActiveFilters =
     search || statusFilter || groupFilter || archiveYearFilter;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleExport = () => {
     try {
       if (!data?.data || data.data.length === 0) {
