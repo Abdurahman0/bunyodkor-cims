@@ -47,8 +47,8 @@ import type { SessionCreateRequest, SessionRead } from "@/types/api";
 
 // Reusable Components
 import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
-import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog";
-import SessionDialog from "@/pages/coach/SessionDialog";
+import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog"; // Assuming this is correct
+import { SessionDialog } from "@/pages/coach/SessionDialog"; // Corrected import
 
 export default function HeadCoach() {
   const queryClient = useQueryClient();
