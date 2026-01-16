@@ -142,43 +142,10 @@ export default function Contracts() {
 
   const {
     data: studentsData,
-    error: studentsError,
     isLoading: isLoadingStudents,
   } = useQuery({
     queryKey: ["students-list"],
-    queryFn: async () => {
-      console.log("[CONTRACTS] Fetching students list with pagination");
-      try {
-        let allStudents: StudentRead[] = [];
-        let currentPage = 1;
-        let hasMore = true;
-
-        while (hasMore) {
-          const response = await studentService.getStudents({
-            page: currentPage,
-            page_size: 100,
-          });
-
-          if (response.data && response.data.length > 0) {
-            allStudents = [...allStudents, ...response.data];
-            currentPage++;
-
-            // If we got less than 100, we've reached the end
-            if (response.data.length < 100) {
-              hasMore = false;
-            }
-          } else {
-            hasMore = false;
-          }
-        }
-
-        console.log("[CONTRACTS] Total students fetched:", allStudents.length);
-        return { data: allStudents };
-      } catch (err) {
-        console.error("[CONTRACTS] Error fetching students:", err);
-        throw err;
-      }
-    },
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }), // Fetch all students
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
