@@ -291,9 +291,8 @@ export default function Finance() {
     return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
   };
 
-  // Use compact formatting for large numbers to prevent overflow on mobile
-  const formatCurrency = (amount: number, compact: boolean = false) => {
-    return formatCurrencyUtil(amount, "UZS", "uz-UZ", compact);
+  const formatCurrency = (amount: number) => {
+    return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
   };
 
   const formatPaymentMonths = (months: number[] | null | undefined) => {
@@ -521,7 +520,7 @@ export default function Finance() {
                       </TableCell>
                       <TableCell>
                         <span className="font-semibold text-foreground text-sm sm:text-base">
-                          {formatCurrency(transaction.amount, false)}
+                          {formatCurrency(transaction.amount)}
                         </span>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">

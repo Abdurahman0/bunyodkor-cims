@@ -125,9 +125,46 @@ export default function Reports() {
     enabled: activeTab === "debtors",
   });
 
-  // Use compact formatting for large numbers to prevent overflow
-  const formatCurrency = (amount: number, compact: boolean = false) => {
-    return formatCurrencyUtil(amount, "UZS", "uz-UZ", compact);
+  // Query to get the total debt amount
+  const { data: totalDebtData } = useQuery({
+    queryKey: [
+      "unpaid-students-total",
+      selectedGroupId,
+      filterMode,
+      selectedYear,
+      selectedMonth,
+      selectedMonths,
+      unpaidDateRange,
+    ],
+    queryFn: () => {
+      const params: any = {
+        page: 1,
+        page_size: 100000, // Fetch all students to calculate total debt
+        group_id: selectedGroupId || undefined,
+      };
+
+      if (filterMode === "month") {
+        params.year = selectedYear;
+        if (selectedMonths) {
+          params.months = selectedMonths;
+        } else if (selectedMonth) {
+          params.month = selectedMonth;
+        }
+      } else {
+        params.from_date = unpaidDateRange.from;
+        params.to_date = unpaidDateRange.to;
+      }
+
+      return studentService.getUnpaidStudents(params);
+    },
+    enabled: activeTab === "debtors",
+  });
+
+  const totalDebtAmount =
+    totalDebtData?.data?.reduce((acc, item) => acc + item.debt_amount, 0) || 0;
+
+  const formatCurrency = (amount: number) => {
+    return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
   };
 
   const formatSource = (source: string) => {
@@ -453,12 +490,11 @@ export default function Reports() {
                       {formatCurrency(
                         Math.round(
                           item.total_amount / (item.transaction_count || 1)
-                        ),
-                        false
+                        )
                       )}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {formatCurrency(item.total_amount, false)}
+                      {formatCurrency(item.total_amount)}
                     </TableCell>
                   </TableRow>
                 )) || (
@@ -727,13 +763,7 @@ export default function Reports() {
             />
             <StatsCard
               title={t("totalDebtAmount")}
-              value={formatCurrency(
-                debtorsData?.data?.reduce(
-                  (acc, item) => acc + item.debt_amount,
-                  0
-                ) || 0,
-                false
-              )}
+              value={formatCurrency(totalDebtAmount)}
               icon={<CreditCard className="w-6 h-6" />}
             />
           </div>
@@ -786,14 +816,14 @@ export default function Reports() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
-                        {formatCurrency(debtor.total_expected, false)}
+                        {formatCurrency(debtor.total_expected)}
                       </TableCell>
                       <TableCell className="text-right text-green-600 dark:text-green-400">
-                        {formatCurrency(debtor.total_paid, false)}
+                        {formatCurrency(debtor.total_paid)}
                       </TableCell>
                       <TableCell className="text-right">
                         <span className="text-red-600 dark:text-red-400 font-medium">
-                          {formatCurrency(debtor.debt_amount, false)}
+                          {formatCurrency(debtor.debt_amount)}
                         </span>
                       </TableCell>
                     </TableRow>
