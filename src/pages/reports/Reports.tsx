@@ -83,7 +83,7 @@ export default function Reports() {
     enabled: activeTab === "attendance",
   });
 
-  const { data: groupsData } = useQuery({
+  const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
     enabled: activeTab === "debtors",
@@ -772,7 +772,7 @@ export default function Reports() {
             <CardHeader>
               <CardTitle className="text-lg">{t("debtorsList")}</CardTitle>
             </CardHeader>
-            <Table isLoading={debtorsLoading}>
+            <Table isLoading={debtorsLoading || groupsLoading}>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("student")}</TableHead>
