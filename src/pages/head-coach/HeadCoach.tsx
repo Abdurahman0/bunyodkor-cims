@@ -1,8 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  headCoachService,
-} from "@/services/api.service";
+import { headCoachService } from "@/services/api.service";
 import { motion } from "framer-motion";
 
 // UI Components
@@ -24,7 +22,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Select (Custom wrapping qilingan versiyangiz)
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -43,19 +40,15 @@ import {
   Eye,
   UserCog,
   Trash2,
-  MapPin, // Stadion uchun icon
 } from "lucide-react";
 
 import { toast } from "react-hot-toast";
-import type {
-  SessionCreateRequest,
-  SessionRead,
-} from "@/types/api";
+import type { SessionCreateRequest, SessionRead } from "@/types/api";
 
 // Reusable Components
 import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
 import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog";
-import { SessionDialog } from "@/pages/coach/SessionDialog";
+import SessionDialog from "@/pages/coach/SessionDialog";
 
 export default function HeadCoach() {
   const queryClient = useQueryClient();
@@ -64,7 +57,7 @@ export default function HeadCoach() {
   const [activeTab, setActiveTab] = useState("overview");
   const [filterGroupId, setFilterGroupId] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<SessionRead | null>(
-    null
+    null,
   );
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
@@ -73,7 +66,7 @@ export default function HeadCoach() {
   >(undefined);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<SessionRead | null>(
-    null
+    null,
   );
 
   // --- API Queries ---
@@ -89,7 +82,7 @@ export default function HeadCoach() {
       headCoachService.getAllSessions(
         filterGroupId === "all"
           ? undefined
-          : { group_id: Number(filterGroupId) }
+          : { group_id: Number(filterGroupId) },
       ),
     select: (data) => data.data,
   });
@@ -114,7 +107,7 @@ export default function HeadCoach() {
     },
     onError: (err: any) => {
       toast.error(
-        err.response?.data?.detail || "Mashg'ulotni o'chirishda xatolik"
+        err.response?.data?.detail || "Mashg'ulotni o'chirishda xatolik",
       );
     },
   });
@@ -144,17 +137,17 @@ export default function HeadCoach() {
 
   const totalCapacity = useMemo(
     () => groups.reduce((sum, g) => sum + g.capacity, 0),
-    [groups]
+    [groups],
   );
 
   const occupancyRate = useMemo(
     () =>
       totalCapacity > 0
         ? (((stats?.active_students_count || 0) / totalCapacity) * 100).toFixed(
-            1
+            1,
           )
         : "0",
-    [stats, totalCapacity]
+    [stats, totalCapacity],
   );
 
   const filteredGroups = useMemo(() => {
@@ -166,7 +159,7 @@ export default function HeadCoach() {
 
   const upcomingSessions = useMemo(
     () => sessions.filter((s) => new Date(s.session_date) > new Date()).length,
-    [sessions]
+    [sessions],
   );
 
   // --- Handlers ---
@@ -206,7 +199,8 @@ export default function HeadCoach() {
 
   // --- Render ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 sm:p-6 lg:p-8 space-y-6">
+    // YANGILANGAN QISM: dark:bg-blue-900/30 qo'shildi
+    <div className="min-h-screen bg-slate-50 dark:bg-blue-900/30 p-4 sm:p-6 lg:p-8 space-y-6">
       {/* HEADER */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -277,7 +271,7 @@ export default function HeadCoach() {
             animate={{ opacity: 1, y: 0 }}
             className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
           >
-            <Card className="border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="border-l-4 border-l-blue-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -291,7 +285,7 @@ export default function HeadCoach() {
                   {isStatsLoading ? (
                     <Loader2 className="animate-spin w-8 h-8" />
                   ) : (
-                    stats?.active_groups_count ?? 0
+                    (stats?.active_groups_count ?? 0)
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
@@ -300,7 +294,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -314,7 +308,7 @@ export default function HeadCoach() {
                   {isStatsLoading ? (
                     <Loader2 className="animate-spin w-8 h-8" />
                   ) : (
-                    stats?.active_students_count ?? 0
+                    (stats?.active_students_count ?? 0)
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
@@ -326,7 +320,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="border-l-4 border-l-purple-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -340,7 +334,7 @@ export default function HeadCoach() {
                   {isStatsLoading ? (
                     <Loader2 className="animate-spin w-8 h-8" />
                   ) : (
-                    stats?.today_sessions_count ?? 0
+                    (stats?.today_sessions_count ?? 0)
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
@@ -350,7 +344,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-orange-500 bg-gradient-to-br from-orange-50 to-white dark:from-orange-900/20 dark:to-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="border-l-4 border-l-orange-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -383,7 +377,6 @@ export default function HeadCoach() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* 2-MUAMMO YECHIMI: Hover stillarini to'g'irladik */}
                 <Button
                   onClick={handleCreateNewSession}
                   variant="outline"
@@ -517,7 +510,7 @@ export default function HeadCoach() {
                     <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full ${groupColorMap.get(
-                          group.id
+                          group.id,
                         )} transition-all duration-500`}
                         style={{
                           width: `${
@@ -529,7 +522,6 @@ export default function HeadCoach() {
                   </div>
                 </CardContent>
                 <CardFooter className="bg-slate-50 dark:bg-slate-900/50 border-t pt-3">
-                  {/* 1-MUAMMO YECHIMI: onClick qo'shildi */}
                   <Button
                     variant="ghost"
                     size="sm"
