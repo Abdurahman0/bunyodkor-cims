@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  publicService,
-  contractService,
   headCoachService,
 } from "@/services/api.service";
 import { motion } from "framer-motion";
@@ -29,7 +26,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Select (Custom wrapping qilingan versiyangiz)
 import { Select } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 // Icons
@@ -38,12 +34,7 @@ import {
   Users,
   Plus,
   BarChart2,
-  FileText,
   Loader2,
-  Search,
-  CheckCircle,
-  AlertCircle,
-  Download,
   Activity,
   UserCheck,
   Clock,
@@ -55,12 +46,10 @@ import {
   MapPin, // Stadion uchun icon
 } from "lucide-react";
 
-import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import type {
   SessionCreateRequest,
   SessionRead,
-  ContractInfoPublic,
 } from "@/types/api";
 
 // Reusable Components
@@ -86,12 +75,6 @@ export default function HeadCoach() {
   const [sessionToDelete, setSessionToDelete] = useState<SessionRead | null>(
     null
   );
-
-  // Contract Search States
-  const [contractNumber, setContractNumber] = useState("");
-  const [contractResult, setContractResult] =
-    useState<ContractInfoPublic | null>(null);
-  const [contractError, setContractError] = useState<string | null>(null);
 
   // --- API Queries ---
   const { data: groups = [], isLoading: isGroupsLoading } = useQuery({
@@ -120,34 +103,6 @@ export default function HeadCoach() {
   });
 
   // --- Mutations ---
-  const searchContractMutation = useMutation({
-    mutationFn: (number: string) => publicService.getContractInfo(number),
-    onSuccess: (data) => {
-      setContractResult(data);
-      setContractError(null);
-      toast.success("Shartnoma ma'lumotlari topildi");
-    },
-    onError: (err: any) => {
-      setContractResult(null);
-      setContractError(err.response?.data?.detail || "Shartnoma topilmadi");
-      toast.error("Shartnoma topilmadi");
-    },
-  });
-
-  const downloadPdfMutation = useMutation({
-    mutationFn: (data: { year: number; number: string }) =>
-      contractService.getContractPdf(data.year, data.number),
-    onSuccess: (data) => {
-      if (data?.pdf_url) {
-        window.open(data.pdf_url, "_blank");
-        toast.success("PDF ochilmoqda...");
-      } else {
-        toast.error("PDF havolasi topilmadi");
-      }
-    },
-    onError: () => toast.error("Faylni yuklashda xatolik"),
-  });
-
   const deleteSessionMutation = useMutation({
     mutationFn: (sessionId: number) =>
       headCoachService.deleteSession(sessionId),
@@ -230,20 +185,6 @@ export default function HeadCoach() {
     setSessionDialogOpen(true);
   };
 
-  const handleCheckContract = () => {
-    if (!contractNumber.trim()) return;
-    searchContractMutation.mutate(contractNumber);
-  };
-
-  const handleDownloadPdf = () => {
-    if (!contractResult) return;
-    const year = new Date(contractResult.start_date).getFullYear();
-    downloadPdfMutation.mutate({
-      year,
-      number: contractResult.contract_number,
-    });
-  };
-
   const handleDeleteRequest = (session: SessionRead) => {
     setSessionToDelete(session);
     setDeleteConfirmOpen(true);
@@ -262,9 +203,6 @@ export default function HeadCoach() {
     setActiveTab("timetable");
     toast.success("Guruh jadvali ochildi");
   };
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
 
   // --- Render ---
   return (
@@ -328,12 +266,6 @@ export default function HeadCoach() {
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
           >
             <Users className="w-4 h-4 mr-2" /> Guruhlar
-          </TabsTrigger>
-          <TabsTrigger
-            value="contract"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
-          >
-            <FileText className="w-4 h-4 mr-2" /> Shartnomalar
           </TabsTrigger>
         </TabsList>
 
@@ -465,13 +397,6 @@ export default function HeadCoach() {
                   className="w-full justify-start hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                 >
                   <Users className="w-4 h-4 mr-2" /> Guruhlarni Ko'rish
-                </Button>
-                <Button
-                  onClick={() => setActiveTab("contract")}
-                  variant="outline"
-                  className="w-full justify-start hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
-                >
-                  <FileText className="w-4 h-4 mr-2" /> Shartnomani Tekshirish
                 </Button>
               </CardContent>
             </Card>
@@ -618,124 +543,6 @@ export default function HeadCoach() {
               </Card>
             ))}
           </motion.div>
-        </TabsContent>
-
-        {/* CONTRACT TAB */}
-        <TabsContent value="contract" className="space-y-6">
-          <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Shartnoma Qidirish</CardTitle>
-                <CardDescription>
-                  Student shartnoma raqamini kiriting
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder="Shartnoma raqami (21-2015C2)"
-                      value={contractNumber}
-                      onChange={(e) => setContractNumber(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleCheckContract();
-                        }
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleCheckContract}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    disabled={
-                      searchContractMutation.isPending || !contractNumber
-                    }
-                  >
-                    {searchContractMutation.isPending && (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    )}
-                    <Search className="w-4 h-4 mr-2" />
-                    Qidirish
-                  </Button>
-                </div>
-                {contractError && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    {contractError}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {contractResult && (
-              <Card className="shadow-lg border-t-4 border-t-emerald-500">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-emerald-500" />
-                    <CardTitle>
-                      {contractResult.student_first_name}{" "}
-                      {contractResult.student_last_name}
-                    </CardTitle>
-                  </div>
-                  <CardDescription className="font-mono">
-                    {contractResult.contract_number}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <span className="text-xs text-slate-500">
-                        Oylik To'lov
-                      </span>
-                      <p className="font-semibold text-blue-600">
-                        {formatCurrency(contractResult.monthly_fee)}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-xs text-slate-500">Joriy Qarz</span>
-                      <p
-                        className={`font-semibold ${
-                          contractResult.current_debt > 0
-                            ? "text-red-500"
-                            : "text-emerald-500"
-                        }`}
-                      >
-                        {formatCurrency(contractResult.current_debt)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="pt-3 border-t">
-                    <span className="text-xs text-slate-500">
-                      Boshlanish Sanasi
-                    </span>
-                    <p className="font-medium">
-                      {format(
-                        new Date(contractResult.start_date),
-                        "dd.MM.yyyy"
-                      )}
-                    </p>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    onClick={handleDownloadPdf}
-                    disabled={downloadPdfMutation.isPending}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    {downloadPdfMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                      <Download className="w-4 h-4 mr-2" />
-                    )}
-                    PDF Yuklash
-                  </Button>
-                </CardFooter>
-              </Card>
-            )}
-          </div>
         </TabsContent>
       </Tabs>
 

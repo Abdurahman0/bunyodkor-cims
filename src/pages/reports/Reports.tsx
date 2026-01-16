@@ -126,7 +126,7 @@ export default function Reports() {
   });
 
   // Use compact formatting for large numbers to prevent overflow
-  const formatCurrency = (amount: number, compact: boolean = true) => {
+  const formatCurrency = (amount: number, compact: boolean = false) => {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", compact);
   };
 
@@ -732,7 +732,7 @@ export default function Reports() {
                   (acc, item) => acc + item.debt_amount,
                   0
                 ) || 0,
-                true
+                false
               )}
               icon={<CreditCard className="w-6 h-6" />}
             />

@@ -292,7 +292,7 @@ export default function Finance() {
   };
 
   // Use compact formatting for large numbers to prevent overflow on mobile
-  const formatCurrency = (amount: number, compact: boolean = true) => {
+  const formatCurrency = (amount: number, compact: boolean = false) => {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", compact);
   };
 
