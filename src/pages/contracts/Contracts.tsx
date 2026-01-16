@@ -72,10 +72,7 @@ export default function Contracts() {
   // Fetch groups on component mount if not already loaded
   useEffect(() => {
     if (!allGroupsData && !isLoadingGroups) {
-      console.log("[CONTRACTS] No groups data, fetching from store...");
       fetchGroups();
-    } else {
-      console.log("[CONTRACTS] Groups already loaded:", allGroupsData);
     }
   }, [allGroupsData, isLoadingGroups, fetchGroups]);
 
@@ -104,15 +101,6 @@ export default function Contracts() {
       contractIdFilter,
     ],
     queryFn: async () => {
-      console.log("[CONTRACTS] Fetching contracts with params:", {
-        page,
-        page_size: 10,
-        contract_number: debouncedSearch || undefined,
-        status: statusFilter || undefined,
-        group_id: groupFilter,
-        contract_id: contractIdFilter,
-      });
-
       try {
         const response = await contractService.getContracts({
           page,
@@ -123,10 +111,6 @@ export default function Contracts() {
           contract_id: contractIdFilter,
         });
 
-        console.log("[CONTRACTS] Response:", response);
-        console.log("[CONTRACTS] Data:", response?.data);
-        console.log("[CONTRACTS] Meta:", response?.meta);
-
         return response;
       } catch (err) {
         console.error("[CONTRACTS] Error fetching contracts:", err);
@@ -135,10 +119,7 @@ export default function Contracts() {
     },
   });
 
-  // Log error if exists
-  if (error) {
-    console.error("[CONTRACTS] Query error:", error);
-  }
+
 
   const {
     data: studentsData,
@@ -149,14 +130,9 @@ export default function Contracts() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Log errors
-  if (studentsError) {
-    console.log("[CONTRACTS] Students query error:", studentsError);
-  }
 
-  // Log loading state
-  console.log("[CONTRACTS] Students loading state:", isLoadingStudents);
-  console.log("[CONTRACTS] Students data available:", !!studentsData);
+
+
 
   // Fetch group details if filtering by group
   const { data: groupData } = useQuery({
@@ -207,19 +183,9 @@ export default function Contracts() {
   const getStudentName = (studentId: number | null | undefined) => {
     if (!studentId) return t("unknown") || "Noma'lum";
 
-    console.log("[CONTRACTS] getStudentName called with studentId:", studentId);
-    console.log("[CONTRACTS] studentsData:", studentsData);
-    console.log("[CONTRACTS] studentsData?.data:", studentsData?.data);
-    console.log(
-      "[CONTRACTS] studentsData?.data length:",
-      studentsData?.data?.length
-    );
-
     const student = studentsData?.data?.find(
       (s: StudentRead) => s.id === studentId
     );
-
-    console.log("[CONTRACTS] Found student:", student);
 
     return student
       ? `${student.first_name} ${student.last_name}`
@@ -318,16 +284,7 @@ export default function Contracts() {
 
   const paginationItems = getPaginationItems();
 
-  // Debug log for render
-  console.log("[CONTRACTS] Rendering with state:", {
-    isLoading,
-    hasData: !!data,
-    dataLength: data?.data?.length,
-    hasError: !!error,
-    studentsCount: studentsData?.data?.length,
-    groupsCount: allGroupsData?.length,
-    groupsLoading: isLoadingGroups,
-  });
+
 
   return (
     <div className="space-y-6">
@@ -383,10 +340,6 @@ export default function Contracts() {
                 <Select
                   value={groupFilter?.toString() || ""}
                   onChange={(e) => {
-                    console.log(
-                      "[CONTRACTS] Group filter changed:",
-                      e.target.value
-                    );
                     setGroupFilter(
                       e.target.value ? parseInt(e.target.value) : undefined
                     );
@@ -400,11 +353,6 @@ export default function Contracts() {
                           !yearGroup?.groups ||
                           !Array.isArray(yearGroup.groups)
                         ) {
-                          console.log(
-                            "[CONTRACTS] Invalid yearGroup at index",
-                            yearIndex,
-                            yearGroup
-                          );
                           return null;
                         }
 
@@ -412,19 +360,10 @@ export default function Contracts() {
                           .filter((group: any) => {
                             const isValid = group && group.id && group.name;
                             if (!isValid) {
-                              console.log(
-                                "[CONTRACTS] Filtering out invalid group:",
-                                group
-                              );
                             }
                             return isValid;
                           })
                           .map((group: any) => {
-                            console.log(
-                              "[CONTRACTS] Rendering group option:",
-                              group.id,
-                              group.name
-                            );
                             return (
                               <option
                                 key={`group-${group.id}`}
