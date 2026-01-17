@@ -87,14 +87,6 @@ export default function HeadCoach() {
     select: (data) => data.data,
   });
 
-  const { data: stats, isLoading: isStatsLoading } = useQuery({
-    queryKey: ["headCoachStats"],
-    queryFn: async () => {
-      const response = await headCoachService.getHeadCoachStats();
-      return response.data;
-    },
-  });
-
   const { data: coachesData = [], isLoading: isCoachesLoading } = useQuery({
     queryKey: ["coaches-list"],
     queryFn: () => userService.getCoaches(),
@@ -108,7 +100,6 @@ export default function HeadCoach() {
       headCoachService.deleteSession(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      queryClient.invalidateQueries({ queryKey: ["headCoachStats"] });
       toast.success("Mashg'ulot muvaffaqiyatli o'chirildi");
       setDetailsDialogOpen(false);
     },
@@ -142,32 +133,12 @@ export default function HeadCoach() {
     return map;
   }, [groups]);
 
-  const totalCapacity = useMemo(
-    () => groups.reduce((sum, g) => sum + g.capacity, 0),
-    [groups],
-  );
-
-  const occupancyRate = useMemo(
-    () =>
-      totalCapacity > 0
-        ? (((stats?.active_students_count || 0) / totalCapacity) * 100).toFixed(
-            1,
-          )
-        : "0",
-    [stats, totalCapacity],
-  );
-
   const filteredGroups = useMemo(() => {
     if (filterGroupId === "all") {
       return groups;
     }
     return groups.filter((g) => g.id.toString() === filterGroupId);
   }, [groups, filterGroupId]);
-
-  const upcomingSessions = useMemo(
-    () => sessions.filter((s) => new Date(s.session_date) > new Date()).length,
-    [sessions],
-  );
 
   const getCoachName = (coachId: number | undefined) => {
     if (!coachId || !coachesData) return "N/A";
@@ -182,6 +153,14 @@ export default function HeadCoach() {
   };
 
   const handleTimeSlotClick = (date: string, time: string) => {
+    const clickedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today's date to midnight for comparison
+
+    if (clickedDate < today) {
+      toast.error("O'tib ketgan sana uchun mashg'ulot yaratib bo'lmaydi.");
+      return;
+    }
     setSessionDialogInitialData({ session_date: date, start_time: time });
     setSessionDialogOpen(true);
   };
@@ -279,109 +258,8 @@ export default function HeadCoach() {
         {/* OVERVIEW TAB */}
         <TabsContent value="overview" className="space-y-6">
           {/* Stats Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
-          >
-            <Card className="border-l-4 border-l-blue-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Faol Guruhlar
-                  </CardTitle>
-                  <Users className="h-5 w-5 text-blue-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {isStatsLoading ? (
-                    <Loader2 className="animate-spin w-8 h-8" />
-                  ) : (
-                    (stats?.active_groups_count ?? 0)
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> Barcha mavjud guruhlar
-                </p>
-              </CardContent>
-            </Card>
 
-            <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Faol Studentlar
-                  </CardTitle>
-                  <UserCheck className="h-5 w-5 text-emerald-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-emerald-600">
-                  {isStatsLoading ? (
-                    <Loader2 className="animate-spin w-8 h-8" />
-                  ) : (
-                    (stats?.active_students_count ?? 0)
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  To'ldirish:{" "}
-                  <span className="font-semibold text-emerald-600">
-                    {occupancyRate}%
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
 
-            <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Bugungi Mashg'ulotlar
-                  </CardTitle>
-                  <CalendarDays className="h-5 w-5 text-purple-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-purple-600">
-                  {isStatsLoading ? (
-                    <Loader2 className="animate-spin w-8 h-8" />
-                  ) : (
-                    (stats?.today_sessions_count ?? 0)
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  Kelayotgan:{" "}
-                  <span className="font-semibold">{upcomingSessions}</span>
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                    O'rtacha Davomat
-                  </CardTitle>
-                  <Activity className="h-5 w-5 text-orange-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-orange-600">
-                  {isStatsLoading ? (
-                    <Loader2 className="animate-spin w-8 h-8" />
-                  ) : (
-                    `${stats?.this_month_attendance_percentage ?? 0}%`
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  Shu oylik ko'rsatkich
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Quick Actions & System Info */}
           <div className="grid lg:grid-cols-2 gap-6">
             <Card className="shadow-lg border-slate-200 dark:border-slate-700">
               <CardHeader>
@@ -416,9 +294,12 @@ export default function HeadCoach() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600">Jami Sig'im</span>
-                  <span className="font-semibold">{totalCapacity} o'rin</span>
+                  <span className="font-semibold">
+                    {groups.reduce((sum, g) => sum + g.capacity, 0)} o'rin
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
+                {/* Remove remaining stats from here as well */}
+                {/* <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600">To'ldirilgan</span>
                   <Badge variant="outline" className="bg-emerald-50">
                     {stats?.active_students_count ?? 0} / {totalCapacity}
@@ -429,7 +310,7 @@ export default function HeadCoach() {
                   <span className="font-semibold text-orange-600">
                     {totalCapacity - (stats?.active_students_count ?? 0)}
                   </span>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>
