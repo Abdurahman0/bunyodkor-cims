@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -32,11 +30,8 @@ import {
   Plus,
   BarChart2,
   Loader2,
-  Activity,
-  UserCheck,
   Clock,
   Trophy,
-  TrendingUp,
   Eye,
   UserCog,
   Trash2,
