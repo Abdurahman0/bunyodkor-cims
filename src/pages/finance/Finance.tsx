@@ -250,7 +250,9 @@ export default function Finance() {
     if (student) {
       return `${student.first_name || ""} ${student.last_name || ""}`.trim();
     }
-    const query = studentQueries.find(q => q.queryKey[1] === studentId);
+    const query = studentQueries.find(
+      (q) => q && q.queryKey && q.queryKey[1] === studentId
+    );
     if (query?.isLoading) return t("loading") || "Loading...";
     if (query?.isError) return t("error") || "Error";
 
