@@ -262,11 +262,11 @@ export default function Contracts() {
     statusFilter ||
     groupFilter ||
     contractIdFilter ||
-    archiveYearFilter ||
+    archiveYearFilter;
     // includeArchived;
 
   // --- Pagination Logic ---
-  const totalPages = data?.meta?.total_pages || 1;
+   const totalPages = data?.meta?.total_pages || 1;
 
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
@@ -399,7 +399,7 @@ export default function Contracts() {
                           !yearGroup?.groups ||
                           !Array.isArray(yearGroup.groups)
                         ) { // Empty block statement.
-                          return null;
+ return null;
                         }
 
                         return yearGroup.groups
@@ -407,7 +407,7 @@ export default function Contracts() {
                             const isValid = group && group.id && group.name;
                             // eslint-disable-next-line no-empty
                             if (!isValid) {
-                            }
+ }
                             return isValid;
                           })
                           .map((group: any) => {

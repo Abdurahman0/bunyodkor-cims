@@ -12,6 +12,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ["set-cookie-parser"], // 🔥 MUHIM
   },
+  build: {
+    target: 'es2020', // Explicitly set target to ES2020 for optional chaining support
+  },
   server: {
     proxy: {
       "/api": {
