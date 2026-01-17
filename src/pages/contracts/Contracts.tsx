@@ -2,11 +2,7 @@
 import { useState, useEffect } from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Link } from "react-router-dom";
-import {
-  contractService,
-  groupService,
-  studentService,
-} from "@/services/api.service"; // studentService qo'shildi
+import { studentService } from "@/services/api.service"; // studentService qo'shildi
 import { toast } from "react-hot-toast"; // Xabar chiqarish uchun
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
