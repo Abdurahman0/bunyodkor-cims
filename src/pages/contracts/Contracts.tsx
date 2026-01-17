@@ -263,7 +263,6 @@ export default function Contracts() {
     groupFilter ||
     contractIdFilter ||
     archiveYearFilter;
-    // includeArchived;
 
   // --- Pagination Logic ---
    const totalPages = data?.meta?.total_pages || 1;
@@ -403,13 +402,7 @@ export default function Contracts() {
                         }
 
                         return yearGroup.groups
-                          .filter((group: any) => {
-                            const isValid = group && group.id && group.name;
-                            // eslint-disable-next-line no-empty
-                            if (!isValid) {
- }
-                            return isValid;
-                          })
+                          .filter((group: any) => group && group.id && group.name)
                           .map((group: any) => {
                             return (
                               <option
@@ -440,18 +433,18 @@ export default function Contracts() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+          <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50">
-                    <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <div className="p-2 rounded-lg bg-muted">
+                    <Users className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    <p className="text-sm font-medium text-foreground">
                       {t("filteringByGroup") || "Guruh bo'yicha filtrlangan"}
                     </p>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <p className="text-sm text-muted-foreground">
                       {groupData.data.name}
                     </p>
                   </div>
@@ -460,7 +453,7 @@ export default function Contracts() {
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
+                  className="text-muted-foreground"
                 >
                   <X className="w-4 h-4 mr-2" />
                   {t("clearFilter") || "Filtrni tozalash"}

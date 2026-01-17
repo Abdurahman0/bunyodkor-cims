@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,10 +75,33 @@ export default function Finance() {
     refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
-  const { data: studentsData } = useQuery({
-    queryKey: ["students-list"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
+  // Get unique student IDs from the current page of transactions
+  const studentIds = useMemo(() => {
+    if (!data?.data) return [];
+    const ids = data.data.map(t => t.student_id).filter(id => id !== null) as number[];
+    return [...new Set(ids)];
+  }, [data]);
+
+  // Fetch student data only for the IDs present in the current transactions
+  const studentQueries = useQueries({
+    queries: studentIds.map(id => ({
+      queryKey: ['student', id],
+      queryFn: () => studentService.getStudent(id),
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    })),
   });
+
+  // Create a map of student IDs to student data for quick lookup
+  const studentsMap = useMemo(() => {
+    const map = new Map<number, StudentRead>();
+    studentQueries.forEach(query => {
+      if (query.data?.data) {
+        map.set(query.data.data.id, query.data.data);
+      }
+    });
+    return map;
+  }, [studentQueries]);
+
 
   const { data: unassignedData } = useQuery({
     queryKey: ["unassigned-transactions"],
@@ -215,22 +238,23 @@ export default function Finance() {
         toast.error(t("noDataToExport"));
         return;
       }
-      exportTransactions(data.data, studentsData?.data); // Pass students data for name lookup
+      exportTransactions(data.data, Array.from(studentsMap.values()));
       toast.success(t("transactionsExported"));
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      toast.error(t("failedToExportTransactions")); // The 'error' variable is used here.
+      toast.error(t("failedToExportTransactions"));
     }
   };
 
   const getStudentName = (studentId: number) => {
-    const student = studentsData?.data?.find(
-      (s: StudentRead) => s.id === studentId,
-    );
+    const student = studentsMap.get(studentId);
     if (student) {
       return `${student.first_name || ""} ${student.last_name || ""}`.trim();
     }
-    return `ID: ${studentId}`;
+    const query = studentQueries.find(q => q.queryKey[1] === studentId);
+    if (query?.isLoading) return t("loading") || "Loading...";
+    if (query?.isError) return t("error") || "Error";
+
+    return t("unknown") || "Unknown";
   };
 
   const getStatusBadge = (status: TransactionRead["status"]) => {

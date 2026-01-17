@@ -464,17 +464,17 @@ export default function Groups() {
         className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
       >
         {/* Total Groups Card */}
-        <Card className="border-l-4 border-l-blue-500 bg-white dark:bg-slate-800 shadow-lg">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t("totalGroups") || "Jami Guruhlar"}
               </CardTitle>
               <Users className="h-5 w-5 text-blue-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">
+            <div className="text-3xl font-bold text-foreground">
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
@@ -485,17 +485,17 @@ export default function Groups() {
         </Card>
 
         {/* Total Capacity Card */}
-        <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t("totalCapacity") || "Umumiy Sig'im"}
               </CardTitle>
               <Calendar className="h-5 w-5 text-emerald-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-emerald-600">
+            <div className="text-3xl font-bold text-foreground">
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
@@ -506,17 +506,17 @@ export default function Groups() {
         </Card>
 
         {/* Total Used Spots Card */}
-        <Card className="border-l-4 border-l-orange-500 bg-white dark:bg-slate-800 shadow-lg">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t("usedSpots") || "Band Qilingan O'rinlar"}
               </CardTitle>
               <UserCheck className="h-5 w-5 text-orange-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-600">
+            <div className="text-3xl font-bold text-foreground">
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
@@ -527,17 +527,17 @@ export default function Groups() {
         </Card>
 
         {/* Total Available Spots Card */}
-        <Card className="border-l-4 border-l-purple-500 bg-white dark:bg-slate-800 shadow-lg">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t("availableSpots") || "Bo'sh O'rinlar"}
               </CardTitle>
               <TrendingUp className="h-5 w-5 text-purple-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
+            <div className="text-3xl font-bold text-foreground">
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
@@ -548,17 +548,17 @@ export default function Groups() {
         </Card>
 
         {/* Filled Groups Count Card */}
-        <Card className="border-l-4 border-l-cyan-500 bg-white dark:bg-slate-800 shadow-lg">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t("filledGroups") || "To'liq Guruhlar"}
               </CardTitle>
               <Users className="h-5 w-5 text-cyan-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-cyan-600">
+            <div className="text-3xl font-bold text-foreground">
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
@@ -611,8 +611,8 @@ export default function Groups() {
               transition={{ duration: 0.3 }}
             >
               <Card className="border-border/50 shadow-md">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-b border-blue-200 dark:border-blue-800">
-                  <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center gap-3">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-foreground flex items-center gap-3">
                     <Calendar className="w-6 h-6" />
                     {yearData.birth_year} {t("birthYear") || "yil tug'ilganlar"}
                     <Badge variant="secondary" className="ml-auto">

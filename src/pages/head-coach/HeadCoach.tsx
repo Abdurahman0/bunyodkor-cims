@@ -224,7 +224,7 @@ export default function HeadCoach() {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Bosh Murabbiy Paneli
                 </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+                <p className="text-muted-foreground text-sm mt-1">
                   To'liq nazorat va boshqaruv tizimi
                 </p>
               </div>
@@ -298,7 +298,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm border-l-emerald-500 bg-card border-border text-card-foreground">
+            <Card className="shadow-sm bg-card border-border text-card-foreground">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart2 className="w-5 h-5 text-indigo-500" /> Tizim Holati
@@ -306,7 +306,7 @@ export default function HeadCoach() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Jami Sig'im</span>
+                  <span className="text-sm text-muted-foreground">Jami Sig'im</span>
                   <span className="font-semibold">
                     {isLoadingGroupsStats ? (
                       <Loader2 className="animate-spin w-4 h-4" />
@@ -317,7 +317,7 @@ export default function HeadCoach() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">
+                  <span className="text-sm text-muted-foreground">
                     Band qilingan o'rinlar
                   </span>
                   <span className="font-semibold">
@@ -329,7 +329,7 @@ export default function HeadCoach() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Bo'sh o'rinlar</span>
+                  <span className="text-sm text-muted-foreground">Bo'sh o'rinlar</span>
                   <span className="font-semibold text-orange-600">
                     {isLoadingGroupsStats ? (
                       <Loader2 className="animate-spin w-4 h-4" />
@@ -421,14 +421,14 @@ export default function HeadCoach() {
                 <CardContent className="space-y-3">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">Jadval:</span>
+                      <span className="text-muted-foreground">Jadval:</span>
                       <span className="font-medium">{group.schedule_days}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">Vaqt:</span>
+                      <span className="text-muted-foreground">Vaqt:</span>
                       <span className="font-medium">{group.schedule_time}</span>
                     </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full ${groupColorMap.get(
                           group.id,
@@ -442,7 +442,7 @@ export default function HeadCoach() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="bg-slate-50 dark:bg-slate-900/50 border-t pt-3">
+                <CardFooter className="bg-muted/50 border-t pt-3">
                   <Button
                     variant="ghost"
                     size="sm"
