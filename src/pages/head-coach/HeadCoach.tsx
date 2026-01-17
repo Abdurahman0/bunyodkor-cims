@@ -1,6 +1,10 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { groupService, headCoachService, userService } from "@/services/api.service";
+import {
+  groupService,
+  headCoachService,
+  userService,
+} from "@/services/api.service";
 import { motion } from "framer-motion";
 
 // UI Components
@@ -41,7 +45,12 @@ import {
 
 import { toast } from "react-hot-toast";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { SessionCreateRequest, SessionRead, GroupsStatisticsResponse } from "@/types/api";
+import type {
+  SessionCreateRequest,
+  SessionRead,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  GroupsStatisticsResponse,
+} from "@/types/api";
 
 // Reusable Components
 import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
@@ -205,7 +214,7 @@ export default function HeadCoach() {
         className="relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-10 rounded-2xl" />
-        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
+        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6 bg-card backdrop-blur-xl rounded-2xl border-border shadow-xl">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
@@ -239,7 +248,7 @@ export default function HeadCoach() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+        <TabsList className="bg-card backdrop-blur-xl p-1 rounded-xl border-border shadow-lg">
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
@@ -264,9 +273,8 @@ export default function HeadCoach() {
         <TabsContent value="overview" className="space-y-6">
           {/* Stats Grid */}
 
-
           <div className="grid lg:grid-cols-2 gap-6">
-            <Card className="shadow-lg border-slate-200 dark:border-slate-700">
+            <Card className="shadow-sm border-border bg-card text-card-foreground">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-blue-500" /> Tezkor Amallar
@@ -290,7 +298,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-l-emerald-500 bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700">
+            <Card className="shadow-sm border-l-emerald-500 bg-card border-border text-card-foreground">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart2 className="w-5 h-5 text-indigo-500" /> Tizim Holati
@@ -303,18 +311,20 @@ export default function HeadCoach() {
                     {isLoadingGroupsStats ? (
                       <Loader2 className="animate-spin w-4 h-4" />
                     ) : (
-                      groupsStats?.data?.total_capacity ?? "N/A"
+                      (groupsStats?.data?.total_capacity ?? "N/A")
                     )}{" "}
                     o'rin
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Band qilingan o'rinlar</span>
+                  <span className="text-sm text-slate-600">
+                    Band qilingan o'rinlar
+                  </span>
                   <span className="font-semibold">
                     {isLoadingGroupsStats ? (
                       <Loader2 className="animate-spin w-4 h-4" />
                     ) : (
-                      groupsStats?.data?.total_used ?? "N/A"
+                      (groupsStats?.data?.total_used ?? "N/A")
                     )}
                   </span>
                 </div>
@@ -324,17 +334,18 @@ export default function HeadCoach() {
                     {isLoadingGroupsStats ? (
                       <Loader2 className="animate-spin w-4 h-4" />
                     ) : (
-                      groupsStats?.data?.total_available ?? "N/A"
+                      (groupsStats?.data?.total_available ?? "N/A")
                     )}
                   </span>
-                </div>              </CardContent>
+                </div>{" "}
+              </CardContent>
             </Card>
           </div>
         </TabsContent>
 
         {/* TIMETABLE TAB */}
         <TabsContent value="timetable" className="space-y-4">
-          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+          <div className="flex justify-between items-center bg-card border-border shadow-sm p-4 rounded-xl backdrop-blur-xl">
             <h2 className="text-xl font-semibold">Mashg'ulotlar Jadvali</h2>
 
             <Select
@@ -368,7 +379,7 @@ export default function HeadCoach() {
 
         {/* GROUPS TAB */}
         <TabsContent value="groups" className="space-y-4">
-          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+          <div className="flex justify-between items-center bg-card border-border shadow-sm p-4 rounded-xl backdrop-blur-xl">
             <h2 className="text-xl font-semibold">Guruhlar</h2>
 
             <Select
@@ -392,7 +403,7 @@ export default function HeadCoach() {
             {filteredGroups.map((group) => (
               <Card
                 key={group.id}
-                className="group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-700 overflow-hidden"
+                className="group hover:shadow-xl transition-all duration-300 border-border overflow-hidden bg-card text-card-foreground"
               >
                 <div className={`h-2 ${groupColorMap.get(group.id)}`} />
                 <CardHeader className="pb-3">
@@ -474,7 +485,9 @@ export default function HeadCoach() {
         initialData={sessionDialogInitialData}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["sessions"] });
-          queryClient.invalidateQueries({ queryKey: ["groups-statistics-headcoach"] });
+          queryClient.invalidateQueries({
+            queryKey: ["groups-statistics-headcoach"],
+          });
         }}
       />
 

@@ -224,13 +224,13 @@ export default function Finance() {
   };
 
   const getStudentName = (studentId: number) => {
-    return (
-      studentsData?.data?.find((s: StudentRead) => s.id === studentId)
-        ?.first_name +
-        " " +
-        studentsData?.data?.find((s: StudentRead) => s.id === studentId)
-          ?.last_name || `ID: ${studentId}`
+    const student = studentsData?.data?.find(
+      (s: StudentRead) => s.id === studentId,
     );
+    if (student) {
+      return `${student.first_name || ""} ${student.last_name || ""}`.trim();
+    }
+    return `ID: ${studentId}`;
   };
 
   const getStatusBadge = (status: TransactionRead["status"]) => {
