@@ -198,6 +198,7 @@ export interface UnpaidStudentInfo {
   total_expected: number;
   total_paid: number;
   debt_amount: number;
+  group_name: string;
   active_contracts_count: number;
 }
 
