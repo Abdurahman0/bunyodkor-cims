@@ -73,6 +73,17 @@
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
+  /* Fix for native date/time input icons in dark mode */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0); /* Default to no invert for light mode */
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator,
+  .dark input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* Invert for dark mode */
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;

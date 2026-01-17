@@ -100,40 +100,51 @@ export function SessionDialog({
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (
-      !formData.group_id ||
-      !formData.session_date ||
-      !formData.start_time ||
-      !formData.end_time ||
-      !formData.topic
-    ) {
-      toast.error("Iltimos, barcha majburiy maydonlarni to'ldiring");
-      return;
-    }
-
-    const payload: SessionCreateRequest = {
-      group_id: Number(formData.group_id),
-      session_date: formData.session_date!,
-      start_time: formData.start_time!,
-      end_time: formData.end_time!,
-      topic: formData.topic!,
-      description: formData.description || "",
-      location: formData.location || "Stadion",
+      const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+  
+      // Basic validation for required fields
+      if (
+        !formData.group_id ||
+        !formData.session_date ||
+        !formData.start_time ||
+        !formData.end_time ||
+        !formData.topic
+      ) {
+        toast.error("Iltimos, barcha majburiy maydonlarni to'ldiring");
+        return;
+      }
+  
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize today's date to midnight
+  
+      const sessionDate = new Date(formData.session_date);
+      sessionDate.setHours(0, 0, 0, 0); // Normalize session date to midnight
+  
+      const editId = (initialData as any)?.id;
+  
+      // Prevent creating new sessions for past dates
+      if (!editId && sessionDate < today) {
+        toast.error("O'tib ketgan sana uchun mashg'ulot yaratib bo'lmaydi.");
+        return;
+      }
+  
+      const payload: SessionCreateRequest = {
+        group_id: Number(formData.group_id),
+        session_date: formData.session_date!,
+        start_time: formData.start_time!,
+        end_time: formData.end_time!,
+        topic: formData.topic!,
+        description: formData.description || "",
+        location: formData.location || "Stadion",
+      };
+  
+      if (editId) {
+        updateSessionMutation.mutate({ id: editId, data: payload });
+      } else {
+        createSessionMutation.mutate(payload);
+      }
     };
-
-    // Agar initialData da 'id' bo'lsa (lekin SessionCreateRequest da id yo'q),
-    // demak bu update. Type assertion ishlatamiz.
-    const editId = (initialData as any)?.id;
-
-    if (editId) {
-      updateSessionMutation.mutate({ id: editId, data: payload });
-    } else {
-      createSessionMutation.mutate(payload);
-    }
-  };
-
   const isPending =
     createSessionMutation.isPending || updateSessionMutation.isPending;
 
