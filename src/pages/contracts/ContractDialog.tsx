@@ -136,7 +136,31 @@ export function ContractDialog({
 
   const { data: studentsData } = useQuery({
     queryKey: ["students-list"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
+    queryFn: async () => {
+      let allStudents: StudentRead[] = [];
+      let currentPage = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await studentService.getStudents({
+          page: currentPage,
+          page_size: 100,
+        });
+
+        if (response.data && response.data.length > 0) {
+          allStudents = [...allStudents, ...response.data];
+
+          if (response.meta && currentPage < response.meta.total_pages) {
+            currentPage++;
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      return { data: allStudents, meta: { total: allStudents.length } };
+    },
   });
 
   // Fetch selected student details

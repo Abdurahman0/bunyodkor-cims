@@ -517,17 +517,12 @@ export default function Contracts() {
                         <TableCell className="hidden md:table-cell">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            {contract.student_id !== null &&
-                            contract.student_id !== undefined ? (
-                              <Link
-                                to={`/students/${contract.student_id}`}
-                                className="hover:underline text-primary hover:text-primary/80"
-                              >
-                                {getStudentName(contract)}
-                              </Link>
-                            ) : (
-                              getStudentName(contract)
-                            )}
+                            <Link
+                              to={`/students/${contract.student_id}`}
+                              className="hover:underline text-primary hover:text-primary/80"
+                            >
+                              {getStudentName(contract)}
+                            </Link>
                           </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
