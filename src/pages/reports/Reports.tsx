@@ -397,7 +397,7 @@ export default function Reports() {
               value={
                 financeReport?.data?.breakdown?.reduce(
                   (acc: number, item: any) => acc + item.transaction_count,
-                  0
+                  0,
                 ) || 0
               }
               icon={<CreditCard className="w-6 h-6" />}
@@ -490,8 +490,8 @@ export default function Reports() {
                     <TableCell className="text-right text-muted-foreground">
                       {formatCurrency(
                         Math.round(
-                          item.total_amount / (item.transaction_count || 1)
-                        )
+                          item.total_amount / (item.transaction_count || 1),
+                        ),
                       )}
                     </TableCell>
                     <TableCell className="text-right font-medium">
@@ -573,8 +573,8 @@ export default function Reports() {
                           group.attendance_percentage >= 80
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                             : group.attendance_percentage >= 60
-                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                         }
                       >
                         {group.attendance_percentage}%
@@ -656,7 +656,7 @@ export default function Reports() {
                           value={selectedMonth || ""}
                           onChange={(e) => {
                             setSelectedMonth(
-                              e.target.value ? Number(e.target.value) : null
+                              e.target.value ? Number(e.target.value) : null,
                             );
                             setSelectedMonths("");
                             setDebtorsPage(1);
@@ -669,7 +669,7 @@ export default function Reports() {
                               <option key={month} value={month}>
                                 {format(new Date(2000, month - 1), "MMMM")}
                               </option>
-                            )
+                            ),
                           )}
                         </select>
                       </div>
@@ -737,7 +737,7 @@ export default function Reports() {
                       value={selectedGroupId ? String(selectedGroupId) : ""}
                       onChange={(e) => {
                         setSelectedGroupId(
-                          e.target.value ? Number(e.target.value) : null
+                          e.target.value ? Number(e.target.value) : null,
                         );
                         setDebtorsPage(1);
                       }}
@@ -803,7 +803,7 @@ export default function Reports() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
-                          {getGroupName(debtor.student.group_id)}
+                          {debtor.student.group_name}
                         </Badge>
                       </TableCell>
                       <TableCell>

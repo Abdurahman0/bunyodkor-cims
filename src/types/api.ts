@@ -147,6 +147,7 @@ export interface RoleUpdateRequest {
 export type StudentStatus = "active" | "graduated" | "dropped" | "suspended";
 
 export interface StudentRead {
+  [x: string]: ReactNode;
   id: number;
   first_name: string;
   last_name: string;
@@ -194,6 +195,11 @@ export interface StudentWithDebtInfo {
 }
 
 export interface UnpaidStudentInfo {
+  year: number;
+  months: string;
+  month: number;
+  from_date: string;
+  to_date: string;
   student: StudentRead;
   total_expected: number;
   total_paid: number;
