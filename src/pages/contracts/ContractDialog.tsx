@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { contractService, studentService } from "@/services/api.service";
 import type {
   ContractRead,
-  ContractCreate,
+  ContractCreate as ContractCreateType, // Renamed to avoid conflict with local type
   ContractUpdate,
   StudentRead,
 } from "@/types/api";
@@ -106,7 +106,7 @@ interface ContractDialogProps {
   onSuccess?: () => void;
 }
 
-type ContractFormData = Omit<ContractCreate, "student_id" | "monthly_fee"> & {
+type ContractFormData = Omit<ContractCreateType, "student_id" | "monthly_fee"> & {
   student_id: number | string;
   monthly_fee: number | string;
 };

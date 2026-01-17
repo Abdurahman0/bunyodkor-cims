@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,10 @@ import {
 } from "@/components/ui/table";
 import {
   contractService,
-  studentService,
   groupService,
 } from "@/services/api.service";
 import { useGroupsStore } from "@/store/groupsStore";
 import {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Plus,
   Search,
   Edit,
   FileText,
@@ -34,17 +31,15 @@ import {
   Users,
   CreditCard,
   X,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
-import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
-import type { ContractRead, StudentRead } from "@/types/api";
 import { ContractDialog } from "./ContractDialog";
+import type { ContractWithStudentNameRead } from "@/types/api";
 
 export default function Contracts() {
   const { t } = useLanguageStore();
@@ -54,12 +49,15 @@ export default function Contracts() {
   const [statusFilter, setStatusFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState<number | undefined>(undefined);
   const [contractIdFilter, setContractIdFilter] = useState<number | undefined>(
-    undefined
+    undefined,
   );
+  const [archiveYearFilter, setArchiveYearFilter] = useState<
+    number | undefined
+  >(undefined);
+  const [includeArchived, setIncludeArchived] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<ContractRead | null>(
-    null
-  );
+  const [selectedContract, setSelectedContract] =
+    useState<ContractWithStudentNameRead | null>(null);
   const queryClient = useQueryClient();
 
   // Use global groups store
@@ -78,19 +76,26 @@ export default function Contracts() {
 
   // Read group_id and contract_id from URL parameters
   useEffect(() => {
+    let newGroupFilter: number | undefined = undefined;
+    let newContractIdFilter: number | undefined = undefined;
+
     const groupId = searchParams.get("group_id");
     if (groupId) {
-      setGroupFilter(parseInt(groupId, 10));
+      newGroupFilter = parseInt(groupId, 10);
     }
 
     const contractId = searchParams.get("contract_id");
     if (contractId) {
-      setContractIdFilter(parseInt(contractId, 10));
+      newContractIdFilter = parseInt(contractId, 10);
     }
+
+    setGroupFilter(newGroupFilter);
+    setContractIdFilter(newContractIdFilter);
   }, [searchParams]);
 
   const debouncedSearch = useDebounce(search, 500);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data, isLoading, error } = useQuery({
     queryKey: [
       "contracts",
@@ -99,16 +104,19 @@ export default function Contracts() {
       statusFilter,
       groupFilter,
       contractIdFilter,
+      archiveYearFilter,
+      includeArchived,
     ],
     queryFn: async () => {
       try {
-        const response = await contractService.getContracts({
+        const response = await contractService.getContractsWithStudentName({
           page,
           page_size: 10,
           contract_number: debouncedSearch || undefined,
           status: statusFilter || undefined,
           group_id: groupFilter,
-          contract_id: contractIdFilter,
+          archive_year: archiveYearFilter,
+          include_archived: includeArchived,
         });
 
         return response;
@@ -119,20 +127,15 @@ export default function Contracts() {
     },
   });
 
-
-
-  const {
-    data: studentsData,
-    isLoading: isLoadingStudents,
-  } = useQuery({
-    queryKey: ["students-list"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }), // Fetch all students
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
-
-
-
+  // // Removed student data fetching
+  // const {
+  //   data: studentsData,
+  //   isLoading: isLoadingStudents,
+  // } = useQuery({
+  //   queryKey: ["students-list"],
+  //   queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }), // Fetch all students
+  //   staleTime: 0,
+  // });
 
   // Fetch group details if filtering by group
   const { data: groupData } = useQuery({
@@ -163,7 +166,7 @@ export default function Contracts() {
   //   },
   // });
 
-  const handleOpenDialog = (contract?: ContractRead) => {
+  const handleOpenDialog = (contract?: ContractWithStudentNameRead) => {
     setSelectedContract(contract || null);
     setIsDialogOpen(true);
   };
@@ -180,16 +183,9 @@ export default function Contracts() {
   //   }
   // };
 
-  const getStudentName = (studentId: number | null | undefined) => {
-    if (!studentId) return t("unknown") || "Noma'lum";
-
-    const student = studentsData?.data?.find(
-      (s: StudentRead) => s.id === studentId
-    );
-
-    return student
-      ? `${student.first_name} ${student.last_name}`
-      : `ID: ${studentId}`;
+  // Simplified: student_full_name is now directly available on the contract object
+  const getStudentName = (contract: ContractWithStudentNameRead) => {
+    return contract.student_full_name || t("unknown") || "Noma'lum";
   };
 
   const formatCurrency = (amount: number | null | undefined) => {
@@ -238,16 +234,36 @@ export default function Contracts() {
     setPage(1); // Reset page on filter
   };
 
+  const handleArchiveYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const year = e.target.value;
+    setArchiveYearFilter(year ? parseInt(year, 10) : undefined);
+    setPage(1);
+  };
+
+  const handleIncludeArchivedChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setIncludeArchived(e.target.checked);
+    setPage(1);
+  };
+
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("");
     setGroupFilter(undefined);
     setContractIdFilter(undefined);
+    setArchiveYearFilter(undefined);
+    setIncludeArchived(false);
     setPage(1);
   };
 
   const hasActiveFilters =
-    search || statusFilter || groupFilter || contractIdFilter;
+    search ||
+    statusFilter ||
+    groupFilter ||
+    contractIdFilter ||
+    archiveYearFilter ||
+    includeArchived;
 
   // --- Pagination Logic ---
   const totalPages = data?.meta?.total_pages || 1;
@@ -283,8 +299,6 @@ export default function Contracts() {
   };
 
   const paginationItems = getPaginationItems();
-
-
 
   return (
     <div className="space-y-6">
@@ -338,27 +352,60 @@ export default function Contracts() {
                   <option value="cancelled">{t("cancelled")}</option>
                 </Select>
                 <Select
+                  value={archiveYearFilter?.toString() || ""}
+                  onChange={handleArchiveYearChange}
+                  className="w-40"
+                >
+                  <option value="">{t("allYears")}</option>
+                  {/* Assuming years from -5 to +5 from current year */}
+                  {Array.from({ length: 11 }, (_, i) => {
+                    const year = new Date().getFullYear() - 5 + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    );
+                  })}
+                </Select>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includeArchived"
+                    checked={includeArchived}
+                    onChange={handleIncludeArchivedChange}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="includeArchived"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {t("includeArchived") || "Include Archived"}
+                  </label>
+                </div>
+                <Select
                   value={groupFilter?.toString() || ""}
                   onChange={(e) => {
                     setGroupFilter(
-                      e.target.value ? parseInt(e.target.value) : undefined
+                      e.target.value ? parseInt(e.target.value) : undefined,
                     );
                   }}
                   className="w-48"
                 >
                   <option value="">{t("allGroups")}</option>
                   {allGroupsData && Array.isArray(allGroupsData)
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     ? allGroupsData.map((yearGroup: any, yearIndex: number) => {
                         if (
                           !yearGroup?.groups ||
                           !Array.isArray(yearGroup.groups)
-                        ) {
+                        ) { // Empty block statement.
                           return null;
                         }
 
                         return yearGroup.groups
                           .filter((group: any) => {
                             const isValid = group && group.id && group.name;
+                            // eslint-disable-next-line no-empty
                             if (!isValid) {
                             }
                             return isValid;
@@ -434,13 +481,11 @@ export default function Contracts() {
             <CardTitle className="text-lg">{t("contractsList")}</CardTitle>
           </CardHeader>
 
-          {isLoading || isLoadingStudents ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">
-                {isLoadingStudents
-                  ? "Talabalar yuklanmoqda..."
-                  : "Shartnomalar yuklanmoqda..."}
+                {t("contractsLoading") || "Shartnomalar yuklanmoqda..."}
               </span>
             </div>
           ) : (
@@ -465,7 +510,7 @@ export default function Contracts() {
                 </TableHeader>
                 <TableBody>
                   {data?.data && data.data.length > 0 ? (
-                    data.data.map((contract: ContractRead) => (
+                    data.data.map((contract: ContractWithStudentNameRead) => (
                       <TableRow key={contract.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -483,10 +528,10 @@ export default function Contracts() {
                                 to={`/students/${contract.student_id}`}
                                 className="hover:underline text-primary hover:text-primary/80"
                               >
-                                {getStudentName(contract.student_id)}
+                                {getStudentName(contract)}
                               </Link>
                             ) : (
-                              getStudentName(contract.student_id)
+                              getStudentName(contract)
                             )}
                           </div>
                         </TableCell>
@@ -497,7 +542,7 @@ export default function Contracts() {
                               {contract.start_date
                                 ? format(
                                     new Date(contract.start_date),
-                                    "MMM d, yyyy"
+                                    "MMM d, yyyy",
                                   )
                                 : "-"}
                             </div>
@@ -506,7 +551,7 @@ export default function Contracts() {
                               {contract.end_date
                                 ? format(
                                     new Date(contract.end_date),
-                                    "MMM d, yyyy"
+                                    "MMM d, yyyy",
                                   )
                                 : "-"}
                             </div>
@@ -557,7 +602,7 @@ export default function Contracts() {
                     <TableEmpty
                       icon={<FileText className="w-12 h-12" />}
                       title={t("noContractsFound")}
-                      description={t("contractsCreatedWithStudents")}
+                      description={t("contractsCreatedHere")}
                     />
                   )}
                 </TableBody>
@@ -596,7 +641,7 @@ export default function Contracts() {
                         >
                           ...
                         </span>
-                      )
+                      ),
                     )}
                   </div>
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { headCoachService } from "@/services/api.service";
+import { headCoachService, userService } from "@/services/api.service";
 import { motion } from "framer-motion";
 
 // UI Components
@@ -95,6 +95,13 @@ export default function HeadCoach() {
     },
   });
 
+  const { data: coachesData = [], isLoading: isCoachesLoading } = useQuery({
+    queryKey: ["coaches-list"],
+    queryFn: () => userService.getCoaches(),
+    select: (data) => data.data,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes, coaches don't change often
+  });
+
   // --- Mutations ---
   const deleteSessionMutation = useMutation({
     mutationFn: (sessionId: number) =>
@@ -162,6 +169,12 @@ export default function HeadCoach() {
     [sessions],
   );
 
+  const getCoachName = (coachId: number | undefined) => {
+    if (!coachId || !coachesData) return "N/A";
+    const coach = coachesData.find((c) => c.id === coachId);
+    return coach ? coach.full_name : "N/A";
+  };
+
   // --- Handlers ---
   const handleSessionClick = (session: SessionRead) => {
     setSelectedSession(session);
@@ -200,7 +213,7 @@ export default function HeadCoach() {
   // --- Render ---
   return (
     // YANGILANGAN QISM: dark:bg-blue-900/30 qo'shildi
-    <div className="min-h-screen bg-slate-50 dark:bg-blue-900/30 p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 space-y-6">
       {/* HEADER */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -320,7 +333,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-purple-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -344,7 +357,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-orange-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -394,7 +407,7 @@ export default function HeadCoach() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-slate-200 dark:border-slate-700">
+            <Card className="shadow-lg border-l-emerald-500 bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart2 className="w-5 h-5 text-indigo-500" /> Tizim Holati
@@ -441,7 +454,7 @@ export default function HeadCoach() {
             </Select>
           </div>
 
-          {isSessionsLoading || isGroupsLoading ? (
+          {isSessionsLoading || isGroupsLoading || isCoachesLoading ? (
             <div className="flex justify-center items-center h-96 bg-white/80 rounded-xl">
               <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
             </div>
@@ -494,7 +507,7 @@ export default function HeadCoach() {
                   </div>
                   <CardDescription className="flex items-center gap-1">
                     <UserCog className="w-3 h-3" />
-                    {group.coach_first_name} {group.coach_last_name}
+                    {getCoachName(group.coach_id)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">

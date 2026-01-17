@@ -248,9 +248,6 @@ export interface ParentUpdateRequest {
 // ============================================================================
 
 export interface GroupRead {
-  coach_last_name: ReactNode;
-  coach_first_name: ReactNode;
-  coach_last_name: ReactNode;
   id: number;
   name: string;
   identifier: string;
@@ -260,6 +257,8 @@ export interface GroupRead {
   schedule_time: string;
   capacity: number;
   coach_id: number;
+  coach_first_name?: string | null;
+  coach_last_name?: string | null;
   created_at: string;
   active_students_count: number;
   waiting_list_count: number;
@@ -323,6 +322,10 @@ export type ContractStatus =
 export interface TerminatedByUser {
   id: number;
   full_name: string;
+}
+
+export interface ContractWithStudentNameRead extends ContractRead {
+  student_full_name: string;
 }
 
 export interface ContractRead {

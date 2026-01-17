@@ -139,7 +139,7 @@ export function SessionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] px-6 sm:px-6">
         <DialogHeader>
           <DialogTitle>
             {(initialData as any)?.id

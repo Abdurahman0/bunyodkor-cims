@@ -854,7 +854,32 @@ export interface GetContractsParams {
   page_size?: number;
 }
 
+export interface GetContractsWithStudentNameParams {
+  archive_year?: number;
+  include_archived?: boolean;
+  status?: string;
+  student_id?: number;
+  group_id?: number;
+  contract_number?: string;
+  page?: number;
+  page_size?: number;
+}
+
 export const contractService = {
+  /**
+   * Get all contracts with student full name with optional filters
+   * GET /contracts/withname
+   */
+  getContractsWithStudentName: async (
+    params?: GetContractsWithStudentNameParams
+  ): Promise<ApiResponse<ContractWithStudentNameRead[]>> => {
+    const response = await apiClient.get<ApiResponse<ContractWithStudentNameRead[]>>(
+      "/contracts/withname",
+      { params }
+    );
+    return response.data;
+  },
+
   /**
    * Get all contracts with optional filters
    * GET /contracts
