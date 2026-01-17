@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,10 +18,7 @@ import {
   TableCell,
   TableEmpty,
 } from "@/components/ui/table";
-import {
-  contractService,
-  groupService,
-} from "@/services/api.service";
+import { contractService, groupService } from "@/services/api.service";
 import { useGroupsStore } from "@/store/groupsStore";
 import {
   Search,
@@ -266,7 +264,7 @@ export default function Contracts() {
     archiveYearFilter;
 
   // --- Pagination Logic ---
-   const totalPages = data?.meta?.total_pages || 1;
+  const totalPages = data?.meta?.total_pages || 1;
 
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
@@ -393,17 +391,20 @@ export default function Contracts() {
                 >
                   <option value="">{t("allGroups")}</option>
                   {allGroupsData && Array.isArray(allGroupsData)
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    ? allGroupsData.map((yearGroup: any, yearIndex: number) => {
+                    ? // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                      allGroupsData.map((yearGroup: any, yearIndex: number) => {
                         if (
                           !yearGroup?.groups ||
                           !Array.isArray(yearGroup.groups)
-                        ) { // Empty block statement.
- return null;
+                        ) {
+                          // Empty block statement.
+                          return null;
                         }
 
                         return yearGroup.groups
-                          .filter((group: any) => group && group.id && group.name)
+                          .filter(
+                            (group: any) => group && group.id && group.name,
+                          )
                           .map((group: any) => {
                             return (
                               <option
@@ -520,6 +521,7 @@ export default function Contracts() {
                             <Link
                               to={`/students/${contract.student_id}`}
                               className="hover:underline text-primary hover:text-primary/80"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               {getStudentName(contract)}
                             </Link>
