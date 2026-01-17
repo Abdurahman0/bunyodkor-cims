@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Link } from "react-router-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -517,21 +518,17 @@ export default function Contracts() {
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <span
-                              className="hover:underline text-primary hover:text-primary/80 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation(); // Jadval qatori (row) bosilib ketmasligi uchun
-
-                                // Tekshirish: Agar ID bo'lmasa, xatolik chiqmasin
-                                if (contract.student_id) {
-                                  navigate(`/students/${contract.student_id}`);
-                                } else {
-                                  console.warn("Student ID mavjud emas!");
-                                }
-                              }}
-                            >
+                          <div
+                            className="flex items-center gap-2 cursor-pointer group"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Jadval qatori bosilib ketishini oldini oladi
+                              if (contract.student_id) {
+                                navigate(`/students/${contract.student_id}`);
+                              }
+                            }}
+                          >
+                            <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <span className="text-primary hover:underline hover:text-primary/80 font-medium transition-colors">
                               {getStudentName(contract)}
                             </span>
                           </div>
