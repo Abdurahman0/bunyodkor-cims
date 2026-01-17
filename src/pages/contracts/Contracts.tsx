@@ -2,6 +2,12 @@
 import { useState, useEffect } from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Link } from "react-router-dom";
+import {
+  contractService,
+  groupService,
+  studentService,
+} from "@/services/api.service"; // studentService qo'shildi
+import { toast } from "react-hot-toast"; // Xabar chiqarish uchun
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -183,6 +189,45 @@ export default function Contracts() {
   //     deleteMutation.mutate(contract.id);
   //   }
   // };
+  const handleStudentClick = async (e: React.MouseEvent, contract: any) => {
+    e.stopPropagation();
+
+    // 1. Agar ID bo'lsa, darhol o'tamiz
+    if (contract.student_id) {
+      navigate(`/students/${contract.student_id}`);
+      return;
+    }
+
+    const toastId = toast.loading("Talaba qidirilmoqda...");
+
+    try {
+      // 2. Ism bo'yicha qidirish
+      const response = await studentService.getStudents({
+        page: 1,
+        page_size: 10,
+        search: contract.student_full_name,
+      });
+
+      if (response.data && response.data.length > 0) {
+        // 3. Tug'ilgan yil bo'yicha aniqlashtirish
+        const foundStudent = response.data.find(
+          (s: any) =>
+            s.birth_year === contract.birth_year ||
+            s.full_name === contract.student_full_name,
+        );
+
+        const targetStudent = foundStudent || response.data[0];
+
+        toast.success("Topildi!", { id: toastId });
+        navigate(`/students/${targetStudent.id}`);
+      } else {
+        toast.error("Talaba topilmadi", { id: toastId });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Xatolik", { id: toastId });
+    }
+  };
 
   // Simplified: student_full_name is now directly available on the contract object
   const getStudentName = (contract: ContractWithStudentNameRead) => {
@@ -519,16 +564,11 @@ export default function Contracts() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <div
-                            className="flex items-center gap-2 cursor-pointer group"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Jadval qatori bosilib ketishini oldini oladi
-                              if (contract.student_id) {
-                                navigate(`/students/${contract.student_id}`);
-                              }
-                            }}
+                            className="flex items-center gap-2 cursor-pointer group select-none"
+                            onClick={(e) => handleStudentClick(e, contract)}
                           >
                             <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            <span className="text-primary hover:underline hover:text-primary/80 font-medium transition-colors">
+                            <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
                               {getStudentName(contract)}
                             </span>
                           </div>
