@@ -24,6 +24,7 @@ import type {
 } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import { User, Calendar, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 // Helper to open a PDF URL by fetching as a blob and opening an object URL.
 const openPdfUrl = async (url: string) => {
@@ -328,9 +329,13 @@ export function ContractDialog({
               <div className="p-3 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <User className="w-4 h-4" />
-                  <span className="text-base">
+                  <Link
+                    to={`/students/${selectedStudent.id}`}
+                    className="text-base hover:underline"
+                    target="_blank"
+                  >
                     {selectedStudent.first_name} {selectedStudent.last_name}
-                  </span>
+                  </Link>
                 </div>
               </div>
             )}
@@ -347,9 +352,13 @@ export function ContractDialog({
                     <span className="font-medium text-blue-700 dark:text-blue-300 min-w-[80px]">
                       {t("studentName")}:
                     </span>
-                    <span className="text-blue-900 dark:text-blue-100">
+                    <Link
+                      to={`/students/${selectedStudent.id}`}
+                      className="text-blue-900 dark:text-blue-100 hover:underline"
+                      target="_blank"
+                    >
                       {selectedStudent.first_name} {selectedStudent.last_name}
-                    </span>
+                    </Link>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="font-medium text-blue-700 dark:text-blue-300 min-w-[80px]">

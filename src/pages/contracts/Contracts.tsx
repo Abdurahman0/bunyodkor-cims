@@ -89,6 +89,7 @@ export default function Contracts() {
       newContractIdFilter = parseInt(contractId, 10);
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGroupFilter(newGroupFilter);
     setContractIdFilter(newContractIdFilter);
   }, [searchParams]);
