@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ import type { ContractWithStudentNameRead } from "@/types/api";
 
 export default function Contracts() {
   const { t } = useLanguageStore();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -518,13 +519,21 @@ export default function Contracts() {
                         <TableCell className="hidden md:table-cell">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            <Link
-                              to={`/students/${contract.student_id}`}
-                              className="hover:underline text-primary hover:text-primary/80"
-                              onClick={(e) => e.stopPropagation()}
+                            <span
+                              className="hover:underline text-primary hover:text-primary/80 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Jadval qatori (row) bosilib ketmasligi uchun
+
+                                // Tekshirish: Agar ID bo'lmasa, xatolik chiqmasin
+                                if (contract.student_id) {
+                                  navigate(`/students/${contract.student_id}`);
+                                } else {
+                                  console.warn("Student ID mavjud emas!");
+                                }
+                              }}
                             >
                               {getStudentName(contract)}
-                            </Link>
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
