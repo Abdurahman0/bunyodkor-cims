@@ -108,21 +108,43 @@ export default function Contracts() {
       groupFilter,
       contractIdFilter,
       archiveYearFilter,
-      // includeArchived,
     ],
     queryFn: async () => {
       try {
-        const response = await contractService.getContractsWithStudentName({
+        const params = {
           page,
           page_size: 10,
           contract_number: debouncedSearch || undefined,
           status: statusFilter || undefined,
           group_id: groupFilter,
           archive_year: archiveYearFilter,
-          // include_archived: includeArchived,
+        };
+
+        // 1. IKKALA APIGA BIR VAQTDA SO'ROV YUBORAMIZ
+        const [withNameRes, standardRes] = await Promise.all([
+          contractService.getContractsWithStudentName(params), // Ismlar uchun
+          contractService.getContracts(params), // IDlar uchun
+        ]);
+
+        // 2. NATIJALARNI BIRLASHTIRAMIZ (MERGE)
+        const mergedData = withNameRes.data.map((contractWithName: any) => {
+          // Ikkinchi natijadan IDsi bir xil bo'lgan shartnomani topamiz
+          const standardContract = standardRes.data.find(
+            (c: any) => c.id === contractWithName.id,
+          );
+
+          // Topilgan shartnomadan "student_id" ni olib qo'shamiz
+          return {
+            ...contractWithName,
+            student_id: standardContract?.student_id,
+          };
         });
 
-        return response;
+        // 3. TAYYOR MA'LUMOTNI QAYTARAMIZ
+        return {
+          ...withNameRes,
+          data: mergedData,
+        };
       } catch (err) {
         console.error("[CONTRACTS] Error fetching contracts:", err);
         throw err;
@@ -200,7 +222,7 @@ export default function Contracts() {
       // 2. Ism bo'yicha qidirish
       const response = await studentService.getStudents({
         page: 1,
-        page_size: 10,
+        page_size: 100,
         search: contract.student_full_name,
       });
 
@@ -561,7 +583,15 @@ export default function Contracts() {
                         <TableCell className="hidden md:table-cell">
                           <div
                             className="flex items-center gap-2 cursor-pointer group select-none"
-                            onClick={(e) => handleStudentClick(e, contract)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Endi bizda student_id aniq bor!
+                              if (contract.student_id) {
+                                navigate(`/students/${contract.student_id}`);
+                              } else {
+                                console.warn("Student ID topilmadi");
+                              }
+                            }}
                           >
                             <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
