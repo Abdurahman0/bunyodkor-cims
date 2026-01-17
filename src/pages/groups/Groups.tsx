@@ -46,7 +46,12 @@ import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { GroupRead, StudentRead, ContractRead, GroupsStatisticsResponse } from "@/types/api";
+import type {
+  GroupRead,
+  StudentRead,
+  ContractRead,
+  GroupsStatisticsResponse,
+} from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 
@@ -242,10 +247,10 @@ export default function Groups() {
       .map((yearData) => ({
         ...yearData,
         groups: yearData.groups.filter((group) =>
-          group.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+          group.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
         ),
         total_groups: yearData.groups.filter((group) =>
-          group.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+          group.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
         ).length,
       }))
       .filter((yearData) => yearData.groups.length > 0);
@@ -266,12 +271,12 @@ export default function Groups() {
 
       console.log(
         "[DEBUG] Fetching group students for group:",
-        selectedGroupForStudents
+        selectedGroupForStudents,
       );
 
       // Try the primary endpoint first
       const response = await groupService.getGroupStudents(
-        selectedGroupForStudents.id
+        selectedGroupForStudents.id,
       );
       console.log("[DEBUG] Group students response:", response);
       console.log("[DEBUG] Group students data:", response.data);
@@ -280,7 +285,7 @@ export default function Groups() {
       // If primary endpoint returns empty or null, use fallback
       if (!response.data || response.data.length === 0) {
         console.log(
-          "[DEBUG] Primary endpoint returned empty, trying fallback /students endpoint"
+          "[DEBUG] Primary endpoint returned empty, trying fallback /students endpoint",
         );
 
         const fallbackResponse = await studentService.getStudents({
@@ -296,7 +301,7 @@ export default function Groups() {
           console.log(
             "[DEBUG] Using fallback data with",
             fallbackResponse.data.length,
-            "students"
+            "students",
           );
           return fallbackResponse.data;
         }
@@ -326,7 +331,7 @@ export default function Groups() {
 
       console.log(
         "[DEBUG] Fetching all students with pagination for group:",
-        selectedGroupForContracts.id
+        selectedGroupForContracts.id,
       );
 
       let allStudents: StudentRead[] = [];
@@ -416,7 +421,7 @@ export default function Groups() {
   const getStudentName = (studentId: number | null | undefined) => {
     if (!studentId) return t("noStudentName");
     const student = studentsForContracts?.data?.find(
-      (s: StudentRead) => s.id === studentId
+      (s: StudentRead) => s.id === studentId,
     );
     return student
       ? `${student.first_name} ${student.last_name}`
@@ -473,7 +478,7 @@ export default function Groups() {
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
-                groupsStats?.data?.total_groups ?? 0
+                (groupsStats?.data?.total_groups ?? 0)
               )}
             </div>
           </CardContent>
@@ -494,7 +499,7 @@ export default function Groups() {
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
-                groupsStats?.data?.total_capacity ?? 0
+                (groupsStats?.data?.total_capacity ?? 0)
               )}
             </div>
           </CardContent>
@@ -515,7 +520,7 @@ export default function Groups() {
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
-                groupsStats?.data?.total_used ?? 0
+                (groupsStats?.data?.total_used ?? 0)
               )}
             </div>
           </CardContent>
@@ -536,7 +541,7 @@ export default function Groups() {
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
-                groupsStats?.data?.total_available ?? 0
+                (groupsStats?.data?.total_available ?? 0)
               )}
             </div>
           </CardContent>
@@ -557,7 +562,7 @@ export default function Groups() {
               {isLoadingGroupsStats ? (
                 <Loader2 className="animate-spin w-8 h-8" />
               ) : (
-                groupsStats?.data?.filled_groups_count ?? 0
+                (groupsStats?.data?.filled_groups_count ?? 0)
               )}
             </div>
           </CardContent>
@@ -742,15 +747,15 @@ export default function Groups() {
                                 student.status === "active"
                                   ? "default"
                                   : student.status === "inactive"
-                                  ? "secondary"
-                                  : "destructive"
+                                    ? "secondary"
+                                    : "destructive"
                               }
                             >
                               {student.status === "active"
                                 ? t("active")
                                 : student.status === "inactive"
-                                ? t("inactive")
-                                : t("archived")}
+                                  ? t("inactive")
+                                  : t("archived")}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -805,7 +810,19 @@ export default function Groups() {
                   <Card
                     key={contract.id}
                     // O'ZGARISH 2: Card dizayni zamonaviylashtirildi
-                    className="group relative overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border border-border/40 hover:border-blue-500/50 hover:bg-slate-50 dark:hover:bg-slate-900/50 rounded-xl hover:-translate-y-1"
+                    className="
+  group relative overflow-hidden
+  bg-white/80 dark:bg-slate-800/80
+  backdrop-blur-xl
+  border border-slate-200 dark:border-slate-700
+  rounded-xl
+  shadow-lg
+  transition-all duration-300
+  hover:-translate-y-1 hover:shadow-xl
+  hover:border-blue-500/40
+  hover:bg-blue-50/50 dark:hover:bg-blue-900/20
+  cursor-pointer
+"
                     onClick={() => {
                       if (contract.student_id) {
                         navigate(`/students/${contract.student_id}`);
@@ -837,15 +854,15 @@ export default function Groups() {
                             contract.status === "active"
                               ? "default"
                               : contract.status === "expired"
-                              ? "secondary"
-                              : "destructive"
+                                ? "secondary"
+                                : "destructive"
                           }
                         >
                           {contract.status === "active"
                             ? t("active")
                             : contract.status === "expired"
-                            ? t("expired")
-                            : t("cancelled")}
+                              ? t("expired")
+                              : t("cancelled")}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -859,9 +876,9 @@ export default function Groups() {
                         <span className="text-foreground/80 font-medium">
                           {contract.start_date && contract.end_date
                             ? `${new Date(
-                                contract.start_date
+                                contract.start_date,
                               ).toLocaleDateString()} - ${new Date(
-                                contract.end_date
+                                contract.end_date,
                               ).toLocaleDateString()}`
                             : t("noDates")}
                         </span>
@@ -872,7 +889,7 @@ export default function Groups() {
                         <span className="font-bold text-foreground text-base">
                           {contract.monthly_fee
                             ? `${Number(
-                                contract.monthly_fee
+                                contract.monthly_fee,
                               ).toLocaleString()} UZS`
                             : t("noFee")}
                         </span>
