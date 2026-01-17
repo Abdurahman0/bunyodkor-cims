@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { headCoachService, userService } from "@/services/api.service";
+import { groupService, headCoachService, userService } from "@/services/api.service";
 import { motion } from "framer-motion";
 
 // UI Components
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,6 +40,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "react-hot-toast";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { SessionCreateRequest, SessionRead, GroupsStatisticsResponse } from "@/types/api";
 
 // Reusable Components
@@ -104,6 +107,7 @@ export default function HeadCoach() {
       toast.success("Mashg'ulot muvaffaqiyatli o'chirildi");
       setDetailsDialogOpen(false);
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) => {
       toast.error(
         err.response?.data?.detail || "Mashg'ulotni o'chirishda xatolik",
