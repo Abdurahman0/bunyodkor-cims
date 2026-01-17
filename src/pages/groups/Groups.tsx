@@ -40,6 +40,7 @@ import {
   UserCheck,
   FileText,
   CreditCard,
+  TrendingUp,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";

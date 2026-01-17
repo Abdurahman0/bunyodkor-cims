@@ -470,7 +470,7 @@ export default function HeadCoach() {
         initialData={sessionDialogInitialData}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["sessions"] });
-          queryClient.invalidateQueries({ queryKey: ["headCoachStats"] });
+          queryClient.invalidateQueries({ queryKey: ["groups-statistics-headcoach"] });
         }}
       />
 
