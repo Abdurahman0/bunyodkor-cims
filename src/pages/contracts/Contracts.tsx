@@ -54,7 +54,7 @@ export default function Contracts() {
   const [archiveYearFilter, setArchiveYearFilter] = useState<
     number | undefined
   >(undefined);
-  const [includeArchived, setIncludeArchived] = useState(false);
+  // const [includeArchived, setIncludeArchived] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] =
     useState<ContractWithStudentNameRead | null>(null);
@@ -105,7 +105,7 @@ export default function Contracts() {
       groupFilter,
       contractIdFilter,
       archiveYearFilter,
-      includeArchived,
+      // includeArchived,
     ],
     queryFn: async () => {
       try {
@@ -116,7 +116,7 @@ export default function Contracts() {
           status: statusFilter || undefined,
           group_id: groupFilter,
           archive_year: archiveYearFilter,
-          include_archived: includeArchived,
+          // include_archived: includeArchived,
         });
 
         return response;
@@ -240,12 +240,12 @@ export default function Contracts() {
     setPage(1);
   };
 
-  const handleIncludeArchivedChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setIncludeArchived(e.target.checked);
-    setPage(1);
-  };
+  // const handleIncludeArchivedChange = (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  // ) => {
+  //   setIncludeArchived(e.target.checked);
+  //   setPage(1);
+  // };
 
   const clearFilters = () => {
     setSearch("");
@@ -253,7 +253,7 @@ export default function Contracts() {
     setGroupFilter(undefined);
     setContractIdFilter(undefined);
     setArchiveYearFilter(undefined);
-    setIncludeArchived(false);
+    // setIncludeArchived(false);
     setPage(1);
   };
 
@@ -263,7 +263,7 @@ export default function Contracts() {
     groupFilter ||
     contractIdFilter ||
     archiveYearFilter ||
-    includeArchived;
+    // includeArchived;
 
   // --- Pagination Logic ---
   const totalPages = data?.meta?.total_pages || 1;
@@ -367,7 +367,7 @@ export default function Contracts() {
                     );
                   })}
                 </Select>
-                <div className="flex items-center space-x-2">
+                {/* <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     id="includeArchived"
@@ -381,7 +381,7 @@ export default function Contracts() {
                   >
                     {t("includeArchived") || "Include Archived"}
                   </label>
-                </div>
+                </div> */}
                 <Select
                   value={groupFilter?.toString() || ""}
                   onChange={(e) => {

@@ -838,6 +838,17 @@ export const groupService = {
     );
     return response.data;
   },
+
+  /**
+   * Get overall statistics for all groups.
+   * GET /groups/statistics
+   */
+  getGroupsStatistics: async (): Promise<ApiResponse<GroupsStatisticsResponse>> => {
+    const response = await apiClient.get<ApiResponse<GroupsStatisticsResponse>>(
+      "/groups/statistics",
+    );
+    return response.data;
+  },
 };
 
 // ============================================================================

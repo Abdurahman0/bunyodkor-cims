@@ -45,7 +45,7 @@ import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { GroupRead, StudentRead, ContractRead } from "@/types/api";
+import type { GroupRead, StudentRead, ContractRead, GroupsStatisticsResponse } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 
@@ -223,6 +223,12 @@ export default function Groups() {
   const { data: groupedData, isLoading } = useQuery({
     queryKey: ["groups-grouped-by-year"],
     queryFn: () => groupService.getGroupsGroupedByYear(),
+  });
+
+  // Fetch group statistics
+  const { data: groupsStats, isLoading: isLoadingGroupsStats } = useQuery({
+    queryKey: ["groups-statistics"],
+    queryFn: () => groupService.getGroupsStatistics(),
   });
 
   // Apply search filter to grouped data
@@ -442,6 +448,119 @@ export default function Groups() {
           <Plus className="w-4 h-4" />
           {t("newGroup")}
         </Button>
+      </motion.div>
+
+      {/* Group Statistics Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+      >
+        {/* Total Groups Card */}
+        <Card className="border-l-4 border-l-blue-500 bg-white dark:bg-slate-800 shadow-lg">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {t("totalGroups") || "Jami Guruhlar"}
+              </CardTitle>
+              <Users className="h-5 w-5 text-blue-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-600">
+              {isLoadingGroupsStats ? (
+                <Loader2 className="animate-spin w-8 h-8" />
+              ) : (
+                groupsStats?.data?.total_groups ?? 0
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Capacity Card */}
+        <Card className="border-l-4 border-l-emerald-500 bg-white dark:bg-slate-800 shadow-lg">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {t("totalCapacity") || "Umumiy Sig'im"}
+              </CardTitle>
+              <Calendar className="h-5 w-5 text-emerald-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-emerald-600">
+              {isLoadingGroupsStats ? (
+                <Loader2 className="animate-spin w-8 h-8" />
+              ) : (
+                groupsStats?.data?.total_capacity ?? 0
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Used Spots Card */}
+        <Card className="border-l-4 border-l-orange-500 bg-white dark:bg-slate-800 shadow-lg">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {t("usedSpots") || "Band Qilingan O'rinlar"}
+              </CardTitle>
+              <UserCheck className="h-5 w-5 text-orange-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-orange-600">
+              {isLoadingGroupsStats ? (
+                <Loader2 className="animate-spin w-8 h-8" />
+              ) : (
+                groupsStats?.data?.total_used ?? 0
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Available Spots Card */}
+        <Card className="border-l-4 border-l-purple-500 bg-white dark:bg-slate-800 shadow-lg">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {t("availableSpots") || "Bo'sh O'rinlar"}
+              </CardTitle>
+              <TrendingUp className="h-5 w-5 text-purple-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-purple-600">
+              {isLoadingGroupsStats ? (
+                <Loader2 className="animate-spin w-8 h-8" />
+              ) : (
+                groupsStats?.data?.total_available ?? 0
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Filled Groups Count Card */}
+        <Card className="border-l-4 border-l-cyan-500 bg-white dark:bg-slate-800 shadow-lg">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {t("filledGroups") || "To'liq Guruhlar"}
+              </CardTitle>
+              <Users className="h-5 w-5 text-cyan-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-cyan-600">
+              {isLoadingGroupsStats ? (
+                <Loader2 className="animate-spin w-8 h-8" />
+              ) : (
+                groupsStats?.data?.filled_groups_count ?? 0
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       <motion.div

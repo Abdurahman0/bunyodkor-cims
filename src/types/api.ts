@@ -496,6 +496,23 @@ export interface SessionUpdateRequest {
 // Head Coach Types
 // ============================================================================
 
+export interface ByBirthYearStatistics {
+  birth_year: number;
+  total_groups: number;
+  total_capacity: number;
+  total_used: number;
+  total_available: number;
+}
+
+export interface GroupsStatisticsResponse {
+  total_groups: number;
+  total_capacity: number;
+  total_used: number;
+  total_available: number;
+  filled_groups_count: number;
+  by_birth_year: ByBirthYearStatistics[];
+}
+
 export interface HeadCoachStats {
   active_groups_count: number;
   active_students_count: number;

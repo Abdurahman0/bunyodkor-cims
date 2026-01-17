@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "react-hot-toast";
-import type { SessionCreateRequest, SessionRead } from "@/types/api";
+import type { SessionCreateRequest, SessionRead, GroupsStatisticsResponse } from "@/types/api";
 
 // Reusable Components
 import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
@@ -92,6 +92,12 @@ export default function HeadCoach() {
     queryFn: () => userService.getCoaches(),
     select: (data) => data.data,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes, coaches don't change often
+  });
+
+  // Fetch group statistics for the "Tizim Holati" card
+  const { data: groupsStats, isLoading: isLoadingGroupsStats } = useQuery({
+    queryKey: ["groups-statistics-headcoach"],
+    queryFn: () => groupService.getGroupsStatistics(),
   });
 
   // --- Mutations ---
@@ -295,23 +301,34 @@ export default function HeadCoach() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600">Jami Sig'im</span>
                   <span className="font-semibold">
-                    {groups.reduce((sum, g) => sum + g.capacity, 0)} o'rin
+                    {isLoadingGroupsStats ? (
+                      <Loader2 className="animate-spin w-4 h-4" />
+                    ) : (
+                      groupsStats?.data?.total_capacity ?? "N/A"
+                    )}{" "}
+                    o'rin
                   </span>
-                </div>
-                {/* Remove remaining stats from here as well */}
-                {/* <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">To'ldirilgan</span>
-                  <Badge variant="outline" className="bg-emerald-50">
-                    {stats?.active_students_count ?? 0} / {totalCapacity}
-                  </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Bo'sh O'rinlar</span>
-                  <span className="font-semibold text-orange-600">
-                    {totalCapacity - (stats?.active_students_count ?? 0)}
+                  <span className="text-sm text-slate-600">Band qilingan o'rinlar</span>
+                  <span className="font-semibold">
+                    {isLoadingGroupsStats ? (
+                      <Loader2 className="animate-spin w-4 h-4" />
+                    ) : (
+                      groupsStats?.data?.total_used ?? "N/A"
+                    )}
                   </span>
-                </div> */}
-              </CardContent>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Bo'sh o'rinlar</span>
+                  <span className="font-semibold text-orange-600">
+                    {isLoadingGroupsStats ? (
+                      <Loader2 className="animate-spin w-4 h-4" />
+                    ) : (
+                      groupsStats?.data?.total_available ?? "N/A"
+                    )}
+                  </span>
+                </div>              </CardContent>
             </Card>
           </div>
         </TabsContent>
