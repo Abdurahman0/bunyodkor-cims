@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 const getApiUrl = () => {
   // In development, use proxy to avoid CORS issues
-  return import.meta.env.VITE_API_URL || "https://209.38.216.205/";
+  return import.meta.env.VITE_API_URL || "http://209.38.216.205/";
 };
 
 // Helper function to get translated message
