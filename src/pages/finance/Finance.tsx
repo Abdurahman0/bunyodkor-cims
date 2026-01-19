@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +31,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
-import { transactionService, studentService } from "@/services/api.service";
-import type { TransactionRead, StudentRead } from "@/types/api";
+import { transactionService } from "@/services/api.service";
+import type {
+  TransactionWithNameRead,
+  TransactionRead,
+  TransactionStatus,
+  TransactionSource,
+} from "@/types/api";
 import { TransactionDialog } from "./TransactionDialog";
 import toast from "react-hot-toast";
 import { exportTransactions } from "@/lib/export-utils";
@@ -54,14 +59,14 @@ export default function Finance() {
 
   const { data, isLoading } = useQuery({
     queryKey: [
-      "transactions",
+      "transactions-with-name",
       page,
       debouncedStudentIdFilter,
       statusFilter,
       sourceFilter,
     ],
     queryFn: () =>
-      transactionService.getTransactions({
+      transactionService.getTransactionsWithName({
         page,
         page_size: 10,
         student_id: debouncedStudentIdFilter
@@ -74,33 +79,6 @@ export default function Finance() {
     refetchOnMount: true, // Refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when window regains focus
   });
-
-  // Get unique student IDs from the current page of transactions
-  const studentIds = useMemo(() => {
-    if (!data?.data) return [];
-    const ids = data.data.map(t => t.student_id).filter(id => id !== null) as number[];
-    return [...new Set(ids)];
-  }, [data]);
-
-  // Fetch student data only for the IDs present in the current transactions
-  const studentQueries = useQueries({
-    queries: studentIds.map(id => ({
-      queryKey: ['student', id],
-      queryFn: () => studentService.getStudent(id),
-      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    })),
-  });
-
-  // Create a map of student IDs to student data for quick lookup
-  const studentsMap = useMemo(() => {
-    const map = new Map<number, StudentRead>();
-    studentQueries.forEach(query => {
-      if (query.data?.data) {
-        map.set(query.data.data.id, query.data.data);
-      }
-    });
-    return map;
-  }, [studentQueries]);
 
 
   const { data: unassignedData } = useQuery({
@@ -153,7 +131,7 @@ export default function Finance() {
     onSuccess: () => {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
-        queryKey: ["transactions"],
+        queryKey: ["transactions-with-name"],
         refetchType: "all",
       });
       queryClient.invalidateQueries({
@@ -191,7 +169,7 @@ export default function Finance() {
     onSuccess: () => {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
-        queryKey: ["transactions"],
+        queryKey: ["transactions-with-name"],
         refetchType: "all",
       });
       queryClient.invalidateQueries({
@@ -238,28 +216,14 @@ export default function Finance() {
         toast.error(t("noDataToExport"));
         return;
       }
-      exportTransactions(data.data, Array.from(studentsMap.values()));
+      exportTransactions(data.data);
       toast.success(t("transactionsExported"));
     } catch (error) {
       toast.error(t("failedToExportTransactions"));
     }
   };
 
-  const getStudentName = (studentId: number) => {
-    const student = studentsMap.get(studentId);
-    if (student) {
-      return `${student.first_name || ""} ${student.last_name || ""}`.trim();
-    }
-    const query = studentQueries.find(
-      (q) => q && q.queryKey && q.queryKey[1] === studentId
-    );
-    if (query?.isLoading) return t("loading") || "Loading...";
-    if (query?.isError) return t("error") || "Error";
-
-    return t("unknown") || "Unknown";
-  };
-
-  const getStatusBadge = (status: TransactionRead["status"]) => {
+  const getStatusBadge = (status: TransactionStatus) => {
     const variants: Record<
       string,
       { icon: React.ElementType; bg: string; text: string }
@@ -299,7 +263,7 @@ export default function Finance() {
     );
   };
 
-  const getSourceIcon = (source: TransactionRead["source"]) => {
+  const getSourceIcon = (source: TransactionSource) => {
     const icons: Record<string, string> = {
       payme: "💳",
       click: "📱",
@@ -310,7 +274,7 @@ export default function Finance() {
     return icons[source!] || "💰";
   };
 
-  const formatSource = (source: TransactionRead["source"]) => {
+  const formatSource = (source: TransactionSource) => {
     // Remove any "Paymentsource." prefix and format properly
     const cleanSource =
       source?.toString().replace(/^.*\./, "").toLowerCase() || "";
@@ -505,7 +469,8 @@ export default function Finance() {
               {data?.data && data.data.length > 0 ? (
                 (() => {
                   const displayed = [...data.data].sort(
-                    (a: TransactionRead, b: TransactionRead) => a.id - b.id
+                    (a: TransactionWithNameRead, b: TransactionWithNameRead) =>
+                      a.id - b.id
                   );
                   return displayed.map((transaction, idx) => (
                     <TableRow key={transaction.id}>
@@ -534,9 +499,9 @@ export default function Finance() {
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {transaction.student_id ? (
+                        {transaction.student_full_name ? (
                           <span className="text-sm">
-                            {getStudentName(transaction.student_id)}
+                            {transaction.student_full_name}
                           </span>
                         ) : (
                           <span className="text-sm text-muted-foreground">

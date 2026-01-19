@@ -1118,7 +1118,32 @@ export interface GetTransactionsParams {
   page_size?: number;
 }
 
+export interface GetTransactionsWithNameParams {
+  payment_year?: number;
+  from_date?: string;
+  to_date?: string;
+  status?: string;
+  source?: string;
+  student_id?: number;
+  page?: number;
+  page_size?: number;
+}
+
 export const transactionService = {
+  /**
+   * Get paginated list of transactions with student names
+   * GET /transactions/withname
+   */
+  getTransactionsWithName: async (
+    params?: GetTransactionsWithNameParams
+  ): Promise<ApiResponse<TransactionWithNameRead[]>> => {
+    const response = await apiClient.get<ApiResponse<TransactionWithNameRead[]>>(
+      "/transactions/withname",
+      { params }
+    );
+    return response.data;
+  },
+
   /**
    * Get paginated list of transactions with filters
    * GET /transactions

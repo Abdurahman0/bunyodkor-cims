@@ -412,6 +412,13 @@ export interface TransactionRead {
   created_at: string;
 }
 
+export interface TransactionWithNameRead extends TransactionRead {
+  student_full_name: string;
+}
+
+export interface TransactionWithNamePaginatedRead
+  extends ApiResponse<TransactionWithNameRead[]> {}
+
 export interface ManualTransactionCreateRequest {
   amount: number;
   source: TransactionSource;

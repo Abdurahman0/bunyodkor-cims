@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import type { TransactionWithNameRead } from '@/types/api'
 
 /**
  * Download data as CSV file
@@ -149,15 +150,7 @@ export const flattenDataForExport = (data: any[]): any[] => {
 /**
  * Export transactions data with all fields
  */
-export const exportTransactions = (transactions: any[], students?: any[]) => {
-  // Helper function to get student name from ID
-  const getStudentName = (studentId: number | undefined) => {
-    if (!studentId || !students) return 'Unassigned'
-    const student = students.find((s: any) => s.id === studentId)
-    if (!student) return `ID: ${studentId}`
-    return `${student.first_name} ${student.last_name}`.trim()
-  }
-
+export const exportTransactions = (transactions: TransactionWithNameRead[]) => {
   const exportData = transactions.map(tx => ({
     ID: tx.id,
     'External ID': tx.external_id || '',
@@ -165,7 +158,7 @@ export const exportTransactions = (transactions: any[], students?: any[]) => {
     Amount: tx.amount || '',
     Status: tx.status || '',
     'Student ID': tx.student_id || '',
-    'Student Name': getStudentName(tx.student_id),
+    'Student Name': tx.student_full_name || 'Unassigned',
     'Contract ID': tx.contract_id || '',
     'Paid At': tx.paid_at ? format(new Date(tx.paid_at), 'yyyy-MM-dd HH:mm:ss') : '',
     Description: tx.description || '',
