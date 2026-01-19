@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { motion } from 'framer-motion'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { LoginRequest, TokenResponse, UserRead, CurrentUserResponse } from '@/types/api'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useLanguageStore } from '@/store/languageStore'
 
 export default function Login() {
@@ -115,10 +116,10 @@ export default function Login() {
             </motion.div>
 
             <CardTitle className="text-3xl text-center font-bold bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
-              Bunyodkor CIMS
+              {t('systemName')}
             </CardTitle>
             <CardDescription className="text-center text-base">
-              Kurs Ma'lumotlari Boshqaruv Tizimi
+              {t('systemDescription')}
             </CardDescription>
           </CardHeader>
 
@@ -132,16 +133,16 @@ export default function Login() {
                 className="space-y-2"
               >
                 <Label htmlFor="phone_or_email" className="text-sm font-medium">
-                  Email yoki Telefon
+                  {t('emailOrPhone')}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="phone_or_email"
-                    placeholder="admin@bunyodkor.uz yoki +998901234567"
+                    placeholder={t('emailOrPhonePlaceholder')}
                     className="pl-10 h-11"
                     {...register('phone_or_email', {
-                      required: 'Email yoki telefon talab qilinadi',
+                      required: t('emailOrPhoneRequired'),
                     })}
                   />
                 </div>
@@ -164,7 +165,7 @@ export default function Login() {
                 className="space-y-2"
               >
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Parol
+                  {t('password')}
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -174,10 +175,10 @@ export default function Login() {
                     placeholder="••••••••"
                     className="pl-10 pr-10 h-11"
                     {...register('password', {
-                      required: 'Parol talab qilinadi',
+                      required: t('passwordRequired'),
                       minLength: {
                         value: 6,
-                        message: 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak',
+                        message: t('passwordMinLength'),
                       },
                     })}
                   />
@@ -222,12 +223,12 @@ export default function Login() {
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                         className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       />
-                      Kirish...
+                      {t('loggingIn')}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <LogIn className="w-4 h-4" />
-                      Kirish
+                      {t('login')}
                     </div>
                   )}
                 </Button>
@@ -242,9 +243,9 @@ export default function Login() {
                   className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg"
                 >
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                    🔵 Mock API Faol
+                    🔵 {t('mockApiActive')}
                   </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">Test ma'lumotlari:</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">{t('testData')}</p>
                   <div className="text-xs font-mono space-y-1 text-blue-800 dark:text-blue-200">
                     <p>admin@bunyodkor.uz / admin123</p>
                     <p>teacher@bunyodkor.uz / teacher123</p>
@@ -263,7 +264,7 @@ export default function Login() {
           transition={{ delay: 0.7 }}
           className="text-center text-sm text-muted-foreground mt-6"
         >
-          © 2024 Bunyodkor. Barcha huquqlar himoyalangan.
+          {t('copyright')}
         </motion.p>
       </motion.div>
     </div>

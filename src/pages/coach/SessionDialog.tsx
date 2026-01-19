@@ -1,21 +1,5 @@
-import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { headCoachService } from "@/services/api.service";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
 import type { GroupRead, SessionCreateRequest } from "@/types/api";
+import { useLanguageStore } from "@/store/languageStore";
 
 interface SessionDialogProps {
   open: boolean;
@@ -25,10 +9,6 @@ interface SessionDialogProps {
   onSuccess: () => void;
 }
 
-
-
-
-
 export function SessionDialog({
   open,
   onOpenChange,
@@ -36,6 +16,7 @@ export function SessionDialog({
   initialData,
   onSuccess,
 }: SessionDialogProps) {
+  const { t } = useLanguageStore();
   const [formData, setFormData] = useState<Partial<SessionCreateRequest>>({
     group_id: 0,
     session_date: "",
@@ -71,31 +52,28 @@ export function SessionDialog({
     mutationFn: (data: SessionCreateRequest) =>
       headCoachService.createSession(data),
     onSuccess: () => {
-      toast.success("Mashg'ulot muvaffaqiyatli yaratildi");
+      toast.success(t("sessionCreatedSuccess"));
       onSuccess();
       onOpenChange(false);
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.detail || "Mashg'ulot yaratishda xatolik"
+        error.response?.data?.detail || t("failedToCreateSession")
       );
     },
   });
-
-
-
 
   const updateSessionMutation = useMutation({
     mutationFn: (data: { id: number; data: SessionCreateRequest }) =>
       headCoachService.updateSession(data.id, data.data),
     onSuccess: () => {
-      toast.success("Mashg'ulot muvaffaqiyatli yangilandi");
+      toast.success(t("sessionUpdatedSuccess"));
       onSuccess();
       onOpenChange(false);
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.detail || "Mashg'ulotni yangilashda xatolik"
+        error.response?.data?.detail || t("failedToUpdateSession")
       );
     },
   });
@@ -111,7 +89,7 @@ export function SessionDialog({
         !formData.end_time ||
         !formData.topic
       ) {
-        toast.error("Iltimos, barcha majburiy maydonlarni to'ldiring");
+        toast.error(t("fillAllRequiredFields"));
         return;
       }
   
@@ -125,7 +103,7 @@ export function SessionDialog({
   
       // Prevent creating new sessions for past dates
       if (!editId && sessionDate < today) {
-        toast.error("O'tib ketgan sana uchun mashg'ulot yaratib bo'lmaydi.");
+        toast.error(t("cannotCreateSessionForPastDate"));
         return;
       }
   
@@ -153,14 +131,12 @@ export function SessionDialog({
       <DialogContent className="sm:max-w-[425px] px-6 sm:px-6">
         <DialogHeader>
           <DialogTitle>
-            {(initialData as any)?.id
-              ? "Mashg'ulotni Tahrirlash"
-              : "Yangi Mashg'ulot"}
+            {(initialData as any)?.id ? t("editSession") : t("createNewSession")}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="group">Guruh</Label>
+            <Label htmlFor="group">{t('group')}</Label>
             <Select
               id="group"
               value={formData.group_id?.toString()}
@@ -178,7 +154,7 @@ export function SessionDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="date">Sana</Label>
+              <Label htmlFor="date">{t('date')}</Label>
               <Input
                 id="date"
                 type="date"
@@ -190,10 +166,10 @@ export function SessionDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location">Joy (Stadion)</Label>
+              <Label htmlFor="location">{t('location')}</Label>
               <Input
                 id="location"
-                placeholder="Masalan: Bunyodkor stadioni"
+                placeholder={t('locationPlaceholder')}
                 value={formData.location}
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
@@ -204,7 +180,7 @@ export function SessionDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_time">Boshlanish</Label>
+              <Label htmlFor="start_time">{t('startTime')}</Label>
               <Input
                 id="start_time"
                 type="time"
@@ -216,7 +192,7 @@ export function SessionDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end_time">Tugash</Label>
+              <Label htmlFor="end_time">{t('endTime')}</Label>
               <Input
                 id="end_time"
                 type="time"
@@ -230,10 +206,10 @@ export function SessionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="topic">Mavzu</Label>
+            <Label htmlFor="topic">{t('topic')}</Label>
             <Input
               id="topic"
-              placeholder="Mashg'ulot mavzusi"
+              placeholder={t('sessionTopicPlaceholder')}
               value={formData.topic}
               onChange={(e) =>
                 setFormData({ ...formData, topic: e.target.value })
@@ -243,10 +219,10 @@ export function SessionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Qo'shimcha Izoh</Label>
+            <Label htmlFor="description">{t('additionalNotes')}</Label>
             <Textarea
               id="description"
-              placeholder="Mashg'ulot haqida batafsil..."
+              placeholder={t('sessionDescriptionPlaceholder')}
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -261,11 +237,11 @@ export function SessionDialog({
               onClick={() => onOpenChange(false)}
               disabled={isPending}
             >
-              Bekor qilish
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Saqlash
+              {t('save')}
             </Button>
           </DialogFooter>
         </form>

@@ -419,7 +419,7 @@ export default function Reports() {
                     <div className="text-xl sm:text-2xl font-bold text-foreground break-words overflow-wrap-anywhere">
                       {formatCurrency(financeReport?.data?.total_revenue || 0)}
                     </div>
-                    <div className="text-xs text-muted-foreground">Total</div>
+                    <div className="text-xs text-muted-foreground">{t("total")}</div>
                   </div>
                 </div>
               </CardHeader>
@@ -428,7 +428,7 @@ export default function Reports() {
                   <DonutChart data={paymentSourcesData} size={180} showLegend />
                 ) : (
                   <div className="h-48 flex items-center justify-center text-muted-foreground">
-                    No data available
+                    {t("noData")}
                   </div>
                 )}
               </CardContent>
@@ -448,7 +448,7 @@ export default function Reports() {
                   />
                 ) : (
                   <div className="h-48 flex items-center justify-center text-muted-foreground">
-                    No data available
+                    {t("noData")}
                   </div>
                 )}
               </CardContent>
@@ -464,7 +464,6 @@ export default function Reports() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("paymentMethod")}</TableHead>
-                  {/* O'ng tomonga to'g'rilash uchun [&>div]:justify-end klassi qo'shildi */}
                   <TableHead className="text-right [&>div]:justify-end">
                     {t("transactions")}
                   </TableHead>
@@ -543,7 +542,6 @@ export default function Reports() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("group")}</TableHead>
-                  {/* O'ng tomonga to'g'rilash uchun [&>div]:justify-end klassi qo'shildi */}
                   <TableHead className="text-right [&>div]:justify-end">
                     {t("totalSessions")}
                   </TableHead>
@@ -743,7 +741,7 @@ export default function Reports() {
                       }}
                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <option value="">{t("allGroups") || "All Groups"}</option>
+                      <option value="">{t("allGroups")}</option>
                       {groupsData?.data?.map((group: GroupRead) => (
                         <option key={group.id} value={String(group.id)}>
                           {group.name}
@@ -779,7 +777,6 @@ export default function Reports() {
                   <TableHead>{t("student")}</TableHead>
                   <TableHead>{t("group")}</TableHead>
                   <TableHead>{t("phone")}</TableHead>
-                  {/* O'ng tomonga to'g'rilash uchun [&>div]:justify-end qo'shildi */}
                   <TableHead className="text-right [&>div]:justify-end">
                     {t("activeContracts")}
                   </TableHead>

@@ -520,6 +520,17 @@ export const translations = {
     startTimeRequired: 'Start time is required',
     endTime: 'End Time',
     endTimeRequired: 'End time is required',
+    location: 'Location (Stadium)',
+    topic: 'Topic',
+    additionalNotes: 'Additional Notes',
+    editSession: 'Edit Session',
+    sessionTopicPlaceholder: 'Session topic',
+    sessionDescriptionPlaceholder: 'Session description...',
+    locationPlaceholder: 'E.g., Bunyodkor Stadium',
+    fillAllRequiredFields: 'Please fill all required fields',
+    cannotCreateSessionForPastDate: 'Cannot create session for a past date.',
+    sessionUpdatedSuccess: 'Session updated successfully',
+    failedToUpdateSession: 'Failed to update session',
 
     // API Error Messages
     errorTimeout: 'Request took too long. Please try again or reduce file sizes.',
@@ -690,6 +701,7 @@ export const translations = {
     reportExported: 'Report exported successfully',
     studentDeleted: 'Student deleted successfully',
     studentsExported: 'Students exported successfully',
+    successfulPayments: 'successful payments',
 
     // Student Detail Page
     backToStudents: 'Back to Students',
@@ -795,6 +807,32 @@ export const translations = {
     studentDeletionWarning_line1: 'This will permanently erase the student\'s profile, all associated contracts, payment history, attendance records, parent information, and gate logs.',
     studentDeletionWarning_line2: 'This data cannot be recovered.',
     confirmPermanentDelete: 'Yes, permanently delete',
+
+    // Assign Transaction Dialog
+    assignTransactionTitle: 'Assign Transaction #{transactionId}',
+    assignTransactionDescription: 'Assign this unassigned payment of {amount} UZS to a student and their contract.',
+    pleaseSelectStudent: 'Please select a student',
+    loadingStudents: 'Loading students...',
+    selectStudent: 'Select a student',
+    pleaseSelectContract: 'Please select a contract',
+    loadingContracts: 'Loading contracts...',
+    selectStudentFirst: 'Select a student first',
+    selectContract: 'Select a contract',
+    assignTransaction: 'Assign Transaction',
+    failedToAssignTransaction: 'Failed to assign transaction',
+
+    // Login
+    systemName: 'Bunyodkor CIMS',
+    systemDescription: 'Course Information Management System',
+    emailOrPhone: 'Email or Phone',
+    emailOrPhonePlaceholder: 'admin@bunyodkor.uz or +998901234567',
+    emailOrPhoneRequired: 'Email or Phone is required',
+    passwordRequired: 'Password is required',
+    loggingIn: 'Logging in...',
+    login: 'Login',
+    invalidCredentials: 'Invalid credentials',
+    testData: 'Test data:',
+    copyright: '© 2024 Bunyodkor. All rights reserved.',
   },
 
   uz: {
@@ -1318,6 +1356,17 @@ export const translations = {
     startTimeRequired: 'Boshlanish vaqti talab qilinadi',
     endTime: 'Tugash vaqti',
     endTimeRequired: 'Tugash vaqti talab qilinadi',
+    location: 'Joy (Stadion)',
+    topic: 'Mavzu',
+    additionalNotes: 'Qo\'shimcha Izoh',
+    editSession: 'Mashg\'ulotni Tahrirlash',
+    sessionTopicPlaceholder: 'Mashg\'ulot mavzusi',
+    sessionDescriptionPlaceholder: 'Mashg\'ulot haqida batafsil...',
+    locationPlaceholder: 'Masalan: Bunyodkor stadioni',
+    fillAllRequiredFields: 'Iltimos, barcha majburiy maydonlarni to\'ldiring',
+    cannotCreateSessionForPastDate: 'O\'tib ketgan sana uchun mashg\'ulot yaratib bo\'lmaydi.',
+    sessionUpdatedSuccess: 'Mashg\'ulot muvaffaqiyatli yangilandi',
+    failedToUpdateSession: 'Mashg\'ulotni yangilashda xatolik',
 
     // API Error Messages
     errorTimeout: 'So\'rov juda ko\'p vaqt oldi. Iltimos, qaytadan urinib ko\'ring yoki fayllar hajmini kamaytiring.',
@@ -1488,6 +1537,7 @@ export const translations = {
     reportExported: 'Hisobot muvaffaqiyatli eksport qilindi',
     studentDeleted: 'Talaba muvaffaqiyatli o\'chirildi',
     studentsExported: 'Talabalar muvaffaqiyatli eksport qilindi',
+    successfulPayments: 'muvaffaqiyatli to\'lovlar',
 
     // Student Detail Page (Talaba Tafsilotlari Sahifasi)
     backToStudents: 'Talabalar ro\'yxatiga qaytish',
@@ -1593,6 +1643,32 @@ export const translations = {
     studentDeletionWarning_line1: 'Bu talabaning profilini, barcha bog\'liq shartnomalarni, to\'lovlar tarixini, davomat yozuvlarini, ota-ona ma\'lumotlarini va darvoza jurnallarini butunlay o\'chiradi.',
     studentDeletionWarning_line2: 'Bu ma\'lumotlarni qayta tiklab bo\'lmaydi.',
     confirmPermanentDelete: 'Ha, butunlay o\'chirish',
+
+    // Assign Transaction Dialog
+    assignTransactionTitle: '#{transactionId} Tranzaktsiyani tayinlash',
+    assignTransactionDescription: 'Ushbu {amount} UZS miqdoridagi tayinlanmagan to\'lovni talabaga va uning shartnomasiga tayinlang.',
+    pleaseSelectStudent: 'Iltimos, talabani tanlang',
+    loadingStudents: 'Talabalar yuklanmoqda...',
+    selectStudent: 'Talabani tanlang',
+    pleaseSelectContract: 'Iltimos, shartnomani tanlang',
+    loadingContracts: 'Shartnomalar yuklanmoqda...',
+    selectStudentFirst: 'Avval talabani tanlang',
+    selectContract: 'Shartnomani tanlang',
+    assignTransaction: 'Tranzaktsiyani tayinlash',
+    failedToAssignTransaction: 'Tranzaktsiyani tayinlashda xatolik',
+
+    // Login
+    systemName: 'Bunyodkor CIMS',
+    systemDescription: 'Kurs Ma\'lumotlari Boshqaruv Tizimi',
+    emailOrPhone: 'Email yoki Telefon',
+    emailOrPhonePlaceholder: 'admin@bunyodkor.uz yoki +998901234567',
+    emailOrPhoneRequired: 'Email yoki telefon talab qilinadi',
+    passwordRequired: 'Parol talab qilinadi',
+    loggingIn: 'Kirilmoqda...',
+    login: 'Kirish',
+    invalidCredentials: 'Noto\'g\'ri ma\'lumotlar',
+    testData: 'Test ma\'lumotlari:',
+    copyright: '© 2024 Bunyodkor. Barcha huquqlar himoyalangan.',
   },
 
   ru: {
@@ -2116,6 +2192,17 @@ export const translations = {
     startTimeRequired: 'Время начала обязательно',
     endTime: 'Время окончания',
     endTimeRequired: 'Время окончания обязательно',
+    location: 'Место (Стадион)',
+    topic: 'Тема',
+    additionalNotes: 'Дополнительные заметки',
+    editSession: 'Редактировать занятие',
+    sessionTopicPlaceholder: 'Тема занятия',
+    sessionDescriptionPlaceholder: 'Подробное описание занятия...',
+    locationPlaceholder: 'Например: Стадион Бунёдкор',
+    fillAllRequiredFields: 'Пожалуйста, заполните все обязательные поля',
+    cannotCreateSessionForPastDate: 'Невозможно создать занятие на прошедшую дату.',
+    sessionUpdatedSuccess: 'Занятие успешно обновлено',
+    failedToUpdateSession: 'Не удалось обновить занятие',
 
     // API Error Messages
     errorTimeout: 'Запрос занял слишком много времени. Пожалуйста, попробуйте снова или уменьшите размер файлов.',
@@ -2287,6 +2374,7 @@ export const translations = {
     reportExported: 'Отчет успешно экспортирован',
     studentDeleted: 'Студент успешно удален',
     studentsExported: 'Студенты успешно экспортированы',
+    successfulPayments: 'успешные платежи',
 
     // Student Detail Page (Страница Деталей Студента)
     backToStudents: 'Вернуться к студентам',
@@ -2392,6 +2480,32 @@ export const translations = {
     studentDeletionWarning_line1: 'Это навсегда сотрет профиль студента, все связанные контракты, историю платежей, записи о посещаемости, информацию о родителях и журналы прохода.',
     studentDeletionWarning_line2: 'Эти данные не могут быть восстановлены.',
     confirmPermanentDelete: 'Да, удалить навсегда',
+
+    // Assign Transaction Dialog
+    assignTransactionTitle: 'Назначить транзакцию #{transactionId}',
+    assignTransactionDescription: 'Назначьте этот неназначенный платеж в размере {amount} UZS студенту и его контракту.',
+    pleaseSelectStudent: 'Пожалуйста, выберите студента',
+    loadingStudents: 'Загрузка студентов...',
+    selectStudent: 'Выберите студента',
+    pleaseSelectContract: 'Пожалуйста, выберите контракт',
+    loadingContracts: 'Загрузка контрактов...',
+    selectStudentFirst: 'Сначала выберите студента',
+    selectContract: 'Выберите контракт',
+    assignTransaction: 'Назначить транзакцию',
+    failedToAssignTransaction: 'Не удалось назначить транзакцию',
+
+    // Login
+    systemName: 'Bunyodkor CIMS',
+    systemDescription: 'Система управления информацией о курсах',
+    emailOrPhone: 'Email или Телефон',
+    emailOrPhonePlaceholder: 'admin@bunyodkor.uz или +998901234567',
+    emailOrPhoneRequired: 'Email или телефон обязательны',
+    passwordRequired: 'Пароль обязателен',
+    loggingIn: 'Вход...',
+    login: 'Войти',
+    invalidCredentials: 'Неверные учетные данные',
+    testData: 'Тестовые данные:',
+    copyright: '© 2024 Bunyodkor. Все права защищены.',
   },
 }
 

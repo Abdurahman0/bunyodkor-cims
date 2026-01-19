@@ -277,7 +277,7 @@ const Users = () => {
                     variant="ghost"
                     size="icon"
                     onClick={clearFilters}
-                    title="Clear filters"
+                    title={t("clearFilters")}
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -332,7 +332,6 @@ const Users = () => {
                   {t("role")}
                 </TableHead>
                 <TableHead>{t("status")}</TableHead>
-                {/* O'zgartirish: [&>div]:justify-end klassi qo'shildi */}
                 <TableHead className="text-right [&>div]:justify-end">
                   {t("actions")}
                 </TableHead>

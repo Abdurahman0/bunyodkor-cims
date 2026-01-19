@@ -80,6 +80,9 @@ import type {
   // Common
   ApiResponse,
   SessionUpdateRequest,
+  GroupsStatisticsResponse,
+  ContractWithStudentNameRead,
+  TransactionWithNameRead,
 } from "@/types/api";
 
 // ============================================================================

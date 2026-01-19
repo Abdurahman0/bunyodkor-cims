@@ -179,7 +179,7 @@ export default function StudentDetailPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Yuklandi");
+      toast.success(t("downloadedSuccessfully"));
     } catch (error) {
       console.error("Error downloading PDF:", error);
       toast.error(t("errorDownloadingFile"));
@@ -190,7 +190,7 @@ export default function StudentDetailPage() {
     try {
       // Shartnoma raqami borligini tekshiramiz
       if (!contract.contract_number) {
-        toast.error("Shartnoma raqami hali shakllanmagan");
+        toast.error(t("contractNumberNotFormed"));
         return;
       }
 
@@ -201,7 +201,7 @@ export default function StudentDetailPage() {
       const year = startDate.getFullYear();
 
       // Loading holatini bildirish
-      const toastId = toast.loading("Shartnoma fayli yuklanmoqda...");
+      const toastId = toast.loading(t("loadingContractFile"));
 
       // API ga so'rov
       const response = await contractService.getContractPdfUrl(
@@ -213,12 +213,12 @@ export default function StudentDetailPage() {
         // PDF ni yangi oynada ochish
         window.open(response.pdf_url, "_blank");
       } else {
-        toast.error("PDF havolasi topilmadi");
+        toast.error(t("pdfLinkNotFound"));
       }
     } catch (error) {
       console.error("PDF xatolik:", error);
       toast.dismiss();
-      toast.error("Shartnoma faylini ochishda xatolik yuz berdi");
+      toast.error(t("errorOpeningContractFile"));
     }
   };
 
@@ -511,7 +511,7 @@ export default function StudentDetailPage() {
                 {transactions?.filter(
                   (t) => t.status?.toLowerCase() === "success"
                 ).length || 0}{" "}
-                {t("successfulPayments") || "muvaffaqiyatli"}
+                {t("successfulPayments")}
               </p>
             </div>
           </CardContent>
@@ -520,7 +520,7 @@ export default function StudentDetailPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                {t("contractNumber") || "Shartnoma raqami"}
+                {t("contractNumber")}
               </p>
               <p className="text-2xl font-bold">
                 {contracts?.find((c) => c.status === "active")
@@ -588,7 +588,7 @@ export default function StudentDetailPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" /> {t("parents") || "Ota-onalar"}
+              <Users className="w-5 h-5" /> {t("parents")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -638,7 +638,7 @@ export default function StudentDetailPage() {
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("noParentInfo") || "Ota-ona ma'lumoti yo'q"}</p>
+                <p>{t("noParentInfo")}</p>
               </div>
             )}
           </CardContent>
@@ -648,7 +648,7 @@ export default function StudentDetailPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" /> {t("guardian") || "Vasiy"}
+              <User className="w-5 h-5" /> {t("guardian")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -698,7 +698,7 @@ export default function StudentDetailPage() {
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <User className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("noGuardianInfo") || "Vasiy ma'lumoti yo'q"}</p>
+                <p>{t("noGuardianInfo")}</p>
               </div>
             )}
           </CardContent>

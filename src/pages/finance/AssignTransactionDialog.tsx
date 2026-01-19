@@ -90,7 +90,7 @@ export function AssignTransactionDialog({
     onError: (error: AxiosError<{ detail: string | { msg: string; message: string }[] }>) => {
       // Handle FastAPI validation errors (422)
       const detail = error.response?.data?.detail; // Access detail from error.response.data
-      let errorMessage = 'Failed to assign transaction';
+      let errorMessage = t('failedToAssignTransaction');
 
       if (Array.isArray(detail) && detail.length > 0) {
         // Extract first validation error message
@@ -122,25 +122,21 @@ export function AssignTransactionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onClose={() => onOpenChange(false)}>
         <DialogHeader>
-          <DialogTitle>Assign Transaction #{transaction.id}</DialogTitle>
+          <DialogTitle>{t('assignTransactionTitle', { transactionId: transaction.id })}</DialogTitle>
           <DialogDescription>
-            Assign this unassigned payment of{' '}
-            <span className="font-bold text-foreground">
-              {new Intl.NumberFormat('uz-UZ').format(transaction.amount)} UZS
-            </span>{' '}
-            to a student and their contract.
+            {t('assignTransactionDescription', { amount: new Intl.NumberFormat('uz-UZ').format(transaction.amount) })}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
           <div className="space-y-1">
-            <Label htmlFor="student_id">Student</Label>
+            <Label htmlFor="student_id">{t('student')}</Label>
             <div className="flex items-center gap-2">
               <Select
                 id="student_id"
-                {...register('student_id', { required: 'Please select a student' })}
+                {...register('student_id', { required: t('pleaseSelectStudent') })}
                 disabled={isLoadingStudents}
               >
-                <option value="">{isLoadingStudents ? 'Loading students...' : 'Select a student'}</option>
+                <option value="">{isLoadingStudents ? t('loadingStudents') : t('selectStudent')}</option>
                 {studentsData?.data?.map((student: StudentRead) => (
                   <option key={student.id} value={student.id}>
                     {student.first_name} {student.last_name}
@@ -153,19 +149,19 @@ export function AssignTransactionDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="contract_id">Contract</Label>
+            <Label htmlFor="contract_id">{t('contract')}</Label>
              <div className="flex items-center gap-2">
               <Select
                 id="contract_id"
-                {...register('contract_id', { required: 'Please select a contract' })}
+                {...register('contract_id', { required: t('pleaseSelectContract') })}
                 disabled={!selectedStudentId || isLoadingContracts}
               >
                 <option value="">
                   {isLoadingContracts
-                    ? 'Loading contracts...'
+                    ? t('loadingContracts')
                     : !selectedStudentId
-                    ? 'Select a student first'
-                    : 'Select a contract'}
+                    ? t('selectStudentFirst')
+                    : t('selectContract')}
                 </option>
                 {contractsData?.data?.map((contract: ContractRead) => (
                   <option key={contract.id} value={contract.id}>
@@ -184,7 +180,7 @@ export function AssignTransactionDialog({
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Assign Transaction
+              {t('assignTransaction')}
             </Button>
           </DialogFooter>
         </form>

@@ -33,11 +33,11 @@ export function BackupSection() {
   const backupMutation = useMutation({
     mutationFn: () => backupService.triggerManualBackup(),
     onSuccess: () => {
-      toast.success(t("backupCreatedSuccess" as any) || "Backup created successfully!");
+      toast.success(t("backupCreatedSuccess"));
       refetch();
     },
     onError: () => {
-      toast.error(t("backupCreatedError" as any) || "Error creating backup!");
+      toast.error(t("backupCreatedError"));
     },
   });
 
@@ -50,10 +50,10 @@ export function BackupSection() {
           </div>
           <div>
             <CardTitle className="text-lg">
-              {t("databaseBackup" as any) || "Database Backup"}
+              {t("databaseBackup")}
             </CardTitle>
             <CardDescription>
-              {t("manualBackupDescription" as any) || "Manual backup of system data and view status"}
+              {t("manualBackupDescription")}
             </CardDescription>
           </div>
         </div>
@@ -61,9 +61,9 @@ export function BackupSection() {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 dark:bg-muted/20">
           <div>
-            <p className="font-medium text-foreground">{t("automaticBackup" as any) || "Automatic Backup"}</p>
+            <p className="font-medium text-foreground">{t("automaticBackup")}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm text-muted-foreground">{t("statusLabel" as any) || "Status:"}</span>
+              <span className="text-sm text-muted-foreground">{t("statusLabel")}</span>
               {isLoading ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
@@ -72,7 +72,7 @@ export function BackupSection() {
                   className="bg-green-50 text-green-700 border-green-200"
                 >
                   <CheckCircle className="w-3 h-3 mr-1" />
-                  {t("statusActive" as any) || "Active"}
+                  {t("statusActive")}
                 </Badge>
               )}
             </div>
@@ -88,12 +88,12 @@ export function BackupSection() {
             ) : (
               <Download className="w-4 h-4" />
             )}
-            {t("manualBackup" as any) || "Manual Backup"}
+            {t("manualBackup")}
           </Button>
         </div>
 
-        <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-100 dark:border-blue-900">
-          {t("backupNote" as any) || "Note: Backups are automatically saved on the server. Manual backup process may take a few seconds."}
+        <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-950/20 p-3 rounded border border-blue-100 dark:border-blue-900">
+          {t("backupNote")}
         </div>
       </CardContent>
     </Card>

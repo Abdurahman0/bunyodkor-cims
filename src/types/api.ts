@@ -1,6 +1,8 @@
 // Generated from Swagger/OpenAPI specification
 // DO NOT EDIT MANUALLY - This file is auto-generated
 
+import type { ReactNode } from "react";
+
 // ============================================================================
 // Common Types
 // ============================================================================
@@ -416,6 +418,7 @@ export interface TransactionWithNameRead extends TransactionRead {
   student_full_name: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TransactionWithNamePaginatedRead
   extends ApiResponse<TransactionWithNameRead[]> {}
 

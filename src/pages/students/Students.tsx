@@ -327,13 +327,12 @@ export default function Students() {
           >
             <Download className="w-4 h-4" />
             <span className="hidden lg:inline">
-              {t("exportAllStudentsData") ||
-                "Barcha talabalarni ma'lumotlarini yuklab olish"}
+              {t("exportAllStudentsData")}
             </span>
             <span className="hidden sm:inline lg:hidden">
-              {t("exportAll") || "Barchasi"}
+              {t("exportAll")}
             </span>
-            <span className="sm:hidden font-bold">Full</span>
+            <span className="sm:hidden font-bold">{t("full")}</span>
           </Button>
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
@@ -455,16 +454,15 @@ export default function Students() {
                       ))
                     : null}
                 </Select>
-                <Input
-                  type="number"
-                  placeholder={t("archiveYear") || "Arxiv yili"}
-                  value={archiveYearFilter}
-                  onChange={(e) => setArchiveYearFilter(e.target.value)}
-                  className="w-full sm:w-40"
-                  min="2020"
-                  max="2050"
-                />
-                {hasActiveFilters && (
+                                  <Input
+                                    type="number"
+                                    placeholder={t("archiveYear")}
+                                    value={archiveYearFilter}
+                                    onChange={(e) => setArchiveYearFilter(e.target.value)}
+                                    className="w-full sm:w-40"
+                                    min="2020"
+                                    max="2050"
+                                  />                {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>
                     <X className="w-4 h-4" />
                   </Button>
@@ -530,7 +528,6 @@ export default function Students() {
                   {t("dateOfBirth")}
                 </TableHead>
                 <TableHead>{t("status")}</TableHead>
-                {/* O'zgartirish: [&>div]:justify-end klassi qo'shildi */}
                 <TableHead className="text-right [&>div]:justify-end">
                   {t("actions")}
                 </TableHead>

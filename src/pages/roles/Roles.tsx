@@ -214,7 +214,6 @@ const Roles = () => {
                 <TableRow>
                   <TableHead>{t("role")}</TableHead>
                   <TableHead>{t("permissions")}</TableHead>
-                  {/* O'zgartirish shu qatorda: [&>div]:justify-end qo'shildi */}
                   <TableHead className="text-right [&>div]:justify-end">
                     {t("actions")}
                   </TableHead>
