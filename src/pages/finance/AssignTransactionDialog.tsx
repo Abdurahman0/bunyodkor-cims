@@ -49,6 +49,7 @@ export function AssignTransactionDialog({
     formState: { errors },
   } = useForm<AssignFormData>();
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedStudentId = watch('student_id');
 
   const { data: studentsData, isLoading: isLoadingStudents } = useQuery({

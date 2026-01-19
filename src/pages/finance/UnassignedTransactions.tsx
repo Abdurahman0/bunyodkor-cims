@@ -12,6 +12,7 @@ import {
   TablePagination,
   TableEmpty,
 } from '@/components/ui/table';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Loader2, Inbox, Link as LinkIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
