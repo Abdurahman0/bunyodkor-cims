@@ -1,73 +1,47 @@
-# React + TypeScript + Vite
+Bunyodkor Football Academy - CIMS (Club Information Management System)
+⚠️ PRIVATE REPOSITORY / CONFIDENTIAL
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This software is proprietary and confidential property of Bunyodkor Football Academy. Unauthorized copying, distribution, or public display of this code is strictly prohibited.
 
-Currently, two official plugins are available:
+📋 Project Overview
+The Club Information Management System (CIMS) is an internal platform designed to digitize and automate the operations of the Bunyodkor Football Academy. It serves as a centralized dashboard for administrators, coaches, and accountants to manage students, training sessions, finances, and facility access.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Key Modules
+👥 User Management: Role-based access control (RBAC) for Admins, Head Coaches, Coaches, and Accountants.
 
-## React Compiler
+⚽ Academy Operations: Management of Students, Groups, Contracts, and Waiting Lists.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+📅 Scheduling & Attendance: Training session scheduling and integration with Gate Control Systems (turnstiles) for automated attendance tracking.
 
-## Expanding the ESLint configuration
+💰 Finance: Tracking transactions, monthly fees, debts, and salary calculations.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+📊 Analytics: Detailed reporting and dashboard visualization.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+🌍 Localization: Multi-language support (Uzbek/Russian) via i18n.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+🛠 Tech Stack
+This project is built using a modern frontend stack:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Core: React + TypeScript
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Build System: Vite
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+State Management:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Global: Zustand
+
+Server State: @tanstack/react-query
+
+Styling: Tailwind CSS
+
+UI Components: Shadcn/UI (Radix UI) + Lucide Icons
+
+Runtime/Package Manager: Bun (Preferred)
+
+🚀 Getting Started (Internal Team)
+Prerequisites
+Node.js (v18+) or Bun (v1.0+)
+
+Access to the private GitHub repository.
+
+VPN or specific network access (if required for the API).
