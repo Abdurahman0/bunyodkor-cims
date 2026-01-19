@@ -471,7 +471,8 @@ export default function Finance() {
                 (() => {
                   const displayed = [...data.data].sort(
                     (a: TransactionWithNameRead, b: TransactionWithNameRead) =>
-                      a.id - b.id
+                      new Date(b.paid_at!).getTime() -
+                      new Date(a.paid_at!).getTime()
                   );
                   return displayed.map((transaction, idx) => (
                     <TableRow key={transaction.id}>
