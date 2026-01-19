@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 const getApiUrl = () => {
   // In development, use proxy to avoid CORS issues
-  return import.meta.env.VITE_API_URL || "http://bunyodkor.api.cims.cognilabs.org/";
+  return import.meta.env.VITE_API_URL || "https://bunyodkor.api.cims.cognilabs.org/";
 };
 
 // Helper function to get translated message
