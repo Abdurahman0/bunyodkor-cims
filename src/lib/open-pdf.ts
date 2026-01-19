@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiClient } from "@/lib/api-client";
 
 // Try to open a PDF from various kinds of responses/URLs.

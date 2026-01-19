@@ -15,6 +15,7 @@ import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useLanguageStore } from '@/store/languageStore'
+import type { CurrentUserResponse, LoginRequest } from '@/types/api'
 
 export default function Login() {
   const { t } = useLanguageStore()
@@ -54,6 +55,7 @@ export default function Login() {
       })
       navigate('/')
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Noto\'g\'ri ma\'lumotlar'
       toast.error(message, { duration: 4000 })

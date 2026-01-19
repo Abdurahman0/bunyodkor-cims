@@ -740,13 +740,24 @@ export default function Reports() {
                         setDebtorsPage(1);
                       }}
                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      disabled={groupsLoading}
                     >
                       <option value="">{t("allGroups")}</option>
-                      {groupsData?.data?.map((group: GroupRead) => (
-                        <option key={group.id} value={String(group.id)}>
-                          {group.name}
+                      {groupsLoading ? (
+                        <option value="" disabled>
+                          {t("loading")}
                         </option>
-                      ))}
+                      ) : groupsData?.data && groupsData.data.length > 0 ? (
+                        groupsData.data.map((group: GroupRead) => (
+                          <option key={group.id} value={String(group.id)}>
+                            {group.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" disabled>
+                          {t("noGroupsAvailable")}
+                        </option>
+                      )}
                     </select>
                   </div>
                 </div>

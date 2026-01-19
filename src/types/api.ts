@@ -415,6 +415,8 @@ export interface TransactionRead {
 }
 
 export interface TransactionWithNameRead extends TransactionRead {
+  description: string;
+  updated_at: any;
   student_full_name: string;
 }
 

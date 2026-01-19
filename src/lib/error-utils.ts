@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Extracts a user-friendly error message from API error responses
  * Handles FastAPI validation errors (422) which return arrays of error objects

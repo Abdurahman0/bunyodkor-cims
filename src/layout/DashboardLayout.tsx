@@ -304,7 +304,7 @@ const DashboardLayout = () => {
           {pageNotifications.length > 0 && (
             <div className="mt-4 pt-4">
               <div className="px-2 mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
-                <Bell className="w-3.5 h-3.5" />
+                <Bell className="w-3.5 h-3.5" /> {/* This Bell icon is fine */}
                 <span>{t("pageInfo") || "Page Info"}</span>
               </div>
               {pageNotifications.map((notif, idx) => (
