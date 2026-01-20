@@ -1030,6 +1030,26 @@ export const contractService = {
   },
 
   /**
+   * Update only the final PDF of an existing contract
+   * PATCH /contracts/{contract_id}/update-pdf
+   */
+  updateContractPdf: async (
+    contractId: number,
+    formData: FormData,
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await apiClient.patch<ApiResponse<Record<string, unknown>>>(
+      `/contracts/${contractId}/update-pdf`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+    return response.data;
+  },
+
+  /**
    * Get all available contract numbers for a group and birth year
    * GET /contracts/available-numbers/{group_id}/{birth_year}
    */

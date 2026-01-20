@@ -91,6 +91,9 @@ export default function StudentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const studentId = parseInt(id || "0", 10);
   const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
+  const [contractToUpdate, setContractToUpdate] = useState<ContractRead | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
@@ -131,6 +134,32 @@ export default function StudentDetailPage() {
         errorMessage = detail;
       }
 
+      toast.error(errorMessage);
+    },
+  });
+
+  const updatePdfMutation = useMutation({
+    mutationFn: async ({ contractId, file }: { contractId: number; file: File }) => {
+      const formData = new FormData();
+      formData.append("final_pdf", file);
+      return contractService.updateContractPdf(contractId, formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-full-info", studentId] });
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success(t("pdfReplacedSuccess") || "Contract PDF updated");
+      setPdfDialogOpen(false);
+      setSelectedPdfFile(null);
+      setContractToUpdate(null);
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      let errorMessage = t("anErrorOccurred") || "An error occurred";
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
       toast.error(errorMessage);
     },
   });
@@ -782,6 +811,17 @@ export default function StudentDetailPage() {
                             <Download className="w-4 h-4 mr-2" />
                             {t("downloadContract")}
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setContractToUpdate(c);
+                              setPdfDialogOpen(true);
+                            }}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            {t("replaceContractPdf")}
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -976,6 +1016,57 @@ export default function StudentDetailPage() {
                   {t("confirmPermanentDelete")}
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Replace Contract PDF Dialog */}
+      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("replaceContractPdf")}</DialogTitle>
+            <DialogDescription className="pt-4 text-left">
+              <p>{t("selectPdfFile")}</p>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4">
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => {
+                const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                setSelectedPdfFile(f);
+              }}
+            />
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPdfDialogOpen(false);
+                setSelectedPdfFile(null);
+                setContractToUpdate(null);
+              }}
+              className="flex-1"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                if (!contractToUpdate || !selectedPdfFile) {
+                  toast.error(t("pleaseSelectFile") || "Please select a file");
+                  return;
+                }
+                updatePdfMutation.mutate({ contractId: contractToUpdate.id, file: selectedPdfFile });
+              }}
+              className="flex-1"
+              disabled={updatePdfMutation.isPending}
+            >
+              {updatePdfMutation.isPending ? t("replacingPdf") : t("replaceContractPdf")}
             </Button>
           </div>
         </DialogContent>
