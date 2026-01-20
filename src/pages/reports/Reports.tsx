@@ -61,7 +61,7 @@ export default function Reports() {
   const currentMonth = new Date().getMonth() + 1;
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(
-    currentMonth
+    currentMonth,
   );
   const [selectedMonths, setSelectedMonths] = useState<string>(""); // comma-separated months
   const [unpaidDateRange, setUnpaidDateRange] = useState({
@@ -90,6 +90,13 @@ export default function Reports() {
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
     enabled: activeTab === "debtors",
   });
+
+  // Normalize groups response in case API returns nested `data` (e.g. { data: { data: [...] } })
+  const groupsList: GroupRead[] = Array.isArray(groupsData?.data)
+    ? groupsData.data
+    : Array.isArray((groupsData as any)?.data?.data)
+      ? (groupsData as any).data.data
+      : [];
 
   // Use unpaid students API instead of debtors report
   const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
@@ -177,8 +184,8 @@ export default function Reports() {
 
   // Helper to get Group Name by ID
   const getGroupName = (groupId: number | undefined) => {
-    if (!groupId || !groupsData?.data) return "N/A";
-    const group = groupsData.data.find((g: any) => g.id === groupId);
+    if (!groupId) return "N/A";
+    const group = groupsList.find((g: any) => g.id === groupId);
     return group ? group.name : "N/A";
   };
 
@@ -223,7 +230,7 @@ export default function Reports() {
             "Transaction Count": item.transaction_count,
             "Total Amount": item.total_amount,
             "Average Amount": Math.round(
-              item.total_amount / (item.transaction_count || 1)
+              item.total_amount / (item.transaction_count || 1),
             ),
           }));
           reportType = `finance-report-${dateRange.from}-to-${dateRange.to}`;
@@ -421,7 +428,9 @@ export default function Reports() {
                     <div className="text-xl sm:text-2xl font-bold text-foreground break-words overflow-wrap-anywhere">
                       {formatCurrency(financeReport?.data?.total_revenue || 0)}
                     </div>
-                    <div className="text-xs text-muted-foreground">{t("total")}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("total")}
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -749,8 +758,8 @@ export default function Reports() {
                         <option value="" disabled>
                           {t("loading")}
                         </option>
-                      ) : groupsData?.data && groupsData.data.length > 0 ? (
-                        groupsData.data.map((group: GroupRead) => (
+                      ) : groupsList && groupsList.length > 0 ? (
+                        groupsList.map((group: GroupRead) => (
                           <option key={group.id} value={String(group.id)}>
                             {group.name}
                           </option>

@@ -92,25 +92,42 @@ export default function CoachPanel() {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["coach-groups"],
     queryFn: () => coachService.getCoachGroups(),
-    select: (res) => res.data,
+    select: (res) => {
+      // normalize in case API wraps data twice: { data: { data: [...] } }
+      if (!res) return [];
+      if (Array.isArray((res as any).data)) return (res as any).data;
+      return (res as any).data?.data || (res as any).data || [];
+    },
   });
 
   const { data: allStudents, isLoading: allStudentsLoading } = useQuery({
     queryKey: ["all-students"],
     queryFn: () => studentService.getStudents({ page_size: 10000 }),
-    select: (res) => res.data,
+    select: (res) => {
+      if (!res) return [];
+      if (Array.isArray((res as any).data)) return (res as any).data;
+      return (res as any).data?.data || (res as any).data || [];
+    },
   });
 
   const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
     queryKey: ["coach-sessions", selectedDate],
     queryFn: () => coachService.getCoachSessions({ date: selectedDate }),
-    select: (res) => res.data,
+    select: (res) => {
+      if (!res) return [];
+      if (Array.isArray((res as any).data)) return (res as any).data;
+      return (res as any).data?.data || (res as any).data || [];
+    },
   });
 
   const { data: allSessions, isLoading: allSessionsLoading } = useQuery({
     queryKey: ["all-sessions"],
     queryFn: () => coachService.getCoachSessions({}),
-    select: (res) => res.data,
+    select: (res) => {
+      if (!res) return [];
+      if (Array.isArray((res as any).data)) return (res as any).data;
+      return (res as any).data?.data || (res as any).data || [];
+    },
   });
 
   const { data: studentsData, isLoading: studentsLoading } = useQuery({
@@ -907,9 +924,7 @@ export default function CoachPanel() {
                       {t("selectStudent")}
                     </option>
                     {allStudents
-                      ?.filter(
-                        (s) => s.group_id === Number(selectedGroupForStats)
-                      )
+                      ?.filter((s) => Number(s.group_id) === Number(selectedGroupForStats))
                       .map((student) => (
                         <option key={student.id} value={student.id.toString()}>
                           {student.first_name} {student.last_name}

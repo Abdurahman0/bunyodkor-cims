@@ -39,9 +39,16 @@ const PayersReport: FC = () => {
   );
 
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
-    queryKey: ["groups-list-payers"],
+    queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
   });
+
+  // Normalize groups response in case API is double-wrapped: { data: { data: [...] } }
+  const groupsList: any[] = Array.isArray(groupsData?.data)
+    ? groupsData.data
+    : Array.isArray((groupsData as any)?.data?.data)
+      ? (groupsData as any).data.data
+      : [];
 
   const { data: payersData, isLoading } = useQuery({
     queryKey: [
@@ -137,11 +144,13 @@ const PayersReport: FC = () => {
                 disabled={groupsLoading}
               >
                 <option value="">{t("allGroups")}</option>
-                {groupsData?.data?.map((g: any) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
+                {groupsList.length > 0
+                  ? groupsList.map((g: any) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))
+                  : null}
               </select>
             </div>
 
