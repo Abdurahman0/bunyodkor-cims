@@ -314,6 +314,18 @@ export default function CoachPanel() {
     return new Map(groupsData.map((g) => [g.id, g]));
   }, [groupsData]);
 
+  // helper to get a student's display name from different possible API shapes
+  const getStudentDisplayName = (item: any) => {
+    if (!item) return t("unknownStudent") || "Unknown Student";
+    // APIs may return either direct fields or nested `student` object
+    const first = item.first_name || item.firstName || item.student?.first_name || item.student?.firstName;
+    const last = item.last_name || item.lastName || item.student?.last_name || item.student?.lastName;
+    if (first || last) return `${first || ""} ${last || ""}`.trim();
+    // fallback to id-based label
+    if (item.student_id || item.id) return `#${item.student_id || item.id}`;
+    return t("unknownStudent") || "Unknown Student";
+  };
+
   const groupStatsChartData = useMemo(() => {
     if (!groupStats) return [];
     return [
@@ -439,7 +451,7 @@ export default function CoachPanel() {
                   <div className="space-y-3">
                     {sessionsData.map((session) => {
                       const group = groupsData?.find(
-                        (g) => g.id === session.group_id,
+                        (g) => Number(g.id) === Number(session.group_id)
                       );
                       return (
                         <button
@@ -529,9 +541,9 @@ export default function CoachPanel() {
                               </TableRow>
                             ) : studentsData && studentsData.length > 0 ? (
                               studentsData.map((student) => (
-                                <TableRow key={student.student_id}>
+                                <TableRow key={student.student_id || student.id}>
                                   <TableCell className="font-medium">
-                                    {student.first_name} {student.last_name}
+                                    {getStudentDisplayName(student)}
                                   </TableCell>
                                   <TableCell>
                                     {student.has_debt ? (
@@ -731,7 +743,7 @@ export default function CoachPanel() {
                             groupStudentsData.map((student) => (
                               <TableRow key={student.id}>
                                 <TableCell className="font-medium">
-                                  {student.first_name} {student.last_name}
+                                        {getStudentDisplayName(student)}
                                 </TableCell>
                                 <TableCell>
                                   {format(
