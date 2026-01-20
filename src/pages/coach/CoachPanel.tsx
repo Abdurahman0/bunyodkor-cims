@@ -65,10 +65,10 @@ export default function CoachPanel() {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(
-    format(new Date(), "yyyy-MM-dd")
+    format(new Date(), "yyyy-MM-dd"),
   );
   const [selectedSession, setSelectedSession] = useState<SessionRead | null>(
-    null
+    null,
   );
   const [selectedGroupForStats, setSelectedGroupForStats] = useState<
     string | null
@@ -150,7 +150,7 @@ export default function CoachPanel() {
       },
       select: (res) => res.data,
       enabled: !!selectedGroup,
-    }
+    },
   );
 
   const { data: myAttendancesData, isLoading: myAttendancesLoading } = useQuery(
@@ -158,7 +158,7 @@ export default function CoachPanel() {
       queryKey: ["my-attendances"],
       queryFn: () => coachService.getMyAttendances({}),
       select: (res) => res.data,
-    }
+    },
   );
 
   const { data: groupStats, isLoading: groupStatsLoading } = useQuery({
@@ -166,7 +166,7 @@ export default function CoachPanel() {
     queryFn: () => {
       if (!selectedGroupForStats) return null;
       return coachService.getGroupAttendanceStats(
-        Number(selectedGroupForStats)
+        Number(selectedGroupForStats),
       );
     },
     enabled: !!selectedGroupForStats,
@@ -178,7 +178,7 @@ export default function CoachPanel() {
     queryFn: () => {
       if (!selectedStudentForStats) return null;
       return coachService.getStudentAttendanceStats(
-        Number(selectedStudentForStats)
+        Number(selectedStudentForStats),
       );
     },
     enabled: !!selectedStudentForStats,
@@ -193,7 +193,7 @@ export default function CoachPanel() {
     onSuccess: () => {
       toast.success(
         t("attendanceSubmittedSuccessfully") ||
-          "Attendance submitted successfully"
+          "Attendance submitted successfully",
       );
       setAttendanceStatus({});
       queryClient.invalidateQueries({
@@ -205,7 +205,7 @@ export default function CoachPanel() {
       toast.error(
         error.response?.data?.detail ||
           t("failedToSubmitAttendance") ||
-          "Failed to submit attendance"
+          "Failed to submit attendance",
       );
     },
   });
@@ -228,7 +228,7 @@ export default function CoachPanel() {
       toast.error(
         error?.response?.data?.detail ||
           t("errorUploadingKonspekt") ||
-          "Error uploading konspekt"
+          "Error uploading konspekt",
       );
     },
   });
@@ -243,7 +243,7 @@ export default function CoachPanel() {
 
   const handleMarkAttendance = (
     studentId: number,
-    status: "present" | "absent" | "late"
+    status: "present" | "absent" | "late",
   ) => {
     setAttendanceStatus((prev) => ({ ...prev, [studentId]: status }));
   };
@@ -251,12 +251,12 @@ export default function CoachPanel() {
   const handleSubmitAttendance = () => {
     if (!selectedSession || Object.keys(attendanceStatus).length === 0) {
       toast.error(
-        t("noAttendanceChangesToSubmit") || "No attendance changes to submit"
+        t("noAttendanceChangesToSubmit") || "No attendance changes to submit",
       );
       return;
     }
     const attendances: AttendanceCreateRequest[] = Object.entries(
-      attendanceStatus
+      attendanceStatus,
     ).map(([student_id, status]) => ({
       student_id: parseInt(student_id, 10),
       status,
@@ -439,7 +439,7 @@ export default function CoachPanel() {
                   <div className="space-y-3">
                     {sessionsData.map((session) => {
                       const group = groupsData?.find(
-                        (g) => g.id === session.group_id
+                        (g) => g.id === session.group_id,
                       );
                       return (
                         <button
@@ -489,7 +489,7 @@ export default function CoachPanel() {
                             {selectedSession.topic} (
                             {
                               groupsData?.find(
-                                (g) => g.id === selectedSession.group_id
+                                (g) => g.id === selectedSession.group_id,
                               )?.name
                             }
                             )
@@ -566,7 +566,7 @@ export default function CoachPanel() {
                                         onClick={() =>
                                           handleMarkAttendance(
                                             student.student_id,
-                                            "present"
+                                            "present",
                                           )
                                         }
                                       >
@@ -586,7 +586,7 @@ export default function CoachPanel() {
                                         onClick={() =>
                                           handleMarkAttendance(
                                             student.student_id,
-                                            "late"
+                                            "late",
                                           )
                                         }
                                       >
@@ -606,7 +606,7 @@ export default function CoachPanel() {
                                         onClick={() =>
                                           handleMarkAttendance(
                                             student.student_id,
-                                            "absent"
+                                            "absent",
                                           )
                                         }
                                       >
@@ -736,7 +736,7 @@ export default function CoachPanel() {
                                 <TableCell>
                                   {format(
                                     new Date(student.date_of_birth),
-                                    "dd.MM.yyyy"
+                                    "dd.MM.yyyy",
                                   )}
                                 </TableCell>
                               </TableRow>
@@ -810,7 +810,7 @@ export default function CoachPanel() {
                           <TableCell>
                             {format(
                               new Date(attendance.created_at),
-                              "dd.MM.yyyy HH:mm"
+                              "dd.MM.yyyy HH:mm",
                             )}
                           </TableCell>
                           <TableCell>
@@ -854,7 +854,7 @@ export default function CoachPanel() {
                   onChange={(e) => setSelectedGroupForStats(e.target.value)}
                   className="w-full md:w-1/3"
                 >
-                  <option value="" disabled selected>
+                  <option value="" disabled>
                     {t("selectGroup")}
                   </option>
                   {groupsData?.map((group) => (
@@ -920,16 +920,28 @@ export default function CoachPanel() {
                     onChange={(e) => setSelectedStudentForStats(e.target.value)}
                     className="w-full md:w-1/3"
                   >
-                    <option value="" disabled selected>
+                    <option value="" disabled>
                       {t("selectStudent")}
                     </option>
-                    {allStudents
-                      ?.filter((s) => Number(s.group_id) === Number(selectedGroupForStats))
-                      .map((student) => (
+                    {(() => {
+                      const filtered = allStudents?.filter(
+                        (s) =>
+                          Number(s.group_id) === Number(selectedGroupForStats),
+                      );
+                      if (!filtered || filtered.length === 0) {
+                        return (
+                          <option value="" disabled>
+                            {t("noStudentsInGroup")}
+                          </option>
+                        );
+                      }
+
+                      return filtered.map((student) => (
                         <option key={student.id} value={student.id.toString()}>
                           {student.first_name} {student.last_name}
                         </option>
-                      ))}
+                      ));
+                    })()}
                   </Select>
                 </CardHeader>
                 {studentStatsLoading && (

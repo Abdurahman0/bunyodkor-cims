@@ -5,13 +5,7 @@ import { studentService, contractService } from "@/services/api.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+// dialog UI removed for Replace Contract PDF — kept programmatic mutation
 import {
   Table,
   TableHeader,
@@ -93,7 +87,9 @@ export default function StudentDetailPage() {
   const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
-  const [contractToUpdate, setContractToUpdate] = useState<ContractRead | null>(null);
+  const [contractToUpdate, setContractToUpdate] = useState<ContractRead | null>(
+    null,
+  );
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
@@ -116,7 +112,7 @@ export default function StudentDetailPage() {
       queryClient.removeQueries({ queryKey: ["student-full-info", studentId] });
 
       toast.success(
-        t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi"
+        t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi",
       );
       setIsHardDeleteDialogOpen(false);
 
@@ -139,13 +135,21 @@ export default function StudentDetailPage() {
   });
 
   const updatePdfMutation = useMutation({
-    mutationFn: async ({ contractId, file }: { contractId: number; file: File }) => {
+    mutationFn: async ({
+      contractId,
+      file,
+    }: {
+      contractId: number;
+      file: File;
+    }) => {
       const formData = new FormData();
       formData.append("final_pdf", file);
       return contractService.updateContractPdf(contractId, formData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-full-info", studentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info", studentId],
+      });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast.success(t("pdfReplacedSuccess") || "Contract PDF updated");
       setPdfDialogOpen(false);
@@ -164,8 +168,6 @@ export default function StudentDetailPage() {
     },
   });
 
-  
-
   const handleDownloadPdf = async (contract: ContractRead) => {
     // Same logic but for download
     try {
@@ -177,7 +179,7 @@ export default function StudentDetailPage() {
         const year = new Date(contract.start_date).getFullYear();
         const response = await contractService.getContractPdfUrl(
           year,
-          contract.contract_number
+          contract.contract_number,
         );
 
         if (typeof response === "string") {
@@ -235,14 +237,25 @@ export default function StudentDetailPage() {
       // API ga so'rov
       const response = await contractService.getContractPdfUrl(
         year,
-        contract.contract_number
+        contract.contract_number,
       );
       toast.dismiss(toastId);
-      if (response && response.pdf_url) {
-        // PDF ni yangi oynada ochish
-        window.open(response.pdf_url, "_blank");
+
+      // `getContractPdfUrl` may return a plain URL string or an object with `pdf_url`.
+      let pdfUrl: string | null = null;
+      if (!response) {
+        pdfUrl = null;
+      } else if (typeof response === "string") {
+        pdfUrl = response;
+      } else if (typeof response === "object" && "pdf_url" in response) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pdfUrl = (response as any).pdf_url;
+      }
+
+      if (pdfUrl) {
+        window.open(pdfUrl, "_blank");
       } else {
-        toast.error(t("pdfLinkNotFound"));
+        toast.error(t("pdfLinkNotFound") || "PDF link not found");
       }
     } catch (error) {
       console.error("PDF xatolik:", error);
@@ -309,7 +322,7 @@ export default function StudentDetailPage() {
         if (!customFields) {
           console.log(
             "[STUDENT DETAIL] No custom_fields in contract",
-            contract.id
+            contract.id,
           );
           continue;
         }
@@ -368,7 +381,7 @@ export default function StudentDetailPage() {
           "[STUDENT DETAIL] Checking mom - name:",
           momName,
           "phone:",
-          momPhone
+          momPhone,
         );
         if (momName) {
           console.log("[STUDENT DETAIL] Found mom:", momName, momPhone);
@@ -400,7 +413,7 @@ export default function StudentDetailPage() {
           "[STUDENT DETAIL] Checking dad - name:",
           dadName,
           "phone:",
-          dadPhone
+          dadPhone,
         );
         if (dadName) {
           console.log("[STUDENT DETAIL] Found dad:", dadName, dadPhone);
@@ -416,7 +429,7 @@ export default function StudentDetailPage() {
         } else {
           console.log(
             "[STUDENT DETAIL] No dad name found in contract",
-            contract.id
+            contract.id,
           );
           console.log(
             "[STUDENT DETAIL] Checked fields - st.dad_fullname:",
@@ -426,7 +439,7 @@ export default function StudentDetailPage() {
             "st.dad_fio:",
             st.dad_fio,
             "customFields.dad_name:",
-            customFields.dad_name
+            customFields.dad_name,
           );
         }
       }
@@ -438,8 +451,8 @@ export default function StudentDetailPage() {
           self.findIndex(
             (p) =>
               p.first_name === parent.first_name &&
-              p.relationship_type === parent.relationship_type
-          )
+              p.relationship_type === parent.relationship_type,
+          ),
       );
 
       console.log("[STUDENT DETAIL] All parents found:", allParents);
@@ -461,13 +474,13 @@ export default function StudentDetailPage() {
   // Separate parents and guardians
   // Parents: Ota and Ona
   const parentsList = displayParents.filter(
-    (p) => p.relationship_type === "Ota" || p.relationship_type === "Ona"
+    (p) => p.relationship_type === "Ota" || p.relationship_type === "Ona",
   );
 
   // Guardians: Everyone else (Buyurtmachi, etc.)
   // BUT also show Buyurtmachi separately if they are ALSO listed as parent
   const guardiansList = displayParents.filter(
-    (p) => p.relationship_type !== "Ota" && p.relationship_type !== "Ona"
+    (p) => p.relationship_type !== "Ota" && p.relationship_type !== "Ona",
   );
 
   console.log("[STUDENT DETAIL] Parents list:", parentsList);
@@ -532,13 +545,13 @@ export default function StudentDetailPage() {
                 {new Intl.NumberFormat("en-US").format(
                   transactions
                     ?.filter((t) => t.status?.toLowerCase() === "success")
-                    .reduce((sum, t) => sum + (t.amount || 0), 0) || 0
+                    .reduce((sum, t) => sum + (t.amount || 0), 0) || 0,
                 )}{" "}
                 UZS
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {transactions?.filter(
-                  (t) => t.status?.toLowerCase() === "success"
+                  (t) => t.status?.toLowerCase() === "success",
                 ).length || 0}{" "}
                 {t("successfulPayments")}
               </p>
@@ -570,7 +583,7 @@ export default function StudentDetailPage() {
                       (attendances.filter((a) => a.status === "present")
                         .length /
                         attendances.length) *
-                        100
+                        100,
                     )
                   : 0}
                 %
@@ -760,7 +773,7 @@ export default function StudentDetailPage() {
                   const endDate = new Date(c.end_date!);
                   const monthsDiff = Math.round(
                     (endDate.getTime() - startDate.getTime()) /
-                      (1000 * 60 * 60 * 24 * 30)
+                      (1000 * 60 * 60 * 24 * 30),
                   );
                   return (
                     <TableRow key={c.id}>
@@ -811,17 +824,7 @@ export default function StudentDetailPage() {
                             <Download className="w-4 h-4 mr-2" />
                             {t("downloadContract")}
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setContractToUpdate(c);
-                              setPdfDialogOpen(true);
-                            }}
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            {t("replaceContractPdf")}
-                          </Button>
+                          {/* Replace PDF button removed — use programmatic update via `updatePdfMutation` */}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1021,56 +1024,7 @@ export default function StudentDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Replace Contract PDF Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t("replaceContractPdf")}</DialogTitle>
-            <DialogDescription className="pt-4 text-left">
-              <p>{t("selectPdfFile")}</p>
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-4">
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => {
-                const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-                setSelectedPdfFile(f);
-              }}
-            />
-          </div>
-
-          <div className="flex gap-3 mt-6">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPdfDialogOpen(false);
-                setSelectedPdfFile(null);
-                setContractToUpdate(null);
-              }}
-              className="flex-1"
-            >
-              {t("cancel")}
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => {
-                if (!contractToUpdate || !selectedPdfFile) {
-                  toast.error(t("pleaseSelectFile") || "Please select a file");
-                  return;
-                }
-                updatePdfMutation.mutate({ contractId: contractToUpdate.id, file: selectedPdfFile });
-              }}
-              className="flex-1"
-              disabled={updatePdfMutation.isPending}
-            >
-              {updatePdfMutation.isPending ? t("replacingPdf") : t("replaceContractPdf")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Replace Contract PDF UI removed — updates happen programmatically via `updatePdfMutation` */}
     </div>
   );
 }

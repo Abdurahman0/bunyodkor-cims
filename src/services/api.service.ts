@@ -1037,15 +1037,13 @@ export const contractService = {
     contractId: number,
     formData: FormData,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    const response = await apiClient.patch<ApiResponse<Record<string, unknown>>>(
-      `/contracts/${contractId}/update-pdf`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    const response = await apiClient.patch<
+      ApiResponse<Record<string, unknown>>
+    >(`/contracts/${contractId}/update-pdf`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
       },
-    );
+    });
     return response.data;
   },
 
