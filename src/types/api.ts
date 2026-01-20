@@ -421,8 +421,9 @@ export interface TransactionWithNameRead extends TransactionRead {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TransactionWithNamePaginatedRead
-  extends ApiResponse<TransactionWithNameRead[]> {}
+export interface TransactionWithNamePaginatedRead extends ApiResponse<
+  TransactionWithNameRead[]
+> {}
 
 export interface ManualTransactionCreateRequest {
   amount: number;
@@ -611,6 +612,16 @@ export interface DebtorItem {
   contract_number: string;
   debt_amount: number;
   group_name: string;
+}
+
+export interface PayerItem {
+  student_id: number;
+  student_name: string;
+  contract_number: string;
+  group_name: string;
+  payment_year: number;
+  payment_months: number[];
+  total_paid: number;
 }
 
 // ============================================================================

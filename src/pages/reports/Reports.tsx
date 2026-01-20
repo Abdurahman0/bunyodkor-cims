@@ -24,6 +24,7 @@ import {
 } from "@/services/api.service";
 import type { GroupRead, UnpaidStudentInfo } from "@/types/api";
 
+import PayersReport from "./PayersReport";
 import {
   BarChart3,
   TrendingUp,
@@ -45,7 +46,7 @@ import {
 export default function Reports() {
   const { t } = useLanguageStore();
   const [activeTab, setActiveTab] = useState<
-    "finance" | "attendance" | "debtors"
+    "finance" | "attendance" | "debtors" | "payers"
   >("finance");
   const [dateRange, setDateRange] = useState({
     from: format(startOfMonth(new Date()), "yyyy-MM-dd"),
@@ -185,6 +186,7 @@ export default function Reports() {
     { id: "finance", label: t("financeReport"), icon: CreditCard },
     { id: "attendance", label: t("attendanceReport"), icon: Users },
     { id: "debtors", label: t("debtors"), icon: AlertTriangle },
+    { id: "payers", label: t("payersReport"), icon: Users },
   ];
 
   const paymentSourcesData =
@@ -859,6 +861,8 @@ export default function Reports() {
           </Card>
         </motion.div>
       )}
+
+      {activeTab === "payers" && <PayersReport />}
     </div>
   );
 }

@@ -66,6 +66,7 @@ import type {
   GroupAttendanceReport,
   StudentAttendanceReport,
   DebtorItem,
+  PayerItem,
   // Settings
   SystemSettingsRead,
   SystemSettingsUpdateRequest,
@@ -144,7 +145,7 @@ export const userService = {
    * GET /users
    */
   getUsers: async (
-    params?: GetUsersParams
+    params?: GetUsersParams,
   ): Promise<ApiResponse<UserRead[]>> => {
     const response = await apiClient.get<ApiResponse<UserRead[]>>("/users", {
       params,
@@ -157,11 +158,11 @@ export const userService = {
    * POST /users
    */
   createUser: async (
-    data: UserCreateRequest
+    data: UserCreateRequest,
   ): Promise<ApiResponse<UserRead>> => {
     const response = await apiClient.post<ApiResponse<UserRead>>(
       "/users",
-      data
+      data,
     );
     return response.data;
   },
@@ -172,11 +173,11 @@ export const userService = {
    */
   updateUser: async (
     userId: number,
-    data: UserUpdateRequest
+    data: UserUpdateRequest,
   ): Promise<ApiResponse<UserRead>> => {
     const response = await apiClient.patch<ApiResponse<UserRead>>(
       `/users/${userId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -187,11 +188,11 @@ export const userService = {
    */
   updateUserRoles: async (
     userId: number,
-    data: UpdateUserRolesRequest
+    data: UpdateUserRolesRequest,
   ): Promise<ApiResponse<UserWithRoles>> => {
     const response = await apiClient.patch<ApiResponse<UserWithRoles>>(
       `/users/${userId}/roles`,
-      data
+      data,
     );
     return response.data;
   },
@@ -202,7 +203,7 @@ export const userService = {
    */
   getUser: async (userId: number): Promise<ApiResponse<UserRead>> => {
     const response = await apiClient.get<ApiResponse<UserRead>>(
-      `/users/${userId}`
+      `/users/${userId}`,
     );
     return response.data;
   },
@@ -212,9 +213,8 @@ export const userService = {
    * GET /users/coaches
    */
   getCoaches: async (): Promise<ApiResponse<UserWithGroups[]>> => {
-    const response = await apiClient.get<ApiResponse<UserWithGroups[]>>(
-      "/users/coaches"
-    );
+    const response =
+      await apiClient.get<ApiResponse<UserWithGroups[]>>("/users/coaches");
     return response.data;
   },
 
@@ -223,7 +223,7 @@ export const userService = {
    * DELETE /users/{user_id}
    */
   deleteUser: async (
-    userId: number
+    userId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -236,11 +236,11 @@ export const userService = {
    * POST /users/bulk-delete
    */
   bulkDeleteUsers: async (
-    userIds: number[]
+    userIds: number[],
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
       "/users/bulk-delete",
-      userIds
+      userIds,
     );
     return response.data;
   },
@@ -257,9 +257,8 @@ export const roleService = {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getRoles: async (): Promise<ApiResponse<RoleWithPermissions[]>> => {
-    const response = await apiClient.get<ApiResponse<RoleWithPermissions[]>>(
-      "/roles"
-    );
+    const response =
+      await apiClient.get<ApiResponse<RoleWithPermissions[]>>("/roles");
     return response.data;
   },
 
@@ -268,11 +267,11 @@ export const roleService = {
    * POST /roles
    */
   createRole: async (
-    data: RoleCreateRequest
+    data: RoleCreateRequest,
   ): Promise<ApiResponse<RoleWithPermissions>> => {
     const response = await apiClient.post<ApiResponse<RoleWithPermissions>>(
       "/roles",
-      data
+      data,
     );
     return response.data;
   },
@@ -283,11 +282,11 @@ export const roleService = {
    */
   updateRole: async (
     roleId: number,
-    data: RoleUpdateRequest
+    data: RoleUpdateRequest,
   ): Promise<ApiResponse<RoleWithPermissions>> => {
     const response = await apiClient.patch<ApiResponse<RoleWithPermissions>>(
       `/roles/${roleId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -297,9 +296,8 @@ export const roleService = {
    * GET /roles/permissions
    */
   getPermissions: async (): Promise<ApiResponse<PermissionRead[]>> => {
-    const response = await apiClient.get<ApiResponse<PermissionRead[]>>(
-      "/roles/permissions"
-    );
+    const response =
+      await apiClient.get<ApiResponse<PermissionRead[]>>("/roles/permissions");
     return response.data;
   },
 
@@ -308,7 +306,7 @@ export const roleService = {
    * DELETE /roles/{role_id}
    */
   deleteRole: async (
-    roleId: number
+    roleId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -336,11 +334,11 @@ export const studentService = {
    * GET /students
    */
   getStudents: async (
-    params?: GetStudentsParams
+    params?: GetStudentsParams,
   ): Promise<ApiResponse<StudentRead[]>> => {
     const response = await apiClient.get<ApiResponse<StudentRead[]>>(
       "/students",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -350,11 +348,11 @@ export const studentService = {
    * POST /students
    */
   createStudent: async (
-    data: StudentCreateRequest
+    data: StudentCreateRequest,
   ): Promise<ApiResponse<StudentRead>> => {
     const response = await apiClient.post<ApiResponse<StudentRead>>(
       "/students",
-      data
+      data,
     );
     return response.data;
   },
@@ -365,7 +363,7 @@ export const studentService = {
    */
   getStudent: async (studentId: number): Promise<ApiResponse<StudentRead>> => {
     const response = await apiClient.get<ApiResponse<StudentRead>>(
-      `/students/${studentId}`
+      `/students/${studentId}`,
     );
     return response.data;
   },
@@ -376,11 +374,11 @@ export const studentService = {
    */
   updateStudent: async (
     studentId: number,
-    data: StudentUpdateRequest
+    data: StudentUpdateRequest,
   ): Promise<ApiResponse<StudentRead>> => {
     const response = await apiClient.patch<ApiResponse<StudentRead>>(
       `/students/${studentId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -390,10 +388,10 @@ export const studentService = {
    * GET /students/{student_id}/contracts
    */
   getStudentContracts: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<ContractRead[]>> => {
     const response = await apiClient.get<ApiResponse<ContractRead[]>>(
-      `/students/${studentId}/contracts`
+      `/students/${studentId}/contracts`,
     );
     return response.data;
   },
@@ -403,10 +401,10 @@ export const studentService = {
    * GET /students/{student_id}/transactions
    */
   getStudentTransactions: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<TransactionRead[]>> => {
     const response = await apiClient.get<ApiResponse<TransactionRead[]>>(
-      `/students/${studentId}/transactions`
+      `/students/${studentId}/transactions`,
     );
     return response.data;
   },
@@ -416,10 +414,10 @@ export const studentService = {
    * GET /students/{student_id}/attendance
    */
   getStudentAttendance: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<AttendanceRead[]>> => {
     const response = await apiClient.get<ApiResponse<AttendanceRead[]>>(
-      `/students/${studentId}/attendance`
+      `/students/${studentId}/attendance`,
     );
     return response.data;
   },
@@ -429,10 +427,10 @@ export const studentService = {
    * GET /students/{student_id}/gatelogs
    */
   getStudentGateLogs: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<GateLogRead[]>> => {
     const response = await apiClient.get<ApiResponse<GateLogRead[]>>(
-      `/students/${studentId}/gatelogs`
+      `/students/${studentId}/gatelogs`,
     );
     return response.data;
   },
@@ -443,13 +441,13 @@ export const studentService = {
    */
   searchStudents: async (
     query: string,
-    params?: { page?: number; page_size?: number }
+    params?: { page?: number; page_size?: number },
   ): Promise<ApiResponse<StudentRead[]>> => {
     const response = await apiClient.get<ApiResponse<StudentRead[]>>(
       "/students/search",
       {
         params: { query, ...params },
-      }
+      },
     );
     return response.data;
   },
@@ -475,7 +473,7 @@ export const studentService = {
   }): Promise<ApiResponse<UnpaidStudentInfo[]>> => {
     const response = await apiClient.get<ApiResponse<UnpaidStudentInfo[]>>(
       "/students/unpaid",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -485,10 +483,10 @@ export const studentService = {
    * GET /students/fullinfo/{student_id}
    */
   getStudentFullInfo: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<StudentFullInfo>> => {
     const response = await apiClient.get<ApiResponse<StudentFullInfo>>(
-      `/students/fullinfo/${studentId}`
+      `/students/fullinfo/${studentId}`,
     );
     return response.data;
   },
@@ -498,7 +496,7 @@ export const studentService = {
    * DELETE /students/{student_id}
    */
   deleteStudent: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -512,7 +510,7 @@ export const studentService = {
    * WARNING: This action is irreversible!
    */
   hardDeleteStudent: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -525,11 +523,11 @@ export const studentService = {
    * POST /students/bulk-delete
    */
   bulkDeleteStudents: async (
-    studentIds: number[]
+    studentIds: number[],
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
       "/students/bulk-delete",
-      studentIds
+      studentIds,
     );
     return response.data;
   },
@@ -549,7 +547,7 @@ export const studentService = {
    * Backend returns: { pdf_url: string }
    */
   createStudentWithContract: async (
-    formData: FormData
+    formData: FormData,
   ): Promise<{ pdf_url: string }> => {
     const response = await apiClient.post<{ pdf_url: string }>(
       "/students/create-with-contract",
@@ -559,7 +557,7 @@ export const studentService = {
           "Content-Type": "multipart/form-data",
         },
         timeout: 120000,
-      }
+      },
     );
 
     return response.data;
@@ -597,7 +595,7 @@ export const studentService = {
       {
         params,
         responseType: "blob",
-      }
+      },
     );
     return response.data;
   },
@@ -619,11 +617,11 @@ export const parentService = {
    * GET /parents
    */
   getParents: async (
-    params?: GetParentsParams
+    params?: GetParentsParams,
   ): Promise<ApiResponse<ParentRead[]>> => {
     const response = await apiClient.get<ApiResponse<ParentRead[]>>(
       "/parents",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -633,11 +631,11 @@ export const parentService = {
    * POST /parents
    */
   createParent: async (
-    data: ParentCreateRequest
+    data: ParentCreateRequest,
   ): Promise<ApiResponse<ParentRead>> => {
     const response = await apiClient.post<ApiResponse<ParentRead>>(
       "/parents",
-      data
+      data,
     );
     return response.data;
   },
@@ -648,7 +646,7 @@ export const parentService = {
    */
   getParent: async (parentId: number): Promise<ApiResponse<ParentRead>> => {
     const response = await apiClient.get<ApiResponse<ParentRead>>(
-      `/parents/${parentId}`
+      `/parents/${parentId}`,
     );
     return response.data;
   },
@@ -659,11 +657,11 @@ export const parentService = {
    */
   updateParent: async (
     parentId: number,
-    data: ParentUpdateRequest
+    data: ParentUpdateRequest,
   ): Promise<ApiResponse<ParentRead>> => {
     const response = await apiClient.patch<ApiResponse<ParentRead>>(
       `/parents/${parentId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -673,7 +671,7 @@ export const parentService = {
    * DELETE /parents/{parent_id}
    */
   deleteParent: async (
-    parentId: number
+    parentId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -699,7 +697,7 @@ export const groupService = {
    * GET /groups
    */
   getGroups: async (
-    params?: GetGroupsParams
+    params?: GetGroupsParams,
   ): Promise<ApiResponse<GroupRead[]>> => {
     const response = await apiClient.get<ApiResponse<GroupRead[]>>("/groups", {
       params,
@@ -712,11 +710,11 @@ export const groupService = {
    * POST /groups
    */
   createGroup: async (
-    data: GroupCreateRequest
+    data: GroupCreateRequest,
   ): Promise<ApiResponse<GroupRead>> => {
     const response = await apiClient.post<ApiResponse<GroupRead>>(
       "/groups",
-      data
+      data,
     );
     return response.data;
   },
@@ -727,7 +725,7 @@ export const groupService = {
    */
   getGroup: async (groupId: number): Promise<ApiResponse<GroupRead>> => {
     const response = await apiClient.get<ApiResponse<GroupRead>>(
-      `/groups/${groupId}`
+      `/groups/${groupId}`,
     );
     return response.data;
   },
@@ -738,11 +736,11 @@ export const groupService = {
    */
   updateGroup: async (
     groupId: number,
-    data: GroupUpdateRequest
+    data: GroupUpdateRequest,
   ): Promise<ApiResponse<GroupRead>> => {
     const response = await apiClient.patch<ApiResponse<GroupRead>>(
       `/groups/${groupId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -752,10 +750,10 @@ export const groupService = {
    * GET /groups/{group_id}/students
    */
   getGroupStudents: async (
-    groupId: number
+    groupId: number,
   ): Promise<ApiResponse<StudentRead[]>> => {
     const response = await apiClient.get<ApiResponse<StudentRead[]>>(
-      `/groups/${groupId}/students`
+      `/groups/${groupId}/students`,
     );
     return response.data;
   },
@@ -766,11 +764,11 @@ export const groupService = {
    */
   getGroupContracts: async (
     groupId: number,
-    params?: { status?: string; page?: number; page_size?: number }
+    params?: { status?: string; page?: number; page_size?: number },
   ): Promise<ApiResponse<ContractRead[]>> => {
     const response = await apiClient.get<ApiResponse<ContractRead[]>>(
       `/groups/${groupId}/contracts`,
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -780,7 +778,7 @@ export const groupService = {
    * DELETE /groups/{group_id}
    */
   deleteGroup: async (
-    groupId: number
+    groupId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -793,11 +791,11 @@ export const groupService = {
    * POST /groups/bulk-delete
    */
   bulkDeleteGroups: async (
-    groupIds: number[]
+    groupIds: number[],
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
       "/groups/bulk-delete",
-      groupIds
+      groupIds,
     );
     return response.data;
   },
@@ -808,7 +806,7 @@ export const groupService = {
    */
   getGroupCapacity: async (
     groupId: number,
-    params?: { archive_year?: number }
+    params?: { archive_year?: number },
   ): Promise<
     ApiResponse<{
       group_id: number;
@@ -837,7 +835,7 @@ export const groupService = {
   }): Promise<GroupedByYearResponse> => {
     const response = await apiClient.get<GroupedByYearResponse>(
       "/groups/grouped-by-year",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -846,10 +844,13 @@ export const groupService = {
    * Get overall statistics for all groups.
    * GET /groups/statistics
    */
-  getGroupsStatistics: async (): Promise<ApiResponse<GroupsStatisticsResponse>> => {
-    const response = await apiClient.get<ApiResponse<GroupsStatisticsResponse>>(
-      "/groups/statistics",
-    );
+  getGroupsStatistics: async (): Promise<
+    ApiResponse<GroupsStatisticsResponse>
+  > => {
+    const response =
+      await apiClient.get<ApiResponse<GroupsStatisticsResponse>>(
+        "/groups/statistics",
+      );
     return response.data;
   },
 };
@@ -885,12 +886,11 @@ export const contractService = {
    * GET /contracts/withname
    */
   getContractsWithStudentName: async (
-    params?: GetContractsWithStudentNameParams
+    params?: GetContractsWithStudentNameParams,
   ): Promise<ApiResponse<ContractWithStudentNameRead[]>> => {
-    const response = await apiClient.get<ApiResponse<ContractWithStudentNameRead[]>>(
-      "/contracts/withname",
-      { params }
-    );
+    const response = await apiClient.get<
+      ApiResponse<ContractWithStudentNameRead[]>
+    >("/contracts/withname", { params });
     return response.data;
   },
 
@@ -899,11 +899,11 @@ export const contractService = {
    * GET /contracts
    */
   getContracts: async (
-    params?: GetContractsParams
+    params?: GetContractsParams,
   ): Promise<ApiResponse<ContractRead[]>> => {
     const response = await apiClient.get<ApiResponse<ContractRead[]>>(
       "/contracts",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -913,11 +913,11 @@ export const contractService = {
    * POST /contracts
    */
   createContract: async (
-    data: ContractCreateRequest
+    data: ContractCreateRequest,
   ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.post<ApiResponse<ContractRead>>(
       "/contracts",
-      data
+      data,
     );
     return response.data;
   },
@@ -927,10 +927,12 @@ export const contractService = {
    * GET /contracts/{contract_id}
    */
   getContract: async (
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    contractId: number,
+    number: string,
+  ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.get<ApiResponse<ContractRead>>(
-      `/contracts/${contractId}`
+      `/contracts/${contractId}`,
     );
     return response.data;
   },
@@ -941,11 +943,11 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    */
   updateContract: async (
     contractId: number,
-    data: ContractUpdateRequest
+    data: ContractUpdateRequest,
   ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.patch<ApiResponse<ContractRead>>(
       `/contracts/${contractId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -955,7 +957,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    * DELETE /contracts/{contract_id}
    */
   deleteContract: async (
-    contractId: number
+    contractId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -972,11 +974,11 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
     data: {
       termination_reason: string;
       terminated_at: string;
-    }
+    },
   ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.post<ApiResponse<ContractRead>>(
       `/contracts/${contractId}/terminate`,
-      data
+      data,
     );
     return response.data;
   },
@@ -986,10 +988,10 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    * GET /contracts/payment-months/{contract_number}
    */
   getContractPaymentMonths: async (
-    contractNumber: string
+    contractNumber: string,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
-      `/contracts/payment-months/${contractNumber}`
+      `/contracts/payment-months/${contractNumber}`,
     );
     return response.data;
   },
@@ -999,11 +1001,11 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    * POST /contracts/bulk-delete
    */
   bulkDeleteContracts: async (
-    contractIds: number[]
+    contractIds: number[],
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
       "/contracts/bulk-delete",
-      contractIds
+      contractIds,
     );
     return response.data;
   },
@@ -1013,7 +1015,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    * POST /contracts/create-with-files
    */
   createContractWithFiles: async (
-    formData: FormData
+    formData: FormData,
   ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.post<ApiResponse<ContractRead>>(
       "/contracts/create-with-files",
@@ -1022,7 +1024,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   },
@@ -1033,7 +1035,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    */
   getAvailableContractNumbers: async (
     groupId: number,
-    birthYear: number
+    birthYear: number,
   ): Promise<
     ApiResponse<{
       group_id: number;
@@ -1047,7 +1049,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
     }>
   > => {
     const response = await apiClient.get(
-      `/contracts/available-numbers/${groupId}/${birthYear}`
+      `/contracts/available-numbers/${groupId}/${birthYear}`,
     );
     return response.data;
   },
@@ -1057,7 +1059,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    * GET /contracts/next-available/{group_id}/{birth_year}
    */
   getNextAvailableNumber: async (
-    groupId: number
+    groupId: number,
   ): Promise<
     ApiResponse<{
       next_available: number;
@@ -1069,7 +1071,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
     // Tahrir: birthYear argument sifatida qolsa ham, URL faqat groupId ni oladi
     // Chunki backend guruh ID orqali yilni o'zi aniqlaydi.
     const response = await apiClient.get(
-      `/contracts/next-available/${groupId}`
+      `/contracts/next-available/${groupId}`,
     );
     return response.data;
   },
@@ -1080,10 +1082,10 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    */
   getContractPdfUrl: async (
     year: number,
-    contractNumber: string
+    contractNumber: string,
   ): Promise<string> => {
     const response = await apiClient.get<string>(
-      `/contracts/${year}/${contractNumber}/pdf`
+      `/contracts/${year}/${contractNumber}/pdf`,
     );
     return response.data;
   },
@@ -1093,7 +1095,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
    * GET /contracts/available-numbers/{group_id}
    */
   getAllAvailableNumbers: async (
-    groupId: number
+    groupId: number,
   ): Promise<
     ApiResponse<{
       available_numbers: number[];
@@ -1101,7 +1103,7 @@ contractId: number, number: string  ): Promise<ApiResponse<ContractRead>> => {
     }>
   > => {
     const response = await apiClient.get(
-      `/contracts/available-numbers/${groupId}`
+      `/contracts/available-numbers/${groupId}`,
     );
     return response.data;
   },
@@ -1138,12 +1140,11 @@ export const transactionService = {
    * GET /transactions/withname
    */
   getTransactionsWithName: async (
-    params?: GetTransactionsWithNameParams
+    params?: GetTransactionsWithNameParams,
   ): Promise<ApiResponse<TransactionWithNameRead[]>> => {
-    const response = await apiClient.get<ApiResponse<TransactionWithNameRead[]>>(
-      "/transactions/withname",
-      { params }
-    );
+    const response = await apiClient.get<
+      ApiResponse<TransactionWithNameRead[]>
+    >("/transactions/withname", { params });
     return response.data;
   },
 
@@ -1152,11 +1153,11 @@ export const transactionService = {
    * GET /transactions
    */
   getTransactions: async (
-    params?: GetTransactionsParams
+    params?: GetTransactionsParams,
   ): Promise<ApiResponse<TransactionRead[]>> => {
     const response = await apiClient.get<ApiResponse<TransactionRead[]>>(
       "/transactions",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1171,7 +1172,7 @@ export const transactionService = {
   }): Promise<ApiResponse<TransactionRead[]>> => {
     const response = await apiClient.get<ApiResponse<TransactionRead[]>>(
       "/transactions/unassigned",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1181,11 +1182,11 @@ export const transactionService = {
    * POST /transactions/manual
    */
   createManualTransaction: async (
-    data: ManualTransactionCreateRequest
+    data: ManualTransactionCreateRequest,
   ): Promise<ApiResponse<TransactionRead>> => {
     const response = await apiClient.post<ApiResponse<TransactionRead>>(
       "/transactions/manual",
-      data
+      data,
     );
     return response.data;
   },
@@ -1196,11 +1197,11 @@ export const transactionService = {
    */
   assignTransaction: async (
     transactionId: number,
-    data: AssignTransactionRequest
+    data: AssignTransactionRequest,
   ): Promise<ApiResponse<TransactionRead>> => {
     const response = await apiClient.patch<ApiResponse<TransactionRead>>(
       `/transactions/${transactionId}/assign`,
-      data
+      data,
     );
     return response.data;
   },
@@ -1210,10 +1211,10 @@ export const transactionService = {
    * GET /transactions/{transaction_id}
    */
   getTransaction: async (
-    transactionId: number
+    transactionId: number,
   ): Promise<ApiResponse<TransactionRead>> => {
     const response = await apiClient.get<ApiResponse<TransactionRead>>(
-      `/transactions/${transactionId}`
+      `/transactions/${transactionId}`,
     );
     return response.data;
   },
@@ -1223,10 +1224,10 @@ export const transactionService = {
    * PATCH /transactions/{transaction_id}/cancel
    */
   cancelTransaction: async (
-    transactionId: number
+    transactionId: number,
   ): Promise<ApiResponse<TransactionRead>> => {
     const response = await apiClient.patch<ApiResponse<TransactionRead>>(
-      `/transactions/${transactionId}/cancel`
+      `/transactions/${transactionId}/cancel`,
     );
     return response.data;
   },
@@ -1236,7 +1237,7 @@ export const transactionService = {
    * DELETE /transactions/{transaction_id}
    */
   deleteTransaction: async (
-    transactionId: number
+    transactionId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -1249,11 +1250,11 @@ export const transactionService = {
    * POST /transactions/bulk-delete
    */
   bulkDeleteTransactions: async (
-    transactionIds: number[]
+    transactionIds: number[],
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
       "/transactions/bulk-delete",
-      transactionIds
+      transactionIds,
     );
     return response.data;
   },
@@ -1269,9 +1270,8 @@ export const coachService = {
    * GET /coach/groups
    */
   getCoachGroups: async (): Promise<ApiResponse<GroupRead[]>> => {
-    const response = await apiClient.get<ApiResponse<GroupRead[]>>(
-      "/coach/groups"
-    );
+    const response =
+      await apiClient.get<ApiResponse<GroupRead[]>>("/coach/groups");
     return response.data;
   },
 
@@ -1285,7 +1285,7 @@ export const coachService = {
   }): Promise<ApiResponse<SessionRead[]>> => {
     const response = await apiClient.get<ApiResponse<SessionRead[]>>(
       "/coach/sessions",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1295,10 +1295,10 @@ export const coachService = {
    * GET /coach/sessions/{session_id}/students-with-debt-info
    */
   getSessionStudentsWithDebt: async (
-    sessionId: number
+    sessionId: number,
   ): Promise<ApiResponse<StudentWithDebtInfo[]>> => {
     const response = await apiClient.get<ApiResponse<StudentWithDebtInfo[]>>(
-      `/coach/sessions/${sessionId}/students-with-debt-info`
+      `/coach/sessions/${sessionId}/students-with-debt-info`,
     );
     return response.data;
   },
@@ -1309,11 +1309,11 @@ export const coachService = {
    */
   markAttendance: async (
     sessionId: number,
-    data: AttendanceCreateRequest
+    data: AttendanceCreateRequest,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
       `/coach/sessions/${sessionId}/attendance`,
-      data
+      data,
     );
     return response.data;
   },
@@ -1323,11 +1323,11 @@ export const coachService = {
    * POST /coach/sessions/{session_id}/bulk-attendance
    */
   bulkAttendance: async (
-    data: BulkAttendanceCreateRequest
+    data: BulkAttendanceCreateRequest,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post<ApiResponse<Record<string, unknown>>>(
       `/coach/sessions/${data.session_id}/bulk-attendance`,
-      data
+      data,
     );
     return response.data;
   },
@@ -1337,7 +1337,7 @@ export const coachService = {
    * GET /coach/sessions/{session_id}
    */
   getSessionDetails: async (
-    sessionId: number
+    sessionId: number,
   ): Promise<ApiResponse<SessionRead & { attendances: AttendanceRead[] }>> => {
     const response = await apiClient.get(`/coach/sessions/${sessionId}`);
     return response.data;
@@ -1352,7 +1352,7 @@ export const coachService = {
     params?: {
       from_date?: string;
       to_date?: string;
-    }
+    },
   ): Promise<
     ApiResponse<{
       total_sessions: number;
@@ -1364,7 +1364,7 @@ export const coachService = {
   > => {
     const response = await apiClient.get(
       `/coach/groups/${groupId}/attendance-stats`,
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1378,7 +1378,7 @@ export const coachService = {
     params?: {
       from_date?: string;
       to_date?: string;
-    }
+    },
   ): Promise<
     ApiResponse<{
       total_sessions: number;
@@ -1390,7 +1390,7 @@ export const coachService = {
   > => {
     const response = await apiClient.get(
       `/coach/students/${studentId}/attendance-stats`,
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1407,7 +1407,7 @@ export const coachService = {
   }): Promise<ApiResponse<AttendanceRead[]>> => {
     const response = await apiClient.get<ApiResponse<AttendanceRead[]>>(
       "/coach/my-attendances",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1418,7 +1418,7 @@ export const coachService = {
    */
   uploadKonspekt: async (
     sessionId: number,
-    formData: FormData
+    formData: FormData,
   ): Promise<ApiResponse<SessionRead>> => {
     const response = await apiClient.post<ApiResponse<SessionRead>>(
       `/coach/sessions/${sessionId}/upload-konspekt`,
@@ -1427,7 +1427,7 @@ export const coachService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   },
@@ -1447,7 +1447,7 @@ export const headCoachService = {
   }): Promise<ApiResponse<GroupRead[]>> => {
     const response = await apiClient.get<ApiResponse<GroupRead[]>>(
       "/head-coach/groups",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1457,11 +1457,11 @@ export const headCoachService = {
    * POST /head-coach/sessions
    */
   createSession: async (
-    data: SessionCreateRequest
+    data: SessionCreateRequest,
   ): Promise<ApiResponse<SessionRead>> => {
     const response = await apiClient.post<ApiResponse<SessionRead>>(
       "/head-coach/sessions",
-      data
+      data,
     );
     return response.data;
   },
@@ -1476,7 +1476,7 @@ export const headCoachService = {
   }): Promise<ApiResponse<SessionRead[]>> => {
     const response = await apiClient.get<ApiResponse<SessionRead[]>>(
       "/head-coach/sessions",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1486,7 +1486,7 @@ export const headCoachService = {
    * GET /head-coach/sessions/{session_id}
    */
   getSessionDetails: async (
-    sessionId: number
+    sessionId: number,
   ): Promise<ApiResponse<SessionRead & { attendances: AttendanceRead[] }>> => {
     const response = await apiClient.get(`/head-coach/sessions/${sessionId}`);
     return response.data;
@@ -1498,11 +1498,11 @@ export const headCoachService = {
    */
   updateSession: async (
     sessionId: number,
-    data: SessionUpdateRequest
+    data: SessionUpdateRequest,
   ): Promise<ApiResponse<SessionRead>> => {
     const response = await apiClient.put<ApiResponse<SessionRead>>(
       `/head-coach/sessions/${sessionId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -1512,7 +1512,7 @@ export const headCoachService = {
    * DELETE /head-coach/sessions/{session_id}
    */
   deleteSession: async (
-    sessionId: number
+    sessionId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete<
       ApiResponse<Record<string, unknown>>
@@ -1551,11 +1551,11 @@ export const attendanceService = {
    * GET /students/attendances/all
    */
   getAllAttendances: async (
-    params?: GetAllAttendancesParams
+    params?: GetAllAttendancesParams,
   ): Promise<ApiResponse<AttendanceRead[]>> => {
     const response = await apiClient.get<ApiResponse<AttendanceRead[]>>(
       "/students/attendances/all",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1579,11 +1579,11 @@ export const sessionService = {
    * GET /sessions
    */
   getSessions: async (
-    params?: GetSessionsParams
+    params?: GetSessionsParams,
   ): Promise<ApiResponse<SessionRead[]>> => {
     const response = await apiClient.get<ApiResponse<SessionRead[]>>(
       "/sessions",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1594,7 +1594,7 @@ export const sessionService = {
    */
   updateSessionAttendance: async (
     sessionId: number,
-    data: AttendanceUpdateRequest[]
+    data: AttendanceUpdateRequest[],
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.patch<
       ApiResponse<Record<string, unknown>>
@@ -1622,11 +1622,11 @@ export const gateService = {
    * POST /gate/callback
    */
   gateCallback: async (
-    data: GateCallbackRequest
+    data: GateCallbackRequest,
   ): Promise<GateCallbackResponse> => {
     const response = await apiClient.post<GateCallbackResponse>(
       "/gate/callback",
-      data
+      data,
     );
     return response.data;
   },
@@ -1636,11 +1636,11 @@ export const gateService = {
    * GET /gate/logs
    */
   getGateLogs: async (
-    params?: GetGateLogsParams
+    params?: GetGateLogsParams,
   ): Promise<ApiResponse<GateLogRead[]>> => {
     const response = await apiClient.get<ApiResponse<GateLogRead[]>>(
       "/gate/logs",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -1657,7 +1657,7 @@ export const reportService = {
    */
   getDashboardSummary: async (): Promise<ApiResponse<DashboardSummary>> => {
     const response = await apiClient.get<ApiResponse<DashboardSummary>>(
-      "/reports/dashboard/summary"
+      "/reports/dashboard/summary",
     );
     return response.data;
   },
@@ -1674,7 +1674,7 @@ export const reportService = {
       "/reports/finance",
       {
         params,
-      }
+      },
     );
     return response.data;
   },
@@ -1687,7 +1687,7 @@ export const reportService = {
     ApiResponse<GroupAttendanceReport[]>
   > => {
     const response = await apiClient.get<ApiResponse<GroupAttendanceReport[]>>(
-      "/reports/attendance/groups"
+      "/reports/attendance/groups",
     );
     return response.data;
   },
@@ -1697,10 +1697,10 @@ export const reportService = {
    * GET /reports/attendance/students/{student_id}
    */
   getStudentAttendanceReport: async (
-    studentId: number
+    studentId: number,
   ): Promise<ApiResponse<StudentAttendanceReport>> => {
     const response = await apiClient.get<ApiResponse<StudentAttendanceReport>>(
-      `/reports/attendance/students/${studentId}`
+      `/reports/attendance/students/${studentId}`,
     );
     return response.data;
   },
@@ -1717,7 +1717,26 @@ export const reportService = {
   }): Promise<ApiResponse<DebtorItem[]>> => {
     const response = await apiClient.get<ApiResponse<DebtorItem[]>>(
       "/reports/debtors",
-      { params }
+      { params },
+    );
+    return response.data;
+  },
+  /**
+   * Get payers report
+   * GET /reports/payers
+   */
+  getPayers: async (params?: {
+    payment_year?: number;
+    group_id?: number;
+    min_paid_amount?: number;
+    from_date?: string;
+    to_date?: string;
+    page?: number;
+    page_size?: number;
+  }): Promise<ApiResponse<PayerItem[]>> => {
+    const response = await apiClient.get<ApiResponse<PayerItem[]>>(
+      "/reports/payers",
+      { params },
     );
     return response.data;
   },
@@ -1733,9 +1752,10 @@ export const settingsService = {
    * GET /settings/system
    */
   getSystemSettings: async (): Promise<ApiResponse<SystemSettingsRead[]>> => {
-    const response = await apiClient.get<ApiResponse<SystemSettingsRead[]>>(
-      "/settings/system"
-    );
+    const response =
+      await apiClient.get<ApiResponse<SystemSettingsRead[]>>(
+        "/settings/system",
+      );
     return response.data;
   },
 
@@ -1744,7 +1764,7 @@ export const settingsService = {
    * PATCH /settings/system
    */
   updateSystemSettings: async (
-    data: SystemSettingsUpdateRequest
+    data: SystemSettingsUpdateRequest,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.patch<
       ApiResponse<Record<string, unknown>>
@@ -1763,10 +1783,10 @@ export const publicService = {
    * GET /public/contracts/{contract_number}
    */
   getContractInfo: async (
-    contractNumber: string
+    contractNumber: string,
   ): Promise<ContractInfoPublic> => {
     const response = await apiClient.get<ContractInfoPublic>(
-      `/public/contracts/${contractNumber}`
+      `/public/contracts/${contractNumber}`,
     );
     return response.data;
   },
@@ -1776,11 +1796,11 @@ export const publicService = {
    * POST /public/payments/payme
    */
   initiatePaymePayment: async (
-    data: InitiatePaymentRequest
+    data: InitiatePaymentRequest,
   ): Promise<string> => {
     const response = await apiClient.post<string>(
       "/public/payments/payme",
-      data
+      data,
     );
     return response.data;
   },
@@ -1790,11 +1810,11 @@ export const publicService = {
    * POST /public/payments/click
    */
   initiateClickPayment: async (
-    data: InitiatePaymentRequest
+    data: InitiatePaymentRequest,
   ): Promise<string> => {
     const response = await apiClient.post<string>(
       "/public/payments/click",
-      data
+      data,
     );
     return response.data;
   },
@@ -1810,7 +1830,7 @@ export const importService = {
    * POST /import/students
    */
   importStudents: async (
-    file: File
+    file: File,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const formData = new FormData();
     formData.append("file", file);
@@ -1822,7 +1842,7 @@ export const importService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   },
@@ -1833,7 +1853,7 @@ export const importService = {
    */
   getImportResult: async (): Promise<ApiResponse<ImportResultResponse>> => {
     const response = await apiClient.get<ApiResponse<ImportResultResponse>>(
-      "/import/students/result"
+      "/import/students/result",
     );
     return response.data;
   },
@@ -1843,7 +1863,7 @@ export const importService = {
    * POST /import/payments
    */
   importPayments: async (
-    file: File
+    file: File,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const formData = new FormData();
     formData.append("file", file);
@@ -1855,7 +1875,7 @@ export const importService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   },
@@ -1885,7 +1905,7 @@ export const waitingListService = {
    * POST /waiting-list
    */
   addToWaitingList: async (
-    data: WaitingListCreate
+    data: WaitingListCreate,
   ): Promise<ApiResponse<WaitingListRead>> => {
     const response = await apiClient.post("/waiting-list", data);
     return response.data;
@@ -1896,7 +1916,7 @@ export const waitingListService = {
    * GET /waiting-list/{waiting_id}
    */
   getWaitingListEntry: async (
-    waitingId: number
+    waitingId: number,
   ): Promise<ApiResponse<WaitingListRead>> => {
     const response = await apiClient.get(`/waiting-list/${waitingId}`);
     return response.data;
@@ -1908,7 +1928,7 @@ export const waitingListService = {
    */
   updateWaitingListEntry: async (
     waitingId: number,
-    data: WaitingListUpdate
+    data: WaitingListUpdate,
   ): Promise<ApiResponse<WaitingListRead>> => {
     const response = await apiClient.patch(`/waiting-list/${waitingId}`, data);
     return response.data;
@@ -1919,7 +1939,7 @@ export const waitingListService = {
    * DELETE /waiting-list/{waiting_id}
    */
   removeFromWaitingList: async (
-    waitingId: number
+    waitingId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.delete(`/waiting-list/${waitingId}`);
     return response.data;
@@ -1930,7 +1950,7 @@ export const waitingListService = {
    * GET /waiting-list/group/{group_id}/next
    */
   getNextInQueue: async (
-    groupId: number
+    groupId: number,
   ): Promise<ApiResponse<WaitingListRead | null>> => {
     const response = await apiClient.get(`/waiting-list/group/${groupId}/next`);
     return response.data;
@@ -1947,7 +1967,7 @@ export const archiveService = {
    * POST /archive/year/{year}
    */
   archiveYear: async (
-    year: number
+    year: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post(`/archive/year/${year}`);
     return response.data;
@@ -1958,7 +1978,7 @@ export const archiveService = {
    * POST /archive/unarchive/year/{year}
    */
   unarchiveYear: async (
-    year: number
+    year: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post(`/archive/unarchive/year/${year}`);
     return response.data;
@@ -1969,7 +1989,7 @@ export const archiveService = {
    * GET /archive/stats/{year}
    */
   getArchiveStats: async (
-    year: number
+    year: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.get(`/archive/stats/${year}`);
     return response.data;
@@ -1980,10 +2000,10 @@ export const archiveService = {
    * GET /archive/terminated-contracts/{year}
    */
   getTerminatedContracts: async (
-    year: number
+    year: number,
   ): Promise<ApiResponse<ContractRead[]>> => {
     const response = await apiClient.get<ApiResponse<ContractRead[]>>(
-      `/archive/terminated-contracts/${year}`
+      `/archive/terminated-contracts/${year}`,
     );
     return response.data;
   },
