@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -770,7 +771,6 @@ export default function Reports() {
                         </option>
                       )}
                     </select>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -821,7 +821,7 @@ export default function Reports() {
                       <TableCell className="font-medium">
                         {debtor.student.first_name} {debtor.student.last_name}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <Badge variant="outline" className="font-normal">
                           {debtor.group_name}
                         </Badge>
