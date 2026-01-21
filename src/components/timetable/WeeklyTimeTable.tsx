@@ -250,7 +250,9 @@ export default function WeeklyTimeTable({
                                   colorClass
                                 )}
                                 style={{
-                                  minHeight: duration > 1 ? `${duration * 60}px` : "auto",
+                                  minHeight: duration > 1 ? `${Math.min(duration * 60, 200)}px` : "auto",
+                                  maxHeight: "200px",
+                                  overflow: "hidden",
                                 }}
                               >
                                 <div className="space-y-1">

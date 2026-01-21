@@ -100,7 +100,7 @@ export function DialogDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn('text-sm text-gray-600 dark:text-gray-400 mt-2', className)}
       {...props}
     />
   )
