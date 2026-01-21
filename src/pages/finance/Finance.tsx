@@ -83,7 +83,6 @@ export default function Finance() {
     refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
-
   const { data: unassignedData } = useQuery({
     queryKey: ["unassigned-transactions"],
     queryFn: () =>
@@ -474,7 +473,7 @@ export default function Finance() {
                   const displayed = [...data.data].sort(
                     (a: TransactionWithNameRead, b: TransactionWithNameRead) =>
                       new Date(b.paid_at!).getTime() -
-                      new Date(a.paid_at!).getTime()
+                      new Date(a.paid_at!).getTime(),
                   );
                   return displayed.map((transaction, idx) => (
                     <TableRow key={transaction.id}>
@@ -542,7 +541,7 @@ export default function Finance() {
                         <span className="text-sm text-muted-foreground">
                           {format(
                             new Date(transaction.paid_at!),
-                            "MMM d, yyyy HH:mm"
+                            "MMM d, yyyy HH:mm",
                           )}
                         </span>
                       </TableCell>

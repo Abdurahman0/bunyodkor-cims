@@ -110,16 +110,6 @@ export default function CoachPanel() {
     },
   });
 
-  // Debug: log allStudents and selection to diagnose empty student dropdown
-  // (temporary - remove once verified)
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    // only run in dev to avoid noisy logs in production
-    if (process.env.NODE_ENV !== "development") return;
-    // eslint-disable-next-line no-console
-    console.debug("[CoachPanel] allStudents count:", allStudents?.length || 0);
-  }, [allStudents]);
-
   const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
     queryKey: ["coach-sessions", selectedDate],
     queryFn: () => coachService.getCoachSessions({ date: selectedDate }),

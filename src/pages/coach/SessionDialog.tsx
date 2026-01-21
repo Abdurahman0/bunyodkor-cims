@@ -35,7 +35,7 @@ export function SessionDialog({
 }: SessionDialogProps) {
   const { t } = useLanguageStore();
   const [formData, setFormData] = useState<Partial<SessionCreateRequest>>({
-    group_id: 0,
+    group_id: undefined,
     session_date: "",
     start_time: "",
     end_time: "",
@@ -54,7 +54,7 @@ export function SessionDialog({
         });
       } else {
         setFormData({
-          group_id: groups.length > 0 ? groups[0].id : 0,
+          group_id: undefined,
           session_date: new Date().toISOString().split("T")[0],
           start_time: "09:00",
           end_time: "10:30",
@@ -156,11 +156,15 @@ export function SessionDialog({
             <Label htmlFor="group">{t("group")}</Label>
             <Select
               id="group"
-              value={formData.group_id?.toString()}
+              value={formData.group_id?.toString() || ""}
               onChange={(e) =>
-                setFormData({ ...formData, group_id: Number(e.target.value) })
+                setFormData({
+                  ...formData,
+                  group_id: Number(e.target.value) || undefined,
+                })
               }
             >
+              <option value="">{t("selectGroup")}</option>
               {groups.map((group) => (
                 <option key={group.id} value={group.id}>
                   {group.name}
