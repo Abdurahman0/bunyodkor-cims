@@ -99,8 +99,8 @@ export default function Reports() {
     : Array.isArray((groupsData as any)?.data?.data)
       ? (groupsData as any).data.data
       : Array.isArray(groupsData)
-      ? (groupsData as any[])
-      : [];
+        ? (groupsData as any[])
+        : [];
 
   // Debug: check groups data
   console.debug("[Reports] groupsData:", groupsData);
