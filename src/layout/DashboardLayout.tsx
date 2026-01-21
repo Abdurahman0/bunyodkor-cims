@@ -186,11 +186,13 @@ const DashboardLayout = () => {
       return false;
     }
 
+    // Determine if current user is a coach (support both `user.role` and `user.roles` array)
+    const isCoach =
+      user?.role === "coach" ||
+      !!user?.roles?.some((r: any) => (r.name || "").toString().toLowerCase() === "coach");
+
     // Hide Students and Groups pages if user is a coach
-    if (
-      user?.role === "coach" &&
-      (item.path === "/students" || item.path === "/groups")
-    ) {
+    if (isCoach && (item.path === "/students" || item.path === "/groups")) {
       return false;
     }
 
