@@ -180,9 +180,19 @@ const DashboardLayout = () => {
     return false;
   };
 
-  const filteredMenuItems = menuItems.filter((item) =>
-    hasPermission(item.permission)
-  );
+  const filteredMenuItems = menuItems.filter((item) => {
+    // Check permissions first
+    if (!hasPermission(item.permission)) {
+      return false;
+    }
+
+    // Hide Students and Groups pages if user is a coach
+    if (user?.role === "coach" && (item.path === "/students" || item.path === "/groups")) {
+      return false;
+    }
+
+    return true;
+  });
 
   const getPageNotifications = () => {
     const path = location.pathname;

@@ -26,6 +26,7 @@ export interface User {
   status: "active" | "inactive";
   created_at: string;
   roles: Role[];
+  role?: "admin" | "coach" | "head-coach" | "super-admin";
 }
 
 export interface Role {
