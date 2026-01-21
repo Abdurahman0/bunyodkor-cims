@@ -1,12 +1,12 @@
-import * as React from 'react'
-import { X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import * as React from "react";
+import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface DialogProps {
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children: React.ReactNode;
 }
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
@@ -29,7 +29,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 25 }}
+              transition={{ type: "spring", damping: 25 }}
               className="relative"
               onClick={(e) => e.stopPropagation()}
             >
@@ -39,7 +39,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
         </>
       )}
     </AnimatePresence>
-  )
+  );
 }
 
 export function DialogContent({
@@ -51,8 +51,8 @@ export function DialogContent({
   return (
     <div
       className={cn(
-        'relative bg-card border border-border text-foreground rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto',
-        className
+        "relative bg-card border border-border text-foreground rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto",
+        className,
       )}
       {...props}
     >
@@ -67,7 +67,7 @@ export function DialogContent({
       )}
       {children}
     </div>
-  )
+  );
 }
 
 export function DialogHeader({
@@ -76,10 +76,10 @@ export function DialogHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('flex flex-col space-y-1.5 p-6 pb-4', className)}
+      className={cn("flex flex-col space-y-1.5 p-6 pb-4", className)}
       {...props}
     />
-  )
+  );
 }
 
 export function DialogTitle({
@@ -88,10 +88,13 @@ export function DialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={cn('text-lg font-semibold leading-none tracking-tight text-foreground', className)}
+      className={cn(
+        "text-lg font-semibold leading-none tracking-tight text-foreground",
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }
 
 export function DialogDescription({
@@ -100,10 +103,10 @@ export function DialogDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn('text-sm text-gray-600 dark:text-gray-400 mt-2', className)}
+      className={cn("text-sm text-gray-600 dark:text-gray-400 mt-2", className)}
       {...props}
     />
-  )
+  );
 }
 
 export function DialogFooter({
@@ -112,8 +115,11 @@ export function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 pt-4', className)}
+      className={cn(
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 pt-4",
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }

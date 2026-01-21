@@ -56,7 +56,7 @@ export default function WeeklyTimeTable({
   className,
 }: WeeklyTimeTableProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState(
-    startOfWeek(new Date(), { weekStartsOn: 1 }) // Monday
+    startOfWeek(new Date(), { weekStartsOn: 1 }), // Monday
   );
 
   // Create color map for groups
@@ -71,7 +71,7 @@ export default function WeeklyTimeTable({
   // Get week dates
   const weekDates = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i)),
-    [currentWeekStart]
+    [currentWeekStart],
   );
 
   // Organize sessions by date and time
@@ -128,11 +128,7 @@ export default function WeeklyTimeTable({
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePreviousWeek}
-            >
+            <Button variant="outline" size="icon" onClick={handlePreviousWeek}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
 
@@ -144,11 +140,7 @@ export default function WeeklyTimeTable({
               </span>
             </div>
 
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleNextWeek}
-            >
+            <Button variant="outline" size="icon" onClick={handleNextWeek}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -166,13 +158,15 @@ export default function WeeklyTimeTable({
                   Time
                 </div>
                 {weekDates.map((date, index) => {
-                  const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                  const isToday =
+                    format(date, "yyyy-MM-dd") ===
+                    format(new Date(), "yyyy-MM-dd");
                   return (
                     <div
                       key={index}
                       className={cn(
                         "p-3 text-center border-r last:border-r-0",
-                        isToday && "bg-primary/10"
+                        isToday && "bg-primary/10",
                       )}
                     >
                       <div className="font-semibold text-sm">
@@ -183,7 +177,7 @@ export default function WeeklyTimeTable({
                           "text-xs mt-1",
                           isToday
                             ? "text-primary font-bold"
-                            : "text-muted-foreground"
+                            : "text-muted-foreground",
                         )}
                       >
                         {format(date, "MMM d")}
@@ -195,7 +189,10 @@ export default function WeeklyTimeTable({
 
               {/* Time Slots Rows */}
               {TIME_SLOTS.map((timeSlot) => (
-                <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0 min-h-[80px]">
+                <div
+                  key={timeSlot}
+                  className="grid grid-cols-8 border-b last:border-b-0 min-h-[80px]"
+                >
                   {/* Time Label */}
                   <div className="p-3 text-sm font-medium text-muted-foreground border-r bg-muted/30 flex items-start">
                     {timeSlot}
@@ -206,14 +203,15 @@ export default function WeeklyTimeTable({
                     const dateStr = format(date, "yyyy-MM-dd");
                     const key = `${dateStr}-${timeSlot}`;
                     const daySessions = sessionsByDateTime.get(key) || [];
-                    const isToday = dateStr === format(new Date(), "yyyy-MM-dd");
+                    const isToday =
+                      dateStr === format(new Date(), "yyyy-MM-dd");
 
                     return (
                       <div
                         key={dayIndex}
                         className={cn(
                           "p-2 border-r last:border-r-0 relative group cursor-pointer transition-colors",
-                          isToday ? "bg-primary/5" : "hover:bg-muted/50"
+                          isToday ? "bg-primary/5" : "hover:bg-muted/50",
                         )}
                         onClick={() => {
                           if (daySessions.length === 0) {
@@ -235,7 +233,9 @@ export default function WeeklyTimeTable({
                           {daySessions.map((session) => {
                             const group = getGroup(session.group_id);
                             const duration = getSessionDuration(session);
-                            const colorClass = groupColorMap.get(session.group_id) || GROUP_COLORS[0];
+                            const colorClass =
+                              groupColorMap.get(session.group_id) ||
+                              GROUP_COLORS[0];
 
                             return (
                               <button
@@ -247,18 +247,22 @@ export default function WeeklyTimeTable({
                                 className={cn(
                                   "w-full p-2 rounded-lg border-l-4 text-left transition-all shadow-sm",
                                   "hover:shadow-md hover:scale-[1.02]",
-                                  colorClass
+                                  colorClass,
                                 )}
                                 style={{
-                                  minHeight: duration > 1 ? `${Math.min(duration * 60, 200)}px` : "auto",
-                                  maxHeight: "200px",
+                                  minHeight:
+                                    duration > 1
+                                      ? `${Math.min(duration * 60, 150)}px`
+                                      : "auto",
+                                  maxHeight: "150px",
                                   overflow: "hidden",
                                 }}
                               >
                                 <div className="space-y-1">
                                   <div className="flex items-start justify-between gap-1">
                                     <span className="font-semibold text-xs line-clamp-1">
-                                      {group?.name || `Group ${session.group_id}`}
+                                      {group?.name ||
+                                        `Group ${session.group_id}`}
                                     </span>
                                     <Badge
                                       variant="secondary"
@@ -278,7 +282,8 @@ export default function WeeklyTimeTable({
                                     <div className="flex items-center gap-0.5">
                                       <Clock className="w-3 h-3" />
                                       <span>
-                                        {session.start_time} - {session.end_time}
+                                        {session.start_time} -{" "}
+                                        {session.end_time}
                                       </span>
                                     </div>
                                   </div>
@@ -286,7 +291,9 @@ export default function WeeklyTimeTable({
                                   {session.station && (
                                     <div className="flex items-center gap-1 text-[10px] opacity-80">
                                       <MapPin className="w-3 h-3" />
-                                      <span className="line-clamp-1">{session.station}</span>
+                                      <span className="line-clamp-1">
+                                        {session.station}
+                                      </span>
                                     </div>
                                   )}
                                 </div>
@@ -309,14 +316,13 @@ export default function WeeklyTimeTable({
         <CardContent className="p-4">
           <div className="flex items-center gap-2 flex-wrap">
             <Users className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">Groups:</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Groups:
+            </span>
             {groups.slice(0, 10).map((group) => {
               const colorClass = groupColorMap.get(group.id) || GROUP_COLORS[0];
               return (
-                <Badge
-                  key={group.id}
-                  className={cn("text-xs", colorClass)}
-                >
+                <Badge key={group.id} className={cn("text-xs", colorClass)}>
                   {group.name}
                 </Badge>
               );
