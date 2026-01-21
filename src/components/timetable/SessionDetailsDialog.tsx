@@ -56,7 +56,7 @@ export default function SessionDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0">
+      <DialogContent className="sm:max-w-[500px] p-0 pb-8">
         <div className="relative">
           {/* Close Button */}
           <button
@@ -180,7 +180,7 @@ export default function SessionDetailsDialog({
 
           {/* Actions Footer (for Head Coach) */}
           {showActions && (onEdit || onDelete) && (
-            <DialogFooter className="gap-2 px-6 pb-6">
+            <DialogFooter className="gap-3 px-6 pb-6 border-t pt-6">
               {onDelete && (
                 <Button
                   variant="destructive"
@@ -188,7 +188,7 @@ export default function SessionDetailsDialog({
                     onDelete(session);
                     onOpenChange(false);
                   }}
-                  className="gap-2"
+                  className="gap-2 flex-1"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Session
@@ -200,7 +200,7 @@ export default function SessionDetailsDialog({
                     onEdit(session);
                     onOpenChange(false);
                   }}
-                  className="gap-2"
+                  className="gap-2 flex-1"
                 >
                   <Edit className="w-4 h-4" />
                   Edit Session

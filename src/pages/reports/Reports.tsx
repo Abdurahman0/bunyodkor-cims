@@ -770,6 +770,7 @@ export default function Reports() {
                         </option>
                       )}
                     </select>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -822,7 +823,7 @@ export default function Reports() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
-                          {debtor.student.group_name}
+                          {debtor.group_name}
                         </Badge>
                       </TableCell>
                       <TableCell>

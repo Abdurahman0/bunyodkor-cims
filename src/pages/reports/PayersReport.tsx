@@ -140,17 +140,25 @@ const PayersReport: FC = () => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
                   setPage(1);
                 }}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 disabled={groupsLoading}
               >
                 <option value="">{t("allGroups")}</option>
-                {groupsList.length > 0
-                  ? groupsList.map((g: any) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))
-                  : null}
+                {groupsLoading ? (
+                  <option value="" disabled>
+                    {t("loading")}
+                  </option>
+                ) : groupsList && groupsList.length > 0 ? (
+                  groupsList.map((g: any) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    {t("noGroupsAvailable")}
+                  </option>
+                )}
               </select>
             </div>
 
