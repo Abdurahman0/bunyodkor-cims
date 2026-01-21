@@ -159,7 +159,8 @@ const PayersReport: FC = () => {
                     {t("noGroupsAvailable")}
                   </option>
                 )}
-              </select>              <select
+              </select>{" "}
+              <select
                 value={groupId ? String(groupId) : ""}
                 onChange={(e) => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
@@ -184,7 +185,8 @@ const PayersReport: FC = () => {
                     {t("noGroupsAvailable")}
                   </option>
                 )}
-              </select>              <select
+              </select>{" "}
+              <select
                 value={groupId ? String(groupId) : ""}
                 onChange={(e) => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
@@ -209,7 +211,8 @@ const PayersReport: FC = () => {
                     {t("noGroupsAvailable")}
                   </option>
                 )}
-              </select>              <select
+              </select>{" "}
+              <select
                 value={groupId ? String(groupId) : ""}
                 onChange={(e) => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
@@ -234,7 +237,8 @@ const PayersReport: FC = () => {
                     {t("noGroupsAvailable")}
                   </option>
                 )}
-              </select>              <select
+              </select>{" "}
+              <select
                 value={groupId ? String(groupId) : ""}
                 onChange={(e) => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
@@ -259,7 +263,8 @@ const PayersReport: FC = () => {
                     {t("noGroupsAvailable")}
                   </option>
                 )}
-              </select>              <select
+              </select>{" "}
+              <select
                 value={groupId ? String(groupId) : ""}
                 onChange={(e) => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
