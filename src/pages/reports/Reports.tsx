@@ -23,6 +23,7 @@ import {
   groupService,
   studentService,
 } from "@/services/api.service";
+import { Select } from "@/components/ui/select";
 import type { GroupRead, ApiResponse } from "@/types/api";
 
 import PayersReport from "./PayersReport";
@@ -675,7 +676,7 @@ export default function Reports() {
                         <label className="text-sm font-medium text-foreground mb-1 block">
                           {t("year")}
                         </label>
-                        <select
+                        <Select
                           value={selectedYear}
                           onChange={(e) => {
                             setSelectedYear(Number(e.target.value));
@@ -693,14 +694,14 @@ export default function Reports() {
                               {year}
                             </option>
                           ))}
-                        </select>
+                        </Select>
                       </div>
 
                       <div className="w-48">
                         <label className="text-sm font-medium text-foreground mb-1 block">
                           {t("month")}
                         </label>
-                        <select
+                        <Select
                           value={selectedMonth || ""}
                           onChange={(e) => {
                             setSelectedMonth(
@@ -719,7 +720,7 @@ export default function Reports() {
                               </option>
                             ),
                           )}
-                        </select>
+                        </Select>
                       </div>
 
                       <div className="w-48">
@@ -781,7 +782,7 @@ export default function Reports() {
                     <label className="text-sm font-medium text-foreground mb-1 block">
                       {t("group")}
                     </label>
-                    <select
+                    <Select
                       value={selectedGroupId ? String(selectedGroupId) : ""}
                       onChange={(e) => {
                         setSelectedGroupId(
@@ -808,7 +809,7 @@ export default function Reports() {
                           {t("noGroupsAvailable")}
                         </option>
                       )}
-                    </select>
+                    </Select>
                   </div>
                 </div>
               </div>

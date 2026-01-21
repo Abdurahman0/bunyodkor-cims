@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { reportService, groupService } from "@/services/api.service";
+import { Select } from "@/components/ui/select";
 import { useLanguageStore } from "@/store/languageStore";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { exportReport } from "@/lib/export-utils";
@@ -108,7 +109,7 @@ const PayersReport: FC = () => {
               <label className="text-sm font-medium text-foreground mb-1 block">
                 {t("paymentYear")}
               </label>
-              <select
+              <Select
                 value={paymentYear}
                 onChange={(e) => {
                   setPaymentYear(e.target.value ? Number(e.target.value) : "");
@@ -127,14 +128,14 @@ const PayersReport: FC = () => {
                   </option>
                 ))}
                 <option value="">{t("allYears")}</option>
-              </select>
+              </Select>
             </div>
 
             <div className="w-64">
               <label className="text-sm font-medium text-foreground mb-1 block">
                 {t("group")}
               </label>
-              <select
+              <Select
                 value={groupId ? String(groupId) : ""}
                 onChange={(e) => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
@@ -159,7 +160,7 @@ const PayersReport: FC = () => {
                     {t("noGroupsAvailable")}
                   </option>
                 )}
-              </select>{" "}
+              </Select>{" "}
             </div>
 
             <div>

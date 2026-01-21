@@ -873,7 +873,10 @@ export default function CoachPanel() {
                 {/* O'ZGARTIRILGAN SELECT */}
                 <Select
                   value={selectedGroupForStats || ""}
-                  onChange={(e) => setSelectedGroupForStats(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedGroupForStats(e.target.value);
+                    setSelectedStudentForStats(null);
+                  }}
                   className="w-full md:w-1/3"
                 >
                   <option value="" disabled>
@@ -936,7 +939,6 @@ export default function CoachPanel() {
               <Card>
                 <CardHeader>
                   <CardTitle>{t("studentStatistics")}</CardTitle>
-                  {/* O'ZGARTIRILGAN SELECT */}
                   <Select
                     value={selectedStudentForStats || ""}
                     onChange={(e) => setSelectedStudentForStats(e.target.value)}
