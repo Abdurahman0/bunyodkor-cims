@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
 export default function Finance() {
   const { t } = useLanguageStore();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [studentIdFilter, setStudentIdFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -502,9 +504,21 @@ export default function Finance() {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {transaction.student_full_name ? (
-                          <span className="text-sm">
+                          <button
+                            onClick={() => {
+                              if (transaction.student_id) {
+                                navigate(`/students/${transaction.student_id}`);
+                              }
+                            }}
+                            disabled={!transaction.student_id}
+                            className={`text-sm ${
+                              transaction.student_id
+                                ? "cursor-pointer text-blue-600 dark:text-blue-400 hover:underline"
+                                : "text-muted-foreground cursor-not-allowed"
+                            }`}
+                          >
                             {transaction.student_full_name}
-                          </span>
+                          </button>
                         ) : (
                           <span className="text-sm text-muted-foreground">
                             {t("unassigned")}

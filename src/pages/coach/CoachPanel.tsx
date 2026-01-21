@@ -110,6 +110,16 @@ export default function CoachPanel() {
     },
   });
 
+  // Debug: log allStudents and selection to diagnose empty student dropdown
+  // (temporary - remove once verified)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    // only run in dev to avoid noisy logs in production
+    if (process.env.NODE_ENV !== "development") return;
+    // eslint-disable-next-line no-console
+    console.debug("[CoachPanel] allStudents count:", allStudents?.length || 0);
+  }, [allStudents]);
+
   const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
     queryKey: ["coach-sessions", selectedDate],
     queryFn: () => coachService.getCoachSessions({ date: selectedDate }),
@@ -318,8 +328,16 @@ export default function CoachPanel() {
   const getStudentDisplayName = (item: any) => {
     if (!item) return t("unknownStudent") || "Unknown Student";
     // APIs may return either direct fields or nested `student` object
-    const first = item.first_name || item.firstName || item.student?.first_name || item.student?.firstName;
-    const last = item.last_name || item.lastName || item.student?.last_name || item.student?.lastName;
+    const first =
+      item.first_name ||
+      item.firstName ||
+      item.student?.first_name ||
+      item.student?.firstName;
+    const last =
+      item.last_name ||
+      item.lastName ||
+      item.student?.last_name ||
+      item.student?.lastName;
     if (first || last) return `${first || ""} ${last || ""}`.trim();
     // fallback to id-based label
     if (item.student_id || item.id) return `#${item.student_id || item.id}`;
@@ -451,7 +469,7 @@ export default function CoachPanel() {
                   <div className="space-y-3">
                     {sessionsData.map((session) => {
                       const group = groupsData?.find(
-                        (g) => Number(g.id) === Number(session.group_id)
+                        (g) => Number(g.id) === Number(session.group_id),
                       );
                       return (
                         <button
@@ -541,7 +559,9 @@ export default function CoachPanel() {
                               </TableRow>
                             ) : studentsData && studentsData.length > 0 ? (
                               studentsData.map((student) => (
-                                <TableRow key={student.student_id || student.id}>
+                                <TableRow
+                                  key={student.student_id || student.id}
+                                >
                                   <TableCell className="font-medium">
                                     {getStudentDisplayName(student)}
                                   </TableCell>
@@ -743,7 +763,7 @@ export default function CoachPanel() {
                             groupStudentsData.map((student) => (
                               <TableRow key={student.id}>
                                 <TableCell className="font-medium">
-                                        {getStudentDisplayName(student)}
+                                  {getStudentDisplayName(student)}
                                 </TableCell>
                                 <TableCell>
                                   {format(
