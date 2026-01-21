@@ -1,7 +1,7 @@
 // src/types/index.ts
 
 // Re-export all API types from api.ts
-export * from './api'
+export * from "./api";
 
 // Legacy types for backward compatibility (deprecated - use types from ./api.ts)
 export interface Meta {

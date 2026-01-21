@@ -89,7 +89,6 @@ export default function Reports() {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
-    enabled: activeTab === "debtors",
   });
 
   // Normalize groups response in case API returns nested `data` (e.g. { data: { data: [...] } })
@@ -98,6 +97,10 @@ export default function Reports() {
     : Array.isArray((groupsData as any)?.data?.data)
       ? (groupsData as any).data.data
       : [];
+
+  // Debug: check groups data
+  console.debug("[Reports] groupsData:", groupsData);
+  console.debug("[Reports] groupsList count:", groupsList.length);
 
   // Use unpaid students API instead of debtors report
   const { data: debtorsData, isLoading: debtorsLoading } = useQuery({

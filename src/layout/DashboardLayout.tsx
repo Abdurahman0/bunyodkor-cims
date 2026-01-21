@@ -187,7 +187,10 @@ const DashboardLayout = () => {
     }
 
     // Hide Students and Groups pages if user is a coach
-    if (user?.role === "coach" && (item.path === "/students" || item.path === "/groups")) {
+    if (
+      user?.role === "coach" &&
+      (item.path === "/students" || item.path === "/groups")
+    ) {
       return false;
     }
 
@@ -240,7 +243,7 @@ const DashboardLayout = () => {
           "lg:translate-x-0",
           {
             "sidebar-closed": !isOpen,
-          }
+          },
         )}
       >
         {/* Header */}
@@ -290,13 +293,13 @@ const DashboardLayout = () => {
                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                     isActive
                       ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/30"
-                      : "text-slate-300 hover:bg-slate-800/50 hover:text-white"
+                      : "text-slate-300 hover:bg-slate-800/50 hover:text-white",
                   )}
                 >
                   <Icon
                     className={cn(
                       "w-5 h-5 flex-shrink-0",
-                      isActive && "drop-shadow-sm"
+                      isActive && "drop-shadow-sm",
                     )}
                   />
                   <span className="font-medium text-sm">{item.label}</span>
@@ -397,7 +400,7 @@ const DashboardLayout = () => {
             <div className="hidden sm:block">
               <h2 className="text-lg font-semibold text-foreground">
                 {filteredMenuItems.find(
-                  (item) => item.path === location.pathname
+                  (item) => item.path === location.pathname,
                 )?.label || "Dashboard"}
               </h2>
             </div>
@@ -444,7 +447,7 @@ const DashboardLayout = () => {
                               "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
                               language === lang.code
                                 ? "bg-primary text-primary-foreground"
-                                : "text-foreground hover:bg-muted"
+                                : "text-foreground hover:bg-muted",
                             )}
                           >
                             <span className="text-lg">{lang.flag}</span>
