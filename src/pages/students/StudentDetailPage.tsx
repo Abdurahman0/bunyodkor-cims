@@ -895,11 +895,20 @@ export default function StudentDetailPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setContractToUpdate(c);
-                              setIsEditContractDialogOpen(true);
+                              const payload = {
+                                start_date: c.start_date,
+                                end_date: c.end_date,
+                                monthly_fee: c.monthly_fee,
+                                status: c.status,
+                                custom_fields: c.custom_fields,
+                              };
+                              updateContractMutation.mutate({
+                                contractId: c.id,
+                                data: payload,
+                              });
                             }}
                           >
-                            {t("replaceContract") || "Shartnomani almashtirish"}
+                            {c.contract_number || t("replaceContract")}
                           </Button>
                           <Button
                             variant="outline"
