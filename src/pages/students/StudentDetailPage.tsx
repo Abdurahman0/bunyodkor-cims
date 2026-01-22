@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { studentService, contractService } from "@/services/api.service";
@@ -30,6 +30,9 @@ import {
   Download,
   Eye,
   Pencil,
+  UploadCloud,
+  File as FileIcon,
+  X,
   RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -102,6 +105,11 @@ export default function StudentDetailPage() {
   const [isEditContractDialogOpen, setIsEditContractDialogOpen] =
     useState(false);
   const [monthlyFeeValue, setMonthlyFeeValue] = useState<number | string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedContractId, setSelectedContractId] = useState<number | null>(null);
+  const [isReplaceDialogOpen, setIsReplaceDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
@@ -147,8 +155,8 @@ export default function StudentDetailPage() {
   });
 
   const updatePdfMutation = useMutation({
-    mutationFn: (contractId: number) =>
-      contractService.updateContractPdf(contractId),
+    mutationFn: ({ contractId, formData }: { contractId: number; formData: FormData }) =>
+      contractService.updateContractPdf(contractId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["student-full-info", studentId],
@@ -862,7 +870,8 @@ export default function StudentDetailPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              updatePdfMutation.mutate(c.id);
+                              setSelectedContractId(c.id);
+                              setIsReplaceDialogOpen(true);
                             }}
                             disabled={updatePdfMutation.isPending}
                           >
