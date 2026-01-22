@@ -30,7 +30,7 @@ import {
   Download,
   Eye,
   Pencil,
-  FileUp,
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -50,7 +50,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 
 const getStatusBadge = (status: string) => {
   const styles: { [key: string]: string } = {
@@ -97,8 +96,6 @@ export default function StudentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const studentId = parseInt(id || "0", 10);
   const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
-  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
-  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
   const [contractToUpdate, setContractToUpdate] = useState<ContractRead | null>(
     null,
   );
@@ -150,26 +147,14 @@ export default function StudentDetailPage() {
   });
 
   const updatePdfMutation = useMutation({
-    mutationFn: async ({
-      contractId,
-      file,
-    }: {
-      contractId: number;
-      file: File;
-    }) => {
-      const formData = new FormData();
-      formData.append("final_pdf", file);
-      return contractService.updateContractPdf(contractId, formData);
-    },
+    mutationFn: (contractId: number) =>
+      contractService.updateContractPdf(contractId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["student-full-info", studentId],
       });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast.success(t("pdfReplacedSuccess") || "Contract PDF updated");
-      setPdfDialogOpen(false);
-      setSelectedPdfFile(null);
-      setContractToUpdate(null);
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
@@ -877,12 +862,12 @@ export default function StudentDetailPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setContractToUpdate(c);
-                              setPdfDialogOpen(true);
+                              updatePdfMutation.mutate(c.id);
                             }}
+                            disabled={updatePdfMutation.isPending}
                           >
-                            <FileUp className="w-4 h-4 mr-2" />
-                            {t("replaceContractPdf") || "Shartnomani almashtirish"}
+                            <RefreshCw className={`w-4 h-4 mr-2 ${updatePdfMutation.isPending ? 'animate-spin' : ''}`} />
+                            {t("replaceContractPdf") || "Shartnomani yangilash"}
                           </Button>
                           <Button
                             variant="outline"
@@ -1199,62 +1184,7 @@ export default function StudentDetailPage() {
         </div>
       )}
 
-      {/* Replace Contract PDF Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {t("replaceContractPdf") || "Shartnoma PDF-ni almashtirish"}
-            </DialogTitle>
-            <DialogDescription>
-              {t("replaceContractPdfDescription") ||
-                "Yangi shartnoma PDF faylini yuklang. Eski fayl o'rniga bu yangisi saqlanadi."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Input
-              id="pdf-upload"
-              type="file"
-              accept="application/pdf"
-              onChange={(e) =>
-                setSelectedPdfFile(e.target.files ? e.target.files[0] : null)
-              }
-            />
-            {selectedPdfFile && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {t("selectedFile") || "Tanlangan fayl"}: {selectedPdfFile.name}
-              </p>
-            )}
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPdfDialogOpen(false);
-                setSelectedPdfFile(null);
-                setContractToUpdate(null);
-              }}
-            >
-              {t("cancel")}
-            </Button>
-            <Button
-              onClick={() => {
-                if (contractToUpdate && selectedPdfFile) {
-                  updatePdfMutation.mutate({
-                    contractId: contractToUpdate.id,
-                    file: selectedPdfFile,
-                  });
-                }
-              }}
-              disabled={!selectedPdfFile || updatePdfMutation.isPending}
-            >
-              {updatePdfMutation.isPending
-                ? (t("uploading") || "Yuklanmoqda...")
-                : (t("uploadAndSave") || "Yuklash va Saqlash")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Replace Contract PDF UI removed — updates happen programmatically via `updatePdfMutation` */}
     </div>
   );
 }
