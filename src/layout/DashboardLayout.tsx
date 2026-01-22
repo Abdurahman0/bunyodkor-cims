@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
@@ -189,7 +190,9 @@ const DashboardLayout = () => {
     // Determine if current user is a coach (support both `user.role` and `user.roles` array)
     const isCoach =
       user?.role === "coach" ||
-      !!user?.roles?.some((r: any) => (r.name || "").toString().toLowerCase() === "coach");
+      !!user?.roles?.some(
+        (r: any) => (r.name || "").toString().toLowerCase() === "coach",
+      );
 
     // Hide Students and Groups pages if user is a coach
     if (isCoach && (item.path === "/students" || item.path === "/groups")) {

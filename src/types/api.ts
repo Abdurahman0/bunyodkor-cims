@@ -381,6 +381,10 @@ export interface ContractUpdateRequest {
   custom_fields?: any;
 }
 
+export interface MonthlyFeeUpdateRequest {
+  monthly_fee: number;
+}
+
 export interface ContractTerminateRequest {
   termination_reason: string;
   terminated_at: string;

@@ -953,6 +953,21 @@ export const contractService = {
   },
 
   /**
+   * Update only the monthly fee for a contract
+   * PATCH /contracts/{contract_id}/monthly-fee
+   */
+  updateContractMonthlyFee: async (
+    contractId: number,
+    data: { monthly_fee: number },
+  ): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.patch<ApiResponse<ContractRead>>(
+      `/contracts/${contractId}/monthly-fee`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
    * Delete contract
    * DELETE /contracts/{contract_id}
    */

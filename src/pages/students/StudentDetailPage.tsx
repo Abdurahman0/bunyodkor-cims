@@ -99,6 +99,11 @@ export default function StudentDetailPage() {
   const [contractToUpdate, setContractToUpdate] = useState<ContractRead | null>(
     null,
   );
+  const [isEditContractDialogOpen, setIsEditContractDialogOpen] =
+    useState(false);
+  const [monthlyFeeValue, setMonthlyFeeValue] = useState<number | string>(
+    "",
+  );
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
@@ -163,6 +168,50 @@ export default function StudentDetailPage() {
       toast.success(t("pdfReplacedSuccess") || "Contract PDF updated");
       setPdfDialogOpen(false);
       setSelectedPdfFile(null);
+      setContractToUpdate(null);
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      let errorMessage = t("anErrorOccurred") || "An error occurred";
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+      toast.error(errorMessage);
+    },
+  });
+
+  const updateContractMutation = useMutation({
+    mutationFn: ({ contractId, data }: { contractId: number; data: any }) =>
+      contractService.updateContract(contractId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-full-info", studentId] });
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success(t("contractUpdatedSuccess") || "Contract updated");
+      setIsEditContractDialogOpen(false);
+      setContractToUpdate(null);
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      let errorMessage = t("anErrorOccurred") || "An error occurred";
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+      toast.error(errorMessage);
+    },
+  });
+
+  const updateMonthlyFeeMutation = useMutation({
+    mutationFn: ({ contractId, monthly_fee }: { contractId: number; monthly_fee: number }) =>
+      contractService.updateContractMonthlyFee(contractId, { monthly_fee }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-full-info", studentId] });
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success(t("contractUpdatedSuccess") || "Monthly fee updated");
+      setMonthlyFeeValue("");
       setContractToUpdate(null);
     },
     onError: (error: any) => {
@@ -828,6 +877,26 @@ export default function StudentDetailPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => {
+                              setContractToUpdate(c);
+                              setMonthlyFeeValue(c.monthly_fee ?? "");
+                            }}
+                          >
+                            {t("editMonthlyFee") || "Edit Monthly Fee"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setContractToUpdate(c);
+                              setIsEditContractDialogOpen(true);
+                            }}
+                          >
+                            {t("edit")}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleDownloadPdf(c)}
                           >
                             <Download className="w-4 h-4 mr-2" />
@@ -982,7 +1051,7 @@ export default function StudentDetailPage() {
         open={isHardDeleteDialogOpen}
         onOpenChange={setIsHardDeleteDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md pb-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-red-600 dark:text-red-500">
               <AlertTriangle />
@@ -1032,6 +1101,88 @@ export default function StudentDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Contract Dialog */}
+      <Dialog open={isEditContractDialogOpen} onOpenChange={setIsEditContractDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("editContract")}</DialogTitle>
+          </DialogHeader>
+          {contractToUpdate && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm">{t("monthlyFee")}</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={String(contractToUpdate.monthly_fee ?? "")}
+                  onChange={(e) =>
+                    setContractToUpdate({ ...contractToUpdate, monthly_fee: Number(e.target.value) })
+                  }
+                  className="w-full border rounded px-3 py-2 mt-1"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    if (!contractToUpdate) return;
+                    const payload = {
+                      start_date: contractToUpdate.start_date,
+                      end_date: contractToUpdate.end_date,
+                      monthly_fee: contractToUpdate.monthly_fee,
+                      status: contractToUpdate.status,
+                      custom_fields: contractToUpdate.custom_fields,
+                    };
+                    updateContractMutation.mutate({ contractId: contractToUpdate.id, data: payload });
+                  }}
+                >
+                  {t("save")}
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditContractDialogOpen(false)}>
+                  {t("cancel")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick edit monthly fee dialog - rendered inline when contractToUpdate.monthly_fee is set via button */}
+      {contractToUpdate && monthlyFeeValue !== "" && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-card border p-4 rounded shadow-md">
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="text-sm">{t("monthlyFee")}</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={String(monthlyFeeValue)}
+                  onChange={(e) => setMonthlyFeeValue(Number(e.target.value))}
+                  className="w-40 border rounded px-2 py-1 mt-1"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    const fee = Number(monthlyFeeValue);
+                    if (isNaN(fee) || fee <= 0) {
+                      toast.error(t("amountMustBeGreaterThanZero") || "Amount must be > 0");
+                      return;
+                    }
+                    updateMonthlyFeeMutation.mutate({ contractId: contractToUpdate.id, monthly_fee: fee });
+                  }}
+                >
+                  {t("save")}
+                </Button>
+                <Button variant="outline" onClick={() => { setMonthlyFeeValue(""); setContractToUpdate(null); }}>
+                  {t("cancel")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Replace Contract PDF UI removed — updates happen programmatically via `updatePdfMutation` */}
     </div>
