@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type FC } from "react";
 import { useState } from "react";
@@ -110,15 +111,21 @@ const PayersReport: FC = () => {
         return;
       }
 
-      const exportData = allItems.map((item: any) => ({
-        "Student ID": item.student_id,
-        "Student Name": item.student_name,
-        Group: item.group_name,
-        Contract: item.contract_number,
-        "Payment Year": item.payment_year,
-        "Payment Months": (item.payment_months || []).join(","),
-        "Total Paid": item.total_paid,
-      }));
+      const exportData = allItems.map((item: any) => {
+        const groupFromList = groupsList.find(
+          (g: any) => g.id === item.group_id,
+        );
+        return {
+          "Student ID": item.student_id,
+          "Student Name": item.student_name,
+          Group:
+            item.group_name || (groupFromList ? groupFromList.name : "N/A"),
+          Contract: item.contract_number,
+          "Payment Year": item.payment_year,
+          "Payment Months": (item.payment_months || []).join(","),
+          "Total Paid": item.total_paid,
+        };
+      });
 
       exportReport(exportData, `payers-report-${paymentYear || "all"}`);
       toast.success(t("reportExported"));
@@ -269,7 +276,12 @@ const PayersReport: FC = () => {
                     {p.student_name}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{p.group_name}</Badge>
+                    <Badge variant="outline">
+                      {p.group_name ||
+                        (groupsList.find((g: any) => g.id === p.group_id)
+                          ?.name ??
+                          "N/A")}
+                    </Badge>
                   </TableCell>
                   <TableCell>{p.contract_number}</TableCell>
                   <TableCell>{p.payment_year}</TableCell>

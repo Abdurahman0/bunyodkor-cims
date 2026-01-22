@@ -823,7 +823,7 @@ export default function Reports() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
-                          {debtor.student.group_name}
+                          {getGroupName(debtor.student.group_id)}
                         </Badge>
                       </TableCell>
                       <TableCell>

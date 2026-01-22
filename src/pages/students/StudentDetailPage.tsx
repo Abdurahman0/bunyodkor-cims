@@ -899,7 +899,7 @@ export default function StudentDetailPage() {
                               setIsEditContractDialogOpen(true);
                             }}
                           >
-                            {t("edit")}
+                            {t("replaceContract") || "Shartnomani almashtirish"}
                           </Button>
                           <Button
                             variant="outline"
@@ -1116,7 +1116,7 @@ export default function StudentDetailPage() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("editContract")}</DialogTitle>
+            <DialogTitle>{t("replaceContract") || t("editContract")}</DialogTitle>
           </DialogHeader>
           {contractToUpdate && (
             <div className="space-y-4">
