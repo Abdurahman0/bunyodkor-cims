@@ -30,6 +30,7 @@ import {
   Download,
   Eye,
   Pencil,
+  FileUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -49,6 +50,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const getStatusBadge = (status: string) => {
   const styles: { [key: string]: string } = {
@@ -285,38 +287,18 @@ export default function StudentDetailPage() {
 
   const handleViewContract = async (contract: ContractRead) => {
     try {
-      // Shartnoma raqami borligini tekshiramiz
-      if (!contract.contract_number) {
-        toast.error(t("contractNumberNotFormed"));
+      // Shartnoma ID si borligini tekshiramiz
+      if (!contract.id) {
+        toast.error("Contract ID not found");
         return;
       }
-
-      // Yilni aniqlash (start_date dan)
-      const startDate = contract.start_date
-        ? new Date(contract.start_date)
-        : new Date();
-      const year = startDate.getFullYear();
 
       // Loading holatini bildirish
       const toastId = toast.loading(t("loadingContractFile"));
 
       // API ga so'rov
-      const response = await contractService.getContractPdfUrl(
-        year,
-        contract.contract_number,
-      );
+      const pdfUrl = await contractService.viewContractPdf(contract.id);
       toast.dismiss(toastId);
-
-      // `getContractPdfUrl` may return a plain URL string or an object with `pdf_url`.
-      let pdfUrl: string | null = null;
-      if (!response) {
-        pdfUrl = null;
-      } else if (typeof response === "string") {
-        pdfUrl = response;
-      } else if (typeof response === "object" && "pdf_url" in response) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pdfUrl = (response as any).pdf_url;
-      }
 
       if (pdfUrl) {
         window.open(pdfUrl, "_blank");
@@ -891,25 +873,16 @@ export default function StudentDetailPage() {
                             <Eye className="w-4 h-4 mr-2" />
                             {t("viewContract")}
                           </Button>
-
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const payload = {
-                                start_date: c.start_date,
-                                end_date: c.end_date,
-                                monthly_fee: c.monthly_fee,
-                                status: c.status,
-                                custom_fields: c.custom_fields,
-                              };
-                              updateContractMutation.mutate({
-                                contractId: c.id,
-                                data: payload,
-                              });
+                              setContractToUpdate(c);
+                              setPdfDialogOpen(true);
                             }}
                           >
-                            {c.contract_number || t("replaceContract")}
+                            <FileUp className="w-4 h-4 mr-2" />
+                            {t("replaceContractPdf") || "Shartnomani almashtirish"}
                           </Button>
                           <Button
                             variant="outline"
@@ -919,7 +892,6 @@ export default function StudentDetailPage() {
                             <Download className="w-4 h-4 mr-2" />
                             {t("downloadContract")}
                           </Button>
-                          {/* Replace PDF button removed — use programmatic update via `updatePdfMutation` */}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1227,7 +1199,62 @@ export default function StudentDetailPage() {
         </div>
       )}
 
-      {/* Replace Contract PDF UI removed — updates happen programmatically via `updatePdfMutation` */}
+      {/* Replace Contract PDF Dialog */}
+      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t("replaceContractPdf") || "Shartnoma PDF-ni almashtirish"}
+            </DialogTitle>
+            <DialogDescription>
+              {t("replaceContractPdfDescription") ||
+                "Yangi shartnoma PDF faylini yuklang. Eski fayl o'rniga bu yangisi saqlanadi."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Input
+              id="pdf-upload"
+              type="file"
+              accept="application/pdf"
+              onChange={(e) =>
+                setSelectedPdfFile(e.target.files ? e.target.files[0] : null)
+              }
+            />
+            {selectedPdfFile && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {t("selectedFile") || "Tanlangan fayl"}: {selectedPdfFile.name}
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPdfDialogOpen(false);
+                setSelectedPdfFile(null);
+                setContractToUpdate(null);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                if (contractToUpdate && selectedPdfFile) {
+                  updatePdfMutation.mutate({
+                    contractId: contractToUpdate.id,
+                    file: selectedPdfFile,
+                  });
+                }
+              }}
+              disabled={!selectedPdfFile || updatePdfMutation.isPending}
+            >
+              {updatePdfMutation.isPending
+                ? (t("uploading") || "Yuklanmoqda...")
+                : (t("uploadAndSave") || "Yuklash va Saqlash")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

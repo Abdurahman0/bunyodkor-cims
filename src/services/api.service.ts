@@ -1124,6 +1124,17 @@ export const contractService = {
   },
 
   /**
+   * View Contract Pdf
+   * GET /contracts/{contract_id}/pdf
+   */
+  viewContractPdf: async (contractId: number): Promise<string> => {
+    const response = await apiClient.get<string>(
+      `/contracts/${contractId}/pdf`,
+    );
+    return response.data;
+  },
+
+  /**
    * Get all available contract numbers (ONLY GAPS - not unused numbers after max)
    * GET /contracts/available-numbers/{group_id}
    */
