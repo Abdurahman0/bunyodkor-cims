@@ -29,6 +29,7 @@ import {
   AlertTriangle,
   Download,
   Eye,
+  Pencil,
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -853,8 +854,17 @@ export default function StudentDetailPage() {
                       </TableCell>
                       <TableCell>{getStatusBadge(c.status!)}</TableCell>
                       <TableCell>
-                        {new Intl.NumberFormat("en-US").format(c.monthly_fee)}{" "}
-                        UZS
+                        <div className="flex items-center gap-2">
+                          {new Intl.NumberFormat("en-US").format(c.monthly_fee)}{" "}
+                          UZS
+                          <Pencil
+                            className="w-4 h-4 text-muted-foreground cursor-pointer"
+                            onClick={() => {
+                              setContractToUpdate(c);
+                              setMonthlyFeeValue(c.monthly_fee ?? "");
+                            }}
+                          />
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -881,16 +891,7 @@ export default function StudentDetailPage() {
                             <Eye className="w-4 h-4 mr-2" />
                             {t("viewContract")}
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setContractToUpdate(c);
-                              setMonthlyFeeValue(c.monthly_fee ?? "");
-                            }}
-                          >
-                            {t("editMonthlyFee") || "Edit Monthly Fee"}
-                          </Button>
+
                           <Button
                             variant="outline"
                             size="sm"
