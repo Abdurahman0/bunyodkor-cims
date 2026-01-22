@@ -212,13 +212,38 @@ export default function Finance() {
 
   const hasActiveFilters = studentIdFilter || statusFilter || sourceFilter;
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
-      if (!data?.data || data.data.length === 0) {
+      const allItems: TransactionWithNameRead[] = [];
+      let pageNum = 1;
+      let totalPages = 1;
+
+      while (pageNum <= totalPages) {
+        const params: any = { page: pageNum, page_size: 100 };
+        if (studentIdFilter) params.student_id = parseInt(studentIdFilter, 10);
+        if (statusFilter) params.status = statusFilter;
+        if (sourceFilter) params.source = sourceFilter;
+
+        const resp = await transactionService.getTransactionsWithName(params);
+        if (resp && Array.isArray(resp.data)) {
+          allItems.push(...resp.data);
+        }
+
+        if (resp && resp.meta && resp.meta.total_pages) {
+          totalPages = resp.meta.total_pages;
+        } else {
+          totalPages = 1;
+        }
+
+        pageNum++;
+      }
+
+      if (allItems.length === 0) {
         toast.error(t("noDataToExport"));
         return;
       }
-      exportTransactions(data.data);
+
+      exportTransactions(allItems);
       toast.success(t("transactionsExported"));
     } catch (error) {
       toast.error(t("failedToExportTransactions"));

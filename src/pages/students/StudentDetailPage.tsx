@@ -101,9 +101,7 @@ export default function StudentDetailPage() {
   );
   const [isEditContractDialogOpen, setIsEditContractDialogOpen] =
     useState(false);
-  const [monthlyFeeValue, setMonthlyFeeValue] = useState<number | string>(
-    "",
-  );
+  const [monthlyFeeValue, setMonthlyFeeValue] = useState<number | string>("");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
@@ -186,7 +184,9 @@ export default function StudentDetailPage() {
     mutationFn: ({ contractId, data }: { contractId: number; data: any }) =>
       contractService.updateContract(contractId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-full-info", studentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info", studentId],
+      });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast.success(t("contractUpdatedSuccess") || "Contract updated");
       setIsEditContractDialogOpen(false);
@@ -205,10 +205,17 @@ export default function StudentDetailPage() {
   });
 
   const updateMonthlyFeeMutation = useMutation({
-    mutationFn: ({ contractId, monthly_fee }: { contractId: number; monthly_fee: number }) =>
-      contractService.updateContractMonthlyFee(contractId, { monthly_fee }),
+    mutationFn: ({
+      contractId,
+      monthly_fee,
+    }: {
+      contractId: number;
+      monthly_fee: number;
+    }) => contractService.updateContractMonthlyFee(contractId, { monthly_fee }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-full-info", studentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info", studentId],
+      });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast.success(t("contractUpdatedSuccess") || "Monthly fee updated");
       setMonthlyFeeValue("");
@@ -1103,7 +1110,10 @@ export default function StudentDetailPage() {
       </Dialog>
 
       {/* Edit Contract Dialog */}
-      <Dialog open={isEditContractDialogOpen} onOpenChange={setIsEditContractDialogOpen}>
+      <Dialog
+        open={isEditContractDialogOpen}
+        onOpenChange={setIsEditContractDialogOpen}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("editContract")}</DialogTitle>
@@ -1117,7 +1127,10 @@ export default function StudentDetailPage() {
                   min={1}
                   value={String(contractToUpdate.monthly_fee ?? "")}
                   onChange={(e) =>
-                    setContractToUpdate({ ...contractToUpdate, monthly_fee: Number(e.target.value) })
+                    setContractToUpdate({
+                      ...contractToUpdate,
+                      monthly_fee: Number(e.target.value),
+                    })
                   }
                   className="w-full border rounded px-3 py-2 mt-1"
                 />
@@ -1133,12 +1146,18 @@ export default function StudentDetailPage() {
                       status: contractToUpdate.status,
                       custom_fields: contractToUpdate.custom_fields,
                     };
-                    updateContractMutation.mutate({ contractId: contractToUpdate.id, data: payload });
+                    updateContractMutation.mutate({
+                      contractId: contractToUpdate.id,
+                      data: payload,
+                    });
                   }}
                 >
                   {t("save")}
                 </Button>
-                <Button variant="outline" onClick={() => setIsEditContractDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditContractDialogOpen(false)}
+                >
                   {t("cancel")}
                 </Button>
               </div>
@@ -1167,15 +1186,27 @@ export default function StudentDetailPage() {
                   onClick={() => {
                     const fee = Number(monthlyFeeValue);
                     if (isNaN(fee) || fee <= 0) {
-                      toast.error(t("amountMustBeGreaterThanZero") || "Amount must be > 0");
+                      toast.error(
+                        t("amountMustBeGreaterThanZero") ||
+                          "Amount must be > 0",
+                      );
                       return;
                     }
-                    updateMonthlyFeeMutation.mutate({ contractId: contractToUpdate.id, monthly_fee: fee });
+                    updateMonthlyFeeMutation.mutate({
+                      contractId: contractToUpdate.id,
+                      monthly_fee: fee,
+                    });
                   }}
                 >
                   {t("save")}
                 </Button>
-                <Button variant="outline" onClick={() => { setMonthlyFeeValue(""); setContractToUpdate(null); }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setMonthlyFeeValue("");
+                    setContractToUpdate(null);
+                  }}
+                >
                   {t("cancel")}
                 </Button>
               </div>

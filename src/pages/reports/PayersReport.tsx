@@ -77,24 +77,54 @@ const PayersReport: FC = () => {
   const formatCurrency = (amount: number) =>
     formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
 
-  const handleExport = () => {
-    if (!payersData?.data || payersData.data.length === 0) {
-      toast.error(t("noDataToExport"));
-      return;
+  const handleExport = async () => {
+    try {
+      const allItems: any[] = [];
+      let pageNum = 1;
+      let totalPages = 1;
+
+      while (pageNum <= totalPages) {
+        const params: any = { page: pageNum, page_size: 100 };
+        if (paymentYear !== "") params.payment_year = paymentYear;
+        if (groupId) params.group_id = groupId;
+        if (minPaidAmount !== "") params.min_paid_amount = minPaidAmount;
+        if (fromDate) params.from_date = fromDate;
+        if (toDate) params.to_date = toDate;
+
+        const resp = await reportService.getPayers(params);
+        if (resp && Array.isArray(resp.data)) {
+          allItems.push(...resp.data);
+        }
+
+        if (resp && resp.meta && resp.meta.total_pages) {
+          totalPages = resp.meta.total_pages;
+        } else {
+          totalPages = 1;
+        }
+
+        pageNum++;
+      }
+
+      if (allItems.length === 0) {
+        toast.error(t("noDataToExport"));
+        return;
+      }
+
+      const exportData = allItems.map((item: any) => ({
+        "Student ID": item.student_id,
+        "Student Name": item.student_name,
+        Group: item.group_name,
+        Contract: item.contract_number,
+        "Payment Year": item.payment_year,
+        "Payment Months": (item.payment_months || []).join(","),
+        "Total Paid": item.total_paid,
+      }));
+
+      exportReport(exportData, `payers-report-${paymentYear || "all"}`);
+      toast.success(t("reportExported"));
+    } catch (err) {
+      toast.error(t("failedToExportReport"));
     }
-
-    const exportData = payersData.data.map((item: any) => ({
-      "Student ID": item.student_id,
-      "Student Name": item.student_name,
-      Group: item.group_name,
-      Contract: item.contract_number,
-      "Payment Year": item.payment_year,
-      "Payment Months": item.payment_months.join(","),
-      "Total Paid": item.total_paid,
-    }));
-
-    exportReport(exportData, `payers-report-${paymentYear || "all"}`);
-    toast.success(t("reportExported"));
   };
 
   return (

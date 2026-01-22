@@ -35,6 +35,7 @@ import {
   Download,
   AlertTriangle,
   CheckCircle,
+  Cloud,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
@@ -238,7 +239,7 @@ export default function Reports() {
       value: group.attendance_percentage,
     })) || [];
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       let dataToExport: any[] | null = null;
       let reportType = "";
@@ -274,26 +275,56 @@ export default function Reports() {
           reportType = "attendance-report";
           break;
 
-        case "debtors":
-          if (!debtorsData?.data?.length) {
+        case "debtors": {
+          // Fetch all debtors pages (respecting current filters)
+          const allDebtors: any[] = [];
+          let page = 1;
+          let totalPages = 1;
+
+          while (page <= totalPages) {
+            const baseParams: any = { page, page_size: 100, group_id: selectedGroupId || undefined };
+
+            let resp: any;
+            if (filterMode === "month") {
+              const params = { ...baseParams, year: selectedYear } as any;
+              if (selectedMonths) params.months = selectedMonths;
+              else if (selectedMonth) params.month = selectedMonth;
+              resp = await studentService.getUnpaidStudents(params);
+            } else if (filterMode === "dateRange") {
+              const params = { ...baseParams, from_date: unpaidDateRange.from, to_date: unpaidDateRange.to } as any;
+              resp = await studentService.getUnpaidStudents(params);
+            } else {
+              resp = await reportService.getDebtorsReport(baseParams);
+            }
+
+            if (resp && Array.isArray(resp.data)) {
+              allDebtors.push(...resp.data);
+            }
+
+            if (resp && resp.meta && resp.meta.total_pages) {
+              totalPages = resp.meta.total_pages;
+            } else {
+              // If no meta, assume single page
+              totalPages = 1;
+            }
+
+            page++;
+          }
+
+          if (allDebtors.length === 0) {
             toast.error(t("noDebtorsDataToExport"));
             return;
           }
-          dataToExport = debtorsData.data.map((debtor: any) => {
+
+          dataToExport = allDebtors.map((debtor: any) => {
             const studentName =
-              (debtor.student_name ??
-                `${debtor.student?.first_name ?? ""} ${debtor.student?.last_name ?? ""}`.trim()) ||
+              (debtor.student_name ?? `${debtor.student?.first_name ?? ""} ${debtor.student?.last_name ?? ""}`.trim()) ||
               "N/A";
 
             const groupName =
-              debtor.group_name ??
-              debtor.student?.group_name ??
-              getGroupNameFromList(debtor.student?.group_id ?? debtor.group_id);
+              debtor.group_name ?? debtor.student?.group_name ?? getGroupNameFromList(debtor.student?.group_id ?? debtor.group_id);
 
-            const contractNumber =
-              debtor.contract_number ??
-              debtor.student?.contracts?.[0]?.contract_number ??
-              "";
+            const contractNumber = debtor.contract_number ?? debtor.student?.contracts?.[0]?.contract_number ?? "";
 
             const debtAmount = debtor.debt_amount ?? 0;
 
@@ -305,7 +336,9 @@ export default function Reports() {
               "Debt Amount": debtAmount,
             };
           });
+
           reportType = "debtors-report";
+        }
           break;
       }
 
@@ -676,6 +709,21 @@ export default function Reports() {
                         <label className="text-sm font-medium text-foreground mb-1 block">
                           {t("year")}
                         </label>
+                          {groupsLoading ? (
+                            <option value="" disabled>
+                              {t("loading")}
+                            </option>
+                          ) : groupsList && groupsList.length > 0 ? (
+                            groupsList.map((group: GroupRead) => (
+                              <option key={group.id} value={String(group.id)}>
+                                {group.name}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="" disabled>
+                              {t("noGroupsAvailable")}
+                            </option>
+                          )}
                         <Select
                           value={selectedYear}
                           onChange={(e) => {
@@ -683,6 +731,13 @@ export default function Reports() {
                             setDebtorsPage(1);
                           }}
                           className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              {/* Loading banner while debtors are being identified */}
+              {debtorsLoading && (
+                <div className="p-3 text-sm text-muted-foreground flex items-center gap-2">
+                  <Cloud className="w-4 h-4" />
+                  {t("identifyingDebtors") || "Identifying debtors..."}
+                </div>
+              )}
                         >
                           {[
                             currentYear - 2,
