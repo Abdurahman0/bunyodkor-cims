@@ -23,8 +23,7 @@ import {
   groupService,
   studentService,
 } from "@/services/api.service";
-import { Select } from "@/components/ui/select";
-import type { GroupRead, ApiResponse } from "@/types/api";
+import type { GroupRead, UnpaidStudentInfo } from "@/types/api";
 
 import PayersReport from "./PayersReport";
 import {
@@ -35,13 +34,15 @@ import {
   Download,
   AlertTriangle,
   CheckCircle,
-  Cloud,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
 import { exportReport } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
-import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
+import {
+  formatCurrency as formatCurrencyUtil,
+  formatNumber,
+} from "@/lib/utils";
 
 export default function Reports() {
   const { t } = useLanguageStore();
@@ -88,8 +89,7 @@ export default function Reports() {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
-    staleTime: 0,
-    refetchOnMount: true,
+    enabled: activeTab === "debtors",
   });
 
   // Normalize groups response in case API returns nested `data` (e.g. { data: { data: [...] } })
@@ -97,24 +97,12 @@ export default function Reports() {
     ? groupsData.data
     : Array.isArray((groupsData as any)?.data?.data)
       ? (groupsData as any).data.data
-      : Array.isArray(groupsData)
-        ? (groupsData as any[])
-        : [];
+      : [];
 
-  // Debug: check groups data
-  console.debug("[Reports] groupsData:", groupsData);
-  console.debug("[Reports] groupsData?.data:", groupsData?.data);
-  console.debug("[Reports] groupsList:", groupsList);
-  console.debug("[Reports] groupsList count:", groupsList.length);
-
-  // Debtors query: if user filters by month or dateRange use studentService.getUnpaidStudents (supports those filters),
-  // otherwise use reportService.getDebtorsReport which is optimized for listing debtors.
-  const { data: debtorsData, isLoading: debtorsLoading } = useQuery<
-    ApiResponse<any>,
-    Error
-  >({
+  // Use unpaid students API instead of debtors report
+  const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
     queryKey: [
-      "debtors-report",
+      "unpaid-students",
       debtorsPage,
       selectedGroupId,
       filterMode,
@@ -124,38 +112,33 @@ export default function Reports() {
       unpaidDateRange,
     ],
     queryFn: () => {
-      const baseParams: any = {
+      const params: any = {
         page: debtorsPage,
         page_size: 10,
         group_id: selectedGroupId || undefined,
       };
 
       if (filterMode === "month") {
-        const params = { ...baseParams, year: selectedYear } as any;
-        if (selectedMonths) params.months = selectedMonths;
-        else if (selectedMonth) params.month = selectedMonth;
-        return studentService.getUnpaidStudents(params);
+        params.year = selectedYear;
+        if (selectedMonths) {
+          params.months = selectedMonths;
+        } else if (selectedMonth) {
+          params.month = selectedMonth;
+        }
+      } else {
+        params.from_date = unpaidDateRange.from;
+        params.to_date = unpaidDateRange.to;
       }
 
-      if (filterMode === "dateRange") {
-        const params = {
-          ...baseParams,
-          from_date: unpaidDateRange.from,
-          to_date: unpaidDateRange.to,
-        } as any;
-        return studentService.getUnpaidStudents(params);
-      }
-
-      // Default: use debitors optimized endpoint
-      return reportService.getDebtorsReport(baseParams);
+      return studentService.getUnpaidStudents(params);
     },
     enabled: activeTab === "debtors",
   });
 
-  // Query to get the total debt amount (fetch all pages). Use the same rule as above for which endpoint to call.
-  const { data: totalDebtData } = useQuery<ApiResponse<any>, Error>({
+  // Query to get the total debt amount
+  const { data: totalDebtData } = useQuery({
     queryKey: [
-      "debtors-report-total",
+      "unpaid-students-total",
       selectedGroupId,
       filterMode,
       selectedYear,
@@ -164,38 +147,31 @@ export default function Reports() {
       unpaidDateRange,
     ],
     queryFn: () => {
-      const baseParams: any = {
+      const params: any = {
         page: 1,
-        page_size: 100000,
+        page_size: 100000, // Fetch all students to calculate total debt
         group_id: selectedGroupId || undefined,
       };
 
       if (filterMode === "month") {
-        const params = { ...baseParams, year: selectedYear } as any;
-        if (selectedMonths) params.months = selectedMonths;
-        else if (selectedMonth) params.month = selectedMonth;
-        return studentService.getUnpaidStudents(params);
+        params.year = selectedYear;
+        if (selectedMonths) {
+          params.months = selectedMonths;
+        } else if (selectedMonth) {
+          params.month = selectedMonth;
+        }
+      } else {
+        params.from_date = unpaidDateRange.from;
+        params.to_date = unpaidDateRange.to;
       }
 
-      if (filterMode === "dateRange") {
-        const params = {
-          ...baseParams,
-          from_date: unpaidDateRange.from,
-          to_date: unpaidDateRange.to,
-        } as any;
-        return studentService.getUnpaidStudents(params);
-      }
-
-      return reportService.getDebtorsReport(baseParams);
+      return studentService.getUnpaidStudents(params);
     },
     enabled: activeTab === "debtors",
   });
 
   const totalDebtAmount =
-    totalDebtData?.data?.reduce(
-      (acc: number, item: any) => acc + (item.debt_amount || 0),
-      0,
-    ) || 0;
+    totalDebtData?.data?.reduce((acc, item) => acc + item.debt_amount, 0) || 0;
 
   const formatCurrency = (amount: number) => {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
@@ -207,11 +183,11 @@ export default function Reports() {
     return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
   };
 
-  // Helper to get Group Name by ID from groupsList
-  const getGroupNameFromList = (groupId?: number | null) => {
+  // Helper to get Group Name by ID
+  const getGroupName = (groupId: number | undefined) => {
     if (!groupId) return "N/A";
-    const g = groupsList.find((x: any) => x.id === groupId);
-    return g ? g.name : "N/A";
+    const group = groupsList.find((g: any) => g.id === groupId);
+    return group ? group.name : "N/A";
   };
 
   const tabs = [
@@ -239,7 +215,7 @@ export default function Reports() {
       value: group.attendance_percentage,
     })) || [];
 
-  const handleExport = async () => {
+  const handleExport = () => {
     try {
       let dataToExport: any[] | null = null;
       let reportType = "";
@@ -275,70 +251,22 @@ export default function Reports() {
           reportType = "attendance-report";
           break;
 
-        case "debtors": {
-          // Fetch all debtors pages (respecting current filters)
-          const allDebtors: any[] = [];
-          let page = 1;
-          let totalPages = 1;
-
-          while (page <= totalPages) {
-            const baseParams: any = { page, page_size: 100, group_id: selectedGroupId || undefined };
-
-            let resp: any;
-            if (filterMode === "month") {
-              const params = { ...baseParams, year: selectedYear } as any;
-              if (selectedMonths) params.months = selectedMonths;
-              else if (selectedMonth) params.month = selectedMonth;
-              resp = await studentService.getUnpaidStudents(params);
-            } else if (filterMode === "dateRange") {
-              const params = { ...baseParams, from_date: unpaidDateRange.from, to_date: unpaidDateRange.to } as any;
-              resp = await studentService.getUnpaidStudents(params);
-            } else {
-              resp = await reportService.getDebtorsReport(baseParams);
-            }
-
-            if (resp && Array.isArray(resp.data)) {
-              allDebtors.push(...resp.data);
-            }
-
-            if (resp && resp.meta && resp.meta.total_pages) {
-              totalPages = resp.meta.total_pages;
-            } else {
-              // If no meta, assume single page
-              totalPages = 1;
-            }
-
-            page++;
-          }
-
-          if (allDebtors.length === 0) {
+        case "debtors":
+          if (!debtorsData?.data?.length) {
             toast.error(t("noDebtorsDataToExport"));
             return;
           }
-
-          dataToExport = allDebtors.map((debtor: any) => {
-            const studentName =
-              (debtor.student_name ?? `${debtor.student?.first_name ?? ""} ${debtor.student?.last_name ?? ""}`.trim()) ||
-              "N/A";
-
-            const groupName =
-              debtor.group_name ?? debtor.student?.group_name ?? getGroupNameFromList(debtor.student?.group_id ?? debtor.group_id);
-
-            const contractNumber = debtor.contract_number ?? debtor.student?.contracts?.[0]?.contract_number ?? "";
-
-            const debtAmount = debtor.debt_amount ?? 0;
-
-            return {
-              "Student ID": debtor.student_id ?? debtor.student?.id,
-              "Student Name": studentName,
-              Group: groupName,
-              "Contract Number": contractNumber,
-              "Debt Amount": debtAmount,
-            };
-          });
-
-          reportType = "debtors-report";
-        }
+          dataToExport = debtorsData.data.map((debtor: UnpaidStudentInfo) => ({
+            "Student ID": debtor.student.id,
+            "Student Name": `${debtor.student.first_name} ${debtor.student.last_name}`,
+            Group: getGroupName(debtor.student.group_id),
+            "Group ID": debtor.student.group_id || "N/A",
+            "Active Contracts": debtor.active_contracts_count,
+            "Total Expected": debtor.total_expected,
+            "Total Paid": debtor.total_paid,
+            "Debt Amount": debtor.debt_amount,
+          }));
+          reportType = "unpaid-students-report";
           break;
       }
 
@@ -709,22 +637,7 @@ export default function Reports() {
                         <label className="text-sm font-medium text-foreground mb-1 block">
                           {t("year")}
                         </label>
-                          {groupsLoading ? (
-                            <option value="" disabled>
-                              {t("loading")}
-                            </option>
-                          ) : groupsList && groupsList.length > 0 ? (
-                            groupsList.map((group: GroupRead) => (
-                              <option key={group.id} value={String(group.id)}>
-                                {group.name}
-                              </option>
-                            ))
-                          ) : (
-                            <option value="" disabled>
-                              {t("noGroupsAvailable")}
-                            </option>
-                          )}
-                        <Select
+                        <select
                           value={selectedYear}
                           onChange={(e) => {
                             setSelectedYear(Number(e.target.value));
@@ -742,22 +655,14 @@ export default function Reports() {
                               {year}
                             </option>
                           ))}
-                        </Select>
-
-                        {/* Loading banner while debtors are being identified */}
-                        {debtorsLoading && (
-                          <div className="p-3 text-sm text-muted-foreground flex items-center gap-2">
-                            <Cloud className="w-4 h-4" />
-                            {t("identifyingDebtors") || "Identifying debtors..."}
-                          </div>
-                        )}
+                        </select>
                       </div>
 
                       <div className="w-48">
                         <label className="text-sm font-medium text-foreground mb-1 block">
                           {t("month")}
                         </label>
-                        <Select
+                        <select
                           value={selectedMonth || ""}
                           onChange={(e) => {
                             setSelectedMonth(
@@ -776,7 +681,7 @@ export default function Reports() {
                               </option>
                             ),
                           )}
-                        </Select>
+                        </select>
                       </div>
 
                       <div className="w-48">
@@ -838,7 +743,7 @@ export default function Reports() {
                     <label className="text-sm font-medium text-foreground mb-1 block">
                       {t("group")}
                     </label>
-                    <Select
+                    <select
                       value={selectedGroupId ? String(selectedGroupId) : ""}
                       onChange={(e) => {
                         setSelectedGroupId(
@@ -854,8 +759,8 @@ export default function Reports() {
                         <option value="" disabled>
                           {t("loading")}
                         </option>
-                      ) : groupsData?.data && groupsData.data.length > 0 ? (
-                        groupsData.data.map((group: GroupRead) => (
+                      ) : groupsList && groupsList.length > 0 ? (
+                        groupsList.map((group: GroupRead) => (
                           <option key={group.id} value={String(group.id)}>
                             {group.name}
                           </option>
@@ -865,7 +770,7 @@ export default function Reports() {
                           {t("noGroupsAvailable")}
                         </option>
                       )}
-                    </Select>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -894,55 +799,56 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>{t("student")}</TableHead>
                   <TableHead>{t("group")}</TableHead>
-                  <TableHead>{t("contractNumber")}</TableHead>
-                  <TableHead className="text-right">
+                  <TableHead>{t("phone")}</TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">
+                    {t("activeContracts")}
+                  </TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">
+                    {t("totalExpected")}
+                  </TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">
+                    {t("totalPaid")}
+                  </TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">
                     {t("debtAmount")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {debtorsData?.data && debtorsData.data.length > 0 ? (
-                  debtorsData.data.map((debtor: any) => {
-                    const studentName =
-                      (debtor.student_name ??
-                        `${debtor.student?.first_name ?? ""} ${debtor.student?.last_name ?? ""}`.trim()) ||
-                      "N/A";
-
-                    const groupName =
-                      debtor.group_name ??
-                      debtor.student?.group_name ??
-                      getGroupNameFromList(
-                        debtor.student?.group_id ?? debtor.group_id,
-                      );
-
-                    const contractNumber =
-                      debtor.contract_number ??
-                      debtor.student?.contracts?.[0]?.contract_number ??
-                      "";
-
-                    const debtAmount = debtor.debt_amount ?? 0;
-
-                    return (
-                      <TableRow
-                        key={`${debtor.student_id ?? debtor.student?.id}-${contractNumber}`}
-                      >
-                        <TableCell className="font-medium">
-                          {studentName}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <Badge variant="outline" className="font-normal">
-                            {groupName}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{contractNumber}</TableCell>
-                        <TableCell className="text-right">
-                          <span className="text-red-600 dark:text-red-400 font-medium">
-                            {formatCurrency(debtAmount)}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                  debtorsData.data.map((debtor: UnpaidStudentInfo) => (
+                    <TableRow key={debtor.student.id}>
+                      <TableCell className="font-medium">
+                        {debtor.student.first_name} {debtor.student.last_name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-normal">
+                          {debtor.student.group_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {debtor.student.phone}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="secondary">
+                          {debtor.active_contracts_count}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatCurrency(debtor.total_expected)}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600 dark:text-green-400">
+                        {formatCurrency(debtor.total_paid)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-red-600 dark:text-red-400 font-medium">
+                          {formatCurrency(debtor.debt_amount)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 ) : (
                   <TableEmpty
                     icon={<CheckCircle className="w-12 h-12 text-green-500" />}
