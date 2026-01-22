@@ -204,7 +204,7 @@ export function StudentWithContractDialog({
       if (selectedGroupId && groupsData?.data) {
         try {
           const selectedGroup = groupsData.data.find(
-            (g: any) => g.id === Number(selectedGroupId)
+            (g: any) => g.id === Number(selectedGroupId),
           );
           if (!selectedGroup) return;
 
@@ -214,7 +214,7 @@ export function StudentWithContractDialog({
               : new Date().getFullYear();
           const response = await contractService.getNextAvailableNumber(
             Number(selectedGroupId),
-            year
+            year,
           );
 
           if (response.data.contract_number) {
@@ -230,7 +230,7 @@ export function StudentWithContractDialog({
 
           const availableResponse =
             await contractService.getAllAvailableNumbers(
-              Number(selectedGroupId)
+              Number(selectedGroupId),
             );
           if (availableResponse.data?.available_numbers) {
             setAvailableNumbers(availableResponse.data.available_numbers);
@@ -276,6 +276,47 @@ export function StudentWithContractDialog({
     }
   };
 
+  // Variant that fetches PDF URL from backend using contract number and start date (like StudentDetailPage)
+  const viewContractByNumber = async () => {
+    try {
+      const contractNumber = getValues("contract_number");
+      if (!contractNumber) {
+        toast.error(
+          t("contractNumberNotFormed") || "Contract number not formed",
+        );
+        return;
+      }
+
+      const startDate = getValues("contract_start_date")
+        ? new Date(getValues("contract_start_date"))
+        : new Date();
+      const year = startDate.getFullYear();
+
+      const toastId = toast.loading(t("loadingContractFile"));
+      const response = await contractService.getContractPdfUrl(
+        year,
+        contractNumber,
+      );
+      toast.dismiss(toastId);
+
+      let pdfUrlFromResp: string | null = null;
+      if (!response) pdfUrlFromResp = null;
+      else if (typeof response === "string") pdfUrlFromResp = response;
+      else if (typeof response === "object" && "pdf_url" in response)
+        pdfUrlFromResp = (response as any).pdf_url;
+
+      if (pdfUrlFromResp) {
+        openPdfUrl(pdfUrlFromResp);
+      } else {
+        toast.error(t("pdfLinkNotFound") || "PDF link not found");
+      }
+    } catch (error) {
+      toast.error(
+        t("errorOpeningContractFile") || "Error opening contract file",
+      );
+    }
+  };
+
   const handleClose = () => {
     setIsSuccess(false);
     setIsSubmitting(false);
@@ -287,7 +328,7 @@ export function StudentWithContractDialog({
 
   // ... (Other helper functions: copyAddressToField, handleCustomerTypeChange, etc.) ...
   const copyAddressToField = (
-    targetField: "student_address" | "buyurtmachi_address"
+    targetField: "student_address" | "buyurtmachi_address",
   ) => {
     if (primaryAddress) {
       setValue(targetField, primaryAddress);
@@ -303,13 +344,13 @@ export function StudentWithContractDialog({
       if (dadName) setValue("buyurtmachi_fio", dadName);
       if (dadPhone) setValue("buyurtmachi_phone", dadPhone);
       toast.success(
-        t("fatherInfoCopied") || "Otaning ma'lumotlari ko'chirildi"
+        t("fatherInfoCopied") || "Otaning ma'lumotlari ko'chirildi",
       );
     } else if (type === "mother") {
       if (momFio) setValue("buyurtmachi_fio", momFio);
       if (momPhone) setValue("buyurtmachi_phone", momPhone);
       toast.success(
-        t("motherInfoCopied") || "Onaning ma'lumotlari ko'chirildi"
+        t("motherInfoCopied") || "Onaning ma'lumotlari ko'chirildi",
       );
     } else {
       setValue("buyurtmachi_fio", "");
@@ -366,7 +407,7 @@ export function StudentWithContractDialog({
 
   const simulateProgress = async (
     stepIndex: number,
-    duration: number = 1000
+    duration: number = 1000,
   ) => {
     setCurrentStep(stepIndex);
     const startProgress = stepIndex * 25;
@@ -566,7 +607,7 @@ export function StudentWithContractDialog({
         try {
           toast(
             t("retryingWithNewNumber") ||
-              "Yangi shartnoma raqami bilan qayta urinilmoqda..."
+              "Yangi shartnoma raqami bilan qayta urinilmoqda...",
           );
           const year =
             data.birth_year && data.birth_year.toString().length === 4
@@ -574,7 +615,7 @@ export function StudentWithContractDialog({
               : new Date().getFullYear();
           const response = await contractService.getNextAvailableNumber(
             Number(data.group_id),
-            year
+            year,
           );
 
           if (response.data.contract_number) {
@@ -584,7 +625,7 @@ export function StudentWithContractDialog({
             toast.success(`${t("newNumberSuggested")}: ${newContractNumber}`);
             toast(
               t("pleaseSubmitAgain") ||
-                "Iltimos, yana bir bor 'Saqlash' tugmasini bosing"
+                "Iltimos, yana bir bor 'Saqlash' tugmasini bosing",
             );
           } else {
             toast.error(errorMessage);
@@ -759,7 +800,7 @@ export function StudentWithContractDialog({
                     <div className="flex flex-wrap gap-1">
                       {availableNumbers.map((num) => {
                         const selectedGroup = groupsData?.data?.find(
-                          (g: any) => g.id === Number(selectedGroupId)
+                          (g: any) => g.id === Number(selectedGroupId),
                         );
                         const contractNumber = `${num}-${
                           selectedGroup?.name || ""
@@ -771,7 +812,7 @@ export function StudentWithContractDialog({
                             onClick={() => {
                               setValue("contract_number", contractNumber);
                               toast.success(
-                                `${t("numberSelected")}: ${contractNumber}`
+                                `${t("numberSelected")}: ${contractNumber}`,
                               );
                             }}
                             className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 border border-blue-300"
@@ -1099,8 +1140,8 @@ export function StudentWithContractDialog({
                       index === currentStep
                         ? "scale-105"
                         : index < currentStep
-                        ? "opacity-60"
-                        : "opacity-30"
+                          ? "opacity-60"
+                          : "opacity-30"
                     }`}
                   >
                     <div
@@ -1108,8 +1149,8 @@ export function StudentWithContractDialog({
                         index < currentStep
                           ? "bg-green-500 text-white"
                           : index === currentStep
-                          ? "bg-primary text-white animate-pulse"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-400"
+                            ? "bg-primary text-white animate-pulse"
+                            : "bg-gray-200 dark:bg-gray-700 text-gray-400"
                       }`}
                     >
                       {index < currentStep ? (
@@ -1161,25 +1202,15 @@ export function StudentWithContractDialog({
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <Button
                     type="button"
-                    onClick={handleViewContract}
+                    onClick={viewContractByNumber}
                     className="w-full gap-2"
                     size="lg"
                   >
                     <Eye className="w-5 h-5" />
                     Ko'rish
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleDownloadContract}
-                    variant="secondary"
-                    className="w-full gap-2"
-                    size="lg"
-                  >
-                    <Download className="w-5 h-5" />
-                    Yuklash
                   </Button>
                 </div>
                 <Button

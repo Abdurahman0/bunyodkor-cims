@@ -1116,7 +1116,9 @@ export default function StudentDetailPage() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("replaceContract") || t("editContract")}</DialogTitle>
+            <DialogTitle>
+              {t("replaceContract") || t("editContract")}
+            </DialogTitle>
           </DialogHeader>
           {contractToUpdate && (
             <div className="space-y-4">
