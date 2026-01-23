@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { waitingListService, groupService } from "@/services/api.service";
 import type {
@@ -73,7 +73,7 @@ export function WaitingListDialog({
 
   // Get selected group's capacity for validation
   const selectedGroup = groupsData?.data?.find(
-    (g: any) => g.id === Number(selectedGroupId)
+    (g: any) => g.id === Number(selectedGroupId),
   );
   const maxPriority = selectedGroup?.capacity || 100;
 
@@ -81,7 +81,7 @@ export function WaitingListDialog({
   useEffect(() => {
     if (selectedGroupId && groupsData?.data && !entry) {
       const selectedGroup = groupsData.data.find(
-        (g: any) => g.id === Number(selectedGroupId)
+        (g: any) => g.id === Number(selectedGroupId),
       );
       if (selectedGroup && selectedGroup.capacity) {
         const currentCount = selectedGroup.current_student_count || 0;
@@ -91,8 +91,8 @@ export function WaitingListDialog({
           1,
           Math.min(
             capacity,
-            Math.floor(1 + (currentCount / capacity) * (capacity - 1))
-          )
+            Math.floor(1 + (currentCount / capacity) * (capacity - 1)),
+          ),
         );
         setValue("priority", calculatedPriority);
       }
@@ -140,7 +140,7 @@ export function WaitingListDialog({
         // Update
         return waitingListService.updateWaitingListEntry(
           entry.id,
-          data as WaitingListUpdate
+          data as WaitingListUpdate,
         );
       }
       // Create
@@ -150,7 +150,7 @@ export function WaitingListDialog({
       toast.success(
         entry
           ? t("waitingListUpdatedSuccess") || "Waiting list updated"
-          : t("waitingListAddedSuccess") || "Added to waiting list"
+          : t("waitingListAddedSuccess") || "Added to waiting list",
       );
       queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
       onOpenChange(false);
@@ -398,12 +398,12 @@ export function WaitingListDialog({
               <Label htmlFor="group_id">
                 {t("group") || "Group"} <span className="text-red-500">*</span>
               </Label>
-              <Select
+              <select
                 id="group_id"
                 {...register("group_id", {
                   required: t("groupRequired") || "Group is required",
                 })}
-                className="[&_option]:bg-white dark:[&_option]:bg-slate-900"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">{t("selectGroup") || "Select group"}</option>
                 {groupsData?.data?.map((group: GroupRead) => (
@@ -411,7 +411,7 @@ export function WaitingListDialog({
                     {group.name}
                   </option>
                 ))}
-              </Select>
+              </select>
               {errors.group_id && (
                 <p className="text-sm text-red-500">
                   {errors.group_id.message}

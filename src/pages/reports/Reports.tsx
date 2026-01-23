@@ -643,7 +643,7 @@ export default function Reports() {
                             setSelectedYear(Number(e.target.value));
                             setDebtorsPage(1);
                           }}
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {[
                             currentYear - 2,
@@ -671,7 +671,7 @@ export default function Reports() {
                             setSelectedMonths("");
                             setDebtorsPage(1);
                           }}
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <option value="">{t("allMonths")}</option>
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -751,7 +751,7 @@ export default function Reports() {
                         );
                         setDebtorsPage(1);
                       }}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={groupsLoading}
                     >
                       <option value="">{t("allGroups")}</option>

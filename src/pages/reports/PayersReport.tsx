@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { reportService, groupService } from "@/services/api.service";
-import { Select } from "@/components/ui/select";
 import { useLanguageStore } from "@/store/languageStore";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { exportReport } from "@/lib/export-utils";
@@ -146,13 +145,13 @@ const PayersReport: FC = () => {
               <label className="text-sm font-medium text-foreground mb-1 block">
                 {t("paymentYear")}
               </label>
-              <Select
+              <select
                 value={paymentYear}
                 onChange={(e) => {
                   setPaymentYear(e.target.value ? Number(e.target.value) : "");
                   setPage(1);
                 }}
-                className="h-10 w-40 rounded-md border border-input bg-background px-3 text-sm"
+                className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {[
                   currentYear - 2,
@@ -165,20 +164,20 @@ const PayersReport: FC = () => {
                   </option>
                 ))}
                 <option value="">{t("allYears")}</option>
-              </Select>
+              </select>
             </div>
 
             <div className="w-64">
               <label className="text-sm font-medium text-foreground mb-1 block">
                 {t("group")}
               </label>
-              <Select
+              <select
                 value={groupId ? String(groupId) : ""}
                 onChange={(e) => {
                   setGroupId(e.target.value ? Number(e.target.value) : null);
                   setPage(1);
                 }}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={groupsLoading}
               >
                 <option value="">{t("allGroups")}</option>
@@ -197,7 +196,7 @@ const PayersReport: FC = () => {
                     {t("noGroupsAvailable")}
                   </option>
                 )}
-              </Select>{" "}
+              </select>{" "}
             </div>
 
             <div>
