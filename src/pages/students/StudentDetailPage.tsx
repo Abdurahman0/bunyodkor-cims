@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { studentService, contractService } from "@/services/api.service";
+import { studentService, contractService, api } from "@/services/api.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,10 +107,11 @@ export default function StudentDetailPage() {
   const [isEditFeeDialogOpen, setIsEditFeeDialogOpen] = useState(false);
   const [monthlyFeeValue, setMonthlyFeeValue] = useState<number | string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedContractId, setSelectedContractId] = useState<number | null>(null);
+  const [selectedContractId, setSelectedContractId] = useState<number | null>(
+    null,
+  );
   const [isReplaceDialogOpen, setIsReplaceDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
@@ -156,8 +157,13 @@ export default function StudentDetailPage() {
   });
 
   const updatePdfMutation = useMutation({
-    mutationFn: ({ contractId, formData }: { contractId: number; formData: FormData }) =>
-      contractService.updateContractPdf(contractId, formData),
+    mutationFn: ({
+      contractId,
+      formData,
+    }: {
+      contractId: number;
+      formData: FormData;
+    }) => contractService.updateContractPdf(contractId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["student-full-info", studentId],
@@ -236,9 +242,9 @@ export default function StudentDetailPage() {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
-        setDragActive(true);
+      setDragActive(true);
     } else if (e.type === "dragleave") {
-        setDragActive(false);
+      setDragActive(false);
     }
   };
 
@@ -247,42 +253,42 @@ export default function StudentDetailPage() {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        if (e.dataTransfer.files[0].type !== "application/pdf") {
-            toast.error("Iltimos, faqat PDF fayl tanlang.");
-            return;
-        }
-        setSelectedFile(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files[0].type !== "application/pdf") {
+        toast.error("Iltimos, faqat PDF fayl tanlang.");
+        return;
+      }
+      setSelectedFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      if (e.target.files && e.target.files[0]) {
-          if (e.target.files[0].type !== "application/pdf") {
-              toast.error("Iltimos, faqat PDF fayl tanlang.");
-              return;
-          }
-          setSelectedFile(e.target.files[0]);
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      if (e.target.files[0].type !== "application/pdf") {
+        toast.error("Iltimos, faqat PDF fayl tanlang.");
+        return;
       }
+      setSelectedFile(e.target.files[0]);
+    }
   };
 
   const closeReplaceDialog = () => {
-      setIsReplaceDialogOpen(false);
-      setSelectedFile(null);
+    setIsReplaceDialogOpen(false);
+    setSelectedFile(null);
   };
 
   const handleUpload = () => {
     if (selectedFile && selectedContractId) {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        updatePdfMutation.mutate(
-            { contractId: selectedContractId, formData },
-            {
-                onSuccess: () => {
-                    closeReplaceDialog();
-                },
-            }
-        );
+      const formData = new FormData();
+      formData.append("final_pdf", selectedFile);
+      updatePdfMutation.mutate(
+        { contractId: selectedContractId, formData },
+        {
+          onSuccess: () => {
+            closeReplaceDialog();
+          },
+        },
+      );
     }
   };
 
@@ -336,30 +342,21 @@ export default function StudentDetailPage() {
   };
 
   // Connects to GET /contracts/{contract_id}/pdf as requested
-  const handleViewContract = async (contract: ContractRead) => {
+  const handleViewContract = async (contractId: number) => {
     try {
-      // Shartnoma ID si borligini tekshiramiz
-      if (!contract.id) {
-        toast.error("Contract ID not found");
-        return;
-      }
+      // API chaqiruvi
+      const response = await api.get(`/contracts/${contractId}/pdf`);
 
-      // Loading holatini bildirish
-      const toastId = toast.loading(t("loadingContractFile"));
-
-      // API ga so'rov
-      const pdfUrl = await contractService.viewContractPdf(contract.id);
-      toast.dismiss(toastId);
+      // Agar javob to'g'ridan-to'g'ri URL string bo'lsa:
+      const pdfUrl = response.data;
 
       if (pdfUrl) {
-        window.open(pdfUrl, "_blank");
+        window.open(pdfUrl, "_blank"); // PDFni yangi oynada ochish
       } else {
-        toast.error(t("pdfLinkNotFound") || "PDF link not found");
+        console.error("PDF link not found");
       }
     } catch (error) {
-      console.error("PDF xatolik:", error);
-      toast.dismiss();
-      toast.error(t("errorOpeningContractFile"));
+      console.error("Error fetching contract PDF", error);
     }
   };
 
@@ -920,7 +917,7 @@ export default function StudentDetailPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleViewContract(c)}
+                            onClick={() => handleViewContract(c.id)}
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             {t("viewContract")}
@@ -934,7 +931,9 @@ export default function StudentDetailPage() {
                             }}
                             disabled={updatePdfMutation.isPending}
                           >
-                            <RefreshCw className={`w-4 h-4 mr-2 ${updatePdfMutation.isPending ? 'animate-spin' : ''}`} />
+                            <RefreshCw
+                              className={`w-4 h-4 mr-2 ${updatePdfMutation.isPending ? "animate-spin" : ""}`}
+                            />
                             {t("replaceContractPdf") || "Shartnomani yangilash"}
                           </Button>
                           <Button
@@ -1156,7 +1155,7 @@ export default function StudentDetailPage() {
             </DialogTitle>
           </DialogHeader>
           {contractToUpdate && (
-            <div className="space-y-4">
+            <div className="p-6 space-y-4">
               <div>
                 <label className="text-sm">{t("monthlyFee")}</label>
                 <input
@@ -1206,128 +1205,154 @@ export default function StudentDetailPage() {
       {/* Edit Monthly Fee Dialog */}
       <Dialog open={isEditFeeDialogOpen} onOpenChange={setIsEditFeeDialogOpen}>
         <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>{t("editMonthlyFee") || "Oylik to'lovni tahrirlash"}</DialogTitle>
-            </DialogHeader>
-            {contractToUpdate && (
-                <div className="space-y-4 py-2">
-                    <div className="flex-1">
-                        <label htmlFor="monthly_fee_input" className="text-sm font-medium">{t("monthlyFee")}</label>
-                        <input
-                            id="monthly_fee_input"
-                            type="number"
-                            min={1}
-                            value={String(monthlyFeeValue)}
-                            onChange={(e) => setMonthlyFeeValue(Number(e.target.value))}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            placeholder="e.g. 500000"
-                        />
-                    </div>
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsEditFeeDialogOpen(false)}
-                            disabled={updateMonthlyFeeMutation.isPending}
-                        >
-                            {t("cancel")}
-                        </Button>
-                        <Button
-                          onClick={() => {
-                              const fee = Number(monthlyFeeValue);
-                              if (isNaN(fee) || fee <= 0) {
-                                  toast.error(
-                                      t("amountMustBeGreaterThanZero") ||
-                                      "Summa 0 dan katta bo'lishi kerak",
-                                  );
-                                  return;
-                              }
-                              updateMonthlyFeeMutation.mutate({
-                                  contractId: contractToUpdate.id,
-                                  monthly_fee: fee,
-                              }, {
-                                  onSuccess: () => {
-                                      setIsEditFeeDialogOpen(false);
-                                  }
-                              });
-                          }}
-                          disabled={updateMonthlyFeeMutation.isPending}
-                        >
-                            {updateMonthlyFeeMutation.isPending && <RefreshCw className="w-4 h-4 mr-2 animate-spin" />}
-                            {t("save")}
-                        </Button>
-                    </div>
-                </div>
-            )}
+          <DialogHeader>
+            <DialogTitle>
+              {t("editMonthlyFee") || "Oylik to'lovni tahrirlash"}
+            </DialogTitle>
+          </DialogHeader>
+          {contractToUpdate && (
+            <div className="p-6 space-y-4">
+              <div className="flex-1">
+                <label
+                  htmlFor="monthly_fee_input"
+                  className="text-sm font-medium"
+                >
+                  {t("monthlyFee")}
+                </label>
+                <input
+                  id="monthly_fee_input"
+                  type="number"
+                  min={1}
+                  value={String(monthlyFeeValue)}
+                  onChange={(e) => setMonthlyFeeValue(Number(e.target.value))}
+                  className="w-full border rounded px-3 py-2 mt-1"
+                  placeholder="e.g. 500000"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditFeeDialogOpen(false)}
+                  disabled={updateMonthlyFeeMutation.isPending}
+                >
+                  {t("cancel")}
+                </Button>
+                <Button
+                  onClick={() => {
+                    const fee = Number(monthlyFeeValue);
+                    if (isNaN(fee) || fee <= 0) {
+                      toast.error(
+                        t("amountMustBeGreaterThanZero") ||
+                          "Summa 0 dan katta bo'lishi kerak",
+                      );
+                      return;
+                    }
+                    updateMonthlyFeeMutation.mutate(
+                      {
+                        contractId: contractToUpdate.id,
+                        monthly_fee: fee,
+                      },
+                      {
+                        onSuccess: () => {
+                          setIsEditFeeDialogOpen(false);
+                        },
+                      },
+                    );
+                  }}
+                  disabled={updateMonthlyFeeMutation.isPending}
+                >
+                  {updateMonthlyFeeMutation.isPending && (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  {t("save")}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
       <Dialog open={isReplaceDialogOpen} onOpenChange={closeReplaceDialog}>
         <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-                <DialogTitle>{t("replaceContractPdf") || "Shartnomani yangilash"}</DialogTitle>
-                <DialogDescription>
-                    {t("replaceContractPdfDescription") ||
-                        `"${contracts.find(c => c.id === selectedContractId)?.contract_number}" raqamli shartnoma uchun yangi PDF faylni yuklang.`}
-                </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <div
-                    onDragEnter={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 bg-muted/20 hover:border-primary/50"}`}
-                >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="application/pdf"
-                        hidden
-                        onChange={handleFileChange}
-                    />
-                    {selectedFile ? (
-                        <div className="flex flex-col items-center text-center p-4">
-                            <FileIcon className="w-12 h-12 text-primary" />
-                            <p className="font-medium mt-2 break-all">{selectedFile.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                                {(selectedFile.size / 1024).toFixed(2)} KB
-                            </p>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="absolute top-2 right-2 text-muted-foreground hover:text-red-500"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedFile(null);
-                                }}
-                            >
-                                <X className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center text-center text-muted-foreground">
-                            <UploadCloud className="w-12 h-12 mb-2" />
-                            <p className="font-bold">{t("dragAndDropOrClick") || "Faylni tashlang yoki bosing"}</p>
-                            <p className="text-sm">{t("pdfOnlyUpTo10MB") || "Faqat PDF (maks 10MB)"}</p>
-                        </div>
-                    )}
+          <DialogHeader>
+            <DialogTitle>
+              {t("replaceContractPdf") || "Shartnomani yangilash"}
+            </DialogTitle>
+            <DialogDescription>
+              {t("replaceContractPdfDescription") ||
+                `"${contracts.find((c) => c.id === selectedContractId)?.contract_number}" raqamli shartnoma uchun yangi PDF faylni yuklang.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 p-6">
+            <div
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 bg-muted/20 hover:border-primary/50"}`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                hidden
+                onChange={handleFileChange}
+              />
+              {selectedFile ? (
+                <div className="flex flex-col items-center text-center p-4">
+                  <FileIcon className="w-12 h-12 text-primary" />
+                  <p className="font-medium mt-2 break-all">
+                    {selectedFile.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {(selectedFile.size / 1024).toFixed(2)} KB
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 text-muted-foreground hover:text-red-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFile(null);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
+              ) : (
+                <div className="flex flex-col items-center text-center text-muted-foreground">
+                  <UploadCloud className="w-12 h-12 mb-2" />
+                  <p className="font-bold">
+                    {t("dragAndDropOrClick") || "Faylni tashlang yoki bosing"}
+                  </p>
+                  <p className="text-sm">
+                    {t("pdfOnlyUpTo10MB") || "Faqat PDF (maks 10MB)"}
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={closeReplaceDialog} disabled={updatePdfMutation.isPending}>
-                    {t("cancel")}
-                </Button>
-                <Button
-                    onClick={handleUpload}
-                    disabled={!selectedFile || updatePdfMutation.isPending}
-                >
-                    {updatePdfMutation.isPending && <RefreshCw className="w-4 h-4 mr-2 animate-spin" />}
-                    {t("upload") || "Yuklash"}
-                </Button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={closeReplaceDialog}
+              disabled={updatePdfMutation.isPending}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={handleUpload}
+              disabled={!selectedFile || updatePdfMutation.isPending}
+            >
+              {updatePdfMutation.isPending && (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              )}
+              {t("upload") || "Yuklash"}
+            </Button>
+          </div>
         </DialogContent>
-    </Dialog>
+      </Dialog>
     </div>
   );
 }

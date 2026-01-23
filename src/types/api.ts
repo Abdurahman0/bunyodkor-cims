@@ -188,6 +188,7 @@ export interface StudentUpdateRequest {
 }
 
 export interface StudentWithDebtInfo {
+  id: number;
   student_id: number;
   first_name: string;
   last_name: string;

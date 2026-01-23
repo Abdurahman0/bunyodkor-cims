@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -71,9 +72,6 @@ export default function CoachPanel() {
     null,
   );
   const [selectedGroupForStats, setSelectedGroupForStats] = useState<
-    string | null
-  >(null);
-  const [selectedStudentForStats, setSelectedStudentForStats] = useState<
     string | null
   >(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupRead | null>(null);
@@ -170,18 +168,6 @@ export default function CoachPanel() {
       );
     },
     enabled: !!selectedGroupForStats,
-    select: (res) => res?.data,
-  });
-
-  const { data: studentStats, isLoading: studentStatsLoading } = useQuery({
-    queryKey: ["student-stats", selectedStudentForStats],
-    queryFn: () => {
-      if (!selectedStudentForStats) return null;
-      return coachService.getStudentAttendanceStats(
-        Number(selectedStudentForStats),
-      );
-    },
-    enabled: !!selectedStudentForStats,
     select: (res) => res?.data,
   });
 
@@ -354,27 +340,6 @@ export default function CoachPanel() {
       },
     ];
   }, [groupStats, t]);
-
-  const studentStatsChartData = useMemo(() => {
-    if (!studentStats) return [];
-    return [
-      {
-        label: t("present"),
-        value: studentStats.present_count,
-        color: "hsl(142, 71%, 45%)",
-      },
-      {
-        label: t("absent"),
-        value: studentStats.absent_count,
-        color: "hsl(0, 84%, 60%)",
-      },
-      {
-        label: t("late"),
-        value: studentStats.late_count,
-        color: "hsl(48, 96%, 53%)",
-      },
-    ];
-  }, [studentStats, t]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 lg:p-8 space-y-6">
@@ -875,7 +840,6 @@ export default function CoachPanel() {
                   value={selectedGroupForStats || ""}
                   onChange={(e) => {
                     setSelectedGroupForStats(e.target.value);
-                    setSelectedStudentForStats(null);
                   }}
                   className="w-full md:w-1/3"
                 >
@@ -933,74 +897,6 @@ export default function CoachPanel() {
                   </CardContent>
                 </Card>
               </motion.div>
-            )}
-
-            {selectedGroupForStats && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("studentStatistics")}</CardTitle>
-                  <Select
-                    value={selectedStudentForStats || ""}
-                    onChange={(e) => setSelectedStudentForStats(e.target.value)}
-                    className="w-full md:w-1/3"
-                  >
-                    <option value="" disabled>
-                      {t("selectStudent")}
-                    </option>
-                    {(() => {
-                      const filtered = allStudents?.filter(
-                        (s) =>
-                          Number(s.group_id) === Number(selectedGroupForStats),
-                      );
-                      if (!filtered || filtered.length === 0) {
-                        return (
-                          <option value="" disabled>
-                            {t("noStudentsInGroup")}
-                          </option>
-                        );
-                      }
-
-                      return filtered.map((student) => (
-                        <option key={student.id} value={student.id.toString()}>
-                          {student.first_name} {student.last_name}
-                        </option>
-                      ));
-                    })()}
-                  </Select>
-                </CardHeader>
-                {studentStatsLoading && (
-                  <div className="flex justify-center items-center py-10">
-                    <Loader2 className="animate-spin text-primary" />
-                  </div>
-                )}
-                {studentStats && (
-                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <DonutChart
-                      data={studentStatsChartData}
-                      centerLabel={t("attendanceRate")}
-                      centerValue={`${studentStats.attendance_rate}%`}
-                    />
-                    <div className="space-y-4">
-                      <StatsCard
-                        title={t("totalSessions")}
-                        value={studentStats.total_sessions}
-                      />
-                      <StatsCard
-                        title={t("present")}
-                        value={studentStats.present_count}
-                      />
-                      <StatsCard
-                        title={t("absent")}
-                        value={studentStats.absent_count}
-                      />
-                      <StatsCard
-                        title={t("late")}
-                        value={studentStats.late_count}
-                      />
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
             )}
           </div>
         </TabsContent>
