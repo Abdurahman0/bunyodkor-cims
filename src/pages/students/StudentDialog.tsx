@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import toast from "react-hot-toast";
 import { studentService, groupService } from "@/services/api.service";
 import type {
@@ -251,16 +252,12 @@ export function StudentDialog({
               <Label htmlFor="status">
                 {t("status")} <span className="text-red-500">*</span>
               </Label>
-              <select
-                id="status"
-                {...register("status", { required: true })}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
+              <Select id="status" {...register("status", { required: true })}>
                 <option value="active">{t("active")}</option>
                 <option value="graduated">{t("graduated")}</option>
                 <option value="dropped">{t("dropped")}</option>
                 <option value="suspended">{t("suspended")}</option>
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="group_id">{t("group")}</Label>
@@ -294,11 +291,7 @@ export function StudentDialog({
                   */}
                 </>
               ) : (
-                <select
-                  id="group_id"
-                  {...register("group_id")}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
+                <Select id="group_id" {...register("group_id")}>
                   <option value="">{t("selectGroup")}</option>
                   {groupsData?.data?.map((group: GroupRead) => {
                     const studentCount = getGroupStudentCount(group.id);
@@ -314,7 +307,7 @@ export function StudentDialog({
                       </option>
                     );
                   })}
-                </select>
+                </Select>
               )}
             </div>
           </div>

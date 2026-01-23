@@ -1127,8 +1127,10 @@ export const contractService = {
    * View Contract Pdf
    * GET /contracts/{contract_id}/pdf
    */
-  viewContractPdf: async (contractId: number): Promise<string> => {
-    const response = await apiClient.get<string>(`/contracts/${contractId}/pdf`);
+  viewContractPdf: async (contractId: number): Promise<Blob> => {
+    const response = await apiClient.get(`/contracts/${contractId}/pdf`, {
+      responseType: "blob",
+    });
     return response.data;
   },
 
