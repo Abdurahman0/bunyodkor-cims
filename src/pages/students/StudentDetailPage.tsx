@@ -346,11 +346,12 @@ export default function StudentDetailPage() {
     const toastId = toast.loading(t("loadingContractFile") || "Shartnoma yuklanmoqda...");
     try {
       // API chaqiruvi
-      const pdfUrl = await contractService.viewContractPdf(contractId);
+      const blob = await contractService.viewContractPdf(contractId);
       toast.dismiss(toastId);
 
-      if (pdfUrl && typeof pdfUrl === "string") {
-        window.open(pdfUrl, "_blank");
+      if (blob) {
+        const fileURL = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+        window.open(fileURL, "_blank");
       } else {
         toast.error(t("pdfLinkNotFound") || "PDF topilmadi");
       }
