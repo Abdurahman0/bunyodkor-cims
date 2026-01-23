@@ -229,7 +229,6 @@ export default function StudentDetailPage() {
     },
   });
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
