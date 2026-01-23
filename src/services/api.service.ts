@@ -1129,7 +1129,7 @@ export const contractService = {
    */
   viewContractPdf: async (contractId: number): Promise<string> => {
     const response = await apiClient.get<string>(
-      `/contracts/${contractId}/pdf`,
+      `/contracts/${contractId}/pdf`
     );
     return response.data;
   },

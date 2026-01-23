@@ -6,7 +6,9 @@ import toast from "react-hot-toast";
 
 const getApiUrl = () => {
   // In development, use proxy to avoid CORS issues
-  return import.meta.env.VITE_API_URL || "https://bunyodkor.api.cims.cognilabs.org/";
+  return (
+    import.meta.env.VITE_API_URL || "https://bunyodkor.api.cims.cognilabs.org/"
+  );
 };
 
 // Helper function to get translated message
@@ -62,13 +64,13 @@ apiClient.interceptors.request.use(
     // Log mock API usage in development
     if (import.meta.env.VITE_USE_MOCK_API === "true" && import.meta.env.DEV) {
       console.log(
-        `🔵 [MOCK API] ${config.method?.toUpperCase()} ${config.url}`
+        `🔵 [MOCK API] ${config.method?.toUpperCase()} ${config.url}`,
       );
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Track if we're currently refreshing to avoid multiple refresh calls
@@ -145,19 +147,20 @@ apiClient.interceptors.response.use(
         const response = await axios.post(
           `${getApiUrl()}/auth/refresh`,
           { refresh_token: refreshToken },
-          { headers: { "Content-Type": "application/json" } }
+          { headers: { "Content-Type": "application/json" } },
         );
 
-        const { access_token, refresh_token } = response.data;
+        const { access_token, refresh_token: new_refresh_token } =
+          response.data;
 
         // Update tokens in store
         useAuthStore
           .getState()
           .setAuth(
             access_token,
-            refresh_token,
+            new_refresh_token || refreshToken,
             useAuthStore.getState().user!,
-            useAuthStore.getState().permissions
+            useAuthStore.getState().permissions,
           );
 
         // Update the failed request with new token
@@ -203,7 +206,8 @@ apiClient.interceptors.response.use(
       const isLimitValidationError =
         message.includes("Input should be less than or equal to") ||
         message.includes("less than or equal to") ||
-        (typeof detail === "string" && detail.includes("less than or equal to"));
+        (typeof detail === "string" &&
+          detail.includes("less than or equal to"));
 
       if (isLimitValidationError) {
         // Only log limit validation errors to console, don't show toast
@@ -220,5 +224,5 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
