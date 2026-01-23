@@ -104,6 +104,7 @@ export default function StudentDetailPage() {
   );
   const [isEditContractDialogOpen, setIsEditContractDialogOpen] =
     useState(false);
+  const [isEditFeeDialogOpen, setIsEditFeeDialogOpen] = useState(false);
   const [monthlyFeeValue, setMonthlyFeeValue] = useState<number | string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedContractId, setSelectedContractId] = useState<number | null>(null);
@@ -334,6 +335,7 @@ export default function StudentDetailPage() {
     }
   };
 
+  // Connects to GET /contracts/{contract_id}/pdf as requested
   const handleViewContract = async (contract: ContractRead) => {
     try {
       // Shartnoma ID si borligini tekshiramiz
@@ -893,6 +895,7 @@ export default function StudentDetailPage() {
                             onClick={() => {
                               setContractToUpdate(c);
                               setMonthlyFeeValue(c.monthly_fee ?? "");
+                              setIsEditFeeDialogOpen(true);
                             }}
                           />
                         </div>
@@ -1200,54 +1203,63 @@ export default function StudentDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Quick edit monthly fee dialog - rendered inline when contractToUpdate.monthly_fee is set via button */}
-      {contractToUpdate && monthlyFeeValue !== "" && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className="bg-card border p-4 rounded shadow-md">
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <label className="text-sm">{t("monthlyFee")}</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={String(monthlyFeeValue)}
-                  onChange={(e) => setMonthlyFeeValue(Number(e.target.value))}
-                  className="w-40 border rounded px-2 py-1 mt-1"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    const fee = Number(monthlyFeeValue);
-                    if (isNaN(fee) || fee <= 0) {
-                      toast.error(
-                        t("amountMustBeGreaterThanZero") ||
-                          "Amount must be > 0",
-                      );
-                      return;
-                    }
-                    updateMonthlyFeeMutation.mutate({
-                      contractId: contractToUpdate.id,
-                      monthly_fee: fee,
-                    });
-                  }}
-                >
-                  {t("save")}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setMonthlyFeeValue("");
-                    setContractToUpdate(null);
-                  }}
-                >
-                  {t("cancel")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Edit Monthly Fee Dialog */}
+      <Dialog open={isEditFeeDialogOpen} onOpenChange={setIsEditFeeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>{t("editMonthlyFee") || "Oylik to'lovni tahrirlash"}</DialogTitle>
+            </DialogHeader>
+            {contractToUpdate && (
+                <div className="space-y-4 py-2">
+                    <div className="flex-1">
+                        <label htmlFor="monthly_fee_input" className="text-sm font-medium">{t("monthlyFee")}</label>
+                        <input
+                            id="monthly_fee_input"
+                            type="number"
+                            min={1}
+                            value={String(monthlyFeeValue)}
+                            onChange={(e) => setMonthlyFeeValue(Number(e.target.value))}
+                            className="w-full border rounded px-3 py-2 mt-1"
+                            placeholder="e.g. 500000"
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsEditFeeDialogOpen(false)}
+                            disabled={updateMonthlyFeeMutation.isPending}
+                        >
+                            {t("cancel")}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                              const fee = Number(monthlyFeeValue);
+                              if (isNaN(fee) || fee <= 0) {
+                                  toast.error(
+                                      t("amountMustBeGreaterThanZero") ||
+                                      "Summa 0 dan katta bo'lishi kerak",
+                                  );
+                                  return;
+                              }
+                              updateMonthlyFeeMutation.mutate({
+                                  contractId: contractToUpdate.id,
+                                  monthly_fee: fee,
+                              }, {
+                                  onSuccess: () => {
+                                      setIsEditFeeDialogOpen(false);
+                                  }
+                              });
+                          }}
+                          disabled={updateMonthlyFeeMutation.isPending}
+                        >
+                            {updateMonthlyFeeMutation.isPending && <RefreshCw className="w-4 h-4 mr-2 animate-spin" />}
+                            {t("save")}
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isReplaceDialogOpen} onOpenChange={closeReplaceDialog}>
         <DialogContent className="sm:max-w-lg">
