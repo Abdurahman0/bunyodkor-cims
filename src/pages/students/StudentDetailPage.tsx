@@ -343,17 +343,27 @@ export default function StudentDetailPage() {
 
   // Connects to GET /contracts/{contract_id}/pdf as requested
   const handleViewContract = async (contractId: number) => {
+    const toastId = toast.loading(t("loadingContractFile") || "Shartnoma yuklanmoqda...");
     try {
       // API chaqiruvi
-      const pdfUrl = await contractService.viewContractPdf(contractId);
+      const response = await contractService.viewContractPdf(contractId);
+      toast.dismiss(toastId);
 
-      if (pdfUrl) {
-        window.open(pdfUrl, "_blank"); // PDFni yangi oynada ochish
+      if (response) {
+        // Agar to'g'ridan-to'g'ri URL string kelsa
+        if (typeof response === "string") {
+          window.open(response, "_blank");
+        } else {
+          // Agar object yoki boshqa format kelsa (blob, base64 va h.k.)
+          openPdfResponse(response);
+        }
       } else {
-        console.error("PDF link not found");
+        toast.error(t("pdfLinkNotFound") || "PDF topilmadi");
       }
     } catch (error) {
+      toast.dismiss(toastId);
       console.error("Error fetching contract PDF", error);
+      toast.error(t("errorOpeningContractFile") || "Xatolik yuz berdi");
     }
   };
 
