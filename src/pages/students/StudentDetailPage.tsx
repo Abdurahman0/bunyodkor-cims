@@ -343,14 +343,19 @@ export default function StudentDetailPage() {
 
   // Connects to GET /contracts/{contract_id}/pdf as requested
   const handleViewContract = async (contractId: number) => {
-    const toastId = toast.loading(t("loadingContractFile") || "Shartnoma yuklanmoqda...");
+    const toastId = toast.loading(
+      t("loadingContractFile") || "Shartnoma yuklanmoqda...",
+    );
     try {
       // API chaqiruvi
-      const pdfUrl = await contractService.viewContractPdf(contractId);
+      const blob = await contractService.viewContractPdf(contractId);
       toast.dismiss(toastId);
 
-      if (pdfUrl) {
-        openPdfUrl(pdfUrl);
+      if (blob) {
+        const fileURL = window.URL.createObjectURL(
+          new Blob([blob], { type: "application/pdf" }),
+        );
+        window.open(fileURL, "_blank");
       } else {
         toast.error(t("pdfLinkNotFound") || "PDF topilmadi");
       }
