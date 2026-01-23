@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import toast from "react-hot-toast";
 import { studentService, groupService } from "@/services/api.service";
 import type {
@@ -97,7 +96,7 @@ export function StudentDialog({
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["students-count"] });
       toast.success(
-        student ? t("studentUpdatedSuccess") : t("studentCreatedSuccess")
+        student ? t("studentUpdatedSuccess") : t("studentCreatedSuccess"),
       );
       onOpenChange(false);
       if (onSuccess) {
@@ -123,7 +122,7 @@ export function StudentDialog({
   const getGroupStudentCount = (groupId: number): number => {
     if (!allStudentsData?.data) return 0;
     return allStudentsData.data.filter(
-      (s) => Number(s.group_id) === Number(groupId)
+      (s) => Number(s.group_id) === Number(groupId),
     ).length;
   };
 
@@ -150,7 +149,7 @@ export function StudentDialog({
         const group = groupsData?.data?.find((g) => g.id === selectedGroupId);
         toast.error(
           `${group?.name || "Guruh"} to'lgan! Iltimos, boshqa guruh tanlang.`,
-          { duration: 4000 }
+          { duration: 4000 },
         );
         return;
       }
@@ -252,12 +251,16 @@ export function StudentDialog({
               <Label htmlFor="status">
                 {t("status")} <span className="text-red-500">*</span>
               </Label>
-              <Select id="status" {...register("status", { required: true })}>
+              <select
+                id="status"
+                {...register("status", { required: true })}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
                 <option value="active">{t("active")}</option>
                 <option value="graduated">{t("graduated")}</option>
                 <option value="dropped">{t("dropped")}</option>
                 <option value="suspended">{t("suspended")}</option>
-              </Select>
+              </select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="group_id">{t("group")}</Label>
@@ -291,7 +294,11 @@ export function StudentDialog({
                   */}
                 </>
               ) : (
-                <Select id="group_id" {...register("group_id")}>
+                <select
+                  id="group_id"
+                  {...register("group_id")}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
                   <option value="">{t("selectGroup")}</option>
                   {groupsData?.data?.map((group: GroupRead) => {
                     const studentCount = getGroupStudentCount(group.id);
@@ -307,7 +314,7 @@ export function StudentDialog({
                       </option>
                     );
                   })}
-                </Select>
+                </select>
               )}
             </div>
           </div>
