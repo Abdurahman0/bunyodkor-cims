@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type FC } from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,11 +45,12 @@ const PayersReport: FC = () => {
   });
 
   // Normalize groups response in case API is double-wrapped: { data: { data: [...] } }
-  const groupsList: any[] = Array.isArray(groupsData?.data)
-    ? groupsData.data
-    : Array.isArray((groupsData as any)?.data?.data)
-      ? (groupsData as any).data.data
-      : [];
+  const groupsList: any[] = useMemo(() => {
+    if (Array.isArray(groupsData?.data)) return groupsData.data;
+    if (Array.isArray((groupsData as any)?.data?.data))
+      return (groupsData as any).data.data;
+    return [];
+  }, [groupsData]);
 
   const { data: payersData, isLoading } = useQuery({
     queryKey: [

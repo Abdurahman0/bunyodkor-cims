@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,11 +93,12 @@ export default function Reports() {
   });
 
   // Normalize groups response in case API returns nested `data` (e.g. { data: { data: [...] } })
-  const groupsList: GroupRead[] = Array.isArray(groupsData?.data)
-    ? groupsData.data
-    : Array.isArray((groupsData as any)?.data?.data)
-      ? (groupsData as any).data.data
-      : [];
+  const groupsList: GroupRead[] = useMemo(() => {
+    if (Array.isArray(groupsData?.data)) return groupsData.data;
+    if (Array.isArray((groupsData as any)?.data?.data))
+      return (groupsData as any).data.data;
+    return [];
+  }, [groupsData]);
 
   // Use unpaid students API instead of debtors report
   const { data: debtorsData, isLoading: debtorsLoading } = useQuery({

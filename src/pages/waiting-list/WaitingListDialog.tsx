@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -71,16 +71,24 @@ export function WaitingListDialog({
     enabled: open,
   });
 
+  // Normalize groups data
+  const groupsList: GroupRead[] = useMemo(() => {
+    if (Array.isArray(groupsData?.data)) return groupsData.data;
+    if (Array.isArray((groupsData as any)?.data?.data))
+      return (groupsData as any).data.data;
+    return [];
+  }, [groupsData]);
+
   // Get selected group's capacity for validation
-  const selectedGroup = groupsData?.data?.find(
+  const selectedGroup = groupsList.find(
     (g: any) => g.id === Number(selectedGroupId),
   );
   const maxPriority = selectedGroup?.capacity || 100;
 
   // Auto-calculate priority based on group capacity
   useEffect(() => {
-    if (selectedGroupId && groupsData?.data && !entry) {
-      const selectedGroup = groupsData.data.find(
+    if (selectedGroupId && groupsList.length > 0 && !entry) {
+      const selectedGroup = groupsList.find(
         (g: any) => g.id === Number(selectedGroupId),
       );
       if (selectedGroup && selectedGroup.capacity) {
@@ -97,7 +105,7 @@ export function WaitingListDialog({
         setValue("priority", calculatedPriority);
       }
     }
-  }, [selectedGroupId, groupsData, entry, setValue]);
+  }, [selectedGroupId, groupsList, entry, setValue]);
 
   useEffect(() => {
     if (open) {
@@ -406,7 +414,7 @@ export function WaitingListDialog({
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">{t("selectGroup") || "Select group"}</option>
-                {groupsData?.data?.map((group: GroupRead) => (
+                {groupsList.map((group: GroupRead) => (
                   <option key={group.id} value={String(group.id)}>
                     {group.name}
                   </option>
@@ -451,7 +459,7 @@ export function WaitingListDialog({
               )}
               <p className="text-xs text-muted-foreground">
                 {t("priorityHelp") ||
-                  `1 = Highest priority, ${maxPriority} = Lowest priority`}
+                  `1 = Highest priority,  = Lowest priority`}
               </p>
             </div>
           </div>

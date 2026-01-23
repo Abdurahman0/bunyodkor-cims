@@ -62,7 +62,7 @@ export default function Students() {
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [archiveYearFilter, setArchiveYearFilter] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<StudentRead | null>(
-    null
+    null,
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCombinedDialogOpen, setIsCombinedDialogOpen] = useState(false);
@@ -70,7 +70,7 @@ export default function Students() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [studentToDelete, setStudentToDelete] = useState<StudentRead | null>(
-    null
+    null,
   );
   const queryClient = useQueryClient();
 
@@ -329,9 +329,7 @@ export default function Students() {
             <span className="hidden lg:inline">
               {t("exportAllStudentsData")}
             </span>
-            <span className="hidden sm:inline lg:hidden">
-              {t("exportAll")}
-            </span>
+            <span className="hidden sm:inline lg:hidden">{t("exportAll")}</span>
             <span className="sm:hidden font-bold">{t("full")}</span>
           </Button>
           <Button onClick={handleCreate} className="gap-2">
@@ -433,7 +431,7 @@ export default function Students() {
                   onChange={(e) => {
                     console.log(
                       "[STUDENTS] Group filter changed:",
-                      e.target.value
+                      e.target.value,
                     );
                     setGroupFilter(e.target.value);
                   }}
@@ -454,15 +452,16 @@ export default function Students() {
                       ))
                     : null}
                 </Select>
-                                  <Input
-                                    type="number"
-                                    placeholder={t("archiveYear")}
-                                    value={archiveYearFilter}
-                                    onChange={(e) => setArchiveYearFilter(e.target.value)}
-                                    className="w-full sm:w-40"
-                                    min="2020"
-                                    max="2050"
-                                  />                {hasActiveFilters && (
+                <Input
+                  type="number"
+                  placeholder={t("archiveYear")}
+                  value={archiveYearFilter}
+                  onChange={(e) => setArchiveYearFilter(e.target.value)}
+                  className="w-full sm:w-40"
+                  min="2020"
+                  max="2050"
+                />{" "}
+                {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>
                     <X className="w-4 h-4" />
                   </Button>
@@ -488,7 +487,7 @@ export default function Students() {
                     {t("group")}:{" "}
                     {
                       allGroups.find(
-                        (g: any) => g?.id?.toString() === groupFilter
+                        (g: any) => g?.id?.toString() === groupFilter,
                       )?.name
                     }
                   </Badge>
@@ -561,7 +560,7 @@ export default function Students() {
                             <p className="text-xs text-muted-foreground/70 truncate">
                               {format(
                                 new Date(student.created_at),
-                                "dd-MM-yyyy"
+                                "dd-MM-yyyy",
                               )}
                             </p>
                           )}
