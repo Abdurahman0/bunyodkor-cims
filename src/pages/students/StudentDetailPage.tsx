@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { studentService, contractService, api } from "@/services/api.service";
+import { studentService, contractService } from "@/services/api.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -345,10 +345,7 @@ export default function StudentDetailPage() {
   const handleViewContract = async (contractId: number) => {
     try {
       // API chaqiruvi
-      const response = await api.get(`/contracts/${contractId}/pdf`);
-
-      // Agar javob to'g'ridan-to'g'ri URL string bo'lsa:
-      const pdfUrl = response.data;
+      const pdfUrl = await contractService.viewContractPdf(contractId);
 
       if (pdfUrl) {
         window.open(pdfUrl, "_blank"); // PDFni yangi oynada ochish
