@@ -965,6 +965,7 @@ export const translations = {
     todayRevenue: "Bugungi daromad",
     activeStudents: "Faol talabalar",
     totalDebtors: "Qarzdorlar soni",
+    totalDebtors: "Bu oydagi qarzdorlar soni",
     totalContracts: "Jami shartnomalar",
     todaySessions: "Bugungi darslar",
     revenueOverview: "Daromad ko'rinishi",
