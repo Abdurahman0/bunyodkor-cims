@@ -134,10 +134,10 @@ export function StudentWithContractDialog({
   const [pdfUrl, setPdfUrl] = useState<string>("");
 
   const steps = [
-    t("preparingData"),
-    t("generatingContract"),
-    t("formattingDocument"),
-    t("finalizing"),
+    t("Preparing Data"),
+    t("Generating Contract"),
+    t("Formatting Document"),
+    t("Finalizing"),
   ];
 
   const {
@@ -222,11 +222,11 @@ export function StudentWithContractDialog({
             const contractNumber = response.data.contract_number;
             setSuggestedContractNumber(contractNumber);
             setValue("contract_number", contractNumber);
-            toast.success(`${t("suggestion")}: ${contractNumber}`, {
+            toast.success(`${t("Suggestion")}: ${contractNumber}`, {
               duration: 3000,
             });
           } else if (response.data.is_full) {
-            toast.error(t("groupIsFull"));
+            toast.error(t("Group Is Full"));
           }
 
           const availableResponse =
@@ -249,7 +249,7 @@ export function StudentWithContractDialog({
   // 1. Shartnomani Yuklash
   const handleDownloadContract = () => {
     if (!pdfUrl) {
-      toast.error(t("pdfNotFound") || "PDF topilmadi");
+      toast.error(t("PDF Not Found") || "PDF topilmadi");
       return;
     }
 
@@ -259,12 +259,12 @@ export function StudentWithContractDialog({
     // Faylni yuklash uchun link yaratamiz
     const link = document.createElement("a");
     link.href = pdfUrl;
-    link.download = `shartnoma_${contractNum}.pdf`; // Fayl nomi chiroyli bo'lishi uchun
+    link.download = `shartnoma_${contractNum}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    toast.success(t("contractDownloaded") || "Shartnoma yuklandi");
+    toast.success(t("Contract Downloaded") || "Shartnoma yuklandi");
   };
 
   // 2. Shartnomani Ko'rish (Student Detail Page dagi kabi)
@@ -283,7 +283,7 @@ export function StudentWithContractDialog({
       const contractNumber = getValues("contract_number");
       if (!contractNumber) {
         toast.error(
-          t("contractNumberNotFormed") || "Contract number not formed",
+          t("Contract Number Not Formed") || "Contract number not formed",
         );
         return;
       }
@@ -293,7 +293,7 @@ export function StudentWithContractDialog({
         : new Date();
       const year = startDate.getFullYear();
 
-      const toastId = toast.loading(t("loadingContractFile"));
+      const toastId = toast.loading(t("Loading Contract File"));
       const response = await contractService.getContractPdfUrl(
         year,
         contractNumber,
@@ -309,11 +309,11 @@ export function StudentWithContractDialog({
       if (pdfUrlFromResp) {
         openPdfUrl(pdfUrlFromResp);
       } else {
-        toast.error(t("pdfLinkNotFound") || "PDF link not found");
+        toast.error(t("PDF Link Not Found") || "PDF link not found");
       }
     } catch (error) {
       toast.error(
-        t("errorOpeningContractFile") || "Error opening contract file",
+        t("Error Opening Contract File") || "Error opening contract file",
       );
     }
   };
@@ -333,9 +333,9 @@ export function StudentWithContractDialog({
   ) => {
     if (primaryAddress) {
       setValue(targetField, primaryAddress);
-      toast.success(t("addressCopied") || "Manzil ko'chirildi");
+      toast.success(t("Address Copied") || "Manzil ko'chirildi");
     } else {
-      toast.error(t("enterAddressFirst") || "Avval birinchi manzilni kiriting");
+      toast.error(t("Enter Address First") || "Avval birinchi manzilni kiriting");
     }
   };
 
@@ -345,13 +345,13 @@ export function StudentWithContractDialog({
       if (dadName) setValue("buyurtmachi_fio", dadName);
       if (dadPhone) setValue("buyurtmachi_phone", dadPhone);
       toast.success(
-        t("fatherInfoCopied") || "Otaning ma'lumotlari ko'chirildi",
+        t("Father Info Copied") || "Otaning ma'lumotlari ko'chirildi",
       );
     } else if (type === "mother") {
       if (momFio) setValue("buyurtmachi_fio", momFio);
       if (momPhone) setValue("buyurtmachi_phone", momPhone);
       toast.success(
-        t("motherInfoCopied") || "Onaning ma'lumotlari ko'chirildi",
+        t("Mother Info Copied") || "Onaning ma'lumotlari ko'chirildi",
       );
     } else {
       setValue("buyurtmachi_fio", "");
@@ -428,7 +428,7 @@ export function StudentWithContractDialog({
       setCurrentStep(0);
 
       if (!data.contract_start_date) {
-        toast.error(t("startDateRequired") || "Boshlanish sanasi majburiy!");
+        toast.error(t("Start Date Required") || "Boshlanish sanasi majburiy!");
         setIsSubmitting(false);
         return;
       }
@@ -519,7 +519,7 @@ export function StudentWithContractDialog({
           formData.append(field, data[field][0]);
         } else {
           filesMissing = true;
-          toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
+          toast.error(`${field}: ${t("File Not Uploaded") || "yuklanmagan!"}`);
         }
       }
       for (const field of optionalFileFields) {
@@ -541,7 +541,7 @@ export function StudentWithContractDialog({
       await simulateProgress(3, 800);
 
       if (!response) {
-        toast.error(t("pdfNotFound") || "PDF topilmadi!");
+        toast.error(t("PDF Not Found") || "PDF topilmadi!");
         setIsSubmitting(false);
         return;
       }
@@ -567,7 +567,7 @@ export function StudentWithContractDialog({
           setIsSuccess(true);
         } catch (e) {
           console.error("[DEBUG] Error creating blob URL", e);
-          toast.error(t("pdfNotFound") || "PDF topilmadi!");
+          toast.error(t("PDF Not Found") || "PDF topilmadi!");
           setIsSubmitting(false);
           return;
         }
@@ -578,7 +578,7 @@ export function StudentWithContractDialog({
       if (onSuccess) onSuccess();
     } catch (error: any) {
       console.error("Xatolik:", error);
-      let errorMessage = t("anErrorOccurred") || "Xatolik yuz berdi";
+      let errorMessage = t("An Error Occurred") || "Xatolik yuz berdi";
       // Xatoliklarni ushlash va qayta urinish logikasi (Sizning kodingizdan saqlandi)
       if (error.response?.data instanceof Blob) {
         try {
@@ -607,7 +607,7 @@ export function StudentWithContractDialog({
       if (isDuplicateContract && data.group_id) {
         try {
           toast(
-            t("retryingWithNewNumber") ||
+            t("Retrying With New Number") ||
               "Yangi shartnoma raqami bilan qayta urinilmoqda...",
           );
           const year =
@@ -623,9 +623,9 @@ export function StudentWithContractDialog({
             const newContractNumber = response.data.contract_number;
             setSuggestedContractNumber(newContractNumber);
             setValue("contract_number", newContractNumber);
-            toast.success(`${t("newNumberSuggested")}: ${newContractNumber}`);
+            toast.success(`${t("New Number Suggested")}: ${newContractNumber}`);
             toast(
-              t("pleaseSubmitAgain") ||
+              t("Please Submit Again") ||
                 "Iltimos, yana bir bor 'Saqlash' tugmasini bosing",
             );
           } else {
@@ -644,14 +644,14 @@ export function StudentWithContractDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto border-2 border-primary/20">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto border-2 border-primary/20 pb-10 pl-10">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <UserPlus className="w-6 h-6" />
-            {t("createStudentAndContract")}
+            {t("Create Student And Contract")}
           </DialogTitle>
           <DialogDescription>
-            {t("fillAllFieldsDocsRequired")}
+            {t("Fill All Fields Docs Required")}
           </DialogDescription>
         </DialogHeader>
 
@@ -663,40 +663,40 @@ export function StudentWithContractDialog({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200">
               <h3 className="font-bold text-blue-800 dark:text-blue-200 text-lg border-b border-blue-200 pb-2 mb-4">
-                1. {t("systemStudentInfo")}
+                1. {t("System Student Info")}
               </h3>
               {/* ... System inputs ... */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label>{t("lastName")} *</Label>
+                  <Label>{t("Last Name")} *</Label>
                   <Input
                     {...register("last_name", { required: true })}
-                    placeholder={t("lastName")}
+                    placeholder={t("Last Name")}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>{t("firstName")} *</Label>
+                  <Label>{t("First Name")} *</Label>
                   <Input
                     {...register("first_name", { required: true })}
-                    placeholder={t("firstName")}
+                    placeholder={t("First Name")}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>{t("middleName")}</Label>
+                  <Label>{t("Middle Name")}</Label>
                   <Input
                     {...register("middle_name")}
-                    placeholder={t("middleName")}
+                    placeholder={t("Middle Name")}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>{t("dateOfBirth")} *</Label>
+                  <Label>{t("Date Of Birth")} *</Label>
                   <Input
                     type="date"
                     {...register("date_of_birth", { required: true })}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>{t("phoneNumber")} *</Label>
+                  <Label>{t("Phone Number")} *</Label>
                   <Input
                     {...register("phone", {
                       required: true,
@@ -711,16 +711,16 @@ export function StudentWithContractDialog({
                   />
                 </div>
                 <div className="col-span-1 md:col-span-2 space-y-1">
-                  <Label>{t("address")}</Label>
-                  <Input {...register("address")} placeholder={t("address")} />
+                  <Label>{t("Address")}</Label>
+                  <Input {...register("address")} placeholder={t("Address")} />
                 </div>
                 <div className="space-y-1">
-                  <Label>{t("group")} *</Label>
+                  <Label>{t("Group")} *</Label>
                   <select
                     {...register("group_id", { required: true })}
                     className="h-10 w-full rounded-md border border-input bg-background px-3"
                   >
-                    <option value="">{t("selectGroupPlaceholder")}</option>
+                    <option value="">{t("Select Group Placeholder")}</option>
                     {groupsData?.data?.map((group: GroupRead) => (
                       <option key={group.id} value={String(group.id)}>
                         {group.name}
@@ -733,19 +733,19 @@ export function StudentWithContractDialog({
 
             <div className="space-y-4 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200">
               <h3 className="font-bold text-purple-800 dark:text-purple-200 text-lg border-b border-purple-200 pb-2 mb-4">
-                {t("traineeDocuments")}
+                {t("Trainee Documents")}
               </h3>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label>{t("certificateSeries")}</Label>
+                    <Label>{t("Certificate Series")}</Label>
                     <Input
                       {...register("tarbiyalanuvchi_birth_series_number")}
                       placeholder="I-AA 1234567"
                     />
                   </div>
                   <div>
-                    <Label>{t("birthYear")}</Label>
+                    <Label>{t("Birth Year")}</Label>
                     <Input
                       {...register("tarbiyalanuvchi_birth_year")}
                       placeholder="2012"
@@ -757,14 +757,14 @@ export function StudentWithContractDialog({
                   </div>
                 </div>
                 <div>
-                  <Label>{t("issuedDate")}</Label>
+                  <Label>{t("Issued Date")}</Label>
                   <Input
                     type="date"
                     {...register("tarbiyalanuvchi_when_give")}
                   />
                 </div>
                 <div>
-                  <Label>{t("issuedBy")}</Label>
+                  <Label>{t("Issued By")}</Label>
                   <Input
                     {...register("tarbiyalanuvchi_who_give")}
                     placeholder="FHDY nomi"
@@ -776,13 +776,13 @@ export function StudentWithContractDialog({
 
           <div className="space-y-4 p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200">
             <h3 className="font-bold text-green-800 dark:text-green-200 text-lg border-b border-green-200 pb-2 mb-4">
-              2. {t("contractInfoForPDF")}
+              2. {t("Contract Info For PDF")}
             </h3>
             {/* ... Contract inputs ... */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="col-span-1 md:col-span-2 space-y-1">
                 <Label className="text-green-700 font-semibold">
-                  {t("contractNumber")} *
+                  {t("Contract Number")} *
                 </Label>
                 <Input
                   {...register("contract_number", { required: true })}
@@ -790,13 +790,13 @@ export function StudentWithContractDialog({
                 />
                 {suggestedContractNumber && (
                   <p className="text-xs text-green-600 mt-1">
-                    {t("suggestion")}: {suggestedContractNumber}
+                    {t("Suggestion")}: {suggestedContractNumber}
                   </p>
                 )}
                 {availableNumbers.length > 0 && (
                   <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200">
                     <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">
-                      {t("availableNumbers")}:
+                      {t("Available Numbers")}:
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {availableNumbers.map((num) => {
@@ -813,7 +813,7 @@ export function StudentWithContractDialog({
                             onClick={() => {
                               setValue("contract_number", contractNumber);
                               toast.success(
-                                `${t("numberSelected")}: ${contractNumber}`,
+                                `${t("Number Selected")}: ${contractNumber}`,
                               );
                             }}
                             className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 border border-blue-300"
@@ -827,14 +827,14 @@ export function StudentWithContractDialog({
                 )}
               </div>
               <div className="space-y-1">
-                <Label>{t("studentFullName")} *</Label>
+                <Label>{t("Student Full Name")} *</Label>
                 <Input
                   {...register("student_fio", { required: true })}
                   placeholder="Ism Familiya Otasining ismi"
                 />
               </div>
               <div className="space-y-1">
-                <Label>{t("birthYear")} *</Label>
+                <Label>{t("Birth Year")} *</Label>
                 <Input
                   {...register("birth_year", { required: true })}
                   placeholder="2015"
@@ -842,7 +842,7 @@ export function StudentWithContractDialog({
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label>{t("studentAddress")} *</Label>
+                  <Label>{t("Student Address")} *</Label>
                   {primaryAddress && (
                     <button
                       type="button"
@@ -860,21 +860,21 @@ export function StudentWithContractDialog({
                 />
               </div>
               <div className="space-y-1">
-                <Label>{t("startDate")} *</Label>
+                <Label>{t("Start Date")} *</Label>
                 <Input
                   type="date"
                   {...register("contract_start_date", { required: true })}
                 />
               </div>
               <div className="space-y-1">
-                <Label>{t("endDate")} *</Label>
+                <Label>{t("End Date")} *</Label>
                 <Input
                   type="date"
                   {...register("contract_end_date", { required: true })}
                 />
               </div>
               <div className="space-y-1">
-                <Label>{t("monthlyFee")} (UZS) *</Label>
+                <Label>{t("Monthly Fee")} (UZS) *</Label>
                 <Input
                   type="number"
                   {...register("tolov_monthly_fee", { required: true })}
@@ -882,7 +882,7 @@ export function StudentWithContractDialog({
                 />
               </div>
               <div className="space-y-1">
-                <Label>{t("amountInWords")} *</Label>
+                <Label>{t("Amount In Words")} *</Label>
                 <Input
                   {...register("tolov_amount_in_words", { required: true })}
                   placeholder="саккиз юз минг"
@@ -894,21 +894,21 @@ export function StudentWithContractDialog({
               {/* Ota/Ona ma'lumotlari */}
               <div className="space-y-4 p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-green-100 shadow-sm">
                 <h4 className="font-bold text-gray-700 flex items-center gap-2">
-                  <UserPlus className="w-4 h-4" /> {t("fatherInfo")}
+                  <UserPlus className="w-4 h-4" /> {t("Father Info")}
                 </h4>
                 <div className="space-y-2">
-                  <Label>{t("fullName")}</Label>
+                  <Label>{t("Full Name")}</Label>
                   <Input {...register("dad_name")} placeholder="F.I.O" />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("occupation")}</Label>
+                  <Label>{t("Occupation")}</Label>
                   <Input
                     {...register("dad_occupation")}
                     placeholder="Ish joyi"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("phoneNumber")}</Label>
+                  <Label>{t("Phone Number")}</Label>
                   <Input
                     {...register("dad_phone", {
                       onChange: (e) => {
@@ -923,21 +923,21 @@ export function StudentWithContractDialog({
               </div>
               <div className="space-y-4 p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-green-100 shadow-sm">
                 <h4 className="font-bold text-gray-700 flex items-center gap-2">
-                  <UserPlus className="w-4 h-4" /> {t("motherInfo")}
+                  <UserPlus className="w-4 h-4" /> {t("Mother Info")}
                 </h4>
                 <div className="space-y-2">
-                  <Label>{t("fullName")}</Label>
+                  <Label>{t("Full Name")}</Label>
                   <Input {...register("mom_fio")} placeholder="F.I.O" />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("occupation")}</Label>
+                  <Label>{t("Occupation")}</Label>
                   <Input
                     {...register("mom_occupation")}
                     placeholder="Ish joyi"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("phoneNumber")}</Label>
+                  <Label>{t("Phone Number")}</Label>
                   <Input
                     {...register("mom_phone", {
                       onChange: (e) => {
@@ -955,11 +955,11 @@ export function StudentWithContractDialog({
             <div className="border-t border-green-200 pt-6 mt-4">
               <div className="space-y-3">
                 <h4 className="font-semibold mb-2 text-green-800">
-                  {t("customer")}
+                  {t("Customer")}
                 </h4>
                 <div className="space-y-2">
                   <div>
-                    <Label>{t("customerType")} *</Label>
+                    <Label>{t("Customer Type")} *</Label>
                     <select
                       value={customerType}
                       onChange={(e) =>
@@ -967,13 +967,13 @@ export function StudentWithContractDialog({
                       }
                       className="h-10 w-full rounded-md border border-input bg-background px-3"
                     >
-                      <option value="father">{t("father")}</option>
-                      <option value="mother">{t("mother")}</option>
-                      <option value="other">{t("other")}</option>
+                      <option value="father">{t("Father")}</option>
+                      <option value="mother">{t("Mother")}</option>
+                      <option value="other">{t("Other")}</option>
                     </select>
                   </div>
                   <div>
-                    <Label>{t("fullName")} *</Label>
+                    <Label>{t("Full Name")} *</Label>
                     <Input
                       {...register("buyurtmachi_fio", { required: true })}
                       readOnly={customerType !== "other"}
@@ -982,7 +982,7 @@ export function StudentWithContractDialog({
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>{t("passportSeries")} *</Label>
+                      <Label>{t("Passport Series")} *</Label>
                       <Input
                         {...register("buyurtmachi_passport_series_number", {
                           required: true,
@@ -991,7 +991,7 @@ export function StudentWithContractDialog({
                       />
                     </div>
                     <div>
-                      <Label>{t("phoneNumber")} *</Label>
+                      <Label>{t("Phone Number")} *</Label>
                       <Input
                         {...register("buyurtmachi_phone", { required: true })}
                         readOnly={customerType !== "other"}
@@ -1003,7 +1003,7 @@ export function StudentWithContractDialog({
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <Label>{t("address")}</Label>
+                      <Label>{t("Address")}</Label>
                       {primaryAddress && (
                         <button
                           type="button"
@@ -1022,11 +1022,11 @@ export function StudentWithContractDialog({
                     />
                   </div>
                   <div>
-                    <Label>{t("issuedDate")}</Label>
+                    <Label>{t("Issued Date")}</Label>
                     <Input type="date" {...register("buyurtmachi_when_give")} />
                   </div>
                   <div>
-                    <Label>{t("issuedBy")}</Label>
+                    <Label>{t("Issued By")}</Label>
                     <Input
                       {...register("buyurtmachi_who_give")}
                       placeholder="IIB nomi"
@@ -1039,7 +1039,7 @@ export function StudentWithContractDialog({
 
           <div className="space-y-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200">
             <h3 className="font-bold text-orange-800 dark:text-orange-200 text-lg border-b border-orange-200 pb-2 mb-4">
-              3. {t("documents")}
+              3. {t("Documents")}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
@@ -1100,7 +1100,7 @@ export function StudentWithContractDialog({
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              {t("cancel")}
+              {t("Cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting} className="w-40">
               {isSubmitting ? (
@@ -1108,7 +1108,7 @@ export function StudentWithContractDialog({
               ) : (
                 <UserPlus className="w-4 h-4 mr-2" />
               )}
-              {t("create")}
+              {t("Create")}
             </Button>
           </div>
         </form>
@@ -1119,7 +1119,7 @@ export function StudentWithContractDialog({
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                  {t("creatingContract")}
+                  {t("Creating Contract")}
                 </h3>
                 <span className="text-2xl font-bold text-primary">
                   {Math.round(loadingProgress)}%
@@ -1178,7 +1178,7 @@ export function StudentWithContractDialog({
               </div>
               <div className="mt-8 text-center">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t("pleaseWaitDoNotClose")}
+                  {t("Please Wait Do Not Close")}
                 </p>
               </div>
             </div>
@@ -1195,10 +1195,10 @@ export function StudentWithContractDialog({
                 </div>
               </div>
               <h3 className="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-3">
-                {t("contractCreatedSuccess")}
+                {t("Contract Created Success")}
               </h3>
               <p className="text-center text-gray-600 dark:text-gray-400 mb-4">
-                {t("successfullySaved")}
+                {t("Successfully Saved")}
               </p>
 
               {/* Action Buttons */}
@@ -1221,7 +1221,7 @@ export function StudentWithContractDialog({
                   className="w-full"
                   size="lg"
                 >
-                  {t("close")}
+                  {t("Close")}
                 </Button>
               </div>
             </div>

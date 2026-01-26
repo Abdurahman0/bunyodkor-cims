@@ -74,14 +74,14 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
         variant="outline"
         className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200 dark:border-emerald-800"
       >
-        {t("active")}
+        {t("Active")}
       </Badge>
     ) : (
       <Badge
         variant="outline"
         className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-200 dark:border-red-800"
       >
-        {t("inactive")}
+        {t("Inactive")}
       </Badge>
     );
   };
@@ -116,7 +116,7 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
                 <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-medium">
                   #{user.id}
                 </span>
-                <span>{t("userDetails")}</span>
+                <span>{t("User Details")}</span>
               </CardDescription>
             </div>
           </div>
@@ -138,20 +138,20 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
         {/* Asosiy ma'lumotlar */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-            <User className="w-4 h-4" /> {t("basicInformation")}
+            <User className="w-4 h-4" /> {t("Basic Information")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem
               icon={User}
-              label={t("fullName")}
+              label={t("Full Name")}
               value={user.full_name}
             />
-            <InfoItem icon={Mail} label={t("email")} value={user.email} />
-            <InfoItem icon={Phone} label={t("phone")} value={user.phone} />
+            <InfoItem icon={Mail} label={t("Email")} value={user.email} />
+            <InfoItem icon={Phone} label={t("Phone")} value={user.phone} />
             <InfoItem
               icon={UserCheck}
-              label={t("status")}
-              value={t(user.status)}
+              label={t("Status")}
+              value={t(user.status.charAt(0).toUpperCase() + user.status.slice(1))}
               badge={getStatusBadge(user.status)}
             />
           </div>
@@ -162,12 +162,12 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
         {/* Xavfsizlik va Tizim */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-            <Shield className="w-4 h-4" /> {t("securityAndSystem")}
+            <Shield className="w-4 h-4" /> {t("Security And System")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem
               icon={Shield}
-              label={t("role")}
+              label={t("Role")}
               value={
                 user.roles && user.roles.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
@@ -183,15 +183,15 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
                   </div>
                 ) : (
                   <span className="text-muted-foreground italic text-sm">
-                    {t("noRole")}
+                    {t("No Role")}
                   </span>
                 )
               }
             />
             <InfoItem
               icon={KeyRound}
-              label={t("superAdmin")}
-              value={user.is_super_admin ? t("yes") : t("no")}
+              label={t("Super Admin")}
+              value={user.is_super_admin ? t("Yes") : t("No")}
               badge={
                 user.is_super_admin && (
                   <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 hover:bg-amber-500/20 border-0 px-2">
@@ -202,12 +202,12 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
             />
             <InfoItem
               icon={Hash}
-              label={t("userId")}
+              label={t("User Id")}
               value={`ID: ${user.id}`}
             />
             <InfoItem
               icon={Calendar}
-              label={t("createdAt")}
+              label={t("Created At")}
               value={format(new Date(user.created_at), "dd MMM yyyy, HH:mm")}
             />
           </div>
