@@ -348,6 +348,7 @@ export default function StudentDetailPage() {
     );
     try {
       // API chaqiruvi
+      // API chaqiruvi
       const blob = await contractService.viewContractPdf(contractId);
       toast.dismiss(toastId);
 
@@ -355,7 +356,6 @@ export default function StudentDetailPage() {
         const fileURL = window.URL.createObjectURL(
           new Blob([blob], { type: "application/pdf" }),
         );
-        window.open(fileURL, "_blank");
       } else {
         toast.error(t("pdfLinkNotFound") || "PDF topilmadi");
       }
