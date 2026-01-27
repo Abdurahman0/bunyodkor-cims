@@ -8,7 +8,7 @@ import {
 import type { GroupRead } from "@/types/api";
 import { useQuery } from "@tanstack/react-query";
 import { groupService } from "@/services/api.service";
-import { Loader2, Users, Search, Filter } from "lucide-react"; // Ikonkalar qo'shildi
+import { Loader2, Users, Search, Filter, Download } from "lucide-react"; // Ikonkalar qo'shildi
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { useLanguageStore } from "@/store/languageStore";
 import { Button } from "@/components/ui/button"; // Button kerak bo'lishi mumkin
 import { Input } from "@/components/ui/input"; // Qidiruv uchun
+import toast from "react-hot-toast";
 
 interface GroupDetailsDialogProps {
   open: boolean;
@@ -87,6 +88,36 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
     );
   };
 
+  const handleExport = async () => {
+    if (!group) return;
+    const toastId = toast.loading(t("exportingData") || "Exporting data...");
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(
+        `${baseUrl}/groups/${group.id}/export-students`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) throw new Error("Export failed");
+
+      const data = await response.json();
+      if (typeof data === "string") {
+        window.open(data, "_blank");
+      }
+      toast.success(t("exportedSuccessfully") || "Exported successfully", {
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(t("errorExportingData") || "Export failed", { id: toastId });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* max-w-5xl - oynani kengroq qildik, p-0 - ichki paddingni o'zimiz boshqaramiz */}
@@ -110,7 +141,15 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
               </p>
             </div>
           </div>
-          {/* Agar kerak bo'lsa bu yerga qo'shimcha action buttonlar qo'ysa bo'ladi */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            {t("export") || "Export"}
+          </Button>
         </DialogHeader>
 
         <div className="p-6 bg-card">
