@@ -212,7 +212,7 @@ export const userService = {
    * Get all coaches (users with Coach role)
    * GET /users/coaches
    */
-  getCoaches: async (): Promise<ApiResponse<UserWithGroups[]>> => {
+  getCoaches: async (p0: {}): Promise<ApiResponse<UserWithGroups[]>> => {
     const response =
       await apiClient.get<ApiResponse<UserWithGroups[]>>("/users/coaches");
     return response.data;

@@ -1,3 +1,6 @@
+/* eslint-disable no-prototype-builtins */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -83,18 +86,37 @@ export default function Dashboard() {
 
   const { data: revenueTransactionsData } = useQuery({
     queryKey: ["revenue-transactions"],
-    queryFn: () => {
+    queryFn: async () => {
       const today = format(new Date(), "yyyy-MM-dd");
       const weekAgo = format(
         new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         "yyyy-MM-dd"
       );
-      return transactionService.getTransactions({
-        from_date: weekAgo,
-        to_date: today,
-        page: 1,
-        page_size: 1000,
-      });
+      
+      let allTransactions: TransactionRead[] = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await transactionService.getTransactions({
+          from_date: weekAgo,
+          to_date: today,
+          page: page,
+          page_size: 100,
+        });
+
+        if (response.data && response.data.length > 0) {
+          allTransactions = [...allTransactions, ...response.data];
+          if (response.meta && page < response.meta.total_pages) {
+            page++;
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      return { data: allTransactions };
     },
   });
 
@@ -207,7 +229,7 @@ export default function Dashboard() {
     })) || [];
 
   // Process revenue data from transactions (last 7 days)
-  const revenueData = (() => {
+  const revenueData = useMemo(() => {
     const transactions = revenueTransactionsData?.data || [];
     const dailyRevenue: { [key: string]: number } = {};
 
@@ -232,11 +254,11 @@ export default function Dashboard() {
     });
 
     // Convert to chart format
-    return Object.entries(dailyRevenue).map(([date, value]) => ({
+    return Object.keys(dailyRevenue).sort().map((date) => ({
       label: format(new Date(date), "EEE"),
-      value: value,
+      value: dailyRevenue[date],
     }));
-  })();
+  }, [revenueTransactionsData]);
 
   // Attendance data - using group attendance reports for aggregate data
   const { data: groupAttendanceData } = useQuery({

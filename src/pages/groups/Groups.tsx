@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -41,6 +42,7 @@ import {
   FileText,
   CreditCard,
   TrendingUp,
+  Download,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -437,6 +439,37 @@ export default function Groups() {
     setSearch("");
   };
 
+  const handleExportGroupStudents = async () => {
+    if (!selectedGroupForContracts) return;
+    const group = selectedGroupForContracts;
+    const toastId = toast.loading(t("exportingData") || "Exporting data...");
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl = import.meta.env.VITE_API_URL || "";
+
+      const response = await fetch(
+        `${baseUrl}/groups/${group.id}/export-students`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) throw new Error("Export failed");
+
+      const data = await response.json();
+      if (typeof data === "string") {
+        window.open(data, "_blank");
+      }
+      toast.success(t("exportedSuccessfully") || "Exported successfully", {
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(t("errorExportingData") || "Export failed", { id: toastId });
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <motion.div
@@ -790,11 +823,22 @@ export default function Groups() {
           className="max-w-5xl max-h-[80vh] overflow-y-auto"
           onClose={() => setIsContractsDialogOpen(false)}
         >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              {selectedGroupForContracts?.name} - {t("contracts")}
-            </DialogTitle>
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                {selectedGroupForContracts?.name} - {t("contracts")}
+              </DialogTitle>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportGroupStudents}
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              {t("export") || "Export"}
+            </Button>
           </DialogHeader>
 
           <div className="mt-4">

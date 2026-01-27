@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FC } from "react";
 import {
   Dialog,
@@ -93,7 +95,7 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
     const toastId = toast.loading(t("exportingData") || "Exporting data...");
     try {
       const token = localStorage.getItem("token");
-      const baseUrl = import.meta.env.VITE_API_URL;
+      const baseUrl = import.meta.env.VITE_API_URL || "";
 
       const response = await fetch(
         `${baseUrl}/groups/${group.id}/export-students`,
