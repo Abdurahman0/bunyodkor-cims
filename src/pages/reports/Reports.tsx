@@ -187,7 +187,8 @@ export default function Reports() {
   // Helper to get Group Name by ID
   const getGroupName = (groupId: number | undefined) => {
     if (!groupId) return "N/A";
-    const group = groupsList.find((g: any) => g.id === groupId);
+    // Use loose equality to handle string/number mismatches
+    const group = groupsList.find((g: any) => g.id == groupId);
     return group ? group.name : "N/A";
   };
 
@@ -745,7 +746,7 @@ export default function Reports() {
                       {t("group")}
                     </label>
                     <select
-                      value={selectedGroupId ? String(selectedGroupId) : ""}
+                      value={selectedGroupId || ""}
                       onChange={(e) => {
                         setSelectedGroupId(
                           e.target.value ? Number(e.target.value) : null,

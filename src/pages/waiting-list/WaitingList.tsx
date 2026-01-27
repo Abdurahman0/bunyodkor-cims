@@ -347,6 +347,8 @@ export default function WaitingList() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         entry={selectedEntry}
+        // @ts-ignore - Passing groups prop even if type definition might be missing in local file
+        groups={groupsData?.data || []}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
         }}

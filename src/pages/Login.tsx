@@ -1,70 +1,76 @@
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import { authService } from '@/services/api.service'
-import { useAuthStore } from '@/store/authStore'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { motion } from 'framer-motion'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { authService } from "@/services/api.service";
+import { useAuthStore } from "@/store/authStore";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from "lucide-react";
+import toast from "react-hot-toast";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { useLanguageStore } from '@/store/languageStore'
-import type { CurrentUserResponse, LoginRequest } from '@/types/api'
+import { useLanguageStore } from "@/store/languageStore";
+import type { CurrentUserResponse, LoginRequest } from "@/types/api";
 
 export default function Login() {
-  const { t } = useLanguageStore()
-  const navigate = useNavigate()
-  const setAuth = useAuthStore((state) => state.setAuth)
-  const [showPassword, setShowPassword] = useState(false)
+  const { t } = useLanguageStore();
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginRequest>()
+  } = useForm<LoginRequest>();
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginRequest) => {
       // 1. Login to get the token
-      const tokenResponse = await authService.login(data)
-      const token = tokenResponse.access_token
-      const refreshToken = tokenResponse.refresh_token
+      const tokenResponse = await authService.login(data);
+      const token = tokenResponse.access_token;
+      const refreshToken = tokenResponse.refresh_token;
 
       // 2. Get User Info using the new token
-      const userRes = await apiClient.get<CurrentUserResponse>('/auth/me', {
+      const userRes = await apiClient.get<CurrentUserResponse>("/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
-      })
+      });
 
       return {
         token,
         refreshToken,
         user: userRes.data.user,
         permissions: userRes.data.permissions,
-      }
+      };
     },
     onSuccess: (data) => {
-      setAuth(data.token, data.refreshToken, data.user, data.permissions)
-      toast.success(`${t('welcomeBack')}, ${data.user.full_name}!`, {
-        icon: '👋',
+      setAuth(data.token, data.refreshToken, data.user, data.permissions);
+      toast.success(`${t("welcomeBack")}, ${data.user.full_name}!`, {
+        icon: "👋",
         duration: 3000,
-      })
-      navigate('/')
+      });
+      navigate("/");
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Noto\'g\'ri ma\'lumotlar'
-      toast.error(message, { duration: 4000 })
+      const message = error.response?.data?.detail || "Noto'g'ri ma'lumotlar";
+      toast.error(message, { duration: 4000 });
     },
-  })
+  });
 
   const onSubmit = (data: LoginRequest) => {
-    loginMutation.mutate(data)
-  }
+    loginMutation.mutate(data);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
@@ -78,7 +84,7 @@ export default function Login() {
         transition={{
           duration: 20,
           repeat: Infinity,
-          ease: 'easeInOut',
+          ease: "easeInOut",
         }}
       />
       <motion.div
@@ -90,7 +96,7 @@ export default function Login() {
         transition={{
           duration: 15,
           repeat: Infinity,
-          ease: 'easeInOut',
+          ease: "easeInOut",
         }}
       />
 
@@ -107,21 +113,25 @@ export default function Login() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{
-                type: 'spring',
+                type: "spring",
                 stiffness: 260,
                 damping: 20,
                 delay: 0.2,
               }}
               className="mx-auto"
             >
-              <img src="/logo.png" alt="Bunyodkor" className="w-20 h-20 object-contain" />
+              <img
+                src="/logo.png"
+                alt="Bunyodkor"
+                className="w-20 h-20 object-contain"
+              />
             </motion.div>
 
             <CardTitle className="text-3xl text-center font-bold bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
-              {t('systemName')}
+              {t("systemName")}
             </CardTitle>
             <CardDescription className="text-center text-base">
-              {t('systemDescription')}
+              {t("systemDescription")}
             </CardDescription>
           </CardHeader>
 
@@ -135,16 +145,16 @@ export default function Login() {
                 className="space-y-2"
               >
                 <Label htmlFor="phone_or_email" className="text-sm font-medium">
-                  {t('emailOrPhone')}
+                  {t("emailOrPhone")}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="phone_or_email"
-                    placeholder={t('emailOrPhonePlaceholder')}
+                    placeholder={t("emailOrPhonePlaceholder")}
                     className="pl-10 h-11"
-                    {...register('phone_or_email', {
-                      required: t('emailOrPhoneRequired'),
+                    {...register("phone_or_email", {
+                      required: t("emailOrPhoneRequired"),
                     })}
                   />
                 </div>
@@ -167,7 +177,7 @@ export default function Login() {
                 className="space-y-2"
               >
                 <Label htmlFor="password" className="text-sm font-medium">
-                  {t('password')}
+                  {t("password")}
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -176,11 +186,11 @@ export default function Login() {
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     className="pl-10 pr-10 h-11"
-                    {...register('password', {
-                      required: t('passwordRequired'),
+                    {...register("password", {
+                      required: t("passwordRequired"),
                       minLength: {
                         value: 6,
-                        message: t('passwordMinLength'),
+                        message: t("passwordMinLength"),
                       },
                     })}
                   />
@@ -222,39 +232,23 @@ export default function Login() {
                     <div className="flex items-center gap-2">
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                         className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       />
-                      {t('loggingIn')}
+                      {t("loggingIn")}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <LogIn className="w-4 h-4" />
-                      {t('login')}
+                      {t("login")}
                     </div>
                   )}
                 </Button>
               </motion.div>
-
-              {/* Mock API Info */}
-              {import.meta.env.VITE_USE_MOCK_API === 'true' && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg"
-                >
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                    🔵 {t('mockApiActive')}
-                  </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">{t('testData')}</p>
-                  <div className="text-xs font-mono space-y-1 text-blue-800 dark:text-blue-200">
-                    <p>admin@bunyodkor.uz / admin123</p>
-                    <p>teacher@bunyodkor.uz / teacher123</p>
-                    <p>manager@bunyodkor.uz / manager123</p>
-                  </div>
-                </motion.div>
-              )}
             </form>
           </CardContent>
         </Card>
@@ -266,9 +260,9 @@ export default function Login() {
           transition={{ delay: 0.7 }}
           className="text-center text-sm text-muted-foreground mt-6"
         >
-          {t('copyright')}
+          {t("copyright")}
         </motion.p>
       </motion.div>
     </div>
-  )
+  );
 }

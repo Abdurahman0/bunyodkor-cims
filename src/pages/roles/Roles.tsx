@@ -29,6 +29,7 @@ import type { RoleWithPermissions } from "@/types/api";
 import toast from "react-hot-toast";
 import RoleDialog from "./RoleDialog";
 import { useLanguageStore } from "@/store/languageStore";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const Roles = () => {
   const { t } = useLanguageStore();
@@ -41,14 +42,16 @@ const Roles = () => {
     null
   );
 
+  const debouncedSearch = useDebounce(search, 500);
+
   // Fetch roles
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["roles", page, search],
+    queryKey: ["roles", page, debouncedSearch],
     queryFn: () => {
       const params = {
         page,
         page_size: 10,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
       };
       return roleService.getRoles(params);
     },

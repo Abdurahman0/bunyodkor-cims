@@ -53,19 +53,19 @@ export default function Finance() {
   const { t } = useLanguageStore();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [studentIdFilter, setStudentIdFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [sourceFilter, setSourceFilter] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const debouncedStudentIdFilter = useDebounce(studentIdFilter, 500);
+  const debouncedSearch = useDebounce(search, 500);
 
   const { data, isLoading } = useQuery({
     queryKey: [
       "transactions-with-name",
       page,
-      debouncedStudentIdFilter,
+      debouncedSearch,
       statusFilter,
       sourceFilter,
     ],
@@ -73,9 +73,7 @@ export default function Finance() {
       transactionService.getTransactionsWithName({
         page,
         page_size: 10,
-        student_id: debouncedStudentIdFilter
-          ? parseInt(debouncedStudentIdFilter, 10)
-          : undefined,
+        search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         source: sourceFilter || undefined,
       }),
@@ -206,12 +204,12 @@ export default function Finance() {
   });
 
   const clearFilters = () => {
-    setStudentIdFilter("");
+    setSearch("");
     setStatusFilter("");
     setSourceFilter("");
   };
 
-  const hasActiveFilters = studentIdFilter || statusFilter || sourceFilter;
+  const hasActiveFilters = search || statusFilter || sourceFilter;
 
   const handleExport = async () => {
     try {
@@ -221,7 +219,7 @@ export default function Finance() {
 
       while (pageNum <= totalPages) {
         const params: any = { page: pageNum, page_size: 100 };
-        if (studentIdFilter) params.student_id = parseInt(studentIdFilter, 10);
+        if (search) params.search = search;
         if (statusFilter) params.status = statusFilter;
         if (sourceFilter) params.source = sourceFilter;
 
@@ -420,9 +418,9 @@ export default function Finance() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder={t("searchByStudentId")}
-                  value={studentIdFilter}
-                  onChange={(e) => setStudentIdFilter(e.target.value)}
+                  placeholder={t("searchByStudentId") || "Search by name..."}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -448,8 +446,6 @@ export default function Finance() {
                   <option value="payme">Payme</option>
                   <option value="click">Click</option>
                   <option value="bank">{t("bank")}</option>
-                  <option value="cash">{t("cash")}</option>
-                  <option value="manual">{t("manual")}</option>
                 </Select>
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>

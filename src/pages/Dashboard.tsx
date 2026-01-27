@@ -84,11 +84,16 @@ export default function Dashboard() {
   const { data: revenueTransactionsData } = useQuery({
     queryKey: ["revenue-transactions"],
     queryFn: () => {
-      // Fetch recent transactions without date filters to avoid 422 validation errors
-      // The backend seems to have strict validation on datetime parameters
+      const today = format(new Date(), "yyyy-MM-dd");
+      const weekAgo = format(
+        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        "yyyy-MM-dd"
+      );
       return transactionService.getTransactions({
+        from_date: weekAgo,
+        to_date: today,
         page: 1,
-        page_size: 100, // Get last 100 transactions
+        page_size: 1000,
       });
     },
   });

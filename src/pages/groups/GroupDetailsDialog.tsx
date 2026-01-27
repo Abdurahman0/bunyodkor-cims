@@ -105,8 +105,8 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
                 {group?.name}
               </DialogTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                {t("Students") || "Students"} • {studentsData?.length || 0}{" "}
-                {t("Total") || "total"}
+                {t("students") || "Students"} • {studentsData?.length || 0}{" "}
+                {t("total") || "total"}
               </p>
             </div>
           </div>
@@ -120,14 +120,14 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder={t("Search Student") || "Search students..."}
+                placeholder={t("searchStudent") || "Search students..."}
                 className="pl-9 h-9 bg-muted/50 border-none shadow-none focus-visible:ring-1"
               />
             </div>
             <Button variant="outline" size="sm" className="h-9 gap-2">
               <Filter className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">
-                {t("Filter") || "Filter"}
+                {t("filter") || "Filter"}
               </span>
             </Button>
           </div>
@@ -136,7 +136,7 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
             <div className="flex flex-col items-center justify-center py-16 space-y-4">
               <Loader2 className="w-10 h-10 animate-spin text-primary/60" />
               <p className="text-sm text-muted-foreground animate-pulse">
-                {t("Loading Data") || "Yuklanmoqda..."}
+                {t("loading") || "Yuklanmoqda..."}
               </p>
             </div>
           ) : studentsData && studentsData.length > 0 ? (
@@ -147,19 +147,19 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
                   <TableHeader className="sticky top-0 bg-muted/50 z-10 backdrop-blur-sm">
                     <TableRow className="hover:bg-transparent border-b border-border/60">
                       <TableHead className="w-[300px] py-4 pl-6 font-semibold text-foreground/70">
-                        {t("Student") || "Student"}
+                        {t("student") || "Student"}
                       </TableHead>
                       <TableHead className="font-semibold text-foreground/70">
-                        {t("Phone") || "Phone"}
+                        {t("phone") || "Phone"}
                       </TableHead>
                       <TableHead className="hidden sm:table-cell font-semibold text-foreground/70">
-                        {t("Birth Year") || "Birth Year"}
+                        {t("birthYear") || "Birth Year"}
                       </TableHead>
                       <TableHead className="hidden md:table-cell font-semibold text-foreground/70">
-                        {t("Address") || "Address"}
+                        {t("address") || "Address"}
                       </TableHead>
                       <TableHead className="text-right pr-6 font-semibold text-foreground/70">
-                        {t("Status") || "Status"}
+                        {t("status") || "Status"}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -220,10 +220,10 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
                 <Users className="w-8 h-8 text-muted-foreground/50" />
               </div>
               <h3 className="text-lg font-medium text-foreground">
-                {t("No Students Found") || "No Students Found"}
+                {t("noStudentsFound") || "No Students Found"}
               </h3>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-1">
-                {t("No Students In Group") ||
+                {t("noStudentsInGroup") ||
                   "This group currently has no students enrolled."}
               </p>
             </div>

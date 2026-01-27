@@ -207,6 +207,7 @@ export default function Contracts() {
   //     deleteMutation.mutate(contract.id);
   //   }
   // };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleStudentClick = async (e: React.MouseEvent, contract: any) => {
     e.stopPropagation();
 
@@ -509,7 +510,7 @@ export default function Contracts() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      {t("filteringByGroup") || "Guruh bo'yicha filtrlangan"}
+                      {t("filteringByGroup")}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {groupData.data.name}
@@ -523,7 +524,7 @@ export default function Contracts() {
                   className="text-muted-foreground"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  {t("clearFilter") || "Filtrni tozalash"}
+                  {t("clearFilter")}
                 </Button>
               </div>
             </CardContent>
@@ -545,7 +546,7 @@ export default function Contracts() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">
-                {t("contractsLoading") || "Shartnomalar yuklanmoqda..."}
+                {t("contractsLoading")}
               </span>
             </div>
           ) : (

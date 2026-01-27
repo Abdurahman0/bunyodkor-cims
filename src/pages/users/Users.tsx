@@ -35,6 +35,7 @@ import toast from "react-hot-toast";
 import UserDialog from "./UserDialog";
 import { UserDetailsCard } from "./UserDetailsCard";
 import { useLanguageStore } from "@/store/languageStore";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const Users = () => {
   const { t } = useLanguageStore();
@@ -48,6 +49,8 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<UserRead | null>(null);
   const [selectedUserForCard, setSelectedUserForCard] = useState<UserRead | null>(null);
 
+  const debouncedSearch = useDebounce(search, 500);
+
   // Fetch roles for filter
   const { data: rolesData } = useQuery({
     queryKey: ["roles"],
@@ -56,12 +59,12 @@ const Users = () => {
 
   // Fetch users
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["users", page, search, status, roleId],
+    queryKey: ["users", page, debouncedSearch, status, roleId],
     queryFn: () => {
       const params = {
         page,
         page_size: 10,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         status: status === "all" ? undefined : status,
         role_id: roleId === "all" ? undefined : parseInt(roleId, 10),
       };

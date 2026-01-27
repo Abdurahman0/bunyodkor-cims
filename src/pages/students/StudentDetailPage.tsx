@@ -169,7 +169,7 @@ export default function StudentDetailPage() {
         queryKey: ["student-full-info", studentId],
       });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      toast.success(t("pdfReplacedSuccess") || "Contract PDF updated");
+      toast.success(t("pdfReplacedSuccess") || "Shartnoma PDF yangilandi");
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
@@ -936,7 +936,7 @@ export default function StudentDetailPage() {
                             <RefreshCw
                               className={`w-4 h-4 mr-2 ${updatePdfMutation.isPending ? "animate-spin" : ""}`}
                             />
-                            {t("replaceContractPdf") || "Shartnomani yangilash"}
+                            {t("replaceContractPdf")}
                           </Button>
                           <Button
                             variant="outline"
@@ -1170,7 +1170,7 @@ export default function StudentDetailPage() {
                       monthly_fee: Number(e.target.value),
                     })
                   }
-                  className="w-full border rounded px-3 py-2 mt-1"
+                  className="w-full border rounded px-3 py-2 mt-1 bg-background text-foreground"
                 />
               </div>
               <div className="flex gap-2">
@@ -1227,7 +1227,7 @@ export default function StudentDetailPage() {
                   min={1}
                   value={String(monthlyFeeValue)}
                   onChange={(e) => setMonthlyFeeValue(Number(e.target.value))}
-                  className="w-full border rounded px-3 py-2 mt-1"
+                  className="w-full border rounded px-3 py-2 mt-1 bg-background text-foreground"
                   placeholder="e.g. 500000"
                 />
               </div>
@@ -1278,11 +1278,10 @@ export default function StudentDetailPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {t("replaceContractPdf") || "Shartnomani yangilash"}
+              {t("replaceContractPdf")}
             </DialogTitle>
             <DialogDescription>
-              {t("replaceContractPdfDescription") ||
-                `"${contracts.find((c) => c.id === selectedContractId)?.contract_number}" raqamli shartnoma uchun yangi PDF faylni yuklang.`}
+              {t("replaceContractPdfDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 p-6">
@@ -1326,16 +1325,16 @@ export default function StudentDetailPage() {
                 <div className="flex flex-col items-center text-center text-muted-foreground">
                   <UploadCloud className="w-12 h-12 mb-2" />
                   <p className="font-bold">
-                    {t("dragAndDropOrClick") || "Faylni tashlang yoki bosing"}
+                    {t("dragAndDropOrClick")}
                   </p>
                   <p className="text-sm">
-                    {t("pdfOnlyUpTo10MB") || "Faqat PDF (maks 10MB)"}
+                    {t("pdfOnlyUpTo10MB")}
                   </p>
                 </div>
               )}
             </div>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pb-6 pr-6">
             <Button
               variant="outline"
               onClick={closeReplaceDialog}
@@ -1350,7 +1349,7 @@ export default function StudentDetailPage() {
               {updatePdfMutation.isPending && (
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
               )}
-              {t("upload") || "Yuklash"}
+              {t("upload")}
             </Button>
           </div>
         </DialogContent>
