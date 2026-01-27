@@ -54,6 +54,26 @@ export default function WaitingList() {
   const { data: groupsData } = useQuery({
     queryKey: ["groups-list"],
     queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
+    queryKey: ["groups-list-all"],
+    queryFn: async () => {
+      let allGroups: GroupRead[] = [];
+      let currentPage = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const response = await groupService.getGroups({ page: currentPage, page_size: 100 });
+        if (response.data && response.data.length > 0) {
+          allGroups = [...allGroups, ...response.data];
+          if (response.meta && currentPage < response.meta.total_pages) {
+            currentPage++;
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      return { data: allGroups };
+    },
   });
 
   const deleteMutation = useMutation({

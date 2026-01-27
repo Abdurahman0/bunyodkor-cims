@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -50,6 +50,10 @@ const Users = () => {
   const [selectedUserForCard, setSelectedUserForCard] = useState<UserRead | null>(null);
 
   const debouncedSearch = useDebounce(search, 500);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, status, roleId]);
 
   // Fetch roles for filter
   const { data: rolesData } = useQuery({

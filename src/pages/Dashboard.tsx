@@ -212,10 +212,11 @@ export default function Dashboard() {
     const dailyRevenue: { [key: string]: number } = {};
 
     // Initialize last 7 days with 0
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const today = new Date();
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-      const dateKey = format(date, "yyyy-MM-dd");
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateKey = format(d, "yyyy-MM-dd");
       dailyRevenue[dateKey] = 0;
     }
 
@@ -223,12 +224,9 @@ export default function Dashboard() {
     transactions.forEach((tx: TransactionRead) => {
       if (tx.paid_at && tx.status === "success") {
         const txDate = new Date(tx.paid_at);
-        // Only count if within last 7 days
-        if (txDate >= sevenDaysAgo) {
-          const dateKey = format(txDate, "yyyy-MM-dd");
-          if (dailyRevenue.hasOwnProperty(dateKey)) {
-            dailyRevenue[dateKey] += tx.amount;
-          }
+        const dateKey = format(txDate, "yyyy-MM-dd");
+        if (dailyRevenue.hasOwnProperty(dateKey)) {
+          dailyRevenue[dateKey] += tx.amount;
         }
       }
     });

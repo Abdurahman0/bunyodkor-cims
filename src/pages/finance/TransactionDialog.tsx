@@ -116,7 +116,7 @@ export function TransactionDialog({
   } = useForm<TransactionFormData>({
     defaultValues: {
       amount: 0,
-      source: "cash",
+      source: "bank",
       contract_number: "",
       payment_year: new Date().getFullYear(),
       payment_months: "",
@@ -334,11 +334,9 @@ export function TransactionDialog({
           <div className="space-y-1">
             <Label htmlFor="source">{t("Payment Source")}</Label>
             <Select id="source" {...register("source")}>
-              <option value="cash">{t("Cash")}</option>
               <option value="bank">{t("Bank Transfer")}</option>
               <option value="payme">Payme</option>
               <option value="click">Click</option>
-              <option value="manual">{t("Manual")}</option>
             </Select>
           </div>
 

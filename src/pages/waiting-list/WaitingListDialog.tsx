@@ -65,18 +65,37 @@ export function WaitingListDialog({
   const selectedGroupId = watch("group_id");
 
   // Get groups list
-  const { data: groupsData } = useQuery({
-    queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
+  const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
+    queryKey: ["groups-list-all"],
+    queryFn: async () => {
+      let allGroups: GroupRead[] = [];
+      let currentPage = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const response = await groupService.getGroups({
+          page: currentPage,
+          page_size: 100,
+        });
+        if (response.data && response.data.length > 0) {
+          allGroups = [...allGroups, ...response.data];
+          if (response.meta && currentPage < response.meta.total_pages) {
+            currentPage++;
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      return { data: allGroups };
+    },
     enabled: open,
   });
 
   // Normalize groups data
   const groupsList: GroupRead[] = useMemo(() => {
-    if (Array.isArray(groupsData?.data)) return groupsData.data;
-    if (Array.isArray((groupsData as any)?.data?.data))
-      return (groupsData as any).data.data;
-    return [];
+    if (!groupsData?.data) return [];
+    return groupsData.data;
   }, [groupsData]);
 
   // Get selected group's capacity for validation
@@ -414,11 +433,15 @@ export function WaitingListDialog({
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">{t("selectGroup") || "Select group"}</option>
-                {groupsList.map((group: GroupRead) => (
-                  <option key={group.id} value={String(group.id)}>
-                    {group.name}
-                  </option>
-                ))}
+                {isLoadingGroups ? (
+                  <option disabled>{t("loading") || "Loading..."}</option>
+                ) : (
+                  groupsList.map((group: GroupRead) => (
+                    <option key={group.id} value={String(group.id)}>
+                      {group.name}
+                    </option>
+                  ))
+                )}
               </select>
               {errors.group_id && (
                 <p className="text-sm text-red-500">
