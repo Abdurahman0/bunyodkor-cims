@@ -446,10 +446,9 @@ export default function Groups() {
     try {
       const token = localStorage.getItem("token");
       const baseUrl = import.meta.env.VITE_API_URL || "";
+      const url = `${baseUrl}/groups/${group.id}/export-students?_t=${new Date().getTime()}`;
 
-      const response = await fetch(
-        `${baseUrl}/groups/${group.id}/export-students`,
-        {
+      const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -458,6 +457,11 @@ export default function Groups() {
 
       if (!response.ok) throw new Error("Export failed");
 
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        throw new Error("API configuration error: Endpoint returned HTML");
+      }
+
       const data = await response.json();
       if (typeof data === "string") {
         window.open(data, "_blank");
@@ -465,8 +469,9 @@ export default function Groups() {
       toast.success(t("exportedSuccessfully") || "Exported successfully", {
         id: toastId,
       });
-    } catch (error) {
-      toast.error(t("errorExportingData") || "Export failed", { id: toastId });
+    } catch (error: any) {
+      console.error("Export error:", error);
+      toast.error(error.message || t("errorExportingData") || "Export failed", { id: toastId });
     }
   };
 
