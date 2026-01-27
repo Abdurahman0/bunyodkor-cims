@@ -95,7 +95,11 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
     const toastId = toast.loading(t("exportingData") || "Exporting data...");
     try {
       const token = localStorage.getItem("token");
-      const baseUrl = import.meta.env.VITE_API_URL || "";
+      let baseUrl = import.meta.env.VITE_API_URL;
+      if (!baseUrl) {
+        baseUrl = "/api/v1";
+      }
+      baseUrl = baseUrl.replace(/\/$/, "");
       const url = `${baseUrl}/groups/${group.id}/export-students?_t=${new Date().getTime()}`;
 
       const response = await fetch(url, {
@@ -109,7 +113,7 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
 
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("text/html")) {
-        throw new Error("API configuration error: Endpoint returned HTML");
+        throw new Error("API xatosi: Server HTML qaytardi. API URL noto'g'ri bo'lishi mumkin.");
       }
 
       const data = await response.json();
