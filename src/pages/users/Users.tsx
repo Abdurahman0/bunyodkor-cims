@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -52,6 +53,90 @@ const Users = () => {
 
   const debouncedSearch = useDebounce(search, 500);
 
+  // Helper for Cyrillic to Latin
+  const cyrillicToLatin = (text: string) => {
+    const map: Record<string, string> = {
+      А: "A",
+      а: "a",
+      Б: "B",
+      б: "b",
+      В: "V",
+      в: "v",
+      Г: "G",
+      г: "g",
+      Д: "D",
+      д: "d",
+      Е: "E",
+      е: "e",
+      Ё: "Yo",
+      ё: "yo",
+      Ж: "J",
+      ж: "j",
+      З: "Z",
+      з: "z",
+      И: "I",
+      и: "i",
+      Й: "Y",
+      й: "y",
+      К: "K",
+      к: "k",
+      Л: "L",
+      л: "l",
+      М: "M",
+      м: "m",
+      Н: "N",
+      н: "n",
+      О: "O",
+      о: "o",
+      П: "P",
+      п: "p",
+      Р: "R",
+      р: "r",
+      С: "S",
+      с: "s",
+      Т: "T",
+      т: "t",
+      У: "U",
+      у: "u",
+      Ф: "F",
+      ф: "f",
+      Х: "X",
+      х: "x",
+      Ц: "Ts",
+      ц: "ts",
+      Ч: "Ch",
+      ч: "ch",
+      Ш: "Sh",
+      ш: "sh",
+      Щ: "Sh",
+      щ: "sh",
+      Ъ: "'",
+      ъ: "'",
+      Ы: "I",
+      ы: "i",
+      Ь: "",
+      ь: "",
+      Э: "E",
+      э: "e",
+      Ю: "Yu",
+      ю: "yu",
+      Я: "Ya",
+      я: "ya",
+      Ғ: "G'",
+      ғ: "g'",
+      Қ: "Q",
+      қ: "q",
+      Ҳ: "H",
+      ҳ: "h",
+      Ў: "O'",
+      ў: "o'",
+    };
+    return text
+      .split("")
+      .map((char) => map[char] || char)
+      .join("");
+  };
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, status, roleId]);
@@ -62,27 +147,89 @@ const Users = () => {
     queryFn: () => roleService.getRoles({}).then((res) => res.data),
   });
 
-  // Fetch users
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["users", page, debouncedSearch, status, roleId],
-    queryFn: () => {
-      const params = {
-        page,
-        page_size: 10,
-        search: debouncedSearch || undefined,
-        status: status === "all" ? undefined : status,
-        role_id: roleId === "all" ? undefined : parseInt(roleId, 10),
-      };
-      return userService.getUsers(params);
-    },
+  // Fetch ALL users for client-side filtering
+  const {
+    data: allUsersData,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["all-users"],
+    queryFn: () => userService.getUsers({ page: 1, page_size: 100000 }),
   });
+
+  // Filter and paginate users on client side
+  const { data, stats } = useMemo(() => {
+    if (!allUsersData?.data)
+      return {
+        data: { data: [], meta: { total: 0, total_pages: 0 } },
+        stats: { total: 0, active: 0, admins: 0 },
+      };
+
+    let filtered = allUsersData.data;
+
+    // Filter by search (Name, Email, Phone) - supports Cyrillic/Latin
+    if (debouncedSearch) {
+      const searchLower = debouncedSearch.toLowerCase();
+      const searchLatin = cyrillicToLatin(debouncedSearch).toLowerCase();
+
+      filtered = filtered.filter((user) => {
+        const fullName = (user.full_name || "").toLowerCase();
+        const email = (user.email || "").toLowerCase();
+        const phone = (user.phone || "").toLowerCase();
+
+        return (
+          fullName.includes(searchLower) ||
+          fullName.includes(searchLatin) ||
+          email.includes(searchLower) ||
+          phone.includes(searchLower)
+        );
+      });
+    }
+
+    // Filter by status
+    if (status !== "all") {
+      filtered = filtered.filter((user) => user.status === status);
+    }
+
+    // Filter by role
+    if (roleId !== "all") {
+      const rId = parseInt(roleId, 10);
+      filtered = filtered.filter((user) =>
+        user.roles?.some((r) => r.id === rId),
+      );
+    }
+
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / 10);
+    const paginated = filtered.slice((page - 1) * 10, page * 10);
+
+    // Calculate stats from ALL data (not just filtered)
+    const allStats = {
+      total: allUsersData.data.length,
+      active: allUsersData.data.filter((u) => u.status === "active").length,
+      admins: allUsersData.data.filter((u) => u.is_super_admin).length,
+    };
+
+    return {
+      data: {
+        data: paginated,
+        meta: {
+          total,
+          total_pages: totalPages,
+          page,
+          page_size: 10,
+        },
+      },
+      stats: allStats,
+    };
+  }, [allUsersData, debouncedSearch, status, roleId, page]);
 
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: number) => userService.deleteUser(id),
     onSuccess: () => {
       toast.success(t("userDeletedSuccessfully"));
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || t("failedToDeleteUser"));
@@ -132,13 +279,6 @@ const Users = () => {
         {t("inactive")}
       </Badge>
     );
-  };
-
-  // Stats
-  const stats = {
-    total: data?.meta?.total || 0,
-    active: data?.data?.filter((u) => u.status === "active").length || 0,
-    admins: data?.data?.filter((u) => u.is_super_admin).length || 0,
   };
 
   return (
@@ -248,7 +388,6 @@ const Users = () => {
               <div className="relative md:col-span-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder={t("searchByNameEmailPhone")}
                   placeholder={t("searchByName")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}

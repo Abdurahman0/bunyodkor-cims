@@ -257,7 +257,7 @@ export const roleService = {
    * GET /roles
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getRoles: async (): Promise<ApiResponse<RoleWithPermissions[]>> => {
+  getRoles: async (p0: {}): Promise<ApiResponse<RoleWithPermissions[]>> => {
     const response =
       await apiClient.get<ApiResponse<RoleWithPermissions[]>>("/roles");
     return response.data;
