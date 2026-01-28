@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Comprehensive API Service Layer
  * Generated from Swagger/OpenAPI specification
