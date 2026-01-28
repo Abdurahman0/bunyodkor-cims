@@ -62,14 +62,47 @@ export default function Finance() {
 
   const debouncedSearch = useDebounce(search, 500);
 
+  // Helper for Cyrillic to Latin
+  const cyrillicToLatin = (text: string) => {
+    const map: Record<string, string> = {
+      'А': 'A', 'а': 'a', 'Б': 'B', 'б': 'b', 'В': 'V', 'в': 'v',
+      'Г': 'G', 'г': 'g', 'Д': 'D', 'д': 'd', 'Е': 'E', 'е': 'e',
+      'Ё': 'Yo', 'ё': 'yo', 'Ж': 'J', 'ж': 'j', 'З': 'Z', 'з': 'z',
+      'И': 'I', 'и': 'i', 'Й': 'Y', 'й': 'y', 'К': 'K', 'к': 'k',
+      'Л': 'L', 'л': 'l', 'М': 'M', 'м': 'm', 'Н': 'N', 'н': 'n',
+      'О': 'O', 'о': 'o', 'П': 'P', 'п': 'p', 'Р': 'R', 'р': 'r',
+      'С': 'S', 'с': 's', 'Т': 'T', 'т': 't', 'У': 'U', 'у': 'u',
+      'Ф': 'F', 'ф': 'f', 'Х': 'X', 'х': 'x', 'Ц': 'Ts', 'ц': 'ts',
+      'Ч': 'Ch', 'ч': 'ch', 'Ш': 'Sh', 'ш': 'sh', 'Щ': 'Sh', 'щ': 'sh',
+      'Ъ': "'", 'ъ': "'", 'Ы': 'I', 'ы': 'i', 'Ь': "", 'ь': "",
+      'Э': 'E', 'э': 'e', 'Ю': 'Yu', 'ю': 'yu', 'Я': 'Ya', 'я': 'ya',
+      'Ғ': "G'", 'ғ': "g'", 'Қ': "Q", 'қ': "q", 'Ҳ': "H", 'ҳ': "h",
+      'Ў': "O'", 'ў': "o'"
+    };
+    return text.split('').map(char => map[char] || char).join('');
+  };
+
+  const latinSearch = /[а-яА-ЯёЁ]/.test(debouncedSearch) ? cyrillicToLatin(debouncedSearch) : debouncedSearch;
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, statusFilter, sourceFilter]);
 
   // 1. Search for students if search term is provided (to get student_id)
+  // We search using BOTH original and Latin versions to cover all cases
   const { data: studentSearchResults } = useQuery({
     queryKey: ["student-search-for-finance", debouncedSearch],
-    queryFn: () => studentService.searchStudents(debouncedSearch),
+    queryFn: async () => {
+      const originalPromise = studentService.searchStudents(debouncedSearch);
+      if (debouncedSearch !== latinSearch) {
+        const latinPromise = studentService.searchStudents(latinSearch);
+        const [resOriginal, resLatin] = await Promise.all([originalPromise, latinPromise]);
+        const all = [...(resOriginal.data || []), ...(resLatin.data || [])];
+        const unique = Array.from(new Map(all.map(item => [item.id, item])).values());
+        return { data: unique };
+      }
+      return originalPromise;
+    },
     enabled: !!debouncedSearch && debouncedSearch.length >= 2,
   });
 
@@ -89,8 +122,9 @@ export default function Finance() {
       transactionService.getTransactionsWithName({
         page,
         page_size: 10,
-        search: debouncedSearch || undefined,
-        student_id: foundStudentId, // Pass the found student ID
+        // If we found a student, use their ID and clear search to avoid filtering issues. If not, search by text (e.g. transaction ID)
+        search: foundStudentId ? undefined : debouncedSearch || undefined,
+        student_id: foundStudentId,
         status: statusFilter || undefined,
         source: sourceFilter || undefined,
       }),

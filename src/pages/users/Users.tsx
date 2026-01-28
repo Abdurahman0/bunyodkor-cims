@@ -47,7 +47,8 @@ const Users = () => {
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRead | null>(null);
-  const [selectedUserForCard, setSelectedUserForCard] = useState<UserRead | null>(null);
+  const [selectedUserForCard, setSelectedUserForCard] =
+    useState<UserRead | null>(null);
 
   const debouncedSearch = useDebounce(search, 500);
 
