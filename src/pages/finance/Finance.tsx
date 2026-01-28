@@ -65,24 +65,90 @@ export default function Finance() {
   // Helper for Cyrillic to Latin
   const cyrillicToLatin = (text: string) => {
     const map: Record<string, string> = {
-      'А': 'A', 'а': 'a', 'Б': 'B', 'б': 'b', 'В': 'V', 'в': 'v',
-      'Г': 'G', 'г': 'g', 'Д': 'D', 'д': 'd', 'Е': 'E', 'е': 'e',
-      'Ё': 'Yo', 'ё': 'yo', 'Ж': 'J', 'ж': 'j', 'З': 'Z', 'з': 'z',
-      'И': 'I', 'и': 'i', 'Й': 'Y', 'й': 'y', 'К': 'K', 'к': 'k',
-      'Л': 'L', 'л': 'l', 'М': 'M', 'м': 'm', 'Н': 'N', 'н': 'n',
-      'О': 'O', 'о': 'o', 'П': 'P', 'п': 'p', 'Р': 'R', 'р': 'r',
-      'С': 'S', 'с': 's', 'Т': 'T', 'т': 't', 'У': 'U', 'у': 'u',
-      'Ф': 'F', 'ф': 'f', 'Х': 'X', 'х': 'x', 'Ц': 'Ts', 'ц': 'ts',
-      'Ч': 'Ch', 'ч': 'ch', 'Ш': 'Sh', 'ш': 'sh', 'Щ': 'Sh', 'щ': 'sh',
-      'Ъ': "'", 'ъ': "'", 'Ы': 'I', 'ы': 'i', 'Ь': "", 'ь': "",
-      'Э': 'E', 'э': 'e', 'Ю': 'Yu', 'ю': 'yu', 'Я': 'Ya', 'я': 'ya',
-      'Ғ': "G'", 'ғ': "g'", 'Қ': "Q", 'қ': "q", 'Ҳ': "H", 'ҳ': "h",
-      'Ў': "O'", 'ў': "o'"
+      А: "A",
+      а: "a",
+      Б: "B",
+      б: "b",
+      В: "V",
+      в: "v",
+      Г: "G",
+      г: "g",
+      Д: "D",
+      д: "d",
+      Е: "E",
+      е: "e",
+      Ё: "Yo",
+      ё: "yo",
+      Ж: "J",
+      ж: "j",
+      З: "Z",
+      з: "z",
+      И: "I",
+      и: "i",
+      Й: "Y",
+      й: "y",
+      К: "K",
+      к: "k",
+      Л: "L",
+      л: "l",
+      М: "M",
+      м: "m",
+      Н: "N",
+      н: "n",
+      О: "O",
+      о: "o",
+      П: "P",
+      п: "p",
+      Р: "R",
+      р: "r",
+      С: "S",
+      с: "s",
+      Т: "T",
+      т: "t",
+      У: "U",
+      у: "u",
+      Ф: "F",
+      ф: "f",
+      Х: "X",
+      х: "x",
+      Ц: "Ts",
+      ц: "ts",
+      Ч: "Ch",
+      ч: "ch",
+      Ш: "Sh",
+      ш: "sh",
+      Щ: "Sh",
+      щ: "sh",
+      Ъ: "'",
+      ъ: "'",
+      Ы: "I",
+      ы: "i",
+      Ь: "",
+      ь: "",
+      Э: "E",
+      э: "e",
+      Ю: "Yu",
+      ю: "yu",
+      Я: "Ya",
+      я: "ya",
+      Ғ: "G'",
+      ғ: "g'",
+      Қ: "Q",
+      қ: "q",
+      Ҳ: "H",
+      ҳ: "h",
+      Ў: "O'",
+      ў: "o'",
     };
-    return text.split('').map(char => map[char] || char).join('');
+    return text
+      .split("")
+      .map((char) => map[char] || char)
+      .join("");
   };
 
-  const latinSearch = /[а-яА-ЯёЁ]/.test(debouncedSearch) ? cyrillicToLatin(debouncedSearch) : debouncedSearch;
+  const latinSearch = /[а-яА-ЯёЁ]/.test(debouncedSearch)
+    ? cyrillicToLatin(debouncedSearch)
+    : debouncedSearch;
 
   useEffect(() => {
     setPage(1);
@@ -96,9 +162,24 @@ export default function Finance() {
       const originalPromise = studentService.searchStudents(debouncedSearch);
       if (debouncedSearch !== latinSearch) {
         const latinPromise = studentService.searchStudents(latinSearch);
-        const [resOriginal, resLatin] = await Promise.all([originalPromise, latinPromise]);
-        const all = [...(resOriginal.data || []), ...(resLatin.data || [])];
-        const unique = Array.from(new Map(all.map(item => [item.id, item])).values());
+        const [resOriginal, resLatin] = await Promise.all([
+          originalPromise,
+          latinPromise,
+        ]);
+
+        // Robust data extraction handling both { data: [...] } and [...] formats
+        const getList = (res: any) => {
+          if (Array.isArray(res)) return res;
+          if (res?.data && Array.isArray(res.data)) return res.data;
+          return [];
+        };
+
+        const originalData = getList(resOriginal);
+        const latinData = getList(resLatin);
+        const all = [...originalData, ...latinData];
+        const unique = Array.from(
+          new Map(all.map((item) => [item.id, item])).values(),
+        );
         return { data: unique };
       }
       return originalPromise;
@@ -541,7 +622,9 @@ export default function Finance() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.data && data.data.length > 0 ? (
+              {data?.data &&
+              Array.isArray(data.data) &&
+              data.data.length > 0 ? (
                 (() => {
                   const displayed = [...data.data].sort(
                     (a: TransactionWithNameRead, b: TransactionWithNameRead) =>
