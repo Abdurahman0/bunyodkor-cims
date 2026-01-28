@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -45,29 +45,49 @@ const Roles = () => {
   const debouncedSearch = useDebounce(search, 500);
 
   // Fetch roles
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["roles", page, debouncedSearch],
-    queryFn: () => {
-      const params = {
-        page,
-        page_size: 10,
-        search: debouncedSearch || undefined,
-      };
-      return roleService.getRoles(params);
-    },
+  const { data: allRolesData, isLoading, refetch } = useQuery({
+    queryKey: ["roles"],
+    queryFn: () => roleService.getRoles({}),
   });
+
+  // Client-side filtering and pagination for roles
+  const { rolesList, rolesMeta } = useMemo(() => {
+    if (!allRolesData?.data) return { rolesList: [], rolesMeta: { total: 0, total_pages: 0 } };
+
+    let filtered = allRolesData.data;
+
+    if (debouncedSearch) {
+      const lowerSearch = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(role => 
+        role.name.toLowerCase().includes(lowerSearch) || 
+        (role.description && role.description.toLowerCase().includes(lowerSearch))
+      );
+    }
+
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / 10);
+    const paginated = filtered.slice((page - 1) * 10, page * 10);
+
+    return {
+      rolesList: paginated,
+      rolesMeta: {
+        total,
+        total_pages: totalPages
+      }
+    };
+  }, [allRolesData, debouncedSearch, page]);
 
   // Fetch all users to compute stats
   const { data: usersData } = useQuery({
     queryKey: ["all-users-for-stats"],
-    queryFn: () => userService.getUsers({ page: 1, page_size: 100000 }),
+    queryFn: () => userService.getUsers({ page: 1, page_size: 100 }), // Just need some data to check structure, or rely on backend count if available
   });
 
   // Compute stats
   const usersWithRolesCount =
     usersData?.data?.filter((user) => user.role_id !== null && user.role_id !== undefined).length || 0;
   const totalPermissionsCount =
-    data?.data?.reduce((acc, role) => acc + role.permissions.length, 0) || 0;
+    allRolesData?.data?.reduce((acc, role) => acc + role.permissions.length, 0) || 0;
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
@@ -146,7 +166,7 @@ const Roles = () => {
                     {t("totalRoles")}
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-1">
-                    {data?.meta?.total || 0}
+                    {rolesMeta.total}
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30">
@@ -223,8 +243,8 @@ const Roles = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data?.data && data.data.length > 0 ? (
-                  data.data.map((role: RoleWithPermissions) => (
+                {rolesList && rolesList.length > 0 ? (
+                  rolesList.map((role: RoleWithPermissions) => (
                     <TableRow key={role.id}>
                       <TableCell>
                         <p className="font-medium text-foreground">
@@ -283,11 +303,11 @@ const Roles = () => {
                 )}
               </TableBody>
             </Table>
-            {data?.meta && data.meta.total_pages > 1 && (
+            {rolesMeta.total_pages > 1 && (
               <TablePagination
                 currentPage={page}
-                totalPages={data.meta.total_pages}
-                totalItems={data.meta.total}
+                totalPages={rolesMeta.total_pages}
+                totalItems={rolesMeta.total}
                 pageSize={10}
                 onPageChange={setPage}
               />
