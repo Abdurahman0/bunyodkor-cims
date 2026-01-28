@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { transactionService } from "@/services/api.service";
-import { studentService } from "@/services/api.service";
 import type {
   TransactionWithNameRead,
   TransactionRead,
@@ -147,73 +146,9 @@ export default function Finance() {
       .join("");
   };
 
-  const latinSearch = /[а-яА-ЯёЁ]/.test(debouncedSearch)
-    ? cyrillicToLatin(debouncedSearch)
-    : debouncedSearch;
-
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, statusFilter, sourceFilter]);
-
-  // 1. Search for students if search term is provided (to get student_id)
-  // We search using BOTH original and Latin versions to cover all cases
-  const { data: studentSearchResults } = useQuery({
-    queryKey: ["student-search-for-finance", debouncedSearch],
-    queryFn: async () => {
-      const originalPromise = studentService.searchStudents(debouncedSearch);
-      if (debouncedSearch !== latinSearch) {
-        const latinPromise = studentService.searchStudents(latinSearch);
-        const [resOriginal, resLatin] = await Promise.all([
-          originalPromise,
-          latinPromise,
-        ]);
-
-        // Robust data extraction handling both { data: [...] } and [...] formats
-        const getList = (res: any) => {
-          if (Array.isArray(res)) return res;
-          if (res?.data && Array.isArray(res.data)) return res.data;
-          return [];
-        };
-
-        const originalData = getList(resOriginal);
-        const latinData = getList(resLatin);
-        const all = [...originalData, ...latinData];
-        const unique = Array.from(
-          new Map(all.map((item) => [item.id, item])).values(),
-        );
-        return { data: unique };
-      }
-      return originalPromise;
-    },
-    enabled: !!debouncedSearch && debouncedSearch.length >= 2,
-  });
-
-  // Get the first matching student's ID (if any)
-  const foundStudentId = studentSearchResults?.data?.[0]?.id;
-
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "transactions-with-name",
-      page,
-      debouncedSearch,
-      foundStudentId, // Add foundStudentId to query key
-      statusFilter,
-      sourceFilter,
-    ],
-    queryFn: () =>
-      transactionService.getTransactionsWithName({
-        page,
-        page_size: 10,
-        // If we found a student, use their ID and clear search to avoid filtering issues. If not, search by text (e.g. transaction ID)
-        search: foundStudentId ? undefined : debouncedSearch || undefined,
-        student_id: foundStudentId,
-        status: statusFilter || undefined,
-        source: sourceFilter || undefined,
-      }),
-    staleTime: 0, // Always refetch
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-  });
 
   const { data: unassignedData } = useQuery({
     queryKey: ["unassigned-transactions"],
@@ -224,17 +159,17 @@ export default function Finance() {
     refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
-  // Separate query for all transactions to calculate accurate statistics
-  const { data: allTransactionsData } = useQuery({
-    queryKey: ["all-transactions-stats"],
+  // Fetch ALL transactions with names for client-side filtering and stats
+  const { data: allTransactionsWithName, isLoading } = useQuery({
+    queryKey: ["all-transactions-with-name"],
     queryFn: async () => {
       // Fetch all transactions by making multiple requests if needed
-      let allTransactions: TransactionRead[] = [];
+      let allTransactions: TransactionWithNameRead[] = [];
       let currentPage = 1;
       let hasMore = true;
 
       while (hasMore) {
-        const response = await transactionService.getTransactions({
+        const response = await transactionService.getTransactionsWithName({
           page: currentPage,
           page_size: 100, // Backend maximum is 100
         });
@@ -253,23 +188,59 @@ export default function Finance() {
         }
       }
 
-      return { data: allTransactions, meta: { total: allTransactions.length } };
+      return allTransactions;
     },
-    staleTime: 0, // Always refetch
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
+
+  // Client-side filtering
+  const filteredTransactions = useMemo(() => {
+    if (!allTransactionsWithName) return [];
+    let result = allTransactionsWithName;
+
+    if (debouncedSearch) {
+      const lowerSearch = debouncedSearch.toLowerCase();
+      const latinSearchTerm = cyrillicToLatin(debouncedSearch).toLowerCase();
+
+      result = result.filter((t) => {
+        const studentName = t.student_full_name?.toLowerCase() || "";
+        const studentNameLatin = cyrillicToLatin(
+          t.student_full_name || ""
+        ).toLowerCase();
+
+        return (
+          studentName.includes(lowerSearch) ||
+          studentNameLatin.includes(latinSearchTerm) ||
+          t.id.toString().includes(lowerSearch) ||
+          (t.external_id && t.external_id.toLowerCase().includes(lowerSearch))
+        );
+      });
+    }
+
+    if (statusFilter) {
+      result = result.filter((t) => t.status === statusFilter);
+    }
+    if (sourceFilter) {
+      result = result.filter((t) => t.source === sourceFilter);
+    }
+
+    return result;
+  }, [allTransactionsWithName, debouncedSearch, statusFilter, sourceFilter]);
+
+  // Pagination
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (page - 1) * 10;
+    const endIndex = startIndex + 10;
+    return filteredTransactions.slice(startIndex, endIndex);
+  }, [filteredTransactions, page]);
+
+  const totalPages = Math.ceil(filteredTransactions.length / 10);
 
   const cancelMutation = useMutation({
     mutationFn: (id: number) => transactionService.cancelTransaction(id),
     onSuccess: () => {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
-        queryKey: ["transactions-with-name"],
-        refetchType: "all",
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["all-transactions-stats"],
+        queryKey: ["all-transactions-with-name"],
         refetchType: "all",
       });
       queryClient.invalidateQueries({
@@ -303,11 +274,7 @@ export default function Finance() {
     onSuccess: () => {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
-        queryKey: ["transactions-with-name"],
-        refetchType: "all",
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["all-transactions-stats"],
+        queryKey: ["all-transactions-with-name"],
         refetchType: "all",
       });
       queryClient.invalidateQueries({
@@ -346,36 +313,12 @@ export default function Finance() {
 
   const handleExport = async () => {
     try {
-      const allItems: TransactionWithNameRead[] = [];
-      let pageNum = 1;
-      let totalPages = 1;
-
-      while (pageNum <= totalPages) {
-        const params: any = { page: pageNum, page_size: 100 };
-        if (search) params.search = search;
-        if (statusFilter) params.status = statusFilter;
-        if (sourceFilter) params.source = sourceFilter;
-
-        const resp = await transactionService.getTransactionsWithName(params);
-        if (resp && Array.isArray(resp.data)) {
-          allItems.push(...resp.data);
-        }
-
-        if (resp && resp.meta && resp.meta.total_pages) {
-          totalPages = resp.meta.total_pages;
-        } else {
-          totalPages = 1;
-        }
-
-        pageNum++;
-      }
-
-      if (allItems.length === 0) {
+      if (!filteredTransactions || filteredTransactions.length === 0) {
         toast.error(t("noDataToExport"));
         return;
       }
 
-      exportTransactions(allItems);
+      exportTransactions(filteredTransactions);
       toast.success(t("transactionsExported"));
     } catch (error) {
       toast.error(t("failedToExportTransactions"));
@@ -468,15 +411,15 @@ export default function Finance() {
 
   // Calculate statistics from ALL transactions, not just current page
   const totalRevenue =
-    allTransactionsData?.data
+    allTransactionsWithName
       ?.filter((t) => t.status === "success")
       .reduce((acc, t) => acc + t.amount, 0) || 0;
   const pendingAmount =
-    allTransactionsData?.data
+    allTransactionsWithName
       ?.filter((t) => t.status === "pending")
       .reduce((acc, t) => acc + t.amount, 0) || 0;
   const successCount =
-    allTransactionsData?.data?.filter((t) => t.status === "success").length ||
+    allTransactionsWithName?.filter((t) => t.status === "success").length ||
     0;
   const unassignedCount = unassignedData?.meta?.total || 0;
 
@@ -623,11 +566,9 @@ export default function Finance() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.data &&
-              Array.isArray(data.data) &&
-              data.data.length > 0 ? (
+              {paginatedTransactions && paginatedTransactions.length > 0 ? (
                 (() => {
-                  const displayed = [...data.data].sort(
+                  const displayed = [...paginatedTransactions].sort(
                     (a: TransactionWithNameRead, b: TransactionWithNameRead) =>
                       new Date(b.paid_at!).getTime() -
                       new Date(a.paid_at!).getTime(),
@@ -758,11 +699,11 @@ export default function Finance() {
               )}
             </TableBody>
           </Table>
-          {data?.meta && data.meta.total_pages > 1 && (
+          {totalPages > 1 && (
             <TablePagination
               currentPage={page}
-              totalPages={data.meta.total_pages}
-              totalItems={data.meta.total}
+              totalPages={totalPages}
+              totalItems={filteredTransactions.length}
               pageSize={10}
               onPageChange={setPage}
             />
