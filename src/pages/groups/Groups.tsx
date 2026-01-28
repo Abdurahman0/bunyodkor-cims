@@ -47,6 +47,7 @@ import {
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
+import { useAuthStore } from "@/store/authStore";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type {
   GroupRead,
@@ -212,6 +213,7 @@ function GroupCard({
 
 export default function Groups() {
   const { t } = useLanguageStore();
+  const { token } = useAuthStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -442,10 +444,16 @@ export default function Groups() {
   const handleExportGroupStudents = async () => {
     if (!selectedGroupForContracts) return;
     const group = selectedGroupForContracts;
+
+    const authToken = token || localStorage.getItem("token");
+    if (!authToken) {
+      toast.error("Siz tizimga kirmagansiz. Iltimos, qayta kiring.");
+      return;
+    }
+
     const toastId = toast.loading(t("exportingData") || "Exporting data...");
     try {
-      const token = localStorage.getItem("token");
-      let baseUrl = "https://bunyodkor.api.cims.cognilabs.org/";
+      let baseUrl = import.meta.env.VITE_API_URL;
       if (!baseUrl) {
         baseUrl = "/api/v1";
       }
@@ -453,29 +461,47 @@ export default function Groups() {
       const url = `${baseUrl}/groups/${group.id}/export-students?_t=${new Date().getTime()}`;
 
       const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        headers: {
+          Authorization: `Bearer ${authToken}`,
         },
-      );
+      });
 
       if (!response.ok) throw new Error("Export failed");
 
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("text/html")) {
-        throw new Error("API xatosi: Server HTML qaytardi. API URL noto'g'ri bo'lishi mumkin.");
+        throw new Error(
+          "API xatosi: Server HTML qaytardi. API URL noto'g'ri bo'lishi mumkin.",
+        );
       }
 
-      const data = await response.json();
-      if (typeof data === "string") {
-        window.open(data, "_blank");
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = `group_${group.name}_students.xlsx`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch.length === 2)
+          filename = filenameMatch[1];
       }
+
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
       toast.success(t("exportedSuccessfully") || "Exported successfully", {
         id: toastId,
       });
     } catch (error: any) {
       console.error("Export error:", error);
-      toast.error(error.message || t("errorExportingData") || "Export failed", { id: toastId });
+      toast.error(error.message || t("errorExportingData") || "Export failed", {
+        id: toastId,
+      });
     }
   };
 
