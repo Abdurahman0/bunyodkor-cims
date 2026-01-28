@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { transactionService } from "@/services/api.service";
+import { studentService } from "@/services/api.service";
 import type {
   TransactionWithNameRead,
   TransactionRead,
@@ -65,11 +66,22 @@ export default function Finance() {
     setPage(1);
   }, [debouncedSearch, statusFilter, sourceFilter]);
 
+  // 1. Search for students if search term is provided (to get student_id)
+  const { data: studentSearchResults } = useQuery({
+    queryKey: ["student-search-for-finance", debouncedSearch],
+    queryFn: () => studentService.searchStudents(debouncedSearch),
+    enabled: !!debouncedSearch && debouncedSearch.length >= 2,
+  });
+
+  // Get the first matching student's ID (if any)
+  const foundStudentId = studentSearchResults?.data?.[0]?.id;
+
   const { data, isLoading } = useQuery({
     queryKey: [
       "transactions-with-name",
       page,
       debouncedSearch,
+      foundStudentId, // Add foundStudentId to query key
       statusFilter,
       sourceFilter,
     ],
@@ -78,6 +90,7 @@ export default function Finance() {
         page,
         page_size: 10,
         search: debouncedSearch || undefined,
+        student_id: foundStudentId, // Pass the found student ID
         status: statusFilter || undefined,
         source: sourceFilter || undefined,
       }),

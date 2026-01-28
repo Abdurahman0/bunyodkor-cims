@@ -137,6 +137,7 @@ export const authService = {
 export interface GetUsersParams {
   page?: number;
   page_size?: number;
+  search?: string;
 }
 
 export const userService = {
@@ -1176,6 +1177,7 @@ export interface GetTransactionsWithNameParams {
   student_id?: number;
   page?: number;
   page_size?: number;
+  search?: string;
 }
 
 export const transactionService = {
