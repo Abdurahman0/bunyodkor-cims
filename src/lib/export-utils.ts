@@ -295,3 +295,18 @@ export const exportReport = (data: any, reportType: string) => {
     exportToJSON(data, reportType)
   }
 }
+
+/**
+ * Download a Blob as a file
+ */
+export const downloadFile = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', filename)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
