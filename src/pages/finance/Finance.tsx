@@ -35,7 +35,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
-import { transactionService } from "@/services/api.service";
+import { transactionService, studentService } from "@/services/api.service";
 import type {
   TransactionWithNameRead,
   TransactionRead,
@@ -150,6 +150,34 @@ export default function Finance() {
     setPage(1);
   }, [debouncedSearch, statusFilter, sourceFilter]);
 
+  // Search students with multiple variations (Original, Latin, X/H swapped)
+  const { data: studentSearchResults } = useQuery({
+    queryKey: ["student-search-combined", debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch || debouncedSearch.length < 2) return [];
+
+      const latinSearch = cyrillicToLatin(debouncedSearch);
+      const queries = [
+        studentService.searchStudents(debouncedSearch),
+        studentService.searchStudents(latinSearch),
+      ];
+
+      // If latin search has X, also try H (common confusion in Uzbek)
+      if (latinSearch.includes("X") || latinSearch.includes("x")) {
+        queries.push(
+          studentService.searchStudents(
+            latinSearch.replace(/X/g, "H").replace(/x/g, "h"),
+          ),
+        );
+      }
+
+      const results = await Promise.all(queries);
+      const allStudents = results.flatMap((r) => r.data || []);
+      return Array.from(new Map(allStudents.map((s) => [s.id, s])).values());
+    },
+    enabled: !!debouncedSearch && debouncedSearch.length >= 2,
+  });
+
   const { data: unassignedData } = useQuery({
     queryKey: ["unassigned-transactions"],
     queryFn: () =>
@@ -200,8 +228,15 @@ export default function Finance() {
     if (debouncedSearch) {
       const lowerSearch = debouncedSearch.toLowerCase();
       const latinSearchTerm = cyrillicToLatin(debouncedSearch).toLowerCase();
+      const foundStudentIds = studentSearchResults?.map((s) => s.id) || [];
 
       result = result.filter((t) => {
+        // 1. Check if transaction belongs to a student found via API search
+        if (t.student_id && foundStudentIds.includes(t.student_id)) {
+          return true;
+        }
+
+        // 2. Fallback to text matching on transaction fields
         const studentName = t.student_full_name?.toLowerCase() || "";
         const studentNameLatin = cyrillicToLatin(
           t.student_full_name || ""
@@ -224,7 +259,13 @@ export default function Finance() {
     }
 
     return result;
-  }, [allTransactionsWithName, debouncedSearch, statusFilter, sourceFilter]);
+  }, [
+    allTransactionsWithName,
+    debouncedSearch,
+    statusFilter,
+    sourceFilter,
+    studentSearchResults,
+  ]);
 
   // Pagination
   const paginatedTransactions = useMemo(() => {
