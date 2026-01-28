@@ -445,7 +445,9 @@ export default function Groups() {
     if (!selectedGroupForContracts) return;
     const group = selectedGroupForContracts;
 
-    const authToken = token || localStorage.getItem("token");
+    const rawToken = token || localStorage.getItem("token");
+    const authToken = rawToken ? rawToken.replace(/^"|"$/g, "") : null;
+
     if (!authToken) {
       toast.error("Siz tizimga kirmagansiz. Iltimos, qayta kiring.");
       return;
@@ -465,6 +467,10 @@ export default function Groups() {
           Authorization: `Bearer ${authToken}`,
         },
       });
+
+      if (response.status === 401) {
+        throw new Error("Sessiya vaqti tugadi (401). Iltimos, qayta kiring.");
+      }
 
       if (!response.ok) throw new Error("Export failed");
 
