@@ -57,6 +57,8 @@ import type {
 } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
+import { apiClient } from "@/lib/api-client";
+import { downloadFile } from "@/lib/export-utils";
 
 // Component to display individual group card with capacity
 function GroupCard({
@@ -445,48 +447,13 @@ export default function Groups() {
     if (!selectedGroupForContracts) return;
     const group = selectedGroupForContracts;
 
-    const rawToken = token || localStorage.getItem("token");
-    const authToken = rawToken ? rawToken.replace(/^"|"$/g, "") : null;
-
-    if (!authToken) {
-      toast.error("Siz tizimga kirmagansiz. Iltimos, qayta kiring.");
-      return;
-    }
-
     const toastId = toast.loading(t("exportingData") || "Exporting data...");
     try {
-      let baseUrl = import.meta.env.VITE_API_URL;
-      if (!baseUrl) {
-        baseUrl = "/api/v1";
-      }
-      baseUrl = baseUrl.replace(/\/$/, "");
-      const url = `${baseUrl}/groups/${group.id}/export-students?_t=${new Date().getTime()}`;
-
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+      const response = await apiClient.get(`/groups/${group.id}/export-students`, {
+        responseType: "blob",
       });
 
-      if (response.status === 401) {
-        throw new Error("Sessiya vaqti tugadi (401). Iltimos, qayta kiring.");
-      }
-
-      if (!response.ok) throw new Error("Export failed");
-
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("text/html")) {
-        throw new Error(
-          "API xatosi: Server HTML qaytardi. API URL noto'g'ri bo'lishi mumkin.",
-        );
-      }
-
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-
-      const contentDisposition = response.headers.get("content-disposition");
+      const contentDisposition = response.headers["content-disposition"];
       let filename = `group_${group.name}_students.xlsx`;
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
@@ -494,11 +461,7 @@ export default function Groups() {
           filename = filenameMatch[1];
       }
 
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+      downloadFile(response.data, filename);
 
       toast.success(t("exportedSuccessfully") || "Exported successfully", {
         id: toastId,
