@@ -28,7 +28,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// FAQAT Select ni import qilamiz
 import { Select } from "@/components/ui/select";
 import {
   coachService,
@@ -835,7 +834,6 @@ export default function CoachPanel() {
                 <CardDescription>{t("selectGroupToSeeStats")}</CardDescription>
               </CardHeader>
               <CardContent>
-                {/* O'ZGARTIRILGAN SELECT */}
                 <Select
                   value={selectedGroupForStats || ""}
                   onChange={(e) => {

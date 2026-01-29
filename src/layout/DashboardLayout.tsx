@@ -107,13 +107,9 @@ const DashboardLayout = () => {
     // --- MANA BU QISMNI QO'SHING: ---
     {
       path: "/head-coach",
-      label: "Bosh Murabbiy", // Yoki t("headCoach") agar tarjimada bo'lsa
+      label: t("headCoach") || "Bosh Murabbiy",
       icon: Trophy,
-      // permission: "head_coach:view", // Agar ruxsatlar bilan ishlasa
-      // Yoki agar ruxsat shart bo'lmasa, shunchaki qoldiring
-      // Lekin odatda permission kerak bo'ladi. Hozircha bo'sh qoldirsangiz ham bo'ladi
-      // yoki "dashboard:view" kabi umumiy ruxsat ishlating.
-      permission: "session:create", // Vaqtincha hammaga ko'rinib turishi uchun
+      permission: "session:manage",
     },
     {
       path: "/attendance",

@@ -69,7 +69,7 @@ const routesConfig = [
   { path: "/roles", permission: "roles:view" },
   { path: "/settings", permission: "settings:system:view" },
   { path: "/archive", permission: "settings:system:view" },
-  { path: "/head-coach", permission: "head-coach:dashboard:view" },
+  { path: "/head-coach", permission: "session:manage" },
 ];
 
 // Foydalanuvchi uchun birinchi ruxsat etilgan sahifani topish
@@ -227,7 +227,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="head-coach" element={<HeadCoach />} />
+            <Route
+              path="head-coach"
+              element={
+                <ProtectedRoute permission="session:manage">
+                  <HeadCoach />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="attendance"
