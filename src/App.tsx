@@ -230,7 +230,7 @@ function App() {
             <Route
               path="head-coach"
               element={
-                <ProtectedRoute permission="session:manage">
+                <ProtectedRoute permission="session:create">
                   <HeadCoach />
                 </ProtectedRoute>
               }
@@ -257,7 +257,7 @@ function App() {
             <Route
               path="waiting-list"
               element={
-                <ProtectedRoute permission="students:manage">
+                <ProtectedRoute permission="students:view">
                   <WaitingList />
                 </ProtectedRoute>
               }
