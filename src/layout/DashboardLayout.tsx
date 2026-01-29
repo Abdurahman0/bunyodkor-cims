@@ -109,7 +109,7 @@ const DashboardLayout = () => {
       path: "/head-coach",
       label: t("headCoach") || "Bosh Murabbiy",
       icon: Trophy,
-      permission: "session:manage",
+      permission: "session:create",
     },
     {
       path: "/attendance",

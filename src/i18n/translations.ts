@@ -29,6 +29,7 @@ export const translations = {
     selectGroupToSeeStats: "Select a group to see statistics",
     studentStatistics: "Student Statistics",
     allAttendancesMarkedByYou: "All attendances you've marked",
+    noAttendanceHistory: "No attendance history found",
     unknownStudent: "Unknown Student",
     gateLogs: "Gate Logs",
     reports: "Reports",
@@ -462,6 +463,8 @@ export const translations = {
       "reports:attendance:view": "View attendance reports",
       "settings:system:view": "View system settings",
       "settings:system:manage": "Manage system settings",
+      "sessions:manage": "Manage sessions",
+      "sessions:create": "Create sessions",
     },
 
     // Common phrases
@@ -936,6 +939,7 @@ export const translations = {
     selectGroupToSeeStats: "Statistikani ko'rish uchun guruhni tanlang",
     studentStatistics: "Talaba statistikasi",
     allAttendancesMarkedByYou: "Siz tomonidan belgilangan barcha davomatlar",
+    noAttendanceHistory: "Davomat tarixi topilmadi",
     unknownStudent: "Noma'lum talaba",
     gateLogs: "Kirish jurnali",
     reports: "Hisobotlar",
@@ -1376,6 +1380,8 @@ export const translations = {
       "reports:attendance:view": "Davomat hisobotlarni ko'rish",
       "settings:system:view": "Tizim sozlamalarini ko'rish",
       "settings:system:manage": "Tizim sozlamalarini boshqarish",
+      "sessions:manage": "Darslarni boshqarish va yaratish",
+      "session:create": "Yangi dars yaratish",
     },
 
     // Common phrases
@@ -1859,6 +1865,7 @@ export const translations = {
     selectGroupToSeeStats: "Выберите группу, чтобы увидеть статистику",
     studentStatistics: "Статистика студента",
     allAttendancesMarkedByYou: "Все посещения, отмеченные вами",
+    noAttendanceHistory: "История посещаемости не найдена",
     unknownStudent: "Неизвестный студент",
     gateLogs: "Журнал входа",
     reports: "Отчеты",
@@ -2296,6 +2303,8 @@ export const translations = {
       "reports:attendance:view": "Просмотр отчетов посещаемости",
       "settings:system:view": "Просмотр системных настроек",
       "settings:system:manage": "Управление системными настройками",
+      "sessions:create": "Создание занятий",
+      "session:manage": "Управление занятиями",
     },
 
     // Common phrases

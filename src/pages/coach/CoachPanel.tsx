@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type SetStateAction, type SetStateAction, type Key, type JSXElementConstructor, type Key, type ReactElement, type ReactNode, type ReactPortal } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -286,17 +286,17 @@ export default function CoachPanel() {
 
   const studentMap = useMemo(() => {
     if (!allStudents) return new Map();
-    return new Map(allStudents.map((s) => [s.id, s]));
+    return new Map(allStudents.map((s: { id: any; }) => [s.id, s]));
   }, [allStudents]);
 
   const sessionMap = useMemo(() => {
     if (!allSessions) return new Map();
-    return new Map(allSessions.map((s) => [s.id, s]));
+    return new Map(allSessions.map((s: { id: any; }) => [s.id, s]));
   }, [allSessions]);
 
   const groupMap = useMemo(() => {
     if (!groupsData) return new Map();
-    return new Map(groupsData.map((g) => [g.id, g]));
+    return new Map(groupsData.map((g: { id: any; }) => [g.id, g]));
   }, [groupsData]);
 
   // helper to get a student's display name from different possible API shapes
@@ -421,9 +421,9 @@ export default function CoachPanel() {
                   </div>
                 ) : sessionsData && sessionsData.length > 0 ? (
                   <div className="space-y-3">
-                    {sessionsData.map((session) => {
+                    {sessionsData.map((session: SetStateAction<SessionRead | null>) => {
                       const group = groupsData?.find(
-                        (g) => Number(g.id) === Number(session.group_id),
+                        (g: { id: any; }) => Number(g.id) === Number(session.group_id),
                       );
                       return (
                         <button
@@ -473,7 +473,7 @@ export default function CoachPanel() {
                             {selectedSession.topic} (
                             {
                               groupsData?.find(
-                                (g) => g.id === selectedSession.group_id,
+                                (g: { id: number; }) => g.id === selectedSession.group_id,
                               )?.name
                             }
                             )
@@ -661,7 +661,7 @@ export default function CoachPanel() {
                   </div>
                 ) : groupsData && groupsData.length > 0 ? (
                   <div className="space-y-3">
-                    {groupsData.map((group) => (
+                    {groupsData.map((group: SetStateAction<GroupRead | null>) => (
                       <button
                         key={group.id}
                         onClick={() => setSelectedGroup(group)}
@@ -714,7 +714,7 @@ export default function CoachPanel() {
                             </TableRow>
                           ) : groupStudentsData &&
                             groupStudentsData.length > 0 ? (
-                            groupStudentsData.map((student) => (
+                            groupStudentsData.map((student: { id: Key | null | undefined; date_of_birth: string | number | Date; }) => (
                               <TableRow key={student.id}>
                                 <TableCell className="font-medium">
                                   {getStudentDisplayName(student)}
@@ -844,7 +844,7 @@ export default function CoachPanel() {
                   <option value="" disabled>
                     {t("selectGroup")}
                   </option>
-                  {groupsData?.map((group) => (
+                  {groupsData?.map((group: { id: Key | null | undefined; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }) => (
                     <option key={group.id} value={group.id.toString()}>
                       {group.name}
                     </option>
