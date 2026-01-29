@@ -63,13 +63,13 @@ const routesConfig = [
   { path: "/coach", permission: "attendance:coach:mark" },
   { path: "/attendance", permission: "attendance:view" },
   { path: "/gate", permission: "gate:logs:view" },
-  { path: "/waiting-list", permission: "students:manage" },
+  { path: "/waiting-list", permission: "students:view" },
   { path: "/reports", permission: "reports:dashboard:view" },
   { path: "/users", permission: "users:manage" },
   { path: "/roles", permission: "roles:view" },
   { path: "/settings", permission: "settings:system:view" },
   { path: "/archive", permission: "settings:system:view" },
-  { path: "/head-coach", permission: "session:manage" },
+  { path: "/head-coach", permission: "session:create" },
 ];
 
 // Foydalanuvchi uchun birinchi ruxsat etilgan sahifani topish
