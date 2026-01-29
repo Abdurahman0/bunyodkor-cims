@@ -382,6 +382,21 @@ const DashboardLayout = () => {
               </div>
             )}
           </div>
+
+          {/* Powered By */}
+          <div className="text-center pt-1">
+            <p className="text-xs text-slate-500">
+              {t("poweredBy")}{" "}
+              <a
+                href="https://www.cognilabs.org/uz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline font-medium"
+              >
+                Cognilabs
+              </a>
+            </p>
+          </div>
         </div>
       </motion.aside>
 
