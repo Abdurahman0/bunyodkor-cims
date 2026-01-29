@@ -57,21 +57,85 @@ const Users = () => {
   // Helper for Cyrillic to Latin
   const cyrillicToLatin = (text: string) => {
     const map: Record<string, string> = {
-      'А': 'A', 'а': 'a', 'Б': 'B', 'б': 'b', 'В': 'V', 'в': 'v',
-      'Г': 'G', 'г': 'g', 'Д': 'D', 'д': 'd', 'Е': 'E', 'е': 'e',
-      'Ё': 'Yo', 'ё': 'yo', 'Ж': 'J', 'ж': 'j', 'З': 'Z', 'з': 'z',
-      'И': 'I', 'и': 'i', 'Й': 'Y', 'й': 'y', 'К': 'K', 'к': 'k',
-      'Л': 'L', 'л': 'l', 'М': 'M', 'м': 'm', 'Н': 'N', 'н': 'n',
-      'О': 'O', 'о': 'o', 'П': 'P', 'п': 'p', 'Р': 'R', 'р': 'r',
-      'С': 'S', 'с': 's', 'Т': 'T', 'т': 't', 'У': 'U', 'у': 'u',
-      'Ф': 'F', 'ф': 'f', 'Х': 'X', 'х': 'x', 'Ц': 'Ts', 'ц': 'ts',
-      'Ч': 'Ch', 'ч': 'ch', 'Ш': 'Sh', 'ш': 'sh', 'Щ': 'Sh', 'щ': 'sh',
-      'Ъ': "'", 'ъ': "'", 'Ы': 'I', 'ы': 'i', 'Ь': "", 'ь': "",
-      'Э': 'E', 'э': 'e', 'Ю': 'Yu', 'ю': 'yu', 'Я': 'Ya', 'я': 'ya',
-      'Ғ': "G'", 'ғ': "g'", 'Қ': "Q", 'қ': "q", 'Ҳ': "H", 'ҳ': "h",
-      'Ў': "O'", 'ў': "o'"
+      А: "A",
+      а: "a",
+      Б: "B",
+      б: "b",
+      В: "V",
+      в: "v",
+      Г: "G",
+      г: "g",
+      Д: "D",
+      д: "d",
+      Е: "E",
+      е: "e",
+      Ё: "Yo",
+      ё: "yo",
+      Ж: "J",
+      ж: "j",
+      З: "Z",
+      з: "z",
+      И: "I",
+      и: "i",
+      Й: "Y",
+      й: "y",
+      К: "K",
+      к: "k",
+      Л: "L",
+      л: "l",
+      М: "M",
+      м: "m",
+      Н: "N",
+      н: "n",
+      О: "O",
+      о: "o",
+      П: "P",
+      п: "p",
+      Р: "R",
+      р: "r",
+      С: "S",
+      с: "s",
+      Т: "T",
+      т: "t",
+      У: "U",
+      у: "u",
+      Ф: "F",
+      ф: "f",
+      Х: "X",
+      х: "x",
+      Ц: "Ts",
+      ц: "ts",
+      Ч: "Ch",
+      ч: "ch",
+      Ш: "Sh",
+      ш: "sh",
+      Щ: "Sh",
+      щ: "sh",
+      Ъ: "'",
+      ъ: "'",
+      Ы: "I",
+      ы: "i",
+      Ь: "",
+      ь: "",
+      Э: "E",
+      э: "e",
+      Ю: "Yu",
+      ю: "yu",
+      Я: "Ya",
+      я: "ya",
+      Ғ: "G'",
+      ғ: "g'",
+      Қ: "Q",
+      қ: "q",
+      Ҳ: "H",
+      ҳ: "h",
+      Ў: "O'",
+      ў: "o'",
     };
-    return text.split('').map(char => map[char] || char).join('');
+    return text
+      .split("")
+      .map((char) => map[char] || char)
+      .join("");
   };
 
   useEffect(() => {
@@ -85,15 +149,22 @@ const Users = () => {
   });
 
   // Fetch ALL users for client-side filtering
-  const { data: allUsersData, isLoading, refetch } = useQuery({
+  const {
+    data: allUsersData,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["all-users"],
     queryFn: async () => {
       let allUsers: UserRead[] = [];
       let currentPage = 1;
       let hasMore = true;
-      
+
       while (hasMore) {
-        const response = await userService.getUsers({ page: currentPage, page_size: 100 });
+        const response = await userService.getUsers({
+          page: currentPage,
+          page_size: 100,
+        });
         if (response.data && response.data.length > 0) {
           allUsers = [...allUsers, ...response.data];
           if (response.meta && currentPage < response.meta.total_pages) {
@@ -111,7 +182,11 @@ const Users = () => {
 
   // Filter and paginate users on client side
   const { data, stats } = useMemo(() => {
-    if (!allUsersData?.data) return { data: { data: [], meta: { total: 0, total_pages: 0 } }, stats: { total: 0, active: 0, admins: 0 } };
+    if (!allUsersData?.data)
+      return {
+        data: { data: [], meta: { total: 0, total_pages: 0 } },
+        stats: { total: 0, active: 0, admins: 0 },
+      };
 
     let filtered = allUsersData.data;
 
@@ -119,28 +194,32 @@ const Users = () => {
     if (debouncedSearch) {
       const searchLower = debouncedSearch.toLowerCase();
       const searchLatin = cyrillicToLatin(debouncedSearch).toLowerCase();
-      
-      filtered = filtered.filter(user => {
+
+      filtered = filtered.filter((user) => {
         const fullName = (user.full_name || "").toLowerCase();
         const email = (user.email || "").toLowerCase();
         const phone = (user.phone || "").toLowerCase();
-        
-        return fullName.includes(searchLower) || 
-               fullName.includes(searchLatin) ||
-               email.includes(searchLower) || 
-               phone.includes(searchLower);
+
+        return (
+          fullName.includes(searchLower) ||
+          fullName.includes(searchLatin) ||
+          email.includes(searchLower) ||
+          phone.includes(searchLower)
+        );
       });
     }
 
     // Filter by status
     if (status !== "all") {
-      filtered = filtered.filter(user => user.status === status);
+      filtered = filtered.filter((user) => user.status === status);
     }
 
     // Filter by role
     if (roleId !== "all") {
       const rId = parseInt(roleId, 10);
-      filtered = filtered.filter(user => user.roles?.some(r => r.id === rId));
+      filtered = filtered.filter((user) =>
+        user.roles?.some((r) => r.id === rId),
+      );
     }
 
     const total = filtered.length;
@@ -161,10 +240,10 @@ const Users = () => {
           total,
           total_pages: totalPages,
           page,
-          page_size: 10
-        }
+          page_size: 10,
+        },
       },
-      stats: allStats
+      stats: allStats,
     };
   }, [allUsersData, debouncedSearch, status, roleId, page]);
 

@@ -70,6 +70,9 @@ export interface UserBase {
 }
 
 export interface UserRead extends UserBase {
+  [x: string]: undefined;
+  role_id: null;
+  role_id: null;
   id: number;
   created_at: string;
   roles: RoleRead[];
