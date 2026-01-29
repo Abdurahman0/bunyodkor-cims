@@ -63,7 +63,7 @@ export default function Login() {
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
-      const message = error.response?.data?.detail || "Noto'g'ri ma'lumotlar";
+      const message = error.response?.data?.detail || t("invalidCredentials");
       toast.error(message, { duration: 4000 });
     },
   });
@@ -261,6 +261,24 @@ export default function Login() {
           className="text-center text-sm text-muted-foreground mt-6"
         >
           {t("copyright")}
+        </motion.p>
+
+        {/* Powered By */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="text-center text-xs text-muted-foreground mt-2"
+        >
+          {t("poweredBy")}{" "}
+          <a
+            href="https://www.cognilabs.org/uz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Cognilabs
+          </a>
         </motion.p>
       </motion.div>
     </div>

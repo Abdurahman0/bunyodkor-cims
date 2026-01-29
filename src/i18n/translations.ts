@@ -29,7 +29,6 @@ export const translations = {
     selectGroupToSeeStats: "Select a group to see statistics",
     studentStatistics: "Student Statistics",
     allAttendancesMarkedByYou: "All attendances you've marked",
-    noAttendanceHistory: "No attendance history found",
     unknownStudent: "Unknown Student",
     gateLogs: "Gate Logs",
     reports: "Reports",
@@ -906,7 +905,8 @@ export const translations = {
     login: "Login",
     invalidCredentials: "Invalid credentials",
     testData: "Test data:",
-    copyright: "© 2024 Bunyodkor. All rights reserved.",
+    copyright: "© 2026 Bunyodkor. All rights reserved.",
+    poweredBy: "Powered by",
   },
 
   uz: {
@@ -939,7 +939,6 @@ export const translations = {
     selectGroupToSeeStats: "Statistikani ko'rish uchun guruhni tanlang",
     studentStatistics: "Talaba statistikasi",
     allAttendancesMarkedByYou: "Siz tomonidan belgilangan barcha davomatlar",
-    noAttendanceHistory: "Davomat tarixi topilmadi",
     unknownStudent: "Noma'lum talaba",
     gateLogs: "Kirish jurnali",
     reports: "Hisobotlar",
@@ -1833,6 +1832,7 @@ export const translations = {
     invalidCredentials: "Noto'g'ri ma'lumotlar",
     testData: "Test ma'lumotlari:",
     copyright: "© 2024 Bunyodkor. Barcha huquqlar himoyalangan.",
+    poweredBy: "Ishlab chiquvchi:",
   },
 
   ru: {
@@ -1865,7 +1865,6 @@ export const translations = {
     selectGroupToSeeStats: "Выберите группу, чтобы увидеть статистику",
     studentStatistics: "Статистика студента",
     allAttendancesMarkedByYou: "Все посещения, отмеченные вами",
-    noAttendanceHistory: "История посещаемости не найдена",
     unknownStudent: "Неизвестный студент",
     gateLogs: "Журнал входа",
     reports: "Отчеты",
@@ -2752,6 +2751,7 @@ export const translations = {
     invalidCredentials: "Неверные учетные данные",
     testData: "Тестовые данные:",
     copyright: "© 2024 Bunyodkor. Все права защищены.",
+    poweredBy: "Разработано",
   },
 };
 
