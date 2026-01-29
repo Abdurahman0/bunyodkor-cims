@@ -1831,8 +1831,8 @@ export const translations = {
     login: "Kirish",
     invalidCredentials: "Noto'g'ri ma'lumotlar",
     testData: "Test ma'lumotlari:",
-    copyright: "© 2024 Bunyodkor. Barcha huquqlar himoyalangan.",
-    poweredBy: "Ishlab chiquvchi:",
+    copyright: "© 2026 Bunyodkor. Barcha huquqlar himoyalangan.",
+    poweredBy: "Ishlab chiquvchi",
   },
 
   ru: {
@@ -2750,7 +2750,7 @@ export const translations = {
     login: "Войти",
     invalidCredentials: "Неверные учетные данные",
     testData: "Тестовые данные:",
-    copyright: "© 2024 Bunyodkor. Все права защищены.",
+    copyright: "© 2026 Bunyodkor. Все права защищены.",
     poweredBy: "Разработано",
   },
 };
