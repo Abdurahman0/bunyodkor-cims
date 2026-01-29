@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Comprehensive API Service Layer
@@ -258,8 +257,8 @@ export const roleService = {
    * Get all roles with their permissions
    * GET /roles
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getRoles: async (p0: {}): Promise<ApiResponse<RoleWithPermissions[]>> => {
+
+  getRoles: async (): Promise<ApiResponse<RoleWithPermissions[]>> => {
     const response =
       await apiClient.get<ApiResponse<RoleWithPermissions[]>>("/roles");
     return response.data;
@@ -930,9 +929,8 @@ export const contractService = {
    * GET /contracts/{contract_id}
    */
   getContract: async (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     contractId: number,
-    number: string,
+    _number: string,
   ): Promise<ApiResponse<ContractRead>> => {
     const response = await apiClient.get<ApiResponse<ContractRead>>(
       `/contracts/${contractId}`,

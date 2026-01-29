@@ -1,7 +1,6 @@
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,15 +27,7 @@ import {
   userService,
   attendanceService,
 } from "@/services/api.service";
-import type {
-  DashboardSummary,
-  TransactionRead,
-  GroupRead,
-  StudentRead,
-  UserRead,
-  FinanceReport,
-  AttendanceRead,
-} from "@/types/api";
+import type { TransactionRead, GroupRead, AttendanceRead } from "@/types/api";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -75,7 +66,7 @@ export default function Dashboard() {
       const today = format(new Date(), "yyyy-MM-dd");
       const weekAgo = format(
         new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        "yyyy-MM-dd"
+        "yyyy-MM-dd",
       );
       return reportService.getFinanceReport({
         from_date: weekAgo,
@@ -90,9 +81,9 @@ export default function Dashboard() {
       const today = format(new Date(), "yyyy-MM-dd");
       const weekAgo = format(
         new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        "yyyy-MM-dd"
+        "yyyy-MM-dd",
       );
-      
+
       let allTransactions: TransactionRead[] = [];
       let page = 1;
       let hasMore = true;
@@ -254,14 +245,16 @@ export default function Dashboard() {
     });
 
     // Convert to chart format
-    return Object.keys(dailyRevenue).sort().map((date) => ({
-      label: format(new Date(date), "EEE"),
-      value: dailyRevenue[date],
-    }));
+    return Object.keys(dailyRevenue)
+      .sort()
+      .map((date) => ({
+        label: format(new Date(date), "EEE"),
+        value: dailyRevenue[date],
+      }));
   }, [revenueTransactionsData]);
 
   // Attendance data - using group attendance reports for aggregate data
-  const { data: groupAttendanceData } = useQuery({
+  useQuery({
     queryKey: ["group-attendance-reports"],
     queryFn: () => reportService.getGroupAttendanceReports(),
   });
@@ -382,7 +375,7 @@ export default function Dashboard() {
                 size={200}
                 centerValue={paymentSourcesData.reduce(
                   (a: any, b: any) => a + b.value,
-                  0
+                  0,
                 )}
                 centerLabel="Total"
                 showLegend
@@ -454,8 +447,8 @@ export default function Dashboard() {
                             tx.status === "success"
                               ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
                               : tx.status === "pending"
-                              ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400"
-                              : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                                ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400"
+                                : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
                           }`}
                         >
                           {tx.status === "success" ? (
@@ -482,8 +475,8 @@ export default function Dashboard() {
                             tx.status === "success"
                               ? "text-green-600 dark:text-green-400"
                               : tx.status === "pending"
-                              ? "text-yellow-600 dark:text-yellow-400"
-                              : "text-red-600 dark:text-red-400"
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-red-600 dark:text-red-400"
                           }`}
                         >
                           {tx.status}
@@ -674,8 +667,8 @@ export default function Dashboard() {
                               attendance.status === "present"
                                 ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
                                 : attendance.status === "late"
-                                ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400"
-                                : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                                  ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400"
+                                  : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
                             }`}
                           >
                             {attendance.status === "present" ? (
@@ -701,8 +694,8 @@ export default function Dashboard() {
                               attendance.status === "present"
                                 ? "text-green-600 dark:text-green-400"
                                 : attendance.status === "late"
-                                ? "text-yellow-600 dark:text-yellow-400"
-                                : "text-red-600 dark:text-red-400"
+                                  ? "text-yellow-600 dark:text-yellow-400"
+                                  : "text-red-600 dark:text-red-400"
                             }`}
                           >
                             {getStatusLabel(attendance.status)}
