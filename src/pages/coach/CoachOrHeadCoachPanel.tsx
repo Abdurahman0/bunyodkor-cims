@@ -7,7 +7,7 @@ export default function CoachOrHeadCoachPanel() {
 
   // Check both the single role property and the roles array for "head-coach"
   const isHeadCoach =
-    user?.role === "head-coach" ||
+    user?.role?.toLowerCase() === "head-coach" ||
     user?.roles?.some((r) => r.name.toLowerCase() === "head-coach");
 
   if (isHeadCoach) {
