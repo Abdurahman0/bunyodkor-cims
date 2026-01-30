@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -13,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { userService, roleService } from '@/services/api.service'
-import type { UserRead, UserCreate, UserUpdate, RoleWithPermissions, PermissionRead } from '@/types/api'
+import type { UserRead, UserCreate, RoleWithPermissions, PermissionRead } from '@/types/api'
 import toast from 'react-hot-toast'
 import { Check, ShieldCheck } from 'lucide-react'
 
@@ -89,7 +90,7 @@ const UserDialog = ({ open, onOpenChange, user, onSuccess }: UserDialogProps) =>
 
       if (user) {
         // --- UPDATE USER ---
-        const updatePayload: UserUpdate = { ...userData }
+        const updatePayload: Partial<UserCreate> = { ...userData }
         if (!updatePayload.password) {
           delete updatePayload.password
         }

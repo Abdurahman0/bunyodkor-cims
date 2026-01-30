@@ -221,7 +221,7 @@ export default function Students() {
 
   const handleExportComprehensiveData = async () => {
     try {
-      toast.loading(t("exportingData") || "Exporting data...");
+      toast.loading(t("exportingData"));
 
       // Get date range for current year
       const currentYear = new Date().getFullYear();
@@ -247,11 +247,11 @@ export default function Students() {
       window.URL.revokeObjectURL(url);
 
       toast.dismiss();
-      toast.success(t("exportedSuccessfully") || "Data exported successfully!");
+      toast.success(t("exportedSuccessfully"));
     } catch (error) {
       console.error(error);
       toast.dismiss();
-      toast.error(t("errorExportingData") || "Error exporting data");
+      toast.error(t("errorExportingData"));
     }
   };
 
@@ -320,17 +320,14 @@ export default function Students() {
             size="sm"
             className="gap-2 bg-primary/10 hover:bg-primary/20"
             onClick={handleExportComprehensiveData}
-            title={
-              t("exportAllStudentsData") ||
-              "Barcha talabalarni ma'lumotlarini yuklab olish"
-            }
+            title={t("exportAllStudentsData")}
           >
             <Download className="w-4 h-4" />
             <span className="hidden lg:inline">
               {t("exportAllStudentsData")}
             </span>
             <span className="hidden sm:inline lg:hidden">{t("exportAll")}</span>
-            <span className="sm:hidden font-bold">{t("full")}</span>
+            <span className="sm:hidden font-bold">{t("full") || "Full"}</span>
           </Button>
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
@@ -494,7 +491,7 @@ export default function Students() {
                 )}
                 {archiveYearFilter && (
                   <Badge variant="secondary">
-                    {t("archiveYear") || "Arxiv yili"}: {archiveYearFilter}
+                    {t("archiveYear")}: {archiveYearFilter}
                   </Badge>
                 )}
               </div>
@@ -580,7 +577,7 @@ export default function Students() {
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline">
                         {allGroups.find((g) => g.id === student.group_id)
-                          ?.name || t("noGroup")}
+                          ?.name || t("noGroup") || "No Group"}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">

@@ -850,7 +850,7 @@ export function StudentWithContractDialog({
                       className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
                     >
                       <Copy className="w-3 h-3" />
-                      Yuqoridagi manzilni ko'chirish
+                      {t("copyAddressFromAbove")}
                     </button>
                   )}
                 </div>
@@ -1007,12 +1007,11 @@ export function StudentWithContractDialog({
                       {primaryAddress && (
                         <button
                           type="button"
-                          onClick={() =>
-                            copyAddressToField("buyurtmachi_address")
-                          }
+                          onClick={() => copyAddressToField("buyurtmachi_address")}
                           className="text-xs text-blue-600 flex items-center gap-1"
                         >
-                          <Copy className="w-3 h-3" /> Ko'chirish
+                          <Copy className="w-3 h-3" />
+                          {t("copy")}
                         </button>
                       )}
                     </div>
@@ -1043,7 +1042,7 @@ export function StudentWithContractDialog({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label>Portfolio *</Label>
+                <Label>{t("profilePhoto")} *</Label>
                 <Input
                   type="file"
                   accept="image/*,application/pdf"
@@ -1051,7 +1050,7 @@ export function StudentWithContractDialog({
                 />
               </div>
               <div>
-                <Label>086-shakl *</Label>
+                <Label>{t("form086")} *</Label>
                 <Input
                   type="file"
                   accept="image/*,application/pdf"
@@ -1059,7 +1058,7 @@ export function StudentWithContractDialog({
                 />
               </div>
               <div>
-                <Label>Otaning pasporti *</Label>
+                <Label>{t("contractPhoto")} *</Label>
                 <Input
                   type="file"
                   accept="image/*,application/pdf"
@@ -1067,7 +1066,7 @@ export function StudentWithContractDialog({
                 />
               </div>
               <div>
-                <Label>Tug'ilganlik guvohnoma *</Label>
+                <Label>{t("birthCertificate")} *</Label>
                 <Input
                   type="file"
                   accept="image/*,application/pdf"
@@ -1075,7 +1074,7 @@ export function StudentWithContractDialog({
                 />
               </div>
               <div>
-                <Label>Yurak tekshiruvi *</Label>
+                <Label>{t("heartCheckup")} *</Label>
                 <Input
                   type="file"
                   accept="image/*,application/pdf"
@@ -1083,7 +1082,7 @@ export function StudentWithContractDialog({
                 />
               </div>
               <div>
-                <Label>Onaning pasporti *</Label>
+                <Label>{t("passportCopy")} *</Label>
                 <Input
                   type="file"
                   accept="image/*,application/pdf"
@@ -1211,7 +1210,7 @@ export function StudentWithContractDialog({
                     size="lg"
                   >
                     <Eye className="w-5 h-5" />
-                    Ko'rish
+                    {t("view")}
                   </Button>
                 </div>
                 <Button

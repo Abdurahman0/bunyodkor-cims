@@ -52,8 +52,6 @@ export default function WaitingList() {
 
   // Get all groups for display
   const { data: groupsData } = useQuery({
-    queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 100000 }),
     queryKey: ["groups-list-all"],
     queryFn: async () => {
       let allGroups: GroupRead[] = [];

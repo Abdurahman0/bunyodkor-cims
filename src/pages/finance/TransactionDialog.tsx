@@ -59,18 +59,18 @@ export function TransactionDialog({
   const debouncedContractSearch = useDebounce(contractSearch, 300);
 
   const monthNames = [
-    t("January"),
-    t("February"),
-    t("March"),
-    t("April"),
-    t("May"),
-    t("June"),
-    t("July"),
-    t("August"),
-    t("September"),
-    t("October"),
-    t("November"),
-    t("December"),
+    t("january"),
+    t("february"),
+    t("march"),
+    t("april"),
+    t("may"),
+    t("june"),
+    t("july"),
+    t("august"),
+    t("september"),
+    t("october"),
+    t("november"),
+    t("december"),
   ];
 
   const monthShortNames = [
@@ -137,7 +137,7 @@ export function TransactionDialog({
     const student = getStudentInfo(contract);
     return student
       ? `${student.first_name} ${student.last_name}`
-      : t("No Student Attached") || "O'quvchi biriktirilmagan";
+      : t("noStudentAttached");
   };
 
   // Yoshni hisoblash
@@ -240,7 +240,7 @@ export function TransactionDialog({
       });
 
       toast.success(
-        t("Transaction Created Success") || "Tranzaksiya muvaffaqiyatli yaratildi"
+        t("transactionCreatedSuccess")
       );
       reset();
       setSelectedMonths([]);
@@ -251,21 +251,20 @@ export function TransactionDialog({
     onError: (error: any) => {
       const detail = error?.response?.data?.detail;
       let errorMessage =
-        t("Failed To Create Transaction") ||
-        "Tranzaksiya yaratishda xatolik yuz berdi";
+        t("failedToCreateTransaction");
 
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
       } else if (typeof detail === "string") {
         // Backend xabarlarini o'zbekchaga o'girish
         if (detail.includes("Contract not found")) {
-          errorMessage = "Bunday raqamli shartnoma topilmadi";
+          errorMessage = t("contractNotFound");
         } else if (detail.includes("Student not found")) {
-          errorMessage = "O'quvchi topilmadi";
+          errorMessage = t("studentNotFound");
         } else if (detail.includes("Transaction already exists")) {
-          errorMessage = "Bunday tranzaksiya allaqachon mavjud";
+          errorMessage = t("transactionAlreadyExists");
         } else if (detail.toLowerCase().includes("permission")) {
-          errorMessage = "Sizda bu amalni bajarish uchun huquq yo'q";
+          errorMessage = t("errorPermissionDenied");
         } else {
           errorMessage = detail;
         }
@@ -283,7 +282,7 @@ export function TransactionDialog({
       .filter((m) => !isNaN(m) && m >= 1 && m <= 12);
 
     if (paymentMonthsArray.length === 0) {
-      toast.error(t("Select At Least One Month") || "Kamida bitta oy tanlang");
+      toast.error(t("selectAtLeastOneMonth"));
       return;
     }
 
@@ -310,20 +309,20 @@ export function TransactionDialog({
         onClose={() => onOpenChange(false)}
       >
         <DialogHeader>
-          <DialogTitle>{t("Add Transaction")}</DialogTitle>
+          <DialogTitle>{t("addTransaction")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="amount">{t("Amount")} (UZS)</Label>
+            <Label htmlFor="amount">{t("amount")} (UZS)</Label>
             <Input
               id="amount"
               type="number"
               placeholder="0"
               {...register("amount", {
-                required: t("Amount Required"),
+                required: t("amountRequired"),
                 valueAsNumber: true,
-                min: { value: 1, message: t("Amount Must Be Greater Than Zero") },
+                min: { value: 1, message: t("amountMustBeGreaterThanZero") },
               })}
             />
             {errors.amount && (
@@ -332,9 +331,9 @@ export function TransactionDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="source">{t("Payment Source")}</Label>
+            <Label htmlFor="source">{t("paymentSource")}</Label>
             <Select id="source" {...register("source")}>
-              <option value="bank">{t("Bank Transfer")}</option>
+              <option value="bank">{t("bankTransfer")}</option>
               <option value="payme">Payme</option>
               <option value="click">Click</option>
             </Select>
@@ -345,11 +344,11 @@ export function TransactionDialog({
             className="space-y-1 relative contract-autocomplete"
             ref={dropdownRef}
           >
-            <Label htmlFor="contract_number">{t("Contract Number")}</Label>
+            <Label htmlFor="contract_number">{t("contractNumber")}</Label>
             <div className="relative">
               <Input
                 id="contract_number"
-                placeholder={t("Enter Contract Number")}
+                placeholder={t("enterContractNumber")}
                 value={contractSearch}
                 onChange={(e) => {
                   setContractSearch(e.target.value);
@@ -421,14 +420,14 @@ export function TransactionDialog({
                 <div className="flex items-center gap-2 mb-2">
                   <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <h3 className="text-lg font-semibold text-foreground">
-                    O'quvchi Ma'lumotlari
+                    {t("studentInformation")}
                   </h3>
                 </div>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1">
                     <span className="text-blue-600 dark:text-blue-400 font-medium min-w-[120px]">
-                      {t("Student Name") || "Talaba ismi"}:
+                      {t("studentName")}:
                     </span>
                     <span className="font-medium text-foreground">
                       {currentStudent.first_name} {currentStudent.last_name}
@@ -437,7 +436,7 @@ export function TransactionDialog({
 
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1">
                     <span className="text-blue-600 dark:text-blue-400 font-medium min-w-[120px]">
-                      {t("Phone Number") || "Telefon raqami"}:
+                      {t("phoneNumber")}:
                     </span>
                     <span className="text-foreground">
                       {currentStudent.phone}
@@ -449,20 +448,20 @@ export function TransactionDialog({
                       <div className="flex items-center gap-1 min-w-[120px]">
                         <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         <span className="text-blue-600 dark:text-blue-400 font-medium">
-                          {t("Birth Year") || "Tug'ilgan yili"}:
+                          {t("birthYear")}:
                         </span>
                       </div>
                       <span className="text-foreground">
                         {new Date(currentStudent.date_of_birth).getFullYear()} (
                         {calculateAge(currentStudent.date_of_birth)}{" "}
-                        {t("Years Old") || "yoshda"})
+                        {t("yearsOld")})
                       </span>
                     </div>
                   )}
 
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1">
                     <span className="text-blue-600 dark:text-blue-400 font-medium min-w-[120px]">
-                      {t("Status") || "Holat"}:
+                      {t("status")}:
                     </span>
                     <Badge
                       variant="secondary"
@@ -477,13 +476,13 @@ export function TransactionDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="payment_year">{t("Payment Year")}</Label>
+            <Label htmlFor="payment_year">{t("paymentYear")}</Label>
             <Input
               id="payment_year"
               type="number"
               placeholder="2025"
               {...register("payment_year", {
-                required: t("Payment Year Required"),
+                required: t("paymentYearRequired"),
                 valueAsNumber: true,
               })}
             />
@@ -498,7 +497,7 @@ export function TransactionDialog({
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <Label>
-                {t("Select Payment Months")}{" "}
+                {t("selectPaymentMonths")}{" "}
                 <span className="text-red-500">*</span>
               </Label>
             </div>
@@ -530,7 +529,7 @@ export function TransactionDialog({
             <input
               type="hidden"
               {...register("payment_months", {
-                required: t("Select At Least One Month"),
+                required: t("selectAtLeastOneMonth"),
               })}
             />
             {errors.payment_months && (
@@ -541,7 +540,7 @@ export function TransactionDialog({
             {selectedMonths.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2 p-3 bg-muted rounded-md">
                 <span className="text-sm text-muted-foreground font-medium">
-                  {t("Selected")}:
+                  {t("selected")}:
                 </span>
                 {selectedMonths.map((month) => (
                   <Badge
@@ -565,11 +564,11 @@ export function TransactionDialog({
 
           <div className="space-y-1">
             <Label htmlFor="comment">
-              {t("Comment")} ({t("Optional")})
+              {t("comment")} ({t("optional")})
             </Label>
             <Input
               id="comment"
-              placeholder={t("Monthly Payment")}
+              placeholder={t("monthlyPayment")}
               {...register("comment")}
             />
           </div>
@@ -580,10 +579,10 @@ export function TransactionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              {t("Cancel")}
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? t("Saving") : t("Save")}
+              {mutation.isPending ? t("saving") : t("save")}
             </Button>
           </div>
         </form>

@@ -63,6 +63,10 @@ export const translations = {
     noData: "No data available",
     viewAll: "View All",
     unknown: "Unknown",
+    view: "View",
+    copy: "Copy",
+    copyAddressFromAbove: "Copy address from above",
+    full: "Full",
 
     // Dashboard
     welcomeBack: "Welcome back",
@@ -148,6 +152,7 @@ export const translations = {
     availableSlots: "available",
     full: "Full",
     noGroupsFound: "No groups found",
+    noGroup: "No Group",
     createGroup: "Create Group",
     totalGroups: "Total Groups",
     totalCapacity: "Total Capacity",
@@ -478,6 +483,7 @@ export const translations = {
     // Additional common translations
     todayActivity: "Here's what's happening at the academy today.",
     graduated: "Graduated",
+    deleted: "Deleted",
     dropped: "Dropped",
     suspended: "Suspended",
     allGroups: "All Groups",
@@ -744,6 +750,9 @@ export const translations = {
     groupIsFull: "This group is full",
     contractPdfNotFound: "Contract PDF file not found",
     failedToLoadFile: "Failed to load file",
+    contractNotFound: "Contract not found",
+    studentNotFound: "Student not found",
+    transactionAlreadyExists: "Transaction already exists",
 
     // Toast Messages - Success
     importCompleted: "Import completed successfully",
@@ -846,6 +855,8 @@ export const translations = {
     viewContracts: "View Contracts",
     selectGroupPlaceholder: "Select a group",
     confirmDeleteStudent: "Are you sure you want to delete",
+    confirmDelete: "Confirm Delete",
+    studentProfile: "Student Profile",
     viewStudents: "View Students",
     groupStudents: "Group Students",
     noStudentsInGroup: "No students in this group",
@@ -973,6 +984,10 @@ export const translations = {
     noData: "Ma'lumot yo'q",
     viewAll: "Barchasini ko'rish",
     unknown: "Noma'lum",
+    view: "Ko'rish",
+    copy: "Ko'chirish",
+    copyAddressFromAbove: "Yuqoridagi manzilni ko'chirish",
+    full: "To'liq",
 
     // Dashboard
     welcomeBack: "Xush kelibsiz",
@@ -1059,6 +1074,7 @@ export const translations = {
     availableSlots: "bo'sh",
     full: "To'liq",
     noGroupsFound: "Guruhlar topilmadi",
+    noGroup: "Guruhsiz",
     createGroup: "Guruh yaratish",
     editGroup: "Guruhni tahrirlash",
     newGroup: "Yangi guruh",
@@ -1395,6 +1411,7 @@ export const translations = {
     // Additional common translations
     todayActivity: "Bunyodkor akademiyasida bugun nima bo'lyapti.",
     graduated: "Bitirgan",
+    deleted: "O'chirilgan",
     dropped: "Tark etgan",
     suspended: "To'xtatilgan",
     allGroups: "Barcha guruhlar",
@@ -1665,6 +1682,9 @@ export const translations = {
     groupIsFull: "Bu guruh to'lgan",
     contractPdfNotFound: "Shartnoma PDF fayli topilmadi",
     failedToLoadFile: "Faylni yuklashda xatolik yuz berdi",
+    contractNotFound: "Shartnoma topilmadi",
+    studentNotFound: "Talaba topilmadi",
+    transactionAlreadyExists: "Tranzaksiya allaqachon mavjud",
 
     // Toast Messages - Success
     importCompleted: "Import muvaffaqiyatli yakunlandi",
@@ -1772,6 +1792,8 @@ export const translations = {
     viewContracts: "Shartnomalarni Ko'rish",
     selectGroupPlaceholder: "Guruhni tanlang",
     confirmDeleteStudent: "Rostdan ham o'chirmoqchimisiz",
+    confirmDelete: "O'chirishni tasdiqlang",
+    studentProfile: "Talaba profili",
     viewStudents: "Talabalarni Ko'rish",
     groupStudents: "Guruh Talabalari",
     noStudentsInGroup: "Guruhda talabalar yo'q",
@@ -1899,6 +1921,10 @@ export const translations = {
     noData: "Нет данных",
     viewAll: "Посмотреть все",
     unknown: "Неизвестно",
+    view: "Просмотр",
+    copy: "Копировать",
+    copyAddressFromAbove: "Скопировать адрес сверху",
+    full: "Полный",
 
     // Dashboard
     welcomeBack: "Добро пожаловать",
@@ -1984,6 +2010,7 @@ export const translations = {
     availableSlots: "доступно",
     full: "Заполнено",
     noGroupsFound: "Группы не найдены",
+    noGroup: "Без группы",
     createGroup: "Создать группу",
     editGroup: "Редактировать группу",
     newGroup: "Новая группа",
@@ -2318,6 +2345,7 @@ export const translations = {
     // Additional common translations
     todayActivity: "Что происходит в академии Бунёдкор сегодня.",
     graduated: "Окончил",
+    deleted: "Удален",
     dropped: "Отчислен",
     suspended: "Приостановлен",
     allGroups: "Все группы",
@@ -2589,6 +2617,9 @@ export const translations = {
     groupIsFull: "Эта группа заполнена",
     contractPdfNotFound: "PDF файл контракта не найден",
     failedToLoadFile: "Не удалось загрузить файл",
+    contractNotFound: "Контракт не найден",
+    studentNotFound: "Студент не найден",
+    transactionAlreadyExists: "Транзакция уже существует",
 
     // Toast Messages - Success
     importCompleted: "Импорт успешно завершен",
@@ -2692,6 +2723,8 @@ export const translations = {
     viewContracts: "Просмотр Контрактов",
     selectGroupPlaceholder: "Выберите группу",
     confirmDeleteStudent: "Вы уверены, что хотите удалить",
+    confirmDelete: "Подтвердить удаление",
+    studentProfile: "Профиль студента",
     viewStudents: "Просмотр Студентов",
     groupStudents: "Студенты Группы",
     noStudentsInGroup: "В группе нет студентов",
