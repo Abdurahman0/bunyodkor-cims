@@ -270,6 +270,10 @@ export const translations = {
     transactionAssignedSuccessfully: "Transaction assigned successfully!",
     noAttendanceHistory: "No attendance history found.",
     selectGroupToViewStudents: "Select a group to view its students.",
+    headCoachDashboard: "Head Coach Dashboard",
+    manageCoaches: "Manage Coaches",
+    teamPerformance: "Team Performance",
+    trainingSessions: "Training Sessions",
 
     // Gate Logs
     gateLogsList: "Gate Logs List",
@@ -1203,6 +1207,10 @@ export const translations = {
     noAttendanceHistory: "Davomat tarixi topilmadi.",
     selectGroupToViewStudents: "Talabalarni ko'rish uchun guruhni tanlang.",
     transactionAssignedSuccessfully: "Tranzaksiya muvaffaqiyatli tayinlandi!",
+    headCoachDashboard: "Bosh Murabbiy Paneli",
+    manageCoaches: "Murabbiylarni Boshqarish",
+    teamPerformance: "Jamoa Ko'rsatkichlari",
+    trainingSessions: "Mashg'ulotlar",
 
     // Gate Logs
     gateLogsList: "Kirish jurnali ro'yxati",
@@ -1314,7 +1322,7 @@ export const translations = {
     totalUsers: "Jami foydalanuvchilar",
     activeUsers: "Faol foydalanuvchilar",
     superAdmins: "Super Adminlar",
-    superAdmin: "Super Admin",
+    superAdmin: "Super Administrator",
     searchByNameEmailPhone: "Ism, email yoki telefon bo'yicha qidirish...",
     allRoles: "Barcha rollar",
     allUsers: "Barcha foydalanuvchilar",
@@ -2147,6 +2155,10 @@ export const translations = {
     transactionAssignedSuccessfully: "Транзакция успешно назначена!",
     noAttendanceHistory: "История посещаемости не найдена.",
     selectGroupToViewStudents: "Выберите группу для просмотра ее студентов.",
+    headCoachDashboard: "Панель Главного Тренера",
+    manageCoaches: "Управление Тренерами",
+    teamPerformance: "Efektivnost Komandy",
+    trainingSessions: "Trenirovochnye Sessii",
 
     // Gate Logs
     gateLogsList: "Список журналов входа",

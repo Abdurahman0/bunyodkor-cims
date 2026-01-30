@@ -104,7 +104,7 @@ export default function HeadCoach() {
   // Fetch group statistics for the "Tizim Holati" card
   const { data: groupsStats, isLoading: isLoadingGroupsStats } = useQuery({
     queryKey: ["groups-statistics-headcoach"],
-    queryFn: () => groupService.getGroupsStatistics(),
+    queryFn: () => groupService.getGroupsStatistics({}),
   });
 
   // --- Mutations ---
