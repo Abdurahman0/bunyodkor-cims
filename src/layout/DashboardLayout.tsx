@@ -354,11 +354,13 @@ const DashboardLayout = () => {
               <>
                 <Sun className="w-5 h-5" />
                 <span className="font-medium">Light Mode</span>
+                <span className="font-medium">{t("lightMode")}</span>
               </>
             ) : (
               <>
                 <Moon className="w-5 h-5" />
                 <span className="font-medium">Dark Mode</span>
+                <span className="font-medium">{t("darkMode")}</span>
               </>
             )}
           </Button>
@@ -379,6 +381,7 @@ const DashboardLayout = () => {
               <div className="mt-2 pt-2 border-t border-border/40 flex items-center gap-1.5 text-xs">
                 <Shield className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-amber-400 font-medium">Super Admin</span>
+                <span className="text-amber-400 font-medium">{t("superAdmin")}</span>
               </div>
             )}
           </div>
