@@ -89,7 +89,7 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
         variant="outline"
         className={`${variant.bg} ${variant.text} ${variant.border} px-2.5 py-0.5 shadow-sm font-medium`}
       >
-        {t(status.charAt(0).toUpperCase() + status.slice(1)) || status}
+        {t(status) || status}
       </Badge>
     );
   };

@@ -268,6 +268,8 @@ export const translations = {
     noAttendanceChangesToSubmit: "No attendance changes to submit",
     suggestion: "Suggestion",
     transactionAssignedSuccessfully: "Transaction assigned successfully!",
+    noAttendanceHistory: "No attendance history found.",
+    selectGroupToViewStudents: "Select a group to view its students.",
 
     // Gate Logs
     gateLogsList: "Gate Logs List",
@@ -526,6 +528,12 @@ export const translations = {
     newNumberSuggested: "New number suggested",
     retryingWithNewNumber: "Retrying with new contract number...",
     invalidFileFormat: "Invalid file format. Accepted formats",
+    issuedByPlaceholder: "Issuing authority",
+    studentFullNamePlaceholder: "First Last Middle Name",
+    addressPlaceholder: "City, district, street, house",
+    amountInWordsPlaceholder: "eight hundred thousand",
+    fullNamePlaceholder: "Full Name",
+    occupationPlaceholder: "Workplace / Occupation",
 
     // Transaction form
     transactionCreatedSuccess: "Transaction created successfully",
@@ -1190,6 +1198,8 @@ export const translations = {
     noAttendanceChangesToSubmit:
       "Yuborilishi kerak bo'lgan davomat o'zgarishlari yo'q",
     suggestion: "Taklif",
+    noAttendanceHistory: "Davomat tarixi topilmadi.",
+    selectGroupToViewStudents: "Talabalarni ko'rish uchun guruhni tanlang.",
     transactionAssignedSuccessfully: "Tranzaksiya muvaffaqiyatli tayinlandi!",
 
     // Gate Logs
@@ -1455,6 +1465,12 @@ export const translations = {
     newNumberSuggested: "Yangi raqam taklif qilingan",
     retryingWithNewNumber: "Yangi shartnoma raqami bilan qayta urinilmoqda...",
     invalidFileFormat: "Noto'g'ri fayl formati. Qabul qilinadigan formatlar",
+    issuedByPlaceholder: "Kim tomonidan berilgan",
+    studentFullNamePlaceholder: "Ism Familiya Otasining ismi",
+    addressPlaceholder: "Shahar, tuman, ko'cha, uy",
+    amountInWordsPlaceholder: "sakkiz yuz ming",
+    fullNamePlaceholder: "F.I.O",
+    occupationPlaceholder: "Ish joyi",
 
     // Transaction form
     transactionCreatedSuccess: "Tranzaksiya muvaffaqiyatli yaratildi",
@@ -2125,6 +2141,8 @@ export const translations = {
     noAttendanceChangesToSubmit: "Нет изменений посещаемости для отправки",
     suggestion: "Предложение",
     transactionAssignedSuccessfully: "Транзакция успешно назначена!",
+    noAttendanceHistory: "История посещаемости не найдена.",
+    selectGroupToViewStudents: "Выберите группу для просмотра ее студентов.",
 
     // Gate Logs
     gateLogsList: "Список журналов входа",
@@ -2389,6 +2407,12 @@ export const translations = {
     newNumberSuggested: "Предложен новый номер",
     retryingWithNewNumber: "Повторная попытка с новым номером контракта...",
     invalidFileFormat: "Неверный формат файла. Допустимые форматы",
+    issuedByPlaceholder: "Кем выдано",
+    studentFullNamePlaceholder: "Ф.И.О.",
+    addressPlaceholder: "Город, район, улица, дом",
+    amountInWordsPlaceholder: "восемьсот тысяч",
+    fullNamePlaceholder: "Ф.И.О.",
+    occupationPlaceholder: "Место работы",
 
     // Transaction form
     transactionCreatedSuccess: "Транзакция успешно создана",

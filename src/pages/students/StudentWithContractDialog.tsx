@@ -249,7 +249,7 @@ export function StudentWithContractDialog({
   // 1. Shartnomani Yuklash
   const handleDownloadContract = () => {
     if (!pdfUrl) {
-      toast.error(t("pdfNotFound") || "PDF topilmadi");
+      toast.error(t("pdfNotFound"));
       return;
     }
 
@@ -264,7 +264,7 @@ export function StudentWithContractDialog({
     link.click();
     document.body.removeChild(link);
 
-    toast.success(t("downloadedSuccessfully") || "Shartnoma yuklandi");
+    toast.success(t("downloadedSuccessfully"));
   };
 
   // 2. Shartnomani Ko'rish (Student Detail Page dagi kabi)
@@ -283,7 +283,7 @@ export function StudentWithContractDialog({
       const contractNumber = getValues("contract_number");
       if (!contractNumber) {
         toast.error(
-          t("contractNumberNotFormed") || "Contract number not formed",
+          t("contractNumberNotFormed"),
         );
         return;
       }
@@ -309,11 +309,11 @@ export function StudentWithContractDialog({
       if (pdfUrlFromResp) {
         openPdfUrl(pdfUrlFromResp);
       } else {
-        toast.error(t("pdfLinkNotFound") || "PDF link not found");
+        toast.error(t("pdfLinkNotFound"));
       }
     } catch (error) {
       toast.error(
-        t("errorOpeningContractFile") || "Error opening contract file",
+        t("errorOpeningContractFile"),
       );
     }
   };
@@ -333,9 +333,9 @@ export function StudentWithContractDialog({
   ) => {
     if (primaryAddress) {
       setValue(targetField, primaryAddress);
-      toast.success(t("addressCopied") || "Manzil ko'chirildi");
+      toast.success(t("addressCopied"));
     } else {
-      toast.error(t("enterAddressFirst") || "Avval birinchi manzilni kiriting");
+      toast.error(t("enterAddressFirst"));
     }
   };
 
@@ -345,13 +345,13 @@ export function StudentWithContractDialog({
       if (dadName) setValue("buyurtmachi_fio", dadName);
       if (dadPhone) setValue("buyurtmachi_phone", dadPhone);
       toast.success(
-        t("fatherInfoCopied") || "Otaning ma'lumotlari ko'chirildi",
+        t("fatherInfoCopied"),
       );
     } else if (type === "mother") {
       if (momFio) setValue("buyurtmachi_fio", momFio);
       if (momPhone) setValue("buyurtmachi_phone", momPhone);
       toast.success(
-        t("motherInfoCopied") || "Onaning ma'lumotlari ko'chirildi",
+        t("motherInfoCopied"),
       );
     } else {
       setValue("buyurtmachi_fio", "");
@@ -428,7 +428,7 @@ export function StudentWithContractDialog({
       setCurrentStep(0);
 
       if (!data.contract_start_date) {
-        toast.error(t("startDateRequired") || "Boshlanish sanasi majburiy!");
+        toast.error(t("startDateRequired"));
         setIsSubmitting(false);
         return;
       }
@@ -519,7 +519,7 @@ export function StudentWithContractDialog({
           formData.append(field, data[field][0]);
         } else {
           filesMissing = true;
-          toast.error(`${field}: ${t("fileNotUploaded") || "yuklanmagan!"}`);
+          toast.error(`${field}: ${t("fileNotUploaded")}`);
         }
       }
       for (const field of optionalFileFields) {
@@ -541,7 +541,7 @@ export function StudentWithContractDialog({
       await simulateProgress(3, 800);
 
       if (!response) {
-        toast.error(t("pdfNotFound") || "PDF topilmadi!");
+        toast.error(t("pdfNotFound"));
         setIsSubmitting(false);
         return;
       }
@@ -567,7 +567,7 @@ export function StudentWithContractDialog({
           setIsSuccess(true);
         } catch (e) {
           console.error("[DEBUG] Error creating blob URL", e);
-          toast.error(t("pdfNotFound") || "PDF topilmadi!");
+          toast.error(t("pdfNotFound"));
           setIsSubmitting(false);
           return;
         }
@@ -578,7 +578,7 @@ export function StudentWithContractDialog({
       if (onSuccess) onSuccess();
     } catch (error: any) {
       console.error("Xatolik:", error);
-      let errorMessage = t("anErrorOccurred") || "Xatolik yuz berdi";
+      let errorMessage = t("anErrorOccurred");
       // Xatoliklarni ushlash va qayta urinish logikasi (Sizning kodingizdan saqlandi)
       if (error.response?.data instanceof Blob) {
         try {
@@ -607,8 +607,7 @@ export function StudentWithContractDialog({
       if (isDuplicateContract && data.group_id) {
         try {
           toast(
-            t("retryingWithNewNumber") ||
-              "Yangi shartnoma raqami bilan qayta urinilmoqda...",
+            t("retryingWithNewNumber"),
           );
           const year =
             data.birth_year && data.birth_year.toString().length === 4
@@ -625,8 +624,7 @@ export function StudentWithContractDialog({
             setValue("contract_number", newContractNumber);
             toast.success(`${t("newNumberSuggested")}: ${newContractNumber}`);
             toast(
-              t("pleaseSubmitAgain") ||
-                "Iltimos, yana bir bor 'Saqlash' tugmasini bosing",
+              t("pleaseSubmitAgain"),
             );
           } else {
             toast.error(errorMessage);
@@ -767,7 +765,7 @@ export function StudentWithContractDialog({
                   <Label>{t("issuedBy")}</Label>
                   <Input
                     {...register("tarbiyalanuvchi_who_give")}
-                    placeholder="FHDY nomi"
+                      placeholder={t("issuedByPlaceholder")}
                   />
                 </div>
               </div>
@@ -830,7 +828,7 @@ export function StudentWithContractDialog({
                 <Label>{t("studentFullName")} *</Label>
                 <Input
                   {...register("student_fio", { required: true })}
-                  placeholder="Ism Familiya Otasining ismi"
+                  placeholder={t("studentFullNamePlaceholder")}
                 />
               </div>
               <div className="space-y-1">
@@ -856,7 +854,7 @@ export function StudentWithContractDialog({
                 </div>
                 <Input
                   {...register("student_address", { required: true })}
-                  placeholder="Shahar, tuman, ko'cha, uy"
+                  placeholder={t("addressPlaceholder")}
                 />
               </div>
               <div className="space-y-1">
@@ -878,14 +876,14 @@ export function StudentWithContractDialog({
                 <Input
                   type="number"
                   {...register("tolov_monthly_fee", { required: true })}
-                  placeholder="800000"
+                  placeholder="800 000"
                 />
               </div>
               <div className="space-y-1">
                 <Label>{t("amountInWords")} *</Label>
                 <Input
                   {...register("tolov_amount_in_words", { required: true })}
-                  placeholder="саккиз юз минг"
+                  placeholder={t("amountInWordsPlaceholder")}
                 />
               </div>
             </div>
@@ -898,13 +896,13 @@ export function StudentWithContractDialog({
                 </h4>
                 <div className="space-y-2">
                   <Label>{t("fullName")}</Label>
-                  <Input {...register("dad_name")} placeholder="F.I.O" />
+                  <Input {...register("dad_name")} placeholder={t("fullNamePlaceholder")} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("occupation")}</Label>
                   <Input
                     {...register("dad_occupation")}
-                    placeholder="Ish joyi"
+                    placeholder={t("occupationPlaceholder")}
                   />
                 </div>
                 <div className="space-y-2">
@@ -927,13 +925,13 @@ export function StudentWithContractDialog({
                 </h4>
                 <div className="space-y-2">
                   <Label>{t("fullName")}</Label>
-                  <Input {...register("mom_fio")} placeholder="F.I.O" />
+                  <Input {...register("mom_fio")} placeholder={t("fullNamePlaceholder")} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("occupation")}</Label>
                   <Input
                     {...register("mom_occupation")}
-                    placeholder="Ish joyi"
+                    placeholder={t("occupationPlaceholder")}
                   />
                 </div>
                 <div className="space-y-2">
@@ -1017,7 +1015,7 @@ export function StudentWithContractDialog({
                     </div>
                     <Input
                       {...register("buyurtmachi_address")}
-                      placeholder="Manzil"
+                      placeholder={t("addressPlaceholder")}
                     />
                   </div>
                   <div>
@@ -1028,7 +1026,7 @@ export function StudentWithContractDialog({
                     <Label>{t("issuedBy")}</Label>
                     <Input
                       {...register("buyurtmachi_who_give")}
-                      placeholder="IIB nomi"
+                      placeholder={t("issuedByPlaceholder")}
                     />
                   </div>
                 </div>
