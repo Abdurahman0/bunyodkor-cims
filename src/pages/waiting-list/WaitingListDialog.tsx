@@ -368,10 +368,10 @@ export function WaitingListDialog({
                       t("fatherPhoneRequired") || "Father's phone is required",
                   })}
                   placeholder={
-                    t("enterMotherName") &&
-                    t("enterMotherName") !== "enterMotherName"
-                      ? t("enterMotherName")
-                      : "Enter mother's name"
+                    t("enterFatherPhone") &&
+                    t("enterFatherPhone") !== "enterFatherPhone"
+                      ? t("enterFatherPhone")
+                      : "+998 XX XXX XX XX"
                   }
                 />
                 {errors.father_phone && (

@@ -261,6 +261,7 @@ export interface ParentUpdateRequest {
 // ============================================================================
 
 export interface GroupRead {
+  current_student_count: number;
   id: number;
   name: string;
   identifier: string;
