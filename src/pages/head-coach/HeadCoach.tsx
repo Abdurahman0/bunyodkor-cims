@@ -56,6 +56,7 @@ import type {
 import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
 import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog"; // Assuming this is correct
 import { SessionDialog } from "@/pages/coach/SessionDialog"; // Corrected import
+import { useLanguageStore } from "@/store/languageStore";
 
 export default function HeadCoach() {
   const queryClient = useQueryClient();
@@ -75,6 +76,7 @@ export default function HeadCoach() {
   const [sessionToDelete, setSessionToDelete] = useState<SessionRead | null>(
     null,
   );
+  const { t } = useLanguageStore();
 
   // --- API Queries ---
   const { data: groups = [], isLoading: isGroupsLoading } = useQuery({
@@ -113,13 +115,13 @@ export default function HeadCoach() {
       headCoachService.deleteSession(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      toast.success("Mashg'ulot muvaffaqiyatli o'chirildi");
+      toast.success(t("sessionDeletedSuccess"));
       setDetailsDialogOpen(false);
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) => {
       toast.error(
-        err.response?.data?.detail || "Mashg'ulotni o'chirishda xatolik",
+        err.response?.data?.detail || t("sessionDeleteError"),
       );
     },
   });
@@ -172,7 +174,7 @@ export default function HeadCoach() {
     today.setHours(0, 0, 0, 0); // Normalize today's date to midnight for comparison
 
     if (clickedDate < today) {
-      toast.error("O'tib ketgan sana uchun mashg'ulot yaratib bo'lmaydi.");
+      toast.error(t("cannotCreateSessionPastDate"));
       return;
     }
     setSessionDialogInitialData({ session_date: date, start_time: time });
@@ -200,7 +202,7 @@ export default function HeadCoach() {
   const handleGroupDetailsClick = (groupId: number) => {
     setFilterGroupId(groupId.toString());
     setActiveTab("timetable");
-    toast.success("Guruh jadvali ochildi");
+    toast.success(t("groupTimetableOpened"));
   };
 
   // --- Render ---
@@ -222,10 +224,10 @@ export default function HeadCoach() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Bosh Murabbiy Paneli
+                  {t("headCoachPanel")}
                 </h1>
                 <p className="text-muted-foreground text-sm mt-1">
-                  To'liq nazorat va boshqaruv tizimi
+                  {t("fullControlSystem")}
                 </p>
               </div>
             </div>
@@ -236,7 +238,7 @@ export default function HeadCoach() {
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Yangi Mashg'ulot
+              {t("newSession")}
             </Button>
           </div>
         </div>
@@ -253,19 +255,19 @@ export default function HeadCoach() {
             value="overview"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
           >
-            <BarChart2 className="w-4 h-4 mr-2" /> Umumiy Ko'rinish
+            <BarChart2 className="w-4 h-4 mr-2" /> {t("overview")}
           </TabsTrigger>
           <TabsTrigger
             value="timetable"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
           >
-            <CalendarDays className="w-4 h-4 mr-2" /> Jadval
+            <CalendarDays className="w-4 h-4 mr-2" /> {t("timetable")}
           </TabsTrigger>
           <TabsTrigger
             value="groups"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-lg"
           >
-            <Users className="w-4 h-4 mr-2" /> Guruhlar
+            <Users className="w-4 h-4 mr-2" /> {t("groups")}
           </TabsTrigger>
         </TabsList>
 
@@ -277,7 +279,7 @@ export default function HeadCoach() {
             <Card className="shadow-sm border-border bg-card text-card-foreground">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-500" /> Tezkor Amallar
+                  <Clock className="w-5 h-5 text-blue-500" /> {t("quickActions")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -286,14 +288,14 @@ export default function HeadCoach() {
                   variant="outline"
                   className="w-full justify-start hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                 >
-                  <Plus className="w-4 h-4 mr-2" /> Yangi Mashg'ulot Qo'shish
+                  <Plus className="w-4 h-4 mr-2" /> {t("addNewSession")}
                 </Button>
                 <Button
                   onClick={() => setActiveTab("groups")}
                   variant="outline"
                   className="w-full justify-start hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                 >
-                  <Users className="w-4 h-4 mr-2" /> Guruhlarni Ko'rish
+                  <Users className="w-4 h-4 mr-2" /> {t("viewGroups")}
                 </Button>
               </CardContent>
             </Card>
@@ -301,24 +303,24 @@ export default function HeadCoach() {
             <Card className="shadow-sm bg-card border-border text-card-foreground">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart2 className="w-5 h-5 text-indigo-500" /> Tizim Holati
+                  <BarChart2 className="w-5 h-5 text-indigo-500" /> {t("systemStatus")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Jami Sig'im</span>
+                  <span className="text-sm text-muted-foreground">{t("totalCapacity")}</span>
                   <span className="font-semibold">
                     {isLoadingGroupsStats ? (
                       <Loader2 className="animate-spin w-4 h-4" />
                     ) : (
                       (groupsStats?.data?.total_capacity ?? "N/A")
                     )}{" "}
-                    o'rin
+                    {t("spots")}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">
-                    Band qilingan o'rinlar
+                    {t("occupiedSpots")}
                   </span>
                   <span className="font-semibold">
                     {isLoadingGroupsStats ? (
@@ -329,7 +331,7 @@ export default function HeadCoach() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Bo'sh o'rinlar</span>
+                  <span className="text-sm text-muted-foreground">{t("availableSpots")}</span>
                   <span className="font-semibold text-orange-600">
                     {isLoadingGroupsStats ? (
                       <Loader2 className="animate-spin w-4 h-4" />
@@ -346,14 +348,14 @@ export default function HeadCoach() {
         {/* TIMETABLE TAB */}
         <TabsContent value="timetable" className="space-y-4">
           <div className="flex justify-between items-center bg-card border-border shadow-sm p-4 rounded-xl backdrop-blur-xl">
-            <h2 className="text-xl font-semibold">Mashg'ulotlar Jadvali</h2>
+            <h2 className="text-xl font-semibold">{t("sessionsTimetable")}</h2>
 
             <Select
               value={filterGroupId}
               onChange={(e) => setFilterGroupId(e.target.value)}
               className="w-[200px]"
             >
-              <option value="all">Barcha Guruhlar</option>
+              <option value="all">{t("allGroups")}</option>
               {groups.map((g) => (
                 <option key={g.id} value={g.id.toString()}>
                   {g.name}
@@ -380,14 +382,14 @@ export default function HeadCoach() {
         {/* GROUPS TAB */}
         <TabsContent value="groups" className="space-y-4">
           <div className="flex justify-between items-center bg-card border-border shadow-sm p-4 rounded-xl backdrop-blur-xl">
-            <h2 className="text-xl font-semibold">Guruhlar</h2>
+            <h2 className="text-xl font-semibold">{t("groups")}</h2>
 
             <Select
               value={filterGroupId}
               onChange={(e) => setFilterGroupId(e.target.value)}
               className="w-[200px]"
             >
-              <option value="all">Barcha Guruhlar</option>
+              <option value="all">{t("allGroups")}</option>
               {groups.map((g) => (
                 <option key={g.id} value={g.id.toString()}>
                   {g.name}
@@ -421,11 +423,11 @@ export default function HeadCoach() {
                 <CardContent className="space-y-3">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Jadval:</span>
+                      <span className="text-muted-foreground">{t("scheduleLabel")}</span>
                       <span className="font-medium">{group.schedule_days}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Vaqt:</span>
+                      <span className="text-muted-foreground">{t("timeLabel")}</span>
                       <span className="font-medium">{group.schedule_time}</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
@@ -450,7 +452,7 @@ export default function HeadCoach() {
                     onClick={() => handleGroupDetailsClick(group.id)}
                   >
                     <Eye className="w-4 h-4 mr-2" />
-                    Batafsil
+                    {t("details")}
                   </Button>
                 </CardFooter>
               </Card>
@@ -496,12 +498,10 @@ export default function HeadCoach() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-red-500" />
-              Mashg'ulotni o'chirishni tasdiqlang
+              {t("confirmDeleteSession")}
             </DialogTitle>
             <DialogDescription>
-              Bu amalni qaytarib bo'lmaydi. Bu{" "}
-              <strong>{sessionToDelete?.topic}</strong> mashg'ulotini va unga
-              bog'liq barcha davomat yozuvlarini butunlay o'chiradi.
+              {t("deleteSessionWarning").replace("{topic}", sessionToDelete?.topic || "")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
@@ -510,7 +510,7 @@ export default function HeadCoach() {
               onClick={() => setDeleteConfirmOpen(false)}
               disabled={deleteSessionMutation.isPending}
             >
-              Bekor qilish
+              {t("cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -520,7 +520,7 @@ export default function HeadCoach() {
               {deleteSessionMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              O'chirish
+              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
