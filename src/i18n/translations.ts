@@ -67,6 +67,8 @@ export const translations = {
     copy: "Copy",
     copyAddressFromAbove: "Copy address from above",
     full: "Full",
+    yes: "Yes",
+    no: "No",
 
     // Dashboard
     welcomeBack: "Welcome back",
@@ -470,6 +472,7 @@ export const translations = {
       "The selected role includes the following permissions:",
     updateUser: "Update User",
     createUser: "Create User",
+    securityAndSystem: "Security and System",
 
     permissionLabels: {
       "users:manage": "Manage users",
@@ -1025,6 +1028,8 @@ export const translations = {
     copy: "Ko'chirish",
     copyAddressFromAbove: "Yuqoridagi manzilni ko'chirish",
     full: "To'liq",
+    yes: "Ha",
+    no: "Yo'q",
 
     // Dashboard
     welcomeBack: "Xush kelibsiz",
@@ -1436,6 +1441,7 @@ export const translations = {
       "Tanlangan rol quyidagi ruxsatlarni o'z ichiga oladi:",
     updateUser: "Foydalanuvchini yangilash",
     createUser: "Foydalanuvchi yaratish",
+    securityAndSystem: "Xavfsizlik va Tizim",
 
     permissionLabels: {
       "users:manage": "Foydalanuvchilarni boshqarish",
@@ -2000,6 +2006,8 @@ export const translations = {
     copy: "Копировать",
     copyAddressFromAbove: "Скопировать адрес сверху",
     full: "Полный",
+    yes: "Да",
+    no: "Нет",
 
     // Dashboard
     welcomeBack: "Добро пожаловать",
@@ -2407,6 +2415,7 @@ export const translations = {
       "Выбранная роль включает следующие разрешения:",
     updateUser: "Обновить пользователя",
     createUser: "Создать пользователя",
+    securityAndSystem: "Безопасность и Система",
 
     permissionLabels: {
       "users:manage": "Управление пользователями",

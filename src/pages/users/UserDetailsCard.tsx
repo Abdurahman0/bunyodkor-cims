@@ -8,7 +8,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import type { UserRead } from "@/types/api";
+import type { UserRead, UserStatus } from "@/types/api";
 import { Badge } from "@/components/ui/badge";
 import { useLanguageStore } from "@/store/languageStore";
 import {
@@ -70,20 +70,20 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
 
   if (!user) return null;
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: UserStatus) => {
     return status === "active" ? (
       <Badge
         variant="outline"
         className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200 dark:border-emerald-800"
       >
-        {t("Active")}
+        {t("active")}
       </Badge>
     ) : (
       <Badge
         variant="outline"
         className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-200 dark:border-red-800"
       >
-        {t("Inactive")}
+        {t("inactive")}
       </Badge>
     );
   };
@@ -118,7 +118,7 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
                 <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-medium">
                   #{user.id}
                 </span>
-                <span>{t("User Details")}</span>
+                <span>{t("userDetails")}</span>
               </CardDescription>
             </div>
           </div>
@@ -140,20 +140,20 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
         {/* Asosiy ma'lumotlar */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-            <User className="w-4 h-4" /> {t("Basic Information")}
+            <User className="w-4 h-4" /> {t("basicInformation")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem
               icon={User}
-              label={t("Full Name")}
+              label={t("fullName")}
               value={user.full_name}
             />
-            <InfoItem icon={Mail} label={t("Email")} value={user.email} />
-            <InfoItem icon={Phone} label={t("Phone")} value={user.phone} />
+            <InfoItem icon={Mail} label={t("email")} value={user.email} />
+            <InfoItem icon={Phone} label={t("phone")} value={user.phone} />
             <InfoItem
               icon={UserCheck}
-              label={t("Status")}
-              value={t(user.status.charAt(0).toUpperCase() + user.status.slice(1))}
+              label={t("status")}
+              value={t(user.status as any)}
               badge={getStatusBadge(user.status)}
             />
           </div>
@@ -164,12 +164,12 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
         {/* Xavfsizlik va Tizim */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-            <Shield className="w-4 h-4" /> {t("Security And System")}
+            <Shield className="w-4 h-4" /> {t("securityAndSystem")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem
               icon={Shield}
-              label={t("Role")}
+              label={t("role")}
               value={
                 user.roles && user.roles.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
@@ -185,31 +185,31 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
                   </div>
                 ) : (
                   <span className="text-muted-foreground italic text-sm">
-                    {t("No Role")}
+                    {t("noRole")}
                   </span>
                 )
               }
             />
             <InfoItem
               icon={KeyRound}
-              label={t("Super Admin")}
-              value={user.is_super_admin ? t("Yes") : t("No")}
+              label={t("superAdmin")}
+              value={user.is_super_admin ? t("yes") : t("no")}
               badge={
                 user.is_super_admin && (
                   <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 hover:bg-amber-500/20 border-0 px-2">
-                    Admin
+                    {t("admin")}
                   </Badge>
                 )
               }
             />
             <InfoItem
               icon={Hash}
-              label={t("User Id")}
+              label={t("userId")}
               value={`ID: ${user.id}`}
             />
             <InfoItem
               icon={Calendar}
-              label={t("Created At")}
+              label={t("createdAt")}
               value={format(new Date(user.created_at), "dd MMM yyyy, HH:mm")}
             />
           </div>
