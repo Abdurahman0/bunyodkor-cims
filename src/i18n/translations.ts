@@ -1471,8 +1471,9 @@ export const translations = {
       "reports:attendance:view": "Davomat hisobotlarni ko'rish",
       "settings:system:view": "Tizim sozlamalarini ko'rish",
       "settings:system:manage": "Tizim sozlamalarini boshqarish",
+      "settings:system:edit": "Tizim sozlamalarini tahrirlash",
       "sessions:manage": "Darslarni boshqarish va yaratish",
-      "session:create": "Yangi dars yaratish",
+      "sessions:create": "Dars yaratish",
     },
 
     // Common phrases
