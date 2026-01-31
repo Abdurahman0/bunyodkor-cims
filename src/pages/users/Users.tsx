@@ -144,8 +144,8 @@ const Users = () => {
 
   // Fetch roles for filter
   const { data: rolesData } = useQuery({
-    queryKey: ["roles"],
-    queryFn: () => roleService.getRoles({}).then((res) => res.data),
+    queryKey: ["roles", "options"],
+    queryFn: () => roleService.getRoles({}).then((res) => Array.isArray(res.data) ? res.data : []),
   });
 
   // Fetch ALL users for client-side filtering
@@ -436,7 +436,7 @@ const Users = () => {
                   className="flex-1"
                 >
                   <option value="all">{t("allRoles")}</option>
-                  {rolesData?.map((role: RoleWithPermissions) => (
+                  {Array.isArray(rolesData) && rolesData.map((role: RoleWithPermissions) => (
                     <option key={role.id} value={role.id}>
                       {role.name}
                     </option>
