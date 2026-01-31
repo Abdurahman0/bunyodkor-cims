@@ -501,6 +501,7 @@ export const translations = {
       "reports:attendance:view": "View attendance reports",
       "settings:system:view": "View system settings",
       "settings:system:manage": "Manage system settings",
+      "settings:system:edit": "Edit system settings",
       "sessions:manage": "Manage sessions",
       "sessions:create": "Create sessions",
     },
@@ -2444,8 +2445,9 @@ export const translations = {
       "reports:attendance:view": "Просмотр отчетов посещаемости",
       "settings:system:view": "Просмотр системных настроек",
       "settings:system:manage": "Управление системными настройками",
+      "settings:system:edit": "Редактирование системных настроек",
       "sessions:create": "Создание занятий",
-      "session:manage": "Управление занятиями",
+      "sessions:manage": "Управление занятиями",
     },
 
     // Common phrases
