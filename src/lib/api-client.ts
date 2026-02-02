@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
@@ -75,30 +76,47 @@ apiClient.interceptors.request.use(
       config.url?.includes("/contracts/") &&
       config.data
     ) {
-      const data = config.data;
+      let data = config.data;
 
-      // Ensure custom_fields is an object
-      if (data.custom_fields && typeof data.custom_fields === "string") {
+      // Handle stringified body
+      if (typeof data === "string") {
         try {
-          data.custom_fields = JSON.parse(data.custom_fields);
+          data = JSON.parse(data);
+          config.data = data;
         } catch (e) {
-          console.warn(
-            "Could not parse custom_fields string in request interceptor.",
-          );
+          // Ignore parse error
         }
       }
 
-      // If custom_fields is an object and is missing contract_creation_date, add it.
-      if (
-        data.custom_fields &&
-        typeof data.custom_fields === "object" &&
-        !data.custom_fields.contract_creation_date
-      ) {
-        // Use start_date or today's date as a fallback
-        const creationDate = data.start_date
-          ? new Date(data.start_date).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0];
-        data.custom_fields.contract_creation_date = creationDate;
+      if (data && typeof data === "object") {
+        // Ensure custom_fields is an object
+        if (typeof data.custom_fields === "string") {
+          try {
+            data.custom_fields = JSON.parse(data.custom_fields);
+          } catch (e) {
+            console.warn(
+              "Could not parse custom_fields string in request interceptor.",
+            );
+          }
+        }
+
+        // If custom_fields is explicitly null, initialize it
+        if (data.custom_fields === null) {
+          data.custom_fields = {};
+        }
+
+        // If custom_fields is an object and is missing contract_creation_date, add it.
+        if (
+          data.custom_fields &&
+          typeof data.custom_fields === "object" &&
+          !data.custom_fields.contract_creation_date
+        ) {
+          // Use start_date or today's date as a fallback
+          const creationDate = data.start_date
+            ? new Date(data.start_date).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0];
+          data.custom_fields.contract_creation_date = creationDate;
+        }
       }
     }
 
