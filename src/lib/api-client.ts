@@ -112,30 +112,141 @@ apiClient.interceptors.request.use(
         }
 
         // Double check it's an object now
-        if (
-          data.custom_fields &&
-          typeof data.custom_fields === "object" &&
-          !data.custom_fields.contract_creation_date
-        ) {
-          try {
-            // Use start_date or today's date as a fallback
-            const dateStr = data.start_date || new Date();
-            const dateObj = new Date(dateStr);
-            // Check if date is valid
-            if (isNaN(dateObj.getTime())) {
-              data.custom_fields.contract_creation_date = new Date()
-                .toISOString()
-                .split("T")[0];
-            } else {
-              data.custom_fields.contract_creation_date = dateObj
-                .toISOString()
-                .split("T")[0];
+        if (data.custom_fields && typeof data.custom_fields === "object") {
+          const cf = data.custom_fields;
+          const today = new Date().toISOString().split("T")[0];
+
+          // 0. Ensure contract_creation_date
+          if (!cf.contract_creation_date) {
+            try {
+              const dateStr = data.start_date || today;
+              const dateObj = new Date(dateStr);
+              cf.contract_creation_date = isNaN(dateObj.getTime())
+                ? today
+                : dateObj.toISOString().split("T")[0];
+            } catch (e) {
+              cf.contract_creation_date = today;
             }
-          } catch (e) {
-            // Fallback to today
-            data.custom_fields.contract_creation_date = new Date()
-              .toISOString()
-              .split("T")[0];
+          }
+
+          // 1. Map 'buyurtmachi' to 'customer'
+          if (!cf.customer && cf.buyurtmachi) {
+            cf.customer = {
+              full_name: cf.buyurtmachi.fio || "Unknown",
+              passport_number: cf.buyurtmachi.pasport_seriya || "Unknown",
+              passport_issued_by:
+                cf.buyurtmachi.pasport_kim_bergan || "Unknown",
+              passport_issue_date:
+                cf.buyurtmachi.pasport_qachon_bergan || today,
+              address: cf.buyurtmachi.manzil || "Unknown",
+              phone: cf.buyurtmachi.telefon || "Unknown",
+            };
+          } else if (!cf.customer) {
+            cf.customer = {
+              full_name: "-",
+              passport_number: "-",
+              passport_issued_by: "-",
+              passport_issue_date: today,
+              address: "-",
+              phone: "-",
+            };
+          }
+
+          // 2. Fix 'student' fields
+          if (cf.student) {
+            // Map FIO
+            if (!cf.student.first_name && cf.student.student_fio) {
+              const parts = cf.student.student_fio.trim().split(/\s+/);
+              if (parts.length > 0) cf.student.last_name = parts[0];
+              if (parts.length > 1) cf.student.first_name = parts[1];
+              if (parts.length > 2)
+                cf.student.patronymic = parts.slice(2).join(" ");
+            }
+            // Map address
+            if (!cf.student.address && cf.student.student_address) {
+              cf.student.address = cf.student.student_address;
+            }
+            // Map phone
+            if (!cf.student.phone) {
+              cf.student.phone =
+                cf.student.dad_phone_number ||
+                cf.student.mom_phone_number ||
+                "Unknown";
+            }
+            // Ensure birth_year is int
+            if (
+              cf.student.birth_year &&
+              typeof cf.student.birth_year === "string"
+            ) {
+              cf.student.birth_year = parseInt(cf.student.birth_year, 10) || 0;
+            }
+
+            // Defaults
+            if (!cf.student.first_name) cf.student.first_name = "Unknown";
+            if (!cf.student.last_name) cf.student.last_name = "Unknown";
+            if (!cf.student.address) cf.student.address = "Unknown";
+            if (!cf.student.birth_year) cf.student.birth_year = 0;
+          } else {
+            cf.student = {
+              first_name: "-",
+              last_name: "-",
+              birth_year: 0,
+              address: "-",
+              phone: "-",
+            };
+          }
+
+          // 3. Map 'parent_passport'
+          if (!cf.parent_passport && cf.buyurtmachi) {
+            cf.parent_passport = {
+              series_number: cf.buyurtmachi.pasport_seriya || "Unknown",
+              issued_by: cf.buyurtmachi.pasport_kim_bergan || "Unknown",
+              issue_date: cf.buyurtmachi.pasport_qachon_bergan || today,
+            };
+          } else if (!cf.parent_passport) {
+            cf.parent_passport = {
+              series_number: "-",
+              issued_by: "-",
+              issue_date: today,
+            };
+          }
+
+          // 4. Map 'student_birth_certificate'
+          if (!cf.student_birth_certificate && cf.tarbiyalanuvchi) {
+            cf.student_birth_certificate = {
+              full_name: cf.tarbiyalanuvchi.fio || "Unknown",
+              series: cf.tarbiyalanuvchi.tugilganlik_guvohnoma || "Unknown",
+              issued_by: cf.tarbiyalanuvchi.guvohnoma_kim_bergan || "Unknown",
+              issue_date: cf.tarbiyalanuvchi.guvohnoma_qachon_bergan || today,
+            };
+          } else if (!cf.student_birth_certificate) {
+            cf.student_birth_certificate = {
+              full_name: "-",
+              series: "-",
+              issued_by: "-",
+              issue_date: today,
+            };
+          }
+
+          // 5. Map 'contract_terms'
+          if (!cf.contract_terms && cf.shartnoma_muddati) {
+            let fee = 0;
+            if (cf.tolov && cf.tolov.oylik_narx) {
+              fee =
+                parseInt(String(cf.tolov.oylik_narx).replace(/\s/g, ""), 10) ||
+                0;
+            }
+            cf.contract_terms = {
+              contract_start_date: cf.shartnoma_muddati.boshlanish || today,
+              contract_end_date: cf.shartnoma_muddati.tugash || today,
+              monthly_fee: fee,
+            };
+          } else if (!cf.contract_terms) {
+            cf.contract_terms = {
+              contract_start_date: today,
+              contract_end_date: today,
+              monthly_fee: 0,
+            };
           }
         }
       }
