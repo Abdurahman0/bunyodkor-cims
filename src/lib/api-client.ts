@@ -89,33 +89,54 @@ apiClient.interceptors.request.use(
       }
 
       if (data && typeof data === "object") {
-        // Ensure custom_fields is an object
+        // Ensure custom_fields is initialized if missing or null
+        if (data.custom_fields === undefined || data.custom_fields === null) {
+          data.custom_fields = {};
+        }
+
+        // Ensure custom_fields is an object (handle string case)
         if (typeof data.custom_fields === "string") {
           try {
             data.custom_fields = JSON.parse(data.custom_fields);
           } catch (e) {
             console.warn(
-              "Could not parse custom_fields string in request interceptor.",
+              "Could not parse custom_fields string in request interceptor. Resetting to empty object.",
             );
+            data.custom_fields = {};
           }
         }
 
-        // If custom_fields is explicitly null, initialize it
+        // If it became null after parse (e.g. "null"), fix it
         if (data.custom_fields === null) {
           data.custom_fields = {};
         }
 
-        // If custom_fields is an object and is missing contract_creation_date, add it.
+        // Double check it's an object now
         if (
           data.custom_fields &&
           typeof data.custom_fields === "object" &&
           !data.custom_fields.contract_creation_date
         ) {
-          // Use start_date or today's date as a fallback
-          const creationDate = data.start_date
-            ? new Date(data.start_date).toISOString().split("T")[0]
-            : new Date().toISOString().split("T")[0];
-          data.custom_fields.contract_creation_date = creationDate;
+          try {
+            // Use start_date or today's date as a fallback
+            const dateStr = data.start_date || new Date();
+            const dateObj = new Date(dateStr);
+            // Check if date is valid
+            if (isNaN(dateObj.getTime())) {
+              data.custom_fields.contract_creation_date = new Date()
+                .toISOString()
+                .split("T")[0];
+            } else {
+              data.custom_fields.contract_creation_date = dateObj
+                .toISOString()
+                .split("T")[0];
+            }
+          } catch (e) {
+            // Fallback to today
+            data.custom_fields.contract_creation_date = new Date()
+              .toISOString()
+              .split("T")[0];
+          }
         }
       }
     }
