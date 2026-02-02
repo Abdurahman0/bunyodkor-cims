@@ -69,6 +69,39 @@ apiClient.interceptors.request.use(
       );
     }
 
+    // HACK: Fix for contract patch requests missing `contract_creation_date`
+    if (
+      config.method?.toLowerCase() === "patch" &&
+      config.url?.includes("/contracts/") &&
+      config.data
+    ) {
+      const data = config.data;
+
+      // Ensure custom_fields is an object
+      if (data.custom_fields && typeof data.custom_fields === "string") {
+        try {
+          data.custom_fields = JSON.parse(data.custom_fields);
+        } catch (e) {
+          console.warn(
+            "Could not parse custom_fields string in request interceptor.",
+          );
+        }
+      }
+
+      // If custom_fields is an object and is missing contract_creation_date, add it.
+      if (
+        data.custom_fields &&
+        typeof data.custom_fields === "object" &&
+        !data.custom_fields.contract_creation_date
+      ) {
+        // Use start_date or today's date as a fallback
+        const creationDate = data.start_date
+          ? new Date(data.start_date).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0];
+        data.custom_fields.contract_creation_date = creationDate;
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error),
