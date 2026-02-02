@@ -293,13 +293,22 @@ const Users = () => {
   const hasActiveFilters = search || status !== "all" || roleId !== "all";
 
   const getStatusBadge = (userStatus: string) => {
-    return userStatus === "active" ? (
-      <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
-        {t("active")}
-      </Badge>
-    ) : (
-      <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400 border-0">
-        {t("inactive")}
+    const styles: Record<string, string> = {
+      active:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      inactive:
+        "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
+      suspended:
+        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      deleted:
+        "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    };
+
+    const style = styles[userStatus] || styles.inactive;
+
+    return (
+      <Badge className={`${style} border-0`}>
+        {t(userStatus as any) || userStatus}
       </Badge>
     );
   };
@@ -426,6 +435,7 @@ const Users = () => {
                 <option value="all">{t("allStatuses")}</option>
                 <option value="active">{t("active")}</option>
                 <option value="inactive">{t("inactive")}</option>
+                <option value="suspended">{t("suspended")}</option>
               </Select>
 
               {/* Role Filter */}

@@ -38,7 +38,7 @@ interface UserFormData {
   password?: string;
   role_id: number;
   is_super_admin: boolean;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "suspended";
 }
 
 import { useLanguageStore } from "@/store/languageStore";
@@ -82,7 +82,7 @@ const UserDialog = ({
           full_name: user.full_name,
           role_id: user.roles?.[0]?.id || 0,
           is_super_admin: user.is_super_admin,
-          status: user.status as "active" | "inactive",
+          status: user.status as "active" | "inactive" | "suspended",
         });
       } else {
         reset({
@@ -342,6 +342,7 @@ const UserDialog = ({
             <Select id="status" {...register("status")}>
               <option value="active">{t("active")}</option>
               <option value="inactive">{t("inactive")}</option>
+              <option value="suspended">{t("suspended")}</option>
             </Select>
           </div>
 

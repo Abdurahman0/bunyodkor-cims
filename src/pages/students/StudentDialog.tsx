@@ -254,9 +254,8 @@ export function StudentDialog({
               </Label>
               <Select id="status" {...register("status", { required: true })}>
                 <option value="active">{t("active")}</option>
-                <option value="graduated">{t("graduated")}</option>
-                <option value="dropped">{t("dropped")}</option>
-                <option value="suspended">{t("suspended")}</option>
+                <option value="archived">{t("archived")}</option>
+                <option value="deleted">{t("deleted")}</option>
               </Select>
             </div>
             <div className="space-y-1">

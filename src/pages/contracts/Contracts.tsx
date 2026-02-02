@@ -268,6 +268,18 @@ export default function Contracts() {
         bg: "bg-yellow-100 dark:bg-yellow-900/30",
         text: "text-yellow-700 dark:text-yellow-400",
       },
+      terminated: {
+        bg: "bg-red-100 dark:bg-red-900/30",
+        text: "text-red-700 dark:text-red-400",
+      },
+      archived: {
+        bg: "bg-purple-100 dark:bg-purple-900/30",
+        text: "text-purple-700 dark:text-purple-400",
+      },
+      deleted: {
+        bg: "bg-gray-100 dark:bg-gray-900/30",
+        text: "text-gray-700 dark:text-gray-400",
+      },
       cancelled: {
         bg: "bg-red-100 dark:bg-red-900/30",
         text: "text-red-700 dark:text-red-400",
@@ -414,6 +426,9 @@ export default function Contracts() {
                   <option value="active">{t("active")}</option>
                   <option value="expired">{t("expired")}</option>
                   <option value="cancelled">{t("cancelled")}</option>
+                  <option value="terminated">{t("terminated")}</option>
+                  <option value="archived">{t("archived")}</option>
+                  <option value="deleted">{t("deleted")}</option>
                 </Select>
                 <Select
                   value={archiveYearFilter?.toString() || ""}

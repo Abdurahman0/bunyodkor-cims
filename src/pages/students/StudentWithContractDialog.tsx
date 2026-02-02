@@ -46,7 +46,7 @@ interface StudentFormData {
   date_of_birth: string;
   phone: string;
   address: string;
-  status: "active" | "graduated" | "dropped" | "suspended";
+  status: "active" | "archived" | "deleted";
   group_id: number | string;
 
   // --- 2. Shartnoma uchun (Contract Data) ---

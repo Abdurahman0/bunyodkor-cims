@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -268,6 +270,20 @@ export function ContractDialog({
       student_id: Number(data.student_id),
       monthly_fee: Number(data.monthly_fee),
     };
+
+    // Fix for custom_fields: ensure it is an object if it exists (backend expects dict, not string)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawData = data as any;
+    if (rawData.custom_fields && typeof rawData.custom_fields === "string") {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload as any).custom_fields = JSON.parse(rawData.custom_fields);
+      } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (payload as any).custom_fields;
+      }
+    }
+
     if (!payload.student_id) {
       toast.error(t("pleaseSelectStudent"));
       return;
@@ -487,7 +503,9 @@ export function ContractDialog({
               <Select id="status" {...register("status")}>
                 <option value="active">{t("active")}</option>
                 <option value="expired">{t("expired")}</option>
-                <option value="cancelled">{t("cancelled")}</option>
+                <option value="terminated">{t("terminated")}</option>
+                <option value="archived">{t("archived")}</option>
+                <option value="deleted">{t("deleted")}</option>
               </Select>
             </div>
           </div>

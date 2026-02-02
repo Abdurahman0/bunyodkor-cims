@@ -71,19 +71,25 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
   if (!user) return null;
 
   const getStatusBadge = (status: UserStatus) => {
-    return status === "active" ? (
+    const styles: Record<string, string> = {
+      active:
+        "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200 dark:border-emerald-800",
+      inactive:
+        "bg-gray-500/10 text-gray-600 hover:bg-gray-500/20 border-gray-200 dark:border-gray-800",
+      suspended:
+        "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 border-yellow-200 dark:border-yellow-800",
+      deleted:
+        "bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-200 dark:border-red-800",
+    };
+
+    const style = styles[status] || styles.inactive;
+
+    return (
       <Badge
         variant="outline"
-        className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200 dark:border-emerald-800"
+        className={style}
       >
-        {t("active")}
-      </Badge>
-    ) : (
-      <Badge
-        variant="outline"
-        className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-200 dark:border-red-800"
-      >
-        {t("inactive")}
+        {t(status as any)}
       </Badge>
     );
   };

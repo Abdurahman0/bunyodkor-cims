@@ -128,20 +128,20 @@ export default function Students() {
       studentService.getStudents({ status: "active", page: 1, page_size: 1 }),
   });
 
-  const { data: suspendedCountData } = useQuery({
-    queryKey: ["students-count", "suspended"],
+  const { data: archivedCountData } = useQuery({
+    queryKey: ["students-count", "archived"],
     queryFn: () =>
       studentService.getStudents({
-        status: "suspended",
+        status: "archived",
         page: 1,
         page_size: 1,
       }),
   });
 
-  const { data: droppedCountData } = useQuery({
-    queryKey: ["students-count", "dropped"],
+  const { data: deletedCountData } = useQuery({
+    queryKey: ["students-count", "deleted"],
     queryFn: () =>
-      studentService.getStudents({ status: "dropped", page: 1, page_size: 1 }),
+      studentService.getStudents({ status: "deleted", page: 1, page_size: 1 }),
   });
 
   // Use DELETE /students/{student_id} for soft delete
@@ -261,6 +261,14 @@ export default function Students() {
         bg: "bg-emerald-100 dark:bg-emerald-900/30",
         text: "text-emerald-700 dark:text-emerald-400",
       },
+      archived: {
+        bg: "bg-purple-100 dark:bg-purple-900/30",
+        text: "text-purple-700 dark:text-purple-400",
+      },
+      deleted: {
+        bg: "bg-rose-100 dark:bg-rose-900/30",
+        text: "text-rose-700 dark:text-rose-400",
+      },
       graduated: {
         bg: "bg-purple-100 dark:bg-purple-900/30",
         text: "text-purple-700 dark:text-purple-400",
@@ -285,8 +293,8 @@ export default function Students() {
   const stats = {
     total: data?.meta?.total || 0,
     active: activeCountData?.meta?.total || 0,
-    suspended: suspendedCountData?.meta?.total || 0,
-    dropped: droppedCountData?.meta?.total || 0,
+    archived: archivedCountData?.meta?.total || 0,
+    deleted: deletedCountData?.meta?.total || 0,
   };
 
   return (
@@ -357,16 +365,16 @@ export default function Students() {
             color: "green",
           },
           {
-            label: t("suspended"),
-            value: stats.suspended,
+            label: t("archived"),
+            value: stats.archived,
             icon: UsersIcon,
-            color: "yellow",
+            color: "purple",
           },
           {
-            label: t("dropped"),
-            value: stats.dropped,
+            label: t("deleted"),
+            value: stats.deleted,
             icon: UsersIcon,
-            color: "red",
+            color: "rose",
           },
         ].map((stat) => (
           <Card
@@ -420,8 +428,8 @@ export default function Students() {
                 >
                   <option value="">{t("allStatuses")}</option>
                   <option value="active">{t("active")}</option>
-                  <option value="dropped">{t("dropped")}</option>
-                  <option value="suspended">{t("suspended")}</option>
+                  <option value="archived">{t("archived")}</option>
+                  <option value="deleted">{t("deleted")}</option>
                 </Select>
                 <Select
                   value={groupFilter}
