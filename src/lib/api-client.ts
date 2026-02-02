@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { useLanguageStore } from "@/store/languageStore";
@@ -195,7 +196,17 @@ apiClient.interceptors.response.use(
 
       if (Array.isArray(detail) && detail.length > 0) {
         // FastAPI validation error - extract first error message
-        message = detail[0].msg || detail[0].message || message;
+        const firstError = detail[0];
+        const errorMessage = firstError.msg || firstError.message || message;
+
+        if (Array.isArray(firstError.loc) && firstError.loc.length > 0) {
+          const field = firstError.loc
+            .filter((item: any) => item !== "body")
+            .join(" -> ");
+          message = field ? `${field}: ${errorMessage}` : errorMessage;
+        } else {
+          message = errorMessage;
+        }
       } else if (typeof detail === "string") {
         message = detail;
       } else if (error.response?.data?.message) {
