@@ -7,7 +7,7 @@ import { translations, type TranslationKey } from "@/i18n/translations";
 import toast from "react-hot-toast";
 
 const getApiUrl = () => {
-  // In development, use proxy to avoid CORS issues
+  // In development, use proxy to avoid CORS issues if set up, otherwise direct API
   return (
     import.meta.env.VITE_API_URL || "https://bunyodkor.api.cims.cognilabs.org/"
   );
@@ -70,7 +70,7 @@ apiClient.interceptors.request.use(
       );
     }
 
-    // HACK: Fix for contract patch requests missing `contract_creation_date`
+    // FIX: Contract patch requests logic (Safe version)
     if (
       config.method?.toLowerCase() === "patch" &&
       config.url?.includes("/contracts/") &&
@@ -78,181 +78,176 @@ apiClient.interceptors.request.use(
     ) {
       try {
         let data = config.data;
+        let isStringData = false;
 
-        // Handle stringified body
+        // Handle stringified body safely
         if (typeof data === "string") {
           try {
             data = JSON.parse(data);
-            config.data = data;
+            isStringData = true;
           } catch (e) {
-            // Ignore parse error
+            // Agar parse qilib bo'lmasa, demak bu oddiy string yoki form-data, unga tegmaymiz
+            return config;
           }
         }
 
         if (data && typeof data === "object") {
-          // Ensure custom_fields is initialized if missing or null
-          if (data.custom_fields === undefined || data.custom_fields === null) {
-            data.custom_fields = {};
+          // Ensure custom_fields is initialized
+          if (!data.custom_fields || typeof data.custom_fields !== "object") {
+             // Agar string bo'lsa parse qilamiz
+             if (typeof data.custom_fields === "string") {
+                try {
+                   data.custom_fields = JSON.parse(data.custom_fields);
+                } catch {
+                   data.custom_fields = {};
+                }
+             } else {
+                data.custom_fields = {};
+             }
           }
 
-          // Ensure custom_fields is an object (handle string case)
-          if (typeof data.custom_fields === "string") {
-            try {
-              data.custom_fields = JSON.parse(data.custom_fields);
-            } catch (e) {
-              console.warn(
-                "Could not parse custom_fields string in request interceptor. Resetting to empty object.",
-              );
-              data.custom_fields = {};
-            }
+          const cf = data.custom_fields;
+          const today = new Date().toISOString().split("T")[0];
+
+          // 0. Ensure contract_creation_date
+          if (!cf.contract_creation_date) {
+            const dateStr = data.start_date || today;
+            const dateObj = new Date(dateStr);
+            cf.contract_creation_date = isNaN(dateObj.getTime())
+              ? today
+              : dateObj.toISOString().split("T")[0];
           }
 
-          // If it became null after parse (e.g. "null"), fix it
-          if (data.custom_fields === null) {
-            data.custom_fields = {};
+          // 1. Map 'buyurtmachi' to 'customer'
+          if (!cf.customer && cf.buyurtmachi) {
+            cf.customer = {
+              full_name: cf.buyurtmachi.fio || "Unknown",
+              passport_number: cf.buyurtmachi.pasport_seriya || "Unknown",
+              passport_issued_by:
+                cf.buyurtmachi.pasport_kim_bergan || "Unknown",
+              passport_issue_date:
+                cf.buyurtmachi.pasport_qachon_bergan || today,
+              address: cf.buyurtmachi.manzil || "Unknown",
+              phone: cf.buyurtmachi.telefon || "Unknown",
+            };
+          } else if (!cf.customer) {
+            // Default customer struct
+            cf.customer = {
+              full_name: "-",
+              passport_number: "-",
+              passport_issued_by: "-",
+              passport_issue_date: today,
+              address: "-",
+              phone: "-",
+            };
           }
 
-          // Double check it's an object now
-          if (data.custom_fields && typeof data.custom_fields === "object") {
-            const cf = data.custom_fields;
-            const today = new Date().toISOString().split("T")[0];
-
-            // 0. Ensure contract_creation_date
-            if (!cf.contract_creation_date) {
-              try {
-                const dateStr = data.start_date || today;
-                const dateObj = new Date(dateStr);
-                cf.contract_creation_date = isNaN(dateObj.getTime())
-                  ? today
-                  : dateObj.toISOString().split("T")[0];
-              } catch (e) {
-                cf.contract_creation_date = today;
-              }
+          // 2. Fix 'student' fields
+          if (cf.student) {
+            // Map FIO
+            if (!cf.student.first_name && cf.student.student_fio) {
+              const parts = cf.student.student_fio.trim().split(/\s+/);
+              if (parts.length > 0) cf.student.last_name = parts[0];
+              if (parts.length > 1) cf.student.first_name = parts[1];
+              if (parts.length > 2)
+                cf.student.patronymic = parts.slice(2).join(" ");
             }
-
-            // 1. Map 'buyurtmachi' to 'customer'
-            if (!cf.customer && cf.buyurtmachi) {
-              cf.customer = {
-                full_name: cf.buyurtmachi.fio || "Unknown",
-                passport_number: cf.buyurtmachi.pasport_seriya || "Unknown",
-                passport_issued_by:
-                  cf.buyurtmachi.pasport_kim_bergan || "Unknown",
-                passport_issue_date:
-                  cf.buyurtmachi.pasport_qachon_bergan || today,
-                address: cf.buyurtmachi.manzil || "Unknown",
-                phone: cf.buyurtmachi.telefon || "Unknown",
-              };
-            } else if (!cf.customer) {
-              cf.customer = {
-                full_name: "-",
-                passport_number: "-",
-                passport_issued_by: "-",
-                passport_issue_date: today,
-                address: "-",
-                phone: "-",
-              };
+            // Map address
+            if (!cf.student.address && cf.student.student_address) {
+              cf.student.address = cf.student.student_address;
             }
-
-            // 2. Fix 'student' fields
-            if (cf.student) {
-              // Map FIO
-              if (!cf.student.first_name && cf.student.student_fio) {
-                const parts = cf.student.student_fio.trim().split(/\s+/);
-                if (parts.length > 0) cf.student.last_name = parts[0];
-                if (parts.length > 1) cf.student.first_name = parts[1];
-                if (parts.length > 2)
-                  cf.student.patronymic = parts.slice(2).join(" ");
-              }
-              // Map address
-              if (!cf.student.address && cf.student.student_address) {
-                cf.student.address = cf.student.student_address;
-              }
-              // Map phone
-              if (!cf.student.phone) {
-                cf.student.phone =
-                  cf.student.dad_phone_number ||
-                  cf.student.mom_phone_number ||
-                  "Unknown";
-              }
-              // Ensure birth_year is int
-              if (cf.student.birth_year) {
-                const year = parseInt(String(cf.student.birth_year), 10);
-                cf.student.birth_year = isNaN(year) ? 2015 : year;
-              }
-
-              // Defaults
-              if (!cf.student.first_name) cf.student.first_name = "Unknown";
-              if (!cf.student.last_name) cf.student.last_name = "Unknown";
-              if (!cf.student.address) cf.student.address = "Unknown";
-              if (!cf.student.birth_year) cf.student.birth_year = 2015;
+            // Map phone
+            if (!cf.student.phone) {
+              cf.student.phone =
+                cf.student.dad_phone_number ||
+                cf.student.mom_phone_number ||
+                "Unknown";
+            }
+            // Ensure birth_year is int and valid
+            if (cf.student.birth_year) {
+              const year = parseInt(String(cf.student.birth_year), 10);
+              cf.student.birth_year = isNaN(year) ? 2015 : year;
             } else {
-              cf.student = {
-                first_name: "-",
-                last_name: "-",
-                birth_year: 0,
-                address: "-",
-                phone: "-",
-              };
+              cf.student.birth_year = 2015;
             }
 
-            // 3. Map 'parent_passport'
-            if (!cf.parent_passport && cf.buyurtmachi) {
-              cf.parent_passport = {
-                series_number: cf.buyurtmachi.pasport_seriya || "Unknown",
-                issued_by: cf.buyurtmachi.pasport_kim_bergan || "Unknown",
-                issue_date: cf.buyurtmachi.pasport_qachon_bergan || today,
-              };
-            } else if (!cf.parent_passport) {
-              cf.parent_passport = {
-                series_number: "-",
-                issued_by: "-",
-                issue_date: today,
-              };
-            }
+            // Defaults
+            if (!cf.student.first_name) cf.student.first_name = "Unknown";
+            if (!cf.student.last_name) cf.student.last_name = "Unknown";
+            if (!cf.student.address) cf.student.address = "Unknown";
+          } else {
+            cf.student = {
+              first_name: "-",
+              last_name: "-",
+              birth_year: 2015,
+              address: "-",
+              phone: "-",
+            };
+          }
 
-            // 4. Map 'student_birth_certificate'
-            if (!cf.student_birth_certificate && cf.tarbiyalanuvchi) {
-              cf.student_birth_certificate = {
-                full_name: cf.tarbiyalanuvchi.fio || "Unknown",
-                series: cf.tarbiyalanuvchi.tugilganlik_guvohnoma || "Unknown",
-                issued_by: cf.tarbiyalanuvchi.guvohnoma_kim_bergan || "Unknown",
-                issue_date: cf.tarbiyalanuvchi.guvohnoma_qachon_bergan || today,
-              };
-            } else if (!cf.student_birth_certificate) {
-              cf.student_birth_certificate = {
-                full_name: "-",
-                series: "-",
-                issued_by: "-",
-                issue_date: today,
-              };
-            }
+          // 3. Map 'parent_passport'
+          if (!cf.parent_passport && cf.buyurtmachi) {
+            cf.parent_passport = {
+              series_number: cf.buyurtmachi.pasport_seriya || "Unknown",
+              issued_by: cf.buyurtmachi.pasport_kim_bergan || "Unknown",
+              issue_date: cf.buyurtmachi.pasport_qachon_bergan || today,
+            };
+          } else if (!cf.parent_passport) {
+            cf.parent_passport = {
+              series_number: "-",
+              issued_by: "-",
+              issue_date: today,
+            };
+          }
 
-            // 5. Map 'contract_terms'
-            if (!cf.contract_terms && cf.shartnoma_muddati) {
-              let fee = 0;
-              if (cf.tolov && cf.tolov.oylik_narx) {
-                fee =
-                  parseInt(
-                    String(cf.tolov.oylik_narx).replace(/\s/g, ""),
-                    10,
-                  ) || 0;
-              }
-              cf.contract_terms = {
-                contract_start_date: cf.shartnoma_muddati.boshlanish || today,
-                contract_end_date: cf.shartnoma_muddati.tugash || today,
-                monthly_fee: fee,
-              };
-            } else if (!cf.contract_terms) {
-              cf.contract_terms = {
-                contract_start_date: today,
-                contract_end_date: today,
-                monthly_fee: 0,
-              };
+          // 4. Map 'student_birth_certificate'
+          if (!cf.student_birth_certificate && cf.tarbiyalanuvchi) {
+            cf.student_birth_certificate = {
+              full_name: cf.tarbiyalanuvchi.fio || "Unknown",
+              series: cf.tarbiyalanuvchi.tugilganlik_guvohnoma || "Unknown",
+              issued_by: cf.tarbiyalanuvchi.guvohnoma_kim_bergan || "Unknown",
+              issue_date: cf.tarbiyalanuvchi.guvohnoma_qachon_bergan || today,
+            };
+          } else if (!cf.student_birth_certificate) {
+            cf.student_birth_certificate = {
+              full_name: "-",
+              series: "-",
+              issued_by: "-",
+              issue_date: today,
+            };
+          }
+
+          // 5. Map 'contract_terms'
+          if (!cf.contract_terms && cf.shartnoma_muddati) {
+            let fee = 0;
+            if (cf.tolov && cf.tolov.oylik_narx) {
+              fee = parseInt(String(cf.tolov.oylik_narx).replace(/\s/g, ""), 10);
+              if (isNaN(fee)) fee = 0;
             }
+            cf.contract_terms = {
+              contract_start_date: cf.shartnoma_muddati.boshlanish || today,
+              contract_end_date: cf.shartnoma_muddati.tugash || today,
+              monthly_fee: fee,
+            };
+          } else if (!cf.contract_terms) {
+            cf.contract_terms = {
+              contract_start_date: today,
+              contract_end_date: today,
+              monthly_fee: 0,
+            };
+          }
+
+          // Yangilangan ma'lumotni configga qaytarish
+          // Agar axios avval string olgan bo'lsa, yana stringga o'giramiz
+          if (isStringData) {
+            config.data = JSON.stringify(data);
+          } else {
+            config.data = data;
           }
         }
       } catch (error) {
-        console.error("Error in contract patch interceptor:", error);
+        console.error("Interceptor Safe Fix Error:", error);
+        // Xato bo'lsa ham so'rovni buzmasdan asl holicha yuboramiz
       }
     }
 
@@ -294,11 +289,12 @@ apiClient.interceptors.response.use(
 
     // Handle different error scenarios
     if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
-      // Timeout error
       showLimitedToast.error(getTranslation("errorTimeout"));
     } else if (error.code === "ERR_NETWORK") {
-      // Network error - backend might be down
+      // Network error 
+      // Agar bu mock API bo'lmasa, demak jiddiy aloqa muammosi yoki CORS
       if (import.meta.env.VITE_USE_MOCK_API !== "true") {
+        console.error("Network Error Details:", error);
         showLimitedToast.error(getTranslation("errorNetwork"));
       }
     } else if (error.response?.status === 401 && !originalRequest._retry) {
@@ -306,7 +302,6 @@ apiClient.interceptors.response.use(
       const refreshToken = useAuthStore.getState().refreshToken;
 
       if (!refreshToken) {
-        // No refresh token, logout
         useAuthStore.getState().logout();
         showLimitedToast.error(getTranslation("errorSessionExpired"));
         window.location.href = "/login";
@@ -314,7 +309,6 @@ apiClient.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -331,7 +325,6 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint
         const response = await axios.post(
           `${getApiUrl()}/auth/refresh`,
           { refresh_token: refreshToken },
@@ -341,7 +334,6 @@ apiClient.interceptors.response.use(
         const { access_token, refresh_token: new_refresh_token } =
           response.data;
 
-        // Update tokens in store
         useAuthStore
           .getState()
           .setAuth(
@@ -351,21 +343,15 @@ apiClient.interceptors.response.use(
             useAuthStore.getState().permissions,
           );
 
-        // Update the failed request with new token
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
-
-        // Process queue
         processQueue(null, access_token);
-
         isRefreshing = false;
 
-        // Retry the original request
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
 
-        // Refresh failed, logout
         useAuthStore.getState().logout();
         showLimitedToast.error(getTranslation("errorSessionExpired"));
         window.location.href = "/login";
@@ -382,7 +368,6 @@ apiClient.interceptors.response.use(
       let message = getTranslation("errorGeneric");
 
       if (Array.isArray(detail) && detail.length > 0) {
-        // FastAPI validation error - extract first error message
         const firstError = detail[0];
         const errorMessage = firstError.msg || firstError.message || message;
 
@@ -400,7 +385,6 @@ apiClient.interceptors.response.use(
         message = error.response.data.message;
       }
 
-      // Check if this is a "less than or equal to" validation error (any limit)
       const isLimitValidationError =
         message.includes("Input should be less than or equal to") ||
         message.includes("less than or equal to") ||
@@ -408,7 +392,6 @@ apiClient.interceptors.response.use(
           detail.includes("less than or equal to"));
 
       if (isLimitValidationError) {
-        // Only log limit validation errors to console, don't show toast
         console.error("API Validation Error (limit check):", {
           message,
           detail: error.response?.data?.detail,
@@ -416,7 +399,6 @@ apiClient.interceptors.response.use(
           url: originalRequest?.url,
         });
       } else {
-        // Show all other errors as toast in UI
         showLimitedToast.error(message);
       }
     }
