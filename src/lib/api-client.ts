@@ -82,24 +82,27 @@ apiClient.interceptors.request.use(
             data = JSON.parse(data);
             isStringData = true;
           } catch (e) {
-            // Agar parse qilib bo'lmasa, demak bu oddiy string yoki form-data, unga tegmaymiz
+            // Not a valid JSON string, let it pass through
             return config;
           }
         }
 
-        if (data && typeof data === "object") {
-          // Ensure custom_fields is initialized
-          if (!data.custom_fields || typeof data.custom_fields !== "object") {
-             // Agar string bo'lsa parse qilamiz
-             if (typeof data.custom_fields === "string") {
-                try {
-                   data.custom_fields = JSON.parse(data.custom_fields);
-                } catch {
-                   data.custom_fields = {};
-                }
-             } else {
-                data.custom_fields = {};
-             }
+        // --- THE FIX ---
+        // Only run the complex mapping logic if custom_fields are present in the request.
+        if (data && data.custom_fields) {
+          // Ensure `custom_fields` is an object, parsing if necessary
+          if (typeof data.custom_fields === "string") {
+            try {
+              data.custom_fields = JSON.parse(data.custom_fields);
+            } catch {
+              // Not valid JSON, initialize as empty to prevent crashes below.
+              data.custom_fields = {};
+            }
+          } else if (
+            typeof data.custom_fields !== "object" ||
+            data.custom_fields === null
+          ) {
+            data.custom_fields = {};
           }
 
           const cf = data.custom_fields;
@@ -232,14 +235,13 @@ apiClient.interceptors.request.use(
               monthly_fee: 0,
             };
           }
+        }
 
-          // Yangilangan ma'lumotni configga qaytarish
-          // Agar axios avval string olgan bo'lsa, yana stringga o'giramiz
-          if (isStringData) {
-            config.data = JSON.stringify(data);
-          } else {
-            config.data = data;
-          }
+        // Re-stringify if the original was a string
+        if (isStringData) {
+          config.data = JSON.stringify(data);
+        } else {
+          config.data = data;
         }
       } catch (error) {
         console.error("Interceptor Safe Fix Error:", error);
