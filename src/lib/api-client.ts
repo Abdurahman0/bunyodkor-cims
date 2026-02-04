@@ -87,156 +87,109 @@ apiClient.interceptors.request.use(
           }
         }
 
-        // --- DEBUG: Temporarily disabling custom_fields logic ---
-        /*
+        // --- FINAL FIX ---
+        // This logic transforms the contract patch data to match the API's expected structure.
         if (data && data.custom_fields) {
-          // Ensure `custom_fields` is an object, parsing if necessary
+          // Ensure `custom_fields` is an object, parsing if necessary.
           if (typeof data.custom_fields === "string") {
             try {
               data.custom_fields = JSON.parse(data.custom_fields);
             } catch {
-              // Not valid JSON, initialize as empty to prevent crashes below.
-              data.custom_fields = {};
+              data.custom_fields = {}; // Initialize if parsing fails
             }
-          } else if (
-            typeof data.custom_fields !== "object" ||
-            data.custom_fields === null
-          ) {
+          } else if (typeof data.custom_fields !== 'object' || data.custom_fields === null) {
             data.custom_fields = {};
           }
 
           const cf = data.custom_fields;
           const today = new Date().toISOString().split("T")[0];
 
-          // 0. Ensure contract_creation_date
-          if (!cf.contract_creation_date) {
-            const dateStr = data.start_date || today;
-            const dateObj = new Date(dateStr);
-            cf.contract_creation_date = isNaN(dateObj.getTime())
-              ? today
-              : dateObj.toISOString().split("T")[0];
+          // 1. Ensure `contract_creation_date`
+          cf.contract_creation_date = cf.contract_creation_date || data.start_date || today;
+
+          // 2. Create `customer` from `buyurtmachi`
+          const customerData = cf.buyurtmachi || {};
+          cf.customer = {
+            full_name: customerData.fio || "string",
+            passport_number: customerData.pasport_seriya || "string",
+            passport_issued_by: customerData.pasport_kim_bergan || "string",
+            passport_issue_date: customerData.pasport_qachon_bergan || today,
+            address: customerData.manzil || "string",
+            phone: customerData.telefon || "string",
+          };
+
+          // 3. Create `student` object
+          const studentData = cf.student || {};
+          const nameParts = (studentData.student_fio || "string string").trim().split(/\s+/);
+          cf.student = {
+            birth_year: parseInt(String(studentData.birth_year), 10) || 0,
+            first_name: studentData.first_name || nameParts[1] || "string",
+            last_name: studentData.last_name || nameParts[0] || "string",
+            patronymic: studentData.patronymic || nameParts.slice(2).join(" ") || "string",
+            address: studentData.student_address || studentData.address || "string",
+            phone: studentData.dad_phone_number || studentData.mom_phone_number || "string",
+          };
+
+          // 4. Create `father` object
+          cf.father = {
+            full_name: studentData.dad_fullname || "string",
+            occupation: studentData.dad_occupation || "string",
+            phone: studentData.dad_phone_number || "string",
+          };
+
+          // 5. Create `mother` object
+          cf.mother = {
+            full_name: studentData.mom_fullname || "string",
+            occupation: studentData.mom_occupation || "string",
+            phone: studentData.mom_phone_number || "string",
+          };
+
+          // 6. Create `parent_passport` from `buyurtmachi`
+          cf.parent_passport = {
+            series_number: customerData.pasport_seriya || "string",
+            issued_by: customerData.pasport_kim_bergan || "string",
+            issue_date: customerData.pasport_qachon_bergan || today,
+          };
+
+          // 7. Create `student_birth_certificate` from `tarbiyalanuvchi`
+          const birthCertData = cf.tarbiyalanuvchi || {};
+          cf.student_birth_certificate = {
+            full_name: birthCertData.fio || "string",
+            series: birthCertData.tugilganlik_guvohnoma || "string",
+            issued_by: birthCertData.guvohnoma_kim_bergan || "string",
+            issue_date: birthCertData.guvohnoma_qachon_bergan || today,
+          };
+
+          // 8. Create `contract_terms`
+          const termsData = cf.shartnoma_muddati || {};
+          let fee = 0;
+          if (cf.tolov && cf.tolov.oylik_narx) {
+              fee = parseInt(String(cf.tolov.oylik_narx).replace(/\s/g, ""), 10) || 0;
           }
-
-          // 1. Map 'buyurtmachi' to 'customer'
-          if (!cf.customer && cf.buyurtmachi) {
-            cf.customer = {
-              full_name: cf.buyurtmachi.fio || "Unknown",
-              passport_number: cf.buyurtmachi.pasport_seriya || "Unknown",
-              passport_issued_by:
-                cf.buyurtmachi.pasport_kim_bergan || "Unknown",
-              passport_issue_date:
-                cf.buyurtmachi.pasport_qachon_bergan || today,
-              address: cf.buyurtmachi.manzil || "Unknown",
-              phone: cf.buyurtmachi.telefon || "Unknown",
-            };
-          } else if (!cf.customer) {
-            // Default customer struct
-            cf.customer = {
-              full_name: "-",
-              passport_number: "-",
-              passport_issued_by: "-",
-              passport_issue_date: today,
-              address: "-",
-              phone: "-",
-            };
-          }
-
-          // 2. Fix 'student' fields
-          if (cf.student) {
-            // Map FIO
-            if (!cf.student.first_name && cf.student.student_fio) {
-              const parts = cf.student.student_fio.trim().split(/\s+/);
-              if (parts.length > 0) cf.student.last_name = parts[0];
-              if (parts.length > 1) cf.student.first_name = parts[1];
-              if (parts.length > 2)
-                cf.student.patronymic = parts.slice(2).join(" ");
-            }
-            // Map address
-            if (!cf.student.address && cf.student.student_address) {
-              cf.student.address = cf.student.student_address;
-            }
-            // Map phone
-            if (!cf.student.phone) {
-              cf.student.phone =
-                cf.student.dad_phone_number ||
-                cf.student.mom_phone_number ||
-                "Unknown";
-            }
-            // Ensure birth_year is int and valid
-            if (cf.student.birth_year) {
-              const year = parseInt(String(cf.student.birth_year), 10);
-              cf.student.birth_year = isNaN(year) ? 2015 : year;
-            } else {
-              cf.student.birth_year = 2015;
-            }
-
-            // Defaults
-            if (!cf.student.first_name) cf.student.first_name = "Unknown";
-            if (!cf.student.last_name) cf.student.last_name = "Unknown";
-            if (!cf.student.address) cf.student.address = "Unknown";
-          } else {
-            cf.student = {
-              first_name: "-",
-              last_name: "-",
-              birth_year: 2015,
-              address: "-",
-              phone: "-",
-            };
-          }
-
-          // 3. Map 'parent_passport'
-          if (!cf.parent_passport && cf.buyurtmachi) {
-            cf.parent_passport = {
-              series_number: cf.buyurtmachi.pasport_seriya || "Unknown",
-              issued_by: cf.buyurtmachi.pasport_kim_bergan || "Unknown",
-              issue_date: cf.buyurtmachi.pasport_qachon_bergan || today,
-            };
-          } else if (!cf.parent_passport) {
-            cf.parent_passport = {
-              series_number: "-",
-              issued_by: "-",
-              issue_date: today,
-            };
-          }
-
-          // 4. Map 'student_birth_certificate'
-          if (!cf.student_birth_certificate && cf.tarbiyalanuvchi) {
-            cf.student_birth_certificate = {
-              full_name: cf.tarbiyalanuvchi.fio || "Unknown",
-              series: cf.tarbiyalanuvchi.tugilganlik_guvohnoma || "Unknown",
-              issued_by: cf.tarbiyalanuvchi.guvohnoma_kim_bergan || "Unknown",
-              issue_date: cf.tarbiyalanuvchi.guvohnoma_qachon_bergan || today,
-            };
-          } else if (!cf.student_birth_certificate) {
-            cf.student_birth_certificate = {
-              full_name: "-",
-              series: "-",
-              issued_by: "-",
-              issue_date: today,
-            };
-          }
-
-          // 5. Map 'contract_terms'
-          if (!cf.contract_terms && cf.shartnoma_muddati) {
-            let fee = 0;
-            if (cf.tolov && cf.tolov.oylik_narx) {
-              fee = parseInt(String(cf.tolov.oylik_narx).replace(/\s/g, ""), 10);
-              if (isNaN(fee)) fee = 0;
-            }
-            cf.contract_terms = {
-              contract_start_date: cf.shartnoma_muddati.boshlanish || today,
-              contract_end_date: cf.shartnoma_muddati.tugash || today,
-              monthly_fee: fee,
-            };
-          } else if (!cf.contract_terms) {
-            cf.contract_terms = {
-              contract_start_date: today,
-              contract_end_date: today,
-              monthly_fee: 0,
-            };
+          cf.contract_terms = {
+            contract_start_date: termsData.boshlanish || data.start_date || today,
+            contract_end_date: termsData.tugash || data.end_date || today,
+            monthly_fee: fee,
+          };
+          
+          // 9. Clean up old, temporary fields from custom_fields
+          delete cf.buyurtmachi;
+          delete cf.tarbiyalanuvchi;
+          delete cf.shartnoma_muddati;
+          delete cf.tolov;
+          delete cf.sana;
+          // Clean up fields that were moved from student object
+          if(cf.student) {
+            delete cf.student.student_fio;
+            delete cf.student.student_address;
+            delete cf.student.dad_fullname;
+            delete cf.student.dad_occupation;
+            delete cf.student.dad_phone_number;
+            delete cf.student.mom_fullname;
+            delete cf.student.mom_occupation;
+            delete cf.student.mom_phone_number;
           }
         }
-        */
 
         // Re-stringify if the original was a string
         if (isStringData) {
