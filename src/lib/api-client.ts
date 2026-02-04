@@ -7,10 +7,13 @@ import { translations, type TranslationKey } from "@/i18n/translations";
 import toast from "react-hot-toast";
 
 const getApiUrl = () => {
-  // In development, use proxy to avoid CORS issues if set up, otherwise direct API
-  return (
-    import.meta.env.VITE_API_URL || "https://bunyodkor.api.cims.cognilabs.org/"
-  );
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (import.meta.env.DEV) {
+    return "/api";
+  }
+  return "https://bunyodkor.api.cims.cognilabs.org/";
 };
 
 // Helper function to get translated message
@@ -61,13 +64,6 @@ apiClient.interceptors.request.use(
     const token = useAuthStore.getState().token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    // Log mock API usage in development
-    if (import.meta.env.VITE_USE_MOCK_API === "true" && import.meta.env.DEV) {
-      console.log(
-        `🔵 [MOCK API] ${config.method?.toUpperCase()} ${config.url}`,
-      );
     }
 
     // FIX: Contract patch requests logic (Safe version)

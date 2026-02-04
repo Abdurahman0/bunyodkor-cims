@@ -20,8 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { contractService, studentService } from "@/services/api.service";
 import type {
   ContractRead,
-  ContractCreate as ContractCreateType, // Renamed to avoid conflict with local type
-  ContractUpdate,
+  ContractRead as ContractCreateType,
   StudentRead,
 } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
@@ -203,11 +202,11 @@ export function ContractDialog({
   }, [contract, open, reset]);
 
   const mutation = useMutation({
-    mutationFn: (data: ContractCreate | ContractUpdate) => {
+    mutationFn: (data: any) => {
       if (contract) {
         return contractService.updateContract(contract.id, data);
       }
-      return contractService.createContract(data as ContractCreate);
+      return contractService.createContract(data as ContractRead);
     },
     onSuccess: async (response) => {
       toast.success(
