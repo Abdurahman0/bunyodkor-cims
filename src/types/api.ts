@@ -385,7 +385,7 @@ export interface ContractUpdateRequest {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   custom_fields?: any;
 }
-
+export type ContractUpdate = ContractUpdateRequest;
 export interface MonthlyFeeUpdateRequest {
   monthly_fee: number;
 }

@@ -267,16 +267,126 @@ export function ContractDialog({
   });
 
   const onSubmit = (data: ContractFormData) => {
-    const payload = {
-      ...data,
-      student_id: Number(data.student_id),
-      monthly_fee: Number(data.monthly_fee),
+    // --- FINAL FIX: Transform data right before submission ---
+    const payload = { ...data };
+
+    // 1. Transform custom_fields if they exist
+    if (payload.custom_fields) {
+      let cf = payload.custom_fields;
+      if (typeof cf === "string") {
+        try {
+          cf = JSON.parse(cf);
+        } catch {
+          cf = {};
+        }
+      } else if (typeof cf !== "object" || cf === null) {
+        cf = {};
+      }
+
+      const today = new Date().toISOString().split("T")[0];
+
+      // Ensure `contract_creation_date`
+      cf.contract_creation_date =
+        cf.contract_creation_date || payload.start_date || today;
+
+      // Create `customer` from `buyurtmachi`
+      const customerData = cf.buyurtmachi || {};
+      cf.customer = {
+        full_name: customerData.fio || "",
+        passport_number: customerData.pasport_seriya || "",
+        passport_issued_by: customerData.pasport_kim_bergan || "",
+        passport_issue_date: customerData.pasport_qachon_bergan || today,
+        address: customerData.manzil || "",
+        phone: customerData.telefon || "",
+      };
+
+      // Create `student` object
+      const studentData = cf.student || {};
+      const nameParts = (studentData.student_fio || "").trim().split(/\s+/);
+      cf.student = {
+        birth_year: parseInt(String(studentData.birth_year), 10) || 0,
+        first_name: studentData.first_name || nameParts[1] || "",
+        last_name: studentData.last_name || nameParts[0] || "",
+        patronymic:
+          studentData.patronymic || nameParts.slice(2).join(" ") || "",
+        address: studentData.student_address || studentData.address || "",
+        phone:
+          studentData.dad_phone_number || studentData.mom_phone_number || "",
+      };
+
+      // Create `father` and `mother` objects
+      cf.father = {
+        full_name: studentData.dad_fullname || "",
+        occupation: studentData.dad_occupation || "",
+        phone: studentData.dad_phone_number || "",
+      };
+      cf.mother = {
+        full_name: studentData.mom_fullname || "",
+        occupation: studentData.mom_occupation || "",
+        phone: studentData.mom_phone_number || "",
+      };
+
+      // Create `parent_passport` from `buyurtmachi`
+      cf.parent_passport = {
+        series_number: customerData.pasport_seriya || "",
+        issued_by: customerData.pasport_kim_bergan || "",
+        issue_date: customerData.pasport_qachon_bergan || today,
+      };
+
+      // Create `student_birth_certificate` from `tarbiyalanuvchi`
+      const birthCertData = cf.tarbiyalanuvchi || {};
+      cf.student_birth_certificate = {
+        full_name: birthCertData.fio || "",
+        series: birthCertData.tugilganlik_guvohnoma || "",
+        issued_by: birthCertData.guvohnoma_kim_bergan || "",
+        issue_date: birthCertData.guvohnoma_qachon_bergan || today,
+      };
+
+      // Create `contract_terms`
+      const termsData = cf.shartnoma_muddati || {};
+      let fee = 0;
+      if (cf.tolov && cf.tolov.oylik_narx) {
+        fee = parseInt(String(cf.tolov.oylik_narx).replace(/\s/g, ""), 10) || 0;
+      }
+      cf.contract_terms = {
+        contract_start_date:
+          termsData.boshlanish || payload.start_date || today,
+        contract_end_date: termsData.tugash || payload.end_date || today,
+        monthly_fee: fee || Number(payload.monthly_fee),
+      };
+
+      // Clean up old fields
+      delete cf.buyurtmachi;
+      delete cf.tarbiyalanuvchi;
+      delete cf.shartnoma_muddati;
+      delete cf.tolov;
+      delete cf.sana;
+      if (cf.student) {
+        delete cf.student.student_fio;
+        delete cf.student.student_address;
+        delete cf.student.dad_fullname;
+        delete cf.student.dad_occupation;
+        delete cf.student.dad_phone_number;
+        delete cf.student.mom_fullname;
+        delete cf.student.mom_occupation;
+        delete cf.student.mom_phone_number;
+      }
+      payload.custom_fields = cf; // Assign the transformed object back
+    }
+
+    // 2. Finalize payload types
+    const finalPayload = {
+      ...payload,
+      student_id: Number(payload.student_id),
+      monthly_fee: Number(payload.monthly_fee),
     };
-    if (!payload.student_id) {
+
+    if (!finalPayload.student_id) {
       toast.error(t("pleaseSelectStudent"));
       return;
     }
-    mutation.mutate(payload);
+
+    mutation.mutate(finalPayload);
   };
 
   const selectedStudent = selectedStudentData?.data;
