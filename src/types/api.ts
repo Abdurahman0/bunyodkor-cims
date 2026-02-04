@@ -15,6 +15,23 @@ export interface ApiMeta {
 }
 
 export interface ApiResponse<T> {
+  [x: string]: any;
+  [x: string]: any;
+  [x: string]: string;
+  [x: string]: string | number | Date;
+  [x: string]: ReactNode;
+  [x: string]: ReactNode;
+  [x: string]: ReactNode;
+  [x: string]: ReactNode;
+  final_pdf_url: any;
+  contract_number: any;
+  start_date: any;
+  first_name: ReactNode;
+  last_name: ReactNode;
+  status: ReactNode;
+  phone: ReactNode;
+  date_of_birth: any;
+  id: any;
   pdf_url?: string | null;
   data: T;
   meta: ApiMeta | null;
