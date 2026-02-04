@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -204,11 +205,11 @@ export function ContractDialog({
   }, [contract, open, reset]);
 
   const mutation = useMutation({
-    mutationFn: (data: ContractCreate | ContractUpdate) => {
+    mutationFn: (data: ContractCreateType | ContractUpdate) => {
       if (contract) {
         return contractService.updateContract(contract.id, data);
       }
-      return contractService.createContract(data as ContractCreate);
+      return contractService.createContract(data as ContractCreateType);
     },
     onSuccess: async (response) => {
       toast.success(

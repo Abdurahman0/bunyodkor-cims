@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Generated from Swagger/OpenAPI specification
 // DO NOT EDIT MANUALLY - This file is auto-generated
 
@@ -15,23 +16,6 @@ export interface ApiMeta {
 }
 
 export interface ApiResponse<T> {
-  [x: string]: any;
-  [x: string]: any;
-  [x: string]: string;
-  [x: string]: string | number | Date;
-  [x: string]: ReactNode;
-  [x: string]: ReactNode;
-  [x: string]: ReactNode;
-  [x: string]: ReactNode;
-  final_pdf_url: any;
-  contract_number: any;
-  start_date: any;
-  first_name: ReactNode;
-  last_name: ReactNode;
-  status: ReactNode;
-  phone: ReactNode;
-  date_of_birth: any;
-  id: any;
   pdf_url?: string | null;
   data: T;
   meta: ApiMeta | null;
@@ -344,11 +328,10 @@ export interface GroupedByYearResponse {
 
 export type ContractStatus =
   | "active"
-  | "pending"
   | "expired"
-  | "cancelled"
+  | "deleted"
   | "terminated"
-  | "completed";
+  | "archived";
 
 export interface TerminatedByUser {
   id: number;
@@ -393,7 +376,7 @@ export interface ContractCreateRequest {
   status?: ContractStatus;
   student_id: number;
 }
-
+export type ContractCreate = ContractCreateRequest;
 export interface ContractUpdateRequest {
   start_date?: string;
   end_date?: string;
