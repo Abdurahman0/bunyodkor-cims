@@ -87,8 +87,8 @@ apiClient.interceptors.request.use(
           }
         }
 
-        // --- THE FIX ---
-        // Only run the complex mapping logic if custom_fields are present in the request.
+        // --- DEBUG: Temporarily disabling custom_fields logic ---
+        /*
         if (data && data.custom_fields) {
           // Ensure `custom_fields` is an object, parsing if necessary
           if (typeof data.custom_fields === "string") {
@@ -236,6 +236,7 @@ apiClient.interceptors.request.use(
             };
           }
         }
+        */
 
         // Re-stringify if the original was a string
         if (isStringData) {
