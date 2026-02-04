@@ -87,8 +87,8 @@ apiClient.interceptors.request.use(
           }
         }
 
-        // --- FINAL FIX ---
-        // This logic transforms the contract patch data to match the API's expected structure.
+        // --- CORRECTED FINAL FIX ---
+        // This logic transforms the contract patch data to match the API's expected structure, using proper defaults.
         if (data && data.custom_fields) {
           // Ensure `custom_fields` is an object, parsing if necessary.
           if (typeof data.custom_fields === "string") {
@@ -110,53 +110,53 @@ apiClient.interceptors.request.use(
           // 2. Create `customer` from `buyurtmachi`
           const customerData = cf.buyurtmachi || {};
           cf.customer = {
-            full_name: customerData.fio || "string",
-            passport_number: customerData.pasport_seriya || "string",
-            passport_issued_by: customerData.pasport_kim_bergan || "string",
+            full_name: customerData.fio || "",
+            passport_number: customerData.pasport_seriya || "",
+            passport_issued_by: customerData.pasport_kim_bergan || "",
             passport_issue_date: customerData.pasport_qachon_bergan || today,
-            address: customerData.manzil || "string",
-            phone: customerData.telefon || "string",
+            address: customerData.manzil || "",
+            phone: customerData.telefon || "",
           };
 
           // 3. Create `student` object
           const studentData = cf.student || {};
-          const nameParts = (studentData.student_fio || "string string").trim().split(/\s+/);
+          const nameParts = (studentData.student_fio || "").trim().split(/\s+/);
           cf.student = {
             birth_year: parseInt(String(studentData.birth_year), 10) || 0,
-            first_name: studentData.first_name || nameParts[1] || "string",
-            last_name: studentData.last_name || nameParts[0] || "string",
-            patronymic: studentData.patronymic || nameParts.slice(2).join(" ") || "string",
-            address: studentData.student_address || studentData.address || "string",
-            phone: studentData.dad_phone_number || studentData.mom_phone_number || "string",
+            first_name: studentData.first_name || nameParts[1] || "",
+            last_name: studentData.last_name || nameParts[0] || "",
+            patronymic: studentData.patronymic || nameParts.slice(2).join(" ") || "",
+            address: studentData.student_address || studentData.address || "",
+            phone: studentData.dad_phone_number || studentData.mom_phone_number || "",
           };
 
           // 4. Create `father` object
           cf.father = {
-            full_name: studentData.dad_fullname || "string",
-            occupation: studentData.dad_occupation || "string",
-            phone: studentData.dad_phone_number || "string",
+            full_name: studentData.dad_fullname || "",
+            occupation: studentData.dad_occupation || "",
+            phone: studentData.dad_phone_number || "",
           };
 
           // 5. Create `mother` object
           cf.mother = {
-            full_name: studentData.mom_fullname || "string",
-            occupation: studentData.mom_occupation || "string",
-            phone: studentData.mom_phone_number || "string",
+            full_name: studentData.mom_fullname || "",
+            occupation: studentData.mom_occupation || "",
+            phone: studentData.mom_phone_number || "",
           };
 
           // 6. Create `parent_passport` from `buyurtmachi`
           cf.parent_passport = {
-            series_number: customerData.pasport_seriya || "string",
-            issued_by: customerData.pasport_kim_bergan || "string",
+            series_number: customerData.pasport_seriya || "",
+            issued_by: customerData.pasport_kim_bergan || "",
             issue_date: customerData.pasport_qachon_bergan || today,
           };
 
           // 7. Create `student_birth_certificate` from `tarbiyalanuvchi`
           const birthCertData = cf.tarbiyalanuvchi || {};
           cf.student_birth_certificate = {
-            full_name: birthCertData.fio || "string",
-            series: birthCertData.tugilganlik_guvohnoma || "string",
-            issued_by: birthCertData.guvohnoma_kim_bergan || "string",
+            full_name: birthCertData.fio || "",
+            series: birthCertData.tugilganlik_guvohnoma || "",
+            issued_by: birthCertData.guvohnoma_kim_bergan || "",
             issue_date: birthCertData.guvohnoma_qachon_bergan || today,
           };
 
