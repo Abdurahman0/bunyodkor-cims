@@ -574,6 +574,8 @@ export const studentService = {
     year?: number;
     month?: number;
     months?: string;
+    from_date?: string;
+    to_date?: string;
     group_id?: number;
   }): Promise<Blob> => {
     const response = await apiClient.get<Blob>("/students/unpaid/export", {

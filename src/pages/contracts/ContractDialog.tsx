@@ -267,10 +267,40 @@ export function ContractDialog({
   });
 
   const onSubmit = (data: ContractFormData) => {
-    // --- FINAL FIX: Transform data right before submission ---
+    const today = new Date().toISOString();
+
+    // If status is 'terminated' or 'cancelled', use the terminate endpoint
+    if (data.status === "terminated" || data.status === "cancelled") {
+      if (!contract) return; // Should not happen
+      const terminatePayload = {
+        termination_reason: "Terminated by user via dialog",
+        terminated_at: today,
+      };
+      // Use a promise toast to give user feedback on the specific action
+      toast.promise(
+        contractService.terminateContract(contract.id, terminatePayload),
+        {
+          loading: t("terminatingContract"),
+          success: () => {
+            queryClient.invalidateQueries({ queryKey: ["contracts"] });
+            onOpenChange(false);
+            if (onSuccess) onSuccess();
+            return t("contractTerminatedSuccess");
+          },
+          error: (err: any) => {
+            const detail = err.response?.data?.detail;
+            if (Array.isArray(detail)) return detail[0].msg;
+            if (typeof detail === 'string') return detail;
+            return t("anErrorOccurred");
+          },
+        }
+      );
+      return; // Stop execution here
+    }
+
+    // --- For all other statuses, perform the standard update with transformation ---
     const payload = { ...data };
 
-    // 1. Transform custom_fields if they exist
     if (payload.custom_fields) {
       let cf = payload.custom_fields;
       if (typeof cf === "string") {
@@ -279,42 +309,36 @@ export function ContractDialog({
         } catch {
           cf = {};
         }
-      } else if (typeof cf !== "object" || cf === null) {
+      } else if (typeof cf !== 'object' || cf === null) {
         cf = {};
       }
 
-      const today = new Date().toISOString().split("T")[0];
-
       // Ensure `contract_creation_date`
       cf.contract_creation_date =
-        cf.contract_creation_date || payload.start_date || today;
+        cf.contract_creation_date || payload.start_date || today.split("T")[0];
 
-      // Create `customer` from `buyurtmachi`
       const customerData = cf.buyurtmachi || {};
       cf.customer = {
         full_name: customerData.fio || "",
         passport_number: customerData.pasport_seriya || "",
         passport_issued_by: customerData.pasport_kim_bergan || "",
-        passport_issue_date: customerData.pasport_qachon_bergan || today,
+        passport_issue_date: customerData.pasport_qachon_bergan || today.split("T")[0],
         address: customerData.manzil || "",
         phone: customerData.telefon || "",
       };
 
-      // Create `student` object
       const studentData = cf.student || {};
       const nameParts = (studentData.student_fio || "").trim().split(/\s+/);
       cf.student = {
         birth_year: parseInt(String(studentData.birth_year), 10) || 0,
         first_name: studentData.first_name || nameParts[1] || "",
         last_name: studentData.last_name || nameParts[0] || "",
-        patronymic:
-          studentData.patronymic || nameParts.slice(2).join(" ") || "",
+        patronymic: studentData.patronymic || nameParts.slice(2).join(" ") || "",
         address: studentData.student_address || studentData.address || "",
         phone:
           studentData.dad_phone_number || studentData.mom_phone_number || "",
       };
 
-      // Create `father` and `mother` objects
       cf.father = {
         full_name: studentData.dad_fullname || "",
         occupation: studentData.dad_occupation || "",
@@ -326,23 +350,20 @@ export function ContractDialog({
         phone: studentData.mom_phone_number || "",
       };
 
-      // Create `parent_passport` from `buyurtmachi`
       cf.parent_passport = {
         series_number: customerData.pasport_seriya || "",
         issued_by: customerData.pasport_kim_bergan || "",
-        issue_date: customerData.pasport_qachon_bergan || today,
+        issue_date: customerData.pasport_qachon_bergan || today.split("T")[0],
       };
 
-      // Create `student_birth_certificate` from `tarbiyalanuvchi`
       const birthCertData = cf.tarbiyalanuvchi || {};
       cf.student_birth_certificate = {
         full_name: birthCertData.fio || "",
         series: birthCertData.tugilganlik_guvohnoma || "",
         issued_by: birthCertData.guvohnoma_kim_bergan || "",
-        issue_date: birthCertData.guvohnoma_qachon_bergan || today,
+        issue_date: birthCertData.guvohnoma_qachon_bergan || today.split("T")[0],
       };
 
-      // Create `contract_terms`
       const termsData = cf.shartnoma_muddati || {};
       let fee = 0;
       if (cf.tolov && cf.tolov.oylik_narx) {
@@ -350,12 +371,11 @@ export function ContractDialog({
       }
       cf.contract_terms = {
         contract_start_date:
-          termsData.boshlanish || payload.start_date || today,
-        contract_end_date: termsData.tugash || payload.end_date || today,
+          termsData.boshlanish || payload.start_date || today.split("T")[0],
+        contract_end_date: termsData.tugash || payload.end_date || today.split("T")[0],
         monthly_fee: fee || Number(payload.monthly_fee),
       };
-
-      // Clean up old fields
+      
       delete cf.buyurtmachi;
       delete cf.tarbiyalanuvchi;
       delete cf.shartnoma_muddati;
@@ -371,10 +391,9 @@ export function ContractDialog({
         delete cf.student.mom_occupation;
         delete cf.student.mom_phone_number;
       }
-      payload.custom_fields = cf; // Assign the transformed object back
+      payload.custom_fields = cf;
     }
 
-    // 2. Finalize payload types
     const finalPayload = {
       ...payload,
       student_id: Number(payload.student_id),
@@ -385,6 +404,9 @@ export function ContractDialog({
       toast.error(t("pleaseSelectStudent"));
       return;
     }
+    
+    // DEBUG: Log the final payload to check for the 422 error
+    console.log("Submitting payload for update:", JSON.stringify(finalPayload, null, 2));
 
     mutation.mutate(finalPayload);
   };
@@ -600,7 +622,6 @@ export function ContractDialog({
               </Label>
               <Select id="status" {...register("status")}>
                 <option value="active">{t("active")}</option>
-                <option value="expired">{t("expired")}</option>
                 <option value="cancelled">{t("cancelled")}</option>
               </Select>
             </div>

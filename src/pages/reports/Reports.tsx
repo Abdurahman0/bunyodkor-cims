@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
-import { exportReport } from "@/lib/export-utils";
+import { exportReport, downloadFile } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
 import {
   formatCurrency as formatCurrencyUtil,
@@ -251,6 +251,36 @@ export default function Reports() {
       value: group.attendance_percentage,
     })) || [];
 
+  const handleDebtorsExport = async () => {
+    const params: any = {
+      group_id: selectedGroupId || undefined,
+    };
+
+    if (filterMode === "month") {
+      params.year = selectedYear;
+      if (selectedMonths) {
+        params.months = selectedMonths;
+      } else if (selectedMonth) {
+        params.month = selectedMonth;
+      }
+    } else {
+      params.from_date = unpaidDateRange.from;
+      params.to_date = unpaidDateRange.to;
+    }
+
+    const promise = studentService.exportUnpaidStudents(params);
+
+    toast.promise(promise, {
+      loading: t("exportingDebtorsReport"),
+      success: (blob) => {
+        const date = format(new Date(), "yyyy-MM-dd");
+        downloadFile(blob, `unpaid-students-report-${date}.xlsx`);
+        return t("reportExportedSuccessfully");
+      },
+      error: t("failedToExportReport"),
+    });
+  };
+
   const handleExport = () => {
     try {
       let dataToExport: any[] | null = null;
@@ -288,22 +318,8 @@ export default function Reports() {
           break;
 
         case "debtors":
-          if (!debtorsData?.data?.length) {
-            toast.error(t("noDebtorsDataToExport"));
-            return;
-          }
-          dataToExport = debtorsData.data.map((debtor: UnpaidStudentInfo) => ({
-            "Student ID": debtor.student.id,
-            "Student Name": `${debtor.student.first_name} ${debtor.student.last_name}`,
-            Group: getGroupName(debtor.student.group_id),
-            "Group ID": debtor.student.group_id || "N/A",
-            "Active Contracts": debtor.active_contracts_count,
-            "Total Expected": debtor.total_expected,
-            "Total Paid": debtor.total_paid,
-            "Debt Amount": debtor.debt_amount,
-          }));
-          reportType = "unpaid-students-report";
-          break;
+          handleDebtorsExport();
+          return; // Early return to avoid running the old logic
       }
 
       if (dataToExport) {
@@ -314,7 +330,6 @@ export default function Reports() {
       toast.error(t("failedToExportReport"));
     }
   };
-
   return (
     <div className="space-y-6">
       <motion.div
