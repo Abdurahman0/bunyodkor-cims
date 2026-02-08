@@ -99,9 +99,12 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
 
     const toastId = toast.loading(t("exportingData") || "Exporting data...");
     try {
-      const response = await apiClient.get(`/groups/${group.id}/export-students`, {
-        responseType: "blob",
-      });
+      const response = await apiClient.get(
+        `/groups/${group.id}/export-students`,
+        {
+          responseType: "blob",
+        },
+      );
 
       const contentDisposition = response.headers["content-disposition"];
       let filename = `group_${group.name}_students.xlsx`;
