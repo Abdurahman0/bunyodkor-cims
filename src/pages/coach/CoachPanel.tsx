@@ -1,5 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useEffect, type SetStateAction, type JSXElementConstructor, type Key, type ReactElement, type ReactNode, type ReactPortal } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  type SetStateAction,
+  type JSXElementConstructor,
+  type Key,
+  type ReactElement,
+  type ReactNode,
+  type ReactPortal,
+} from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -286,17 +296,17 @@ export default function CoachPanel() {
 
   const studentMap = useMemo(() => {
     if (!allStudents) return new Map();
-    return new Map(allStudents.map((s: { id: any; }) => [s.id, s]));
+    return new Map(allStudents.map((s: { id: any }) => [s.id, s]));
   }, [allStudents]);
 
   const sessionMap = useMemo(() => {
     if (!allSessions) return new Map();
-    return new Map(allSessions.map((s: { id: any; }) => [s.id, s]));
+    return new Map(allSessions.map((s: { id: any }) => [s.id, s]));
   }, [allSessions]);
 
   const groupMap = useMemo(() => {
     if (!groupsData) return new Map();
-    return new Map(groupsData.map((g: { id: any; }) => [g.id, g]));
+    return new Map(groupsData.map((g: { id: any }) => [g.id, g]));
   }, [groupsData]);
 
   // helper to get a student's display name from different possible API shapes
@@ -421,32 +431,35 @@ export default function CoachPanel() {
                   </div>
                 ) : sessionsData && sessionsData.length > 0 ? (
                   <div className="space-y-3">
-                    {sessionsData.map((session: SetStateAction<SessionRead | null>) => {
-                      const group = groupsData?.find(
-                        (g: { id: any; }) => Number(g.id) === Number(session.group_id),
-                      );
-                      return (
-                        <button
-                          key={session.id}
-                          onClick={() => setSelectedSession(session)}
-                          className={`w-full text-left p-4 rounded-lg border transition-all ${
-                            selectedSession?.id === session.id
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-card hover:border-slate-300 dark:hover:border-slate-700"
-                          }`}
-                        >
-                          <p className="font-semibold">
-                            {group?.name || t("unknownGroup")}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {session.topic}
-                          </p>
-                          <p className="text-sm font-mono mt-1">
-                            {session.start_time} - {session.end_time}
-                          </p>
-                        </button>
-                      );
-                    })}
+                    {sessionsData.map(
+                      (session: SetStateAction<SessionRead | null>) => {
+                        const group = groupsData?.find(
+                          (g: { id: any }) =>
+                            Number(g.id) === Number(session.group_id),
+                        );
+                        return (
+                          <button
+                            key={session.id}
+                            onClick={() => setSelectedSession(session)}
+                            className={`w-full text-left p-4 rounded-lg border transition-all ${
+                              selectedSession?.id === session.id
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card hover:border-slate-300 dark:hover:border-slate-700"
+                            }`}
+                          >
+                            <p className="font-semibold">
+                              {group?.name || t("unknownGroup")}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {session.topic}
+                            </p>
+                            <p className="text-sm font-mono mt-1">
+                              {session.start_time} - {session.end_time}
+                            </p>
+                          </button>
+                        );
+                      },
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-10">
@@ -473,7 +486,8 @@ export default function CoachPanel() {
                             {selectedSession.topic} (
                             {
                               groupsData?.find(
-                                (g: { id: number; }) => g.id === selectedSession.group_id,
+                                (g: { id: number }) =>
+                                  g.id === selectedSession.group_id,
                               )?.name
                             }
                             )
@@ -661,22 +675,24 @@ export default function CoachPanel() {
                   </div>
                 ) : groupsData && groupsData.length > 0 ? (
                   <div className="space-y-3">
-                    {groupsData.map((group: SetStateAction<GroupRead | null>) => (
-                      <button
-                        key={group.id}
-                        onClick={() => setSelectedGroup(group)}
-                        className={`w-full text-left p-4 rounded-lg border transition-all ${
-                          selectedGroup?.id === group.id
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card hover:border-slate-300 dark:hover:border-slate-700"
-                        }`}
-                      >
-                        <p className="font-semibold">{group.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {group.schedule_days} {group.schedule_time}
-                        </p>
-                      </button>
-                    ))}
+                    {groupsData.map(
+                      (group: SetStateAction<GroupRead | null>) => (
+                        <button
+                          key={group.id}
+                          onClick={() => setSelectedGroup(group)}
+                          className={`w-full text-left p-4 rounded-lg border transition-all ${
+                            selectedGroup?.id === group.id
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-card hover:border-slate-300 dark:hover:border-slate-700"
+                          }`}
+                        >
+                          <p className="font-semibold">{group.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {group.schedule_days} {group.schedule_time}
+                          </p>
+                        </button>
+                      ),
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-10">
@@ -714,19 +730,24 @@ export default function CoachPanel() {
                             </TableRow>
                           ) : groupStudentsData &&
                             groupStudentsData.length > 0 ? (
-                            groupStudentsData.map((student: { id: Key | null | undefined; date_of_birth: string | number | Date; }) => (
-                              <TableRow key={student.id}>
-                                <TableCell className="font-medium">
-                                  {getStudentDisplayName(student)}
-                                </TableCell>
-                                <TableCell>
-                                  {format(
-                                    new Date(student.date_of_birth),
-                                    "dd.MM.yyyy",
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))
+                            groupStudentsData.map(
+                              (student: {
+                                id: Key | null | undefined;
+                                date_of_birth: string | number | Date;
+                              }) => (
+                                <TableRow key={student.id}>
+                                  <TableCell className="font-medium">
+                                    {getStudentDisplayName(student)}
+                                  </TableCell>
+                                  <TableCell>
+                                    {format(
+                                      new Date(student.date_of_birth),
+                                      "dd.MM.yyyy",
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ),
+                            )
                           ) : (
                             <TableRow>
                               <TableCell
@@ -844,11 +865,42 @@ export default function CoachPanel() {
                   <option value="" disabled>
                     {t("selectGroup")}
                   </option>
-                  {groupsData?.map((group: { id: Key | null | undefined; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }) => (
-                    <option key={group.id} value={group.id.toString()}>
-                      {group.name}
-                    </option>
-                  ))}
+                  {groupsData?.map(
+                    (group: {
+                      id: Key | null | undefined;
+                      name:
+                        | string
+                        | number
+                        | bigint
+                        | boolean
+                        | ReactElement<
+                            unknown,
+                            string | JSXElementConstructor<any>
+                          >
+                        | Iterable<ReactNode>
+                        | ReactPortal
+                        | Promise<
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | ReactPortal
+                            | ReactElement<
+                                unknown,
+                                string | JSXElementConstructor<any>
+                              >
+                            | Iterable<ReactNode>
+                            | null
+                            | undefined
+                          >
+                        | null
+                        | undefined;
+                    }) => (
+                      <option key={group.id} value={group.id.toString()}>
+                        {group.name}
+                      </option>
+                    ),
+                  )}
                 </Select>
               </CardContent>
             </Card>

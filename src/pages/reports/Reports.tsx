@@ -34,6 +34,7 @@ import {
   Download,
   AlertTriangle,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
@@ -153,7 +154,7 @@ export default function Reports() {
   });
 
   // Query to get the total debt amount
-  const { data: totalDebtData } = useQuery({
+  const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
     queryKey: [
       "unpaid-students-total",
       selectedGroupId,
@@ -846,7 +847,7 @@ export default function Reports() {
             <CardHeader>
               <CardTitle className="text-lg">{t("debtorsList")}</CardTitle>
             </CardHeader>
-            <Table isLoading={debtorsLoading || groupsLoading}>
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("student")}</TableHead>
@@ -867,7 +868,18 @@ export default function Reports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {debtorsData?.data && debtorsData.data.length > 0 ? (
+                {debtorsLoading || groupsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-36 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <p className="text-sm font-medium">
+                          Qarzdorlar hisoblanmoqda...
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : debtorsData?.data && debtorsData.data.length > 0 ? (
                   debtorsData.data.map((debtor: UnpaidStudentInfo) => (
                     <TableRow key={debtor.student.id}>
                       <TableCell className="font-medium">
