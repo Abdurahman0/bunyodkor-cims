@@ -48,7 +48,7 @@ const DashboardLayout = () => {
   // Close sidebar on route change (mobile)
   useEffect(() => {
     close();
-  }, [location.pathname]);
+  }, [close, location.pathname]);
 
   // Close sidebar on escape key
   useEffect(() => {
@@ -104,7 +104,6 @@ const DashboardLayout = () => {
       icon: Shield,
       permission: "attendance:coach:mark",
     },
-    // --- MANA BU QISMNI QO'SHING: ---
     {
       path: "/head-coach",
       label: t("headCoach") || "Bosh Murabbiy",
@@ -378,7 +377,9 @@ const DashboardLayout = () => {
             {user?.is_super_admin && (
               <div className="mt-2 pt-2 border-t border-border/40 flex items-center gap-1.5 text-xs">
                 <Shield className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-amber-400 font-medium">{t("superAdmin")}</span>
+                <span className="text-amber-400 font-medium">
+                  {t("superAdmin")}
+                </span>
               </div>
             )}
           </div>
