@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   Ban,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { transactionService, studentService } from "@/services/api.service";
@@ -584,7 +585,7 @@ export default function Finance() {
           <CardHeader className="border-b border-border">
             <CardTitle className="text-lg">{t("transactionsList")}</CardTitle>
           </CardHeader>
-          <Table isLoading={isLoading}>
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>#</TableHead>
@@ -607,7 +608,18 @@ export default function Finance() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedTransactions && paginatedTransactions.length > 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="h-36 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <p className="text-sm font-medium">
+                        Transaksiyalar hisoblanmoqda...
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedTransactions && paginatedTransactions.length > 0 ? (
                 (() => {
                   const displayed = [...paginatedTransactions].sort(
                     (a: TransactionWithNameRead, b: TransactionWithNameRead) =>

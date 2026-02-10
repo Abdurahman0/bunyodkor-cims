@@ -94,7 +94,10 @@ export default function Reports() {
       let currentPage = 1;
       let hasMore = true;
       while (hasMore) {
-        const response = await groupService.getGroups({ page: currentPage, page_size: 100 });
+        const response = await groupService.getGroups({
+          page: currentPage,
+          page_size: 100,
+        });
         if (response.data && response.data.length > 0) {
           allGroups = [...allGroups, ...response.data];
           if (response.meta && currentPage < response.meta.total_pages) {
