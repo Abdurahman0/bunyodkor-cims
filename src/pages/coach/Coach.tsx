@@ -53,6 +53,7 @@ import {
   TrendingUp,
   CalendarDays,
   List as ListIcon,
+  MapPin,
 } from "lucide-react";
 import { format, addDays, subDays, startOfWeek, endOfWeek } from "date-fns";
 import { toast } from "sonner";
@@ -63,7 +64,7 @@ import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog";
 export default function Coach() {
   const { t } = useLanguageStore();
   const [selectedDate, setSelectedDate] = useState(
-    format(new Date(), "yyyy-MM-dd")
+    format(new Date(), "yyyy-MM-dd"),
   );
   const [filterGroupId, setFilterGroupId] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<number | null>(null);
@@ -75,7 +76,8 @@ export default function Coach() {
   const [currentTab, setCurrentTab] = useState("attendance");
   const [viewMode, setViewMode] = useState<"timetable" | "list">("timetable");
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedSessionForDetails, setSelectedSessionForDetails] = useState<SessionRead | null>(null);
+  const [selectedSessionForDetails, setSelectedSessionForDetails] =
+    useState<SessionRead | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -95,12 +97,18 @@ export default function Coach() {
 
   // Fetch all sessions for the current week for timetable view
   const { data: weekSessionsData } = useQuery({
-    queryKey: ["coach-week-sessions", format(weekStart, "yyyy-MM-dd"), format(weekEnd, "yyyy-MM-dd")],
+    queryKey: [
+      "coach-week-sessions",
+      format(weekStart, "yyyy-MM-dd"),
+      format(weekEnd, "yyyy-MM-dd"),
+    ],
     queryFn: async () => {
       // Fetch sessions for each day of the week
-      const days = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), "yyyy-MM-dd"));
+      const days = Array.from({ length: 7 }, (_, i) =>
+        format(addDays(weekStart, i), "yyyy-MM-dd"),
+      );
       const allSessions = await Promise.all(
-        days.map((date) => coachService.getCoachSessions({ date }))
+        days.map((date) => coachService.getCoachSessions({ date })),
       );
       return {
         data: allSessions.flatMap((response) => response.data || []),
@@ -225,7 +233,7 @@ export default function Coach() {
       toast.error(
         error?.response?.data?.detail ||
           t("errorUploadingKonspekt") ||
-          "Error uploading konspekt"
+          "Error uploading konspekt",
       );
     },
   });
@@ -241,7 +249,7 @@ export default function Coach() {
 
   const handleMarkAttendance = (
     studentId: number,
-    status: "present" | "absent" | "late"
+    status: "present" | "absent" | "late",
   ) => {
     if (!selectedSession) return;
     setAttendanceStatus((prev) => ({ ...prev, [studentId]: status }));
@@ -310,7 +318,8 @@ export default function Coach() {
             {t("coachPanel") || "Coach Panel"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {t("manageSessionsAndAttendance") || "Manage sessions and mark attendance"}
+            {t("manageSessionsAndAttendance") ||
+              "Manage sessions and mark attendance"}
           </p>
         </div>
       </motion.div>
@@ -326,7 +335,9 @@ export default function Coach() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">{t("myGroups") || "My Groups"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("myGroups") || "My Groups"}
+                </p>
                 <p className="text-2xl font-bold mt-1">{totalGroups}</p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
@@ -340,7 +351,9 @@ export default function Coach() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">{t("todaySessions") || "Today's Sessions"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("todaySessions") || "Today's Sessions"}
+                </p>
                 <p className="text-2xl font-bold mt-1">{totalSessions}</p>
               </div>
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
@@ -354,7 +367,9 @@ export default function Coach() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">{t("totalAttendances") || "Total Attendances"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("totalAttendances") || "Total Attendances"}
+                </p>
                 <p className="text-2xl font-bold mt-1">{totalAttendances}</p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
@@ -530,7 +545,7 @@ export default function Coach() {
                     <div className="space-y-3">
                       {sessionsData.data.map((session: SessionRead) => {
                         const group = groupsData?.data?.find(
-                          (g) => g.id === session.group_id
+                          (g) => g.id === session.group_id,
                         );
                         const isSelected = selectedSession === session.id;
                         return (
@@ -566,6 +581,18 @@ export default function Coach() {
                             >
                               {session.start_time} - {session.end_time}
                             </p>
+                            {session.location && (
+                              <p
+                                className={`text-xs mt-1 flex items-center gap-1 ${
+                                  isSelected
+                                    ? "text-primary-foreground/70"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                <MapPin className="w-3 h-3" />
+                                {session.location}
+                              </p>
+                            )}
                           </button>
                         );
                       })}
@@ -594,7 +621,8 @@ export default function Coach() {
                 <CardContent>
                   {!selectedSession ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      {t("selectSessionToMark") || "Select a session to mark attendance"}
+                      {t("selectSessionToMark") ||
+                        "Select a session to mark attendance"}
                     </div>
                   ) : studentsLoading ? (
                     <div className="flex items-center justify-center py-8">
@@ -604,7 +632,7 @@ export default function Coach() {
                     <div className="space-y-3">
                       {studentsData.data.map((student: StudentWithDebtInfo) => {
                         const existingAttendance = existingAttendanceMap.get(
-                          student.student_id
+                          student.student_id,
                         );
                         const hasExistingAttendance = !!existingAttendance;
                         const displayStatus = hasExistingAttendance
@@ -625,7 +653,8 @@ export default function Coach() {
                                   <div className="flex items-center gap-1 mt-1">
                                     <AlertTriangle className="w-3 h-3 text-red-500" />
                                     <span className="text-xs text-red-500">
-                                      {t("debt") || "Debt"}: {formatCurrency(student.debt_amount!)}
+                                      {t("debt") || "Debt"}:{" "}
+                                      {formatCurrency(student.debt_amount!)}
                                     </span>
                                   </div>
                                 )}
@@ -633,7 +662,8 @@ export default function Coach() {
                                   <div className="flex items-center gap-1 mt-1">
                                     <CheckCircle className="w-3 h-3 text-green-500" />
                                     <span className="text-xs text-green-600 dark:text-green-400">
-                                      {t("attendanceMarked") || "Davomat olindi"}
+                                      {t("attendanceMarked") ||
+                                        "Davomat olindi"}
                                     </span>
                                   </div>
                                 )}
@@ -644,14 +674,20 @@ export default function Coach() {
                               <Button
                                 size="sm"
                                 variant={
-                                  displayStatus === "present" ? "default" : "outline"
+                                  displayStatus === "present"
+                                    ? "default"
+                                    : "outline"
                                 }
                                 onClick={() =>
-                                  handleMarkAttendance(student.student_id, "present")
+                                  handleMarkAttendance(
+                                    student.student_id,
+                                    "present",
+                                  )
                                 }
                                 className="flex-1 gap-1"
                                 disabled={
-                                  attendanceMutation.isPending || hasExistingAttendance
+                                  attendanceMutation.isPending ||
+                                  hasExistingAttendance
                                 }
                               >
                                 <CheckCircle className="w-4 h-4" />
@@ -660,14 +696,20 @@ export default function Coach() {
                               <Button
                                 size="sm"
                                 variant={
-                                  displayStatus === "absent" ? "destructive" : "outline"
+                                  displayStatus === "absent"
+                                    ? "destructive"
+                                    : "outline"
                                 }
                                 onClick={() =>
-                                  handleMarkAttendance(student.student_id, "absent")
+                                  handleMarkAttendance(
+                                    student.student_id,
+                                    "absent",
+                                  )
                                 }
                                 className="flex-1 gap-1"
                                 disabled={
-                                  attendanceMutation.isPending || hasExistingAttendance
+                                  attendanceMutation.isPending ||
+                                  hasExistingAttendance
                                 }
                               >
                                 <XCircle className="w-4 h-4" />
@@ -676,14 +718,20 @@ export default function Coach() {
                               <Button
                                 size="sm"
                                 variant={
-                                  displayStatus === "late" ? "secondary" : "outline"
+                                  displayStatus === "late"
+                                    ? "secondary"
+                                    : "outline"
                                 }
                                 onClick={() =>
-                                  handleMarkAttendance(student.student_id, "late")
+                                  handleMarkAttendance(
+                                    student.student_id,
+                                    "late",
+                                  )
                                 }
                                 className="gap-1"
                                 disabled={
-                                  attendanceMutation.isPending || hasExistingAttendance
+                                  attendanceMutation.isPending ||
+                                  hasExistingAttendance
                                 }
                               >
                                 <Clock className="w-4 h-4" />
@@ -695,7 +743,8 @@ export default function Coach() {
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      {t("noStudentsInSession") || "No students in this session"}
+                      {t("noStudentsInSession") ||
+                        "No students in this session"}
                     </div>
                   )}
                 </CardContent>
@@ -716,7 +765,8 @@ export default function Coach() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {myAttendancesData?.data && myAttendancesData.data.length > 0 ? (
+                {myAttendancesData?.data &&
+                myAttendancesData.data.length > 0 ? (
                   <div className="border rounded-lg">
                     <Table>
                       <TableHeader>
@@ -729,42 +779,55 @@ export default function Coach() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {myAttendancesData.data.map((attendance: AttendanceRead) => (
-                          <TableRow key={attendance.id}>
-                            <TableCell>
-                              {format(new Date(attendance.date), "MMM d, yyyy")}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {t("studentId") || "Student"} #{attendance.student_id}
-                            </TableCell>
-                            <TableCell>
-                              {groupsData?.data?.find(
-                                (g) =>
-                                  sessionsData?.data?.find(
-                                    (s) => s.id === attendance.session_id
-                                  )?.group_id === g.id
-                              )?.name || "-"}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {getStatusIcon(attendance.status)}
-                                <span className="capitalize">{attendance.status}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {attendance.marked_at
-                                ? format(new Date(attendance.marked_at), "HH:mm")
-                                : "-"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {myAttendancesData.data.map(
+                          (attendance: AttendanceRead) => (
+                            <TableRow key={attendance.id}>
+                              <TableCell>
+                                {format(
+                                  new Date(attendance.date),
+                                  "MMM d, yyyy",
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {t("studentId") || "Student"} #
+                                {attendance.student_id}
+                              </TableCell>
+                              <TableCell>
+                                {groupsData?.data?.find(
+                                  (g) =>
+                                    sessionsData?.data?.find(
+                                      (s) => s.id === attendance.session_id,
+                                    )?.group_id === g.id,
+                                )?.name || "-"}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {getStatusIcon(attendance.status)}
+                                  <span className="capitalize">
+                                    {attendance.status}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {attendance.marked_at
+                                  ? format(
+                                      new Date(attendance.marked_at),
+                                      "HH:mm",
+                                    )
+                                  : "-"}
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )}
                       </TableBody>
                     </Table>
                   </div>
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>{t("noAttendanceHistory") || "No attendance history yet"}</p>
+                    <p>
+                      {t("noAttendanceHistory") || "No attendance history yet"}
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -776,7 +839,9 @@ export default function Coach() {
       {/* Session Details Dialog */}
       <SessionDetailsDialog
         session={selectedSessionForDetails}
-        group={groupsData?.data?.find((g) => g.id === selectedSessionForDetails?.group_id)}
+        group={groupsData?.data?.find(
+          (g) => g.id === selectedSessionForDetails?.group_id,
+        )}
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
       />
@@ -790,7 +855,8 @@ export default function Coach() {
               {t("uploadKonspekt") || "Upload Konspekt"}
             </DialogTitle>
             <DialogDescription>
-              {t("uploadKonspektDescription") || "Upload a konspekt file for this session"}
+              {t("uploadKonspektDescription") ||
+                "Upload a konspekt file for this session"}
             </DialogDescription>
           </DialogHeader>
 
