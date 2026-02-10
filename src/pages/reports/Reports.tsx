@@ -836,13 +836,43 @@ export default function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <StatsCard
               title={t("totalDebtors")}
-              value={debtorsData?.meta?.total || 0}
-              icon={<AlertTriangle className="w-6 h-6" />}
+              value={
+                debtorsLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("calculating")}
+                  </span>
+                ) : (
+                  debtorsData?.meta?.total || 0
+                )
+              }
+              icon={
+                debtorsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                ) : (
+                  <AlertTriangle className="w-6 h-6" />
+                )
+              }
             />
             <StatsCard
               title={t("totalDebtAmount")}
-              value={formatCurrency(totalDebtAmount)}
-              icon={<CreditCard className="w-6 h-6" />}
+              value={
+                totalDebtLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("calculating")}
+                  </span>
+                ) : (
+                  formatCurrency(totalDebtAmount)
+                )
+              }
+              icon={
+                totalDebtLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                ) : (
+                  <CreditCard className="w-6 h-6" />
+                )
+              }
             />
           </div>
 
