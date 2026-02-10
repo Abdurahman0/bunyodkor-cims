@@ -177,17 +177,34 @@ const DashboardLayout = () => {
   };
 
   const filteredMenuItems = menuItems.filter((item) => {
-    // Check permissions first
-    if (!hasPermission(item.permission)) {
-      return false;
-    }
-
     // Determine if current user is a coach (support both `user.role` and `user.roles` array)
     const isCoach =
       user?.role === "coach" ||
       !!user?.roles?.some(
         (r: any) => (r.name || "").toString().toLowerCase() === "coach",
       );
+
+    // Determine if current user is a head coach
+    const isHeadCoach =
+      user?.role === "head-coach" ||
+      !!user?.roles?.some((r: any) => {
+        const name = (r.name || "")
+          .toString()
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/_/g, "-");
+        return name === "head-coach";
+      });
+
+    // Special handling for Head Coach page - show if user is Head Coach
+    if (item.path === "/head-coach" && isHeadCoach) {
+      return true;
+    }
+
+    // Check permissions first
+    if (!hasPermission(item.permission)) {
+      return false;
+    }
 
     // Hide Students and Groups pages if user is a coach
     if (isCoach && (item.path === "/students" || item.path === "/groups")) {
