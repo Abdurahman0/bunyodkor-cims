@@ -294,7 +294,8 @@ export const translations = {
     timeLabel: "Time:",
     details: "Details",
     confirmDeleteSession: "Confirm Session Deletion",
-    deleteSessionWarning: "This action cannot be undone. This will permanently delete the session '{topic}' and all associated attendance records.",
+    deleteSessionWarning:
+      "This action cannot be undone. This will permanently delete the session '{topic}' and all associated attendance records.",
     sessionDeletedSuccess: "Session deleted successfully",
     sessionDeleteError: "Error deleting session",
     groupTimetableOpened: "Group timetable opened",
@@ -356,6 +357,7 @@ export const translations = {
     contract: "Contract",
     noDebtors: "No Debtors",
     allStudentsPaid: "All students have paid their fees",
+    calculating: "Calculating...",
 
     // Settings
     systemSettings: "System Settings",
@@ -1259,12 +1261,14 @@ export const translations = {
     timeLabel: "Vaqt:",
     details: "Batafsil",
     confirmDeleteSession: "Mashg'ulotni o'chirishni tasdiqlang",
-    deleteSessionWarning: "Bu amalni qaytarib bo'lmaydi. Bu '{topic}' mashg'ulotini va unga bog'liq barcha davomat yozuvlarini butunlay o'chiradi.",
+    deleteSessionWarning:
+      "Bu amalni qaytarib bo'lmaydi. Bu '{topic}' mashg'ulotini va unga bog'liq barcha davomat yozuvlarini butunlay o'chiradi.",
     sessionDeletedSuccess: "Mashg'ulot muvaffaqiyatli o'chirildi",
     sessionDeleteError: "Mashg'ulotni o'chirishda xatolik",
     groupTimetableOpened: "Guruh jadvali ochildi",
     spots: "o'rin",
-    cannotCreateSessionPastDate: "O'tib ketgan sana uchun mashg'ulot yaratib bo'lmaydi.",
+    cannotCreateSessionPastDate:
+      "O'tib ketgan sana uchun mashg'ulot yaratib bo'lmaydi.",
 
     // Gate Logs
     gateLogsList: "Kirish jurnali ro'yxati",
@@ -1322,6 +1326,7 @@ export const translations = {
     contract: "Shartnoma",
     noDebtors: "Qarzdorlar yo'q",
     allStudentsPaid: "Barcha talabalar to'lovlarni to'lagan",
+    calculating: "Hisoblanmoqda...",
 
     // Settings
     systemSettings: "Tizim sozlamalari",
@@ -2236,12 +2241,14 @@ export const translations = {
     timeLabel: "Время:",
     details: "Подробнее",
     confirmDeleteSession: "Подтвердите Удаление Занятия",
-    deleteSessionWarning: "Это действие необратимо. Это навсегда удалит занятие '{topic}' и все связанные записи о посещаемости.",
+    deleteSessionWarning:
+      "Это действие необратимо. Это навсегда удалит занятие '{topic}' и все связанные записи о посещаемости.",
     sessionDeletedSuccess: "Занятие успешно удалено",
     sessionDeleteError: "Ошибка при удалении занятия",
     groupTimetableOpened: "Расписание группы открыто",
     spots: "мест",
-    cannotCreateSessionPastDate: "Невозможно создать занятие на прошедшую дату.",
+    cannotCreateSessionPastDate:
+      "Невозможно создать занятие на прошедшую дату.",
 
     // Gate Logs
     gateLogsList: "Список журналов входа",
@@ -2299,6 +2306,7 @@ export const translations = {
     contract: "Контракт",
     noDebtors: "Нет должников",
     allStudentsPaid: "Все студенты оплатили свои взносы",
+    calculating: "Расчетливый...",
 
     // Settings
     systemSettings: "Системные настройки",
