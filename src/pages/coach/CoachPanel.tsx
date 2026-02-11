@@ -64,6 +64,7 @@ import {
   GraduationCap,
   List,
   BarChart2,
+  MapPin,
 } from "lucide-react";
 import { format, addDays, subDays } from "date-fns";
 import { toast } from "react-hot-toast";
@@ -456,6 +457,12 @@ export default function CoachPanel() {
                             <p className="text-sm font-mono mt-1">
                               {session.start_time} - {session.end_time}
                             </p>
+                            {session.location && (
+                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {session.location}
+                              </p>
+                            )}
                           </button>
                         );
                       },
@@ -491,6 +498,12 @@ export default function CoachPanel() {
                               )?.name
                             }
                             )
+                            {selectedSession.location && (
+                              <span className="flex items-center gap-1 mt-1">
+                                <MapPin className="w-3 h-3" />
+                                {selectedSession.location}
+                              </span>
+                            )}
                           </CardDescription>
                         </div>
                         <Button
