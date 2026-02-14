@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
@@ -26,7 +27,7 @@ import WaitingList from "./pages/waiting-list/WaitingList";
 import Archive from "./pages/archive/Archive"; // Yangi qo'shilgan sahifa
 import PublicContractCheck from "./pages/public/PublicContractCheck"; // Yangi qo'shilgan
 import Attendance from "./pages/attendance/Attendance";
-import HeadCoach from "./pages/head-coach/HeadCoach"; 
+import HeadCoach from "./pages/head-coach/HeadCoach";
 
 // Dev Tools
 import { DevTools } from "./components/DevTools";
@@ -78,6 +79,19 @@ const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
   if (!user) return "/login";
   if (user.is_super_admin) return "/"; // Super admin dashboardga kira oladi
 
+  // Head Coach uchun maxsus tekshiruv
+  const isHeadCoach =
+    user?.role === "head-coach" ||
+    !!user?.roles?.some((r: any) => {
+      const name = (r.name || "")
+        .toString()
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/_/g, "-");
+      return name === "head-coach";
+    });
+  if (isHeadCoach) return "/head-coach";
+
   // Foydalanuvchi ruxsati bor birinchi routeni topamiz
   const route = routesConfig.find((r) => {
     if (!r.permission) return true;
@@ -99,14 +113,38 @@ const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
 interface ProtectedRouteProps {
   children: JSX.Element;
   permission?: string;
+  allowedRoles?: string[];
 }
 
-function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
+function ProtectedRoute({
+  children,
+  permission,
+  allowedRoles,
+}: ProtectedRouteProps) {
   const { user, permissions } = useAuthStore();
 
   if (!user) return <Navigate to="/login" replace />;
 
   if (user.is_super_admin) return children;
+
+  // Rol bo'yicha tekshirish (Permission bo'lmasa ham ruxsat berish uchun)
+  if (allowedRoles && allowedRoles.length > 0) {
+    const hasRole = allowedRoles.some((role) => {
+      if (user.role === role) return true;
+      if (user.roles && Array.isArray(user.roles)) {
+        return user.roles.some((r: any) => {
+          const name = (r.name || r || "")
+            .toString()
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/_/g, "-");
+          return name === role.toLowerCase();
+        });
+      }
+      return false;
+    });
+    if (hasRole) return children;
+  }
 
   // Ruxsat tekshirish
   const hasPermission = () => {
@@ -230,7 +268,10 @@ function App() {
             <Route
               path="head-coach"
               element={
-                <ProtectedRoute permission="session:create">
+                <ProtectedRoute
+                  permission="session:create"
+                  allowedRoles={["head-coach"]}
+                >
                   <HeadCoach />
                 </ProtectedRoute>
               }

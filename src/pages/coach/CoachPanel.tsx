@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useState,
@@ -65,6 +66,7 @@ import {
   List,
   BarChart2,
   MapPin,
+  AlignLeft,
 } from "lucide-react";
 import { format, addDays, subDays } from "date-fns";
 import { toast } from "react-hot-toast";
@@ -101,7 +103,6 @@ export default function CoachPanel() {
     queryKey: ["coach-groups"],
     queryFn: () => coachService.getCoachGroups(),
     select: (res) => {
-      // normalize in case API wraps data twice: { data: { data: [...] } }
       if (!res) return [];
       if (Array.isArray((res as any).data)) return (res as any).data;
       return (res as any).data?.data || (res as any).data || [];
@@ -310,10 +311,8 @@ export default function CoachPanel() {
     return new Map(groupsData.map((g: { id: any }) => [g.id, g]));
   }, [groupsData]);
 
-  // helper to get a student's display name from different possible API shapes
   const getStudentDisplayName = (item: any) => {
     if (!item) return t("unknownStudent") || "Unknown Student";
-    // APIs may return either direct fields or nested `student` object
     const first =
       item.first_name ||
       item.firstName ||
@@ -325,7 +324,6 @@ export default function CoachPanel() {
       item.student?.last_name ||
       item.student?.lastName;
     if (first || last) return `${first || ""} ${last || ""}`.trim();
-    // fallback to id-based label
     if (item.student_id || item.id) return `#${item.student_id || item.id}`;
     return t("unknownStudent") || "Unknown Student";
   };
@@ -433,7 +431,7 @@ export default function CoachPanel() {
                 ) : sessionsData && sessionsData.length > 0 ? (
                   <div className="space-y-3">
                     {sessionsData.map(
-                      (session: SetStateAction<SessionRead | null>) => {
+                      (session: SetStateAction<SessionRead | null> | any) => {
                         const group = groupsData?.find(
                           (g: { id: any }) =>
                             Number(g.id) === Number(session.group_id),
@@ -444,25 +442,37 @@ export default function CoachPanel() {
                             onClick={() => setSelectedSession(session)}
                             className={`w-full text-left p-4 rounded-lg border transition-all ${
                               selectedSession?.id === session.id
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-card hover:border-slate-300 dark:hover:border-slate-700"
+                                ? "bg-primary/5 border-primary shadow-sm"
+                                : "bg-card hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm"
                             }`}
                           >
-                            <p className="font-semibold">
-                              {group?.name || t("unknownGroup")}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {session.topic}
-                            </p>
-                            <p className="text-sm font-mono mt-1">
-                              {session.start_time} - {session.end_time}
-                            </p>
-                            {session.location && (
-                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {session.location}
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex items-start justify-between">
+                                <p className="font-bold text-slate-900 dark:text-slate-100">
+                                  {group?.name || t("unknownGroup")}
+                                </p>
+                              </div>
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {session.topic}
                               </p>
-                            )}
+                              {session.description && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 italic">
+                                  {session.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-3 mt-2 text-xs font-mono font-medium">
+                                <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300">
+                                  <Clock className="w-3.5 h-3.5 text-blue-500" />
+                                  {session.start_time} - {session.end_time}
+                                </span>
+                                {session.location && (
+                                  <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    {session.location}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </button>
                         );
                       },
@@ -483,26 +493,44 @@ export default function CoachPanel() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <Card>
                     <CardHeader>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="flex items-center gap-2">
                             <List className="w-5 h-5" />
                             {t("attendanceList") || "Attendance List"}
                           </CardTitle>
-                          <CardDescription>
-                            {selectedSession.topic} (
-                            {
-                              groupsData?.find(
-                                (g: { id: number }) =>
-                                  g.id === selectedSession.group_id,
-                              )?.name
-                            }
-                            )
-                            {selectedSession.location && (
-                              <span className="flex items-center gap-1 mt-1">
-                                <MapPin className="w-3 h-3" />
-                                {selectedSession.location}
+                          <CardDescription className="space-y-3 mt-3">
+                            <div className="flex flex-wrap items-center gap-2 text-base font-medium text-slate-800 dark:text-slate-200">
+                              <span>{selectedSession.topic}</span>
+                              <span className="text-slate-400">•</span>
+                              <span>
+                                {
+                                  groupsData?.find(
+                                    (g: { id: number }) =>
+                                      g.id === selectedSession.group_id,
+                                  )?.name
+                                }
                               </span>
+                            </div>
+
+                            <div className="flex items-center gap-4 text-sm font-medium">
+                              <span className="flex items-center gap-1.5 font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md">
+                                <Clock className="w-4 h-4" />
+                                {selectedSession.start_time} -{" "}
+                                {selectedSession.end_time}
+                              </span>
+                              {selectedSession.location && (
+                                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
+                                  <MapPin className="w-4 h-4" />
+                                  {selectedSession.location}
+                                </span>
+                              )}
+                            </div>
+
+                            {selectedSession.description && (
+                              <div className="mt-2 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                                {selectedSession.description}
+                              </div>
                             )}
                           </CardDescription>
                         </div>
@@ -539,7 +567,7 @@ export default function CoachPanel() {
                                 </TableCell>
                               </TableRow>
                             ) : studentsData && studentsData.length > 0 ? (
-                              studentsData.map((student) => (
+                              studentsData.map((student: any) => (
                                 <TableRow
                                   key={student.student_id || student.id}
                                 >
@@ -583,8 +611,7 @@ export default function CoachPanel() {
                                           )
                                         }
                                       >
-                                        {" "}
-                                        <CheckCircle className="w-4 h-4" />{" "}
+                                        <CheckCircle className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         size="sm"
@@ -603,8 +630,7 @@ export default function CoachPanel() {
                                           )
                                         }
                                       >
-                                        {" "}
-                                        <Clock className="w-4 h-4" />{" "}
+                                        <Clock className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         size="sm"
@@ -623,8 +649,7 @@ export default function CoachPanel() {
                                           )
                                         }
                                       >
-                                        {" "}
-                                        <XCircle className="w-4 h-4" />{" "}
+                                        <XCircle className="w-4 h-4" />
                                       </Button>
                                     </div>
                                   </TableCell>
@@ -689,7 +714,7 @@ export default function CoachPanel() {
                 ) : groupsData && groupsData.length > 0 ? (
                   <div className="space-y-3">
                     {groupsData.map(
-                      (group: SetStateAction<GroupRead | null>) => (
+                      (group: SetStateAction<GroupRead | null> | any) => (
                         <button
                           key={group.id}
                           onClick={() => setSelectedGroup(group)}
@@ -819,7 +844,7 @@ export default function CoachPanel() {
                       </TableCell>
                     </TableRow>
                   ) : myAttendancesData && myAttendancesData.length > 0 ? (
-                    myAttendancesData.map((attendance) => {
+                    myAttendancesData.map((attendance: any) => {
                       const student = studentMap.get(attendance.student_id);
                       const session = sessionMap.get(attendance.session_id);
                       const group = session
@@ -870,46 +895,22 @@ export default function CoachPanel() {
               <CardContent>
                 <Select
                   value={selectedGroupForStats || ""}
-                  onChange={(e) => {
-                    setSelectedGroupForStats(e.target.value);
+                  onValueChange={(value) => {
+                    setSelectedGroupForStats(value);
                   }}
-                  className="w-full md:w-1/3"
                 >
                   <option value="" disabled>
                     {t("selectGroup")}
                   </option>
-                  {groupsData?.map(
+                  {Array.isArray(groupsData) && groupsData.map(
                     (group: {
                       id: Key | null | undefined;
-                      name:
-                        | string
-                        | number
-                        | bigint
-                        | boolean
-                        | ReactElement<
-                            unknown,
-                            string | JSXElementConstructor<any>
-                          >
-                        | Iterable<ReactNode>
-                        | ReactPortal
-                        | Promise<
-                            | string
-                            | number
-                            | bigint
-                            | boolean
-                            | ReactPortal
-                            | ReactElement<
-                                unknown,
-                                string | JSXElementConstructor<any>
-                              >
-                            | Iterable<ReactNode>
-                            | null
-                            | undefined
-                          >
-                        | null
-                        | undefined;
+                      name: ReactNode;
                     }) => (
-                      <option key={group.id} value={group.id.toString()}>
+                      <option
+                        key={group.id}
+                        value={(group.id as any).toString()}
+                      >
                         {group.name}
                       </option>
                     ),
