@@ -82,6 +82,7 @@ const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
   // Head Coach uchun maxsus tekshiruv
   const isHeadCoach =
     user?.role === "head-coach" ||
+    permissions.includes("session:create") ||
     !!user?.roles?.some((r: any) => {
       const name = (r.name || r || "")
         .toString()
@@ -89,6 +90,8 @@ const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
         .replace(/\s+/g, "-")
         .replace(/_/g, "-");
       return name === "head-coach";
+        .replace(/[\s_-]/g, ""); // Remove spaces, dashes, underscores
+      return name === "headcoach";
     });
   if (isHeadCoach) return "/head-coach";
 
@@ -131,6 +134,9 @@ function ProtectedRoute({
   if (allowedRoles && allowedRoles.length > 0) {
     const hasRole = allowedRoles.some((role) => {
       if (user.role === role) return true;
+      const normalizedRole = role.toLowerCase().replace(/[\s_-]/g, "");
+      if (user.role && user.role.toLowerCase().replace(/[\s_-]/g, "") === normalizedRole) return true;
+      
       if (user.roles && Array.isArray(user.roles)) {
         return user.roles.some((r: any) => {
           const name = (r.name || r || "")
@@ -139,6 +145,8 @@ function ProtectedRoute({
             .replace(/\s+/g, "-")
             .replace(/_/g, "-");
           return name === role.toLowerCase();
+            .replace(/[\s_-]/g, "");
+          return name === normalizedRole;
         });
       }
       return false;

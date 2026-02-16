@@ -96,36 +96,22 @@ const PayersReport: FC = () => {
 
   const handleExport = async () => {
     try {
-      const allItems: any[] = [];
-      let pageNum = 1;
-      let totalPages = 1;
+      const toastId = toast.loading(t("exportingData"));
+      const params: any = { page: 1, page_size: 100000 };
+      if (paymentYear !== "") params.payment_year = paymentYear;
+      if (groupId) params.group_id = groupId;
+      if (minPaidAmount !== "") params.min_paid_amount = minPaidAmount;
+      if (fromDate) params.from_date = fromDate;
+      if (toDate) params.to_date = toDate;
 
-      while (pageNum <= totalPages) {
-        const params: any = { page: pageNum, page_size: 100 };
-        if (paymentYear !== "") params.payment_year = paymentYear;
-        if (groupId) params.group_id = groupId;
-        if (minPaidAmount !== "") params.min_paid_amount = minPaidAmount;
-        if (fromDate) params.from_date = fromDate;
-        if (toDate) params.to_date = toDate;
+      const resp = await reportService.getPayers(params);
 
-        const resp = await reportService.getPayers(params);
-        if (resp && Array.isArray(resp.data)) {
-          allItems.push(...resp.data);
-        }
-
-        if (resp && resp.meta && resp.meta.total_pages) {
-          totalPages = resp.meta.total_pages;
-        } else {
-          totalPages = 1;
-        }
-
-        pageNum++;
-      }
-
-      if (allItems.length === 0) {
-        toast.error(t("noDataToExport"));
+      if (!resp?.data || resp.data.length === 0) {
+        toast.error(t("noDataToExport"), { id: toastId });
         return;
       }
+      
+      const allItems = resp.data;
 
       const exportData = allItems.map((item: any) => {
         const groupFromList = groupsList.find(
@@ -144,9 +130,9 @@ const PayersReport: FC = () => {
       });
 
       exportReport(exportData, `payers-report-${paymentYear || "all"}`);
-      toast.success(t("reportExported"));
+      toast.success(t("exportedSuccessfully"), { id: toastId });
     } catch (err) {
-      toast.error(t("failedToExportReport"));
+      toast.error(t("errorExportingData"));
     }
   };
 

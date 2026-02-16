@@ -326,36 +326,6 @@ export default function Reports() {
         case "debtors":
           await handleDebtorsExport();
           return; // Early return to avoid running the old logic
-
-        case "payers":
-          const toastId = toast.loading(t("exportingData"));
-          try {
-            const response = await reportService.getPayers({
-              page: 1,
-              page_size: 100000,
-            });
-
-            if (response.data && response.data.length > 0) {
-              dataToExport = response.data.map((item) => ({
-                [t("student")]: item.student_name,
-                [t("contract")]: item.contract_number,
-                [t("group")]: item.group_name,
-                [t("paymentYear")]: item.payment_year,
-                [t("paymentMonths")]: item.payment_months.join(", "),
-                [t("totalPaid")]: item.total_paid,
-              }));
-              reportType = `payers-report-${format(new Date(), "yyyy-MM-dd")}`;
-
-              exportReport(dataToExport, reportType);
-              toast.success(t("exportedSuccessfully"), { id: toastId });
-            } else {
-              toast.error(t("noDataToExport"), { id: toastId });
-            }
-          } catch (e) {
-            console.error(e);
-            toast.error(t("errorExportingData"), { id: toastId });
-          }
-          return;
       }
 
       if (dataToExport) {
@@ -381,10 +351,12 @@ export default function Reports() {
             {t("analyticsAndInsights")}
           </p>
         </div>
-        <Button variant="outline" className="gap-2" onClick={handleExport}>
-          <Download className="w-4 h-4" />
-          {t("exportReport")}
-        </Button>
+        {activeTab !== "payers" && (
+          <Button variant="outline" className="gap-2" onClick={handleExport}>
+            <Download className="w-4 h-4" />
+            {t("exportReport")}
+          </Button>
+        )}
       </motion.div>
 
       <motion.div
