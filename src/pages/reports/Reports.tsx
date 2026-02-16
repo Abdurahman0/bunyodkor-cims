@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
@@ -258,7 +259,7 @@ export default function Reports() {
   const handleDebtorsExport = async () => {
     const params: any = {
       group_id: selectedGroupId || undefined,
-      page_size: 10000,
+      page_size: 100000,
     };
 
     if (filterMode === "month") {
@@ -276,17 +277,17 @@ export default function Reports() {
     const promise = studentService.exportUnpaidStudents(params);
 
     toast.promise(promise, {
-      loading: t("exportingDebtorsReport"),
+      loading: t("exportingData"),
       success: (blob) => {
         const date = format(new Date(), "yyyy-MM-dd");
         downloadFile(blob, `unpaid-students-report-${date}.xlsx`);
-        return t("reportExportedSuccessfully");
+        return t("exportedSuccessfully");
       },
-      error: t("failedToExportReport"),
+      error: t("errorExportingData"),
     });
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       let dataToExport: any[] | null = null;
       let reportType = "";
@@ -323,16 +324,46 @@ export default function Reports() {
           break;
 
         case "debtors":
-          handleDebtorsExport();
+          await handleDebtorsExport();
           return; // Early return to avoid running the old logic
+
+        case "payers":
+          const toastId = toast.loading(t("exportingData"));
+          try {
+            const response = await reportService.getPayers({
+              page: 1,
+              page_size: 100000,
+            });
+
+            if (response.data && response.data.length > 0) {
+              dataToExport = response.data.map((item) => ({
+                [t("student")]: item.student_name,
+                [t("contract")]: item.contract_number,
+                [t("group")]: item.group_name,
+                [t("paymentYear")]: item.payment_year,
+                [t("paymentMonths")]: item.payment_months.join(", "),
+                [t("totalPaid")]: item.total_paid,
+              }));
+              reportType = `payers-report-${format(new Date(), "yyyy-MM-dd")}`;
+
+              exportReport(dataToExport, reportType);
+              toast.success(t("exportedSuccessfully"), { id: toastId });
+            } else {
+              toast.error(t("noDataToExport"), { id: toastId });
+            }
+          } catch (e) {
+            console.error(e);
+            toast.error(t("errorExportingData"), { id: toastId });
+          }
+          return;
       }
 
       if (dataToExport) {
         exportReport(dataToExport, reportType);
-        toast.success(t("reportExported"));
+        toast.success(t("exportedSuccessfully"));
       }
     } catch (error) {
-      toast.error(t("failedToExportReport"));
+      toast.error(t("errorExportingData"));
     }
   };
   return (
