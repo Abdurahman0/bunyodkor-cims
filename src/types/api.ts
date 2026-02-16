@@ -487,7 +487,6 @@ export interface BulkAttendanceCreateRequest {
 
 export interface SessionRead {
   [x: string]: any;
-  [x: string]: any;
   location: any;
   id: number;
   session_date: string;

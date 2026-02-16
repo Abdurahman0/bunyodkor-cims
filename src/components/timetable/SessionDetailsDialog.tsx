@@ -40,6 +40,7 @@ export default function SessionDetailsDialog({
   session,
   group,
   open,
+  station,
   onOpenChange,
   groupColorClass = "bg-blue-500",
   onEdit,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { GroupRead, SessionCreateRequest } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useMutation } from "@tanstack/react-query";
@@ -34,14 +35,14 @@ export function SessionDialog({
   onSuccess,
 }: SessionDialogProps) {
   const { t } = useLanguageStore();
-  const [formData, setFormData] = useState<Partial<SessionCreateRequest>>({
+  const [formData, setFormData] = useState<Partial<SessionCreateRequest> & { station?: string }>({
     group_id: undefined,
     session_date: "",
     start_time: "",
     end_time: "",
     topic: "", // This property exists in SessionCreateRequest
     description: "",
-    location: "Stadion", // Default location
+    station: "Stadion", // Default location
   });
 
   useEffect(() => {
@@ -50,8 +51,8 @@ export function SessionDialog({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData({
           ...initialData, // Spread initialData first,
-          location: initialData.location || "Stadion",
-        });
+          station: (initialData as any).station || (initialData as any).location || "Stadion",
+        } as any);
       } else {
         setFormData({
           group_id: undefined,
@@ -60,7 +61,7 @@ export function SessionDialog({
           end_time: "10:30",
           topic: "", // This property exists in SessionCreateRequest
           description: "",
-          location: "Stadion",
+          station: "Stadion",
         });
       }
     }
@@ -122,14 +123,14 @@ export function SessionDialog({
       return;
     }
 
-    const payload: SessionCreateRequest = {
+    const payload: any = {
       group_id: Number(formData.group_id),
       session_date: formData.session_date!,
       start_time: formData.start_time!,
       end_time: formData.end_time!,
       topic: formData.topic!,
       description: formData.description || "",
-      location: formData.location || "Stadion",
+      station: formData.station || "Stadion",
     };
 
     if (editId) {
@@ -191,9 +192,9 @@ export function SessionDialog({
               <Input
                 id="location"
                 placeholder={t("locationPlaceholder")}
-                value={formData.location}
+                value={formData.station}
                 onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
+                  setFormData({ ...formData, station: e.target.value })
                 }
               />
             </div>
