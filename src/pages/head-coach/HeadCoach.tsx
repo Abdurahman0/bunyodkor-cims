@@ -164,6 +164,7 @@ export default function HeadCoach() {
 
   // --- Handlers ---
   const handleSessionClick = (session: SessionRead) => {
+    console.log("Sessiya ma'lumotlari:", session);
     setSelectedSession(session);
     setDetailsDialogOpen(true);
   };
