@@ -83,7 +83,7 @@ const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
   const isHeadCoach =
     user?.role === "head-coach" ||
     !!user?.roles?.some((r: any) => {
-      const name = (r.name || "")
+      const name = (r.name || r || "")
         .toString()
         .toLowerCase()
         .replace(/\s+/g, "-")

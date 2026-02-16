@@ -181,14 +181,14 @@ const DashboardLayout = () => {
     const isCoach =
       user?.role === "coach" ||
       !!user?.roles?.some(
-        (r: any) => (r.name || "").toString().toLowerCase() === "coach",
+        (r: any) => (r.name || r || "").toString().toLowerCase() === "coach",
       );
 
     // Determine if current user is a head coach
     const isHeadCoach =
       user?.role === "head-coach" ||
       !!user?.roles?.some((r: any) => {
-        const name = (r.name || "")
+        const name = (r.name || r || "")
           .toString()
           .toLowerCase()
           .replace(/\s+/g, "-")
@@ -473,7 +473,6 @@ const DashboardLayout = () => {
                           <button
                             key={lang.code}
                             onClick={() => {
-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
                               setLanguage(lang.code as any);
                               setIsLangOpen(false);
                             }}
