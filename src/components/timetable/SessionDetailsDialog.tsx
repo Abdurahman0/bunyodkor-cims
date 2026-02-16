@@ -117,24 +117,26 @@ export default function SessionDetailsDialog({
 
             <Separator />
 
-            {/* Station / Location */}
-            {/* Ba'zi backend joylarida 'location', ba'zilarida 'station' bo'lishi mumkinligi uchun ikkalasini ham hisobga oldim */}
-            {(session.location || (session as any).station) && (
-              <>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
-                    <MapPin className="w-4 h-4" />
-                    <span className="font-medium">
-                      {t("location") || "Location"}
-                    </span>
-                  </div>
-                  <p className="text-sm pl-6 font-medium text-foreground">
-                    {session.location || (session as any).station}
-                  </p>
-                </div>
-                <Separator />
-              </>
-            )}
+     {/* Station / Location qismi */}
+{(session.location || (session as any).station) ? (
+  <>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+        <MapPin className="w-4 h-4" />
+        <span className="font-medium">
+          {t("location") || "Location"}
+        </span>
+      </div>
+      <p className="text-sm pl-6 font-medium text-foreground">
+        {session.location || (session as any).station}
+      </p>
+    </div>
+    <Separator />
+  </>
+) : (
+  /* Test uchun: Agar ma'lumot kelmasa ham "No Location" deb chiqsin desangiz buni qo'ying */
+  null 
+)}
 
             {/* Description / Izoh */}
             {session.description && (
