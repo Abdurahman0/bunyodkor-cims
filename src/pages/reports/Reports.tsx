@@ -224,7 +224,7 @@ export default function Reports() {
   };
 
   // Helper to get Group Name by ID
-  const getGroupName = (groupId: number | undefined) => {
+  const getGroupName = (groupId: number | null | undefined) => {
     if (!groupId) return "N/A";
     // Use loose equality to handle string/number mismatches
     const group = groupsList.find((g: any) => g.id == groupId);

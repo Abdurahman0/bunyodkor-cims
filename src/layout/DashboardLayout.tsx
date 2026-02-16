@@ -191,9 +191,8 @@ const DashboardLayout = () => {
         const name = (r.name || r || "")
           .toString()
           .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/_/g, "-");
-        return name === "head-coach";
+          .replace(/[\s_-]/g, "");
+        return name === "headcoach";
       });
 
     // Special handling for Head Coach page - show if user is Head Coach

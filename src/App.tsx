@@ -87,10 +87,7 @@ const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
       const name = (r.name || r || "")
         .toString()
         .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/_/g, "-");
-      return name === "head-coach";
-        .replace(/[\s_-]/g, ""); // Remove spaces, dashes, underscores
+        .replace(/[\s_-]/g, "");
       return name === "headcoach";
     });
   if (isHeadCoach) return "/head-coach";
@@ -142,9 +139,6 @@ function ProtectedRoute({
           const name = (r.name || r || "")
             .toString()
             .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/_/g, "-");
-          return name === role.toLowerCase();
             .replace(/[\s_-]/g, "");
           return name === normalizedRole;
         });
