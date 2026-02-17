@@ -42,13 +42,13 @@ const PayersReport: FC = () => {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups-list-all"],
     queryFn: async () => {
-      let allGroups: any[] = [];
+      const allGroups: any[] = [];
       let currentPage = 1;
       let hasMore = true;
       while (hasMore) {
         const response = await groupService.getGroups({ page: currentPage, page_size: 100 });
         if (response.data && response.data.length > 0) {
-          allGroups = [...allGroups, ...response.data];
+          allGroups.push(...response.data);
           if (response.meta && currentPage < response.meta.total_pages) {
             currentPage++;
           } else {

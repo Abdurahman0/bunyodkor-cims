@@ -257,6 +257,7 @@ export default function Reports() {
 
   const handleDebtorsExport = async () => {
     const params: any = {
+      page: 1,
       page_size: 100000,
     };
 
