@@ -91,7 +91,7 @@ export default function Reports() {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups-list-all"],
     queryFn: async () => {
-      let allGroups: GroupRead[] = [];
+      const allGroups: GroupRead[] = [];
       let currentPage = 1;
       let hasMore = true;
       while (hasMore) {
@@ -100,7 +100,7 @@ export default function Reports() {
           page_size: 100,
         });
         if (response.data && response.data.length > 0) {
-          allGroups = [...allGroups, ...response.data];
+          allGroups.push(...response.data);
           if (response.meta && currentPage < response.meta.total_pages) {
             currentPage++;
           } else {
@@ -187,7 +187,7 @@ export default function Reports() {
         params.to_date = unpaidDateRange.to;
       }
 
-      let allDebtors: any[] = [];
+      let totalDebt = 0;
       let hasMore = true;
       let currentPage = 1;
 
@@ -195,7 +195,7 @@ export default function Reports() {
         params.page = currentPage;
         const response = await studentService.getUnpaidStudents(params);
         if (response.data && response.data.length > 0) {
-          allDebtors = [...allDebtors, ...response.data];
+          totalDebt += response.data.reduce((sum, item) => sum + item.debt_amount, 0);
           if (response.meta && currentPage < response.meta.total_pages) {
             currentPage++;
           } else {
@@ -205,13 +205,12 @@ export default function Reports() {
           hasMore = false;
         }
       }
-      return { data: allDebtors };
+      return { total_debt: totalDebt };
     },
     enabled: activeTab === "debtors",
   });
 
-  const totalDebtAmount =
-    totalDebtData?.data?.reduce((acc, item) => acc + item.debt_amount, 0) || 0;
+  const totalDebtAmount = totalDebtData?.total_debt || 0;
 
   const formatCurrency = (amount: number) => {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
@@ -258,7 +257,6 @@ export default function Reports() {
 
   const handleDebtorsExport = async () => {
     const params: any = {
-      page: 1,
       page_size: 100000,
     };
 
