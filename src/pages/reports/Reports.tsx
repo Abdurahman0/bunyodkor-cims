@@ -258,10 +258,12 @@ export default function Reports() {
 
   const handleDebtorsExport = async () => {
     const params: any = {
-      group_id: selectedGroupId || undefined,
       page_size: 100000,
     };
 
+    if (selectedGroupId) {
+      params.group_id = selectedGroupId;
+    }
     if (filterMode === "month") {
       params.year = selectedYear;
       if (selectedMonths) {
