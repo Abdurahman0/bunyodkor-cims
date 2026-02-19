@@ -78,14 +78,11 @@ export default function WaitingList() {
     mutationFn: (id: number) => waitingListService.removeFromWaitingList(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
-      toast.success(
-        t("waitingListRemovedSuccess") ||
-          "Removed from waiting list successfully"
-      );
+      toast.success(t("waitingListRemovedSuccess"));
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
-      let errorMessage = "Failed to remove from waiting list";
+      let errorMessage = t("failedToRemoveFromWaitingList");
 
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
@@ -105,7 +102,12 @@ export default function WaitingList() {
   const handleDelete = (entry: WaitingListRead) => {
     if (
       confirm(
-        `Are you sure you want to remove ${entry.student_first_name} ${entry.student_last_name} from the waiting list?`
+        (t("confirmRemoveWaitingList") ||
+          "Are you sure you want to remove {{student}} from the waiting list?")
+          .replace(
+            "{{student}}",
+            `${entry.student_first_name} ${entry.student_last_name}`,
+          )
       )
     ) {
       deleteMutation.mutate(entry.id);
@@ -114,7 +116,12 @@ export default function WaitingList() {
 
   const getGroupName = (groupId: number) => {
     const group = groupsData?.data?.find((g: GroupRead) => g.id === groupId);
-    return group ? group.name : `Group #${groupId}`;
+    return group
+      ? group.name
+      : (t("groupNumber") || "Group #{{id}}").replace(
+          "{{id}}",
+          String(groupId),
+        );
   };
 
   const totalPages = sortedData?.meta?.total_pages || 1;
@@ -242,13 +249,17 @@ export default function WaitingList() {
                       <div className="flex flex-wrap items-center gap-4 text-sm">
                         <div className="flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-muted-foreground">Father:</span>
+                          <span className="text-muted-foreground">
+                            {t("father")}:
+                          </span>
                           <span className="font-medium">{entry.father_name}</span>
                           <span className="text-muted-foreground">({entry.father_phone})</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-muted-foreground">Mother:</span>
+                          <span className="text-muted-foreground">
+                            {t("mother")}:
+                          </span>
                           <span className="font-medium">{entry.mother_name}</span>
                           <span className="text-muted-foreground">({entry.mother_phone})</span>
                         </div>
@@ -320,7 +331,9 @@ export default function WaitingList() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between p-6 border-t">
               <p className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
+                {(t("pageOfTotal") || "Page {{page}} of {{total}}")
+                  .replace("{{page}}", String(page))
+                  .replace("{{total}}", String(totalPages))}
               </p>
               <div className="flex items-center gap-1">
                 <Button

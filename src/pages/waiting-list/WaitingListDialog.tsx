@@ -176,8 +176,8 @@ export function WaitingListDialog({
     onSuccess: () => {
       toast.success(
         entry
-          ? t("waitingListUpdatedSuccess") || "Waiting list updated"
-          : t("waitingListAddedSuccess") || "Added to waiting list",
+          ? t("waitingListUpdatedSuccess")
+          : t("waitingListAddedSuccess"),
       );
       queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
       onOpenChange(false);
@@ -185,7 +185,7 @@ export function WaitingListDialog({
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
-      let errorMessage = t("anErrorOccurred") || "An error occurred";
+      let errorMessage = t("anErrorOccurred");
 
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
@@ -491,8 +491,7 @@ export function WaitingListDialog({
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                {t("priorityHelp") ||
-                  `1 = Highest priority,  = Lowest priority`}
+                {t("priorityHelp")}
               </p>
             </div>
           </div>

@@ -662,6 +662,9 @@ export const translations = {
     waitingListAddedSuccess: "Student added to waiting list successfully",
     waitingListUpdatedSuccess: "Waiting list entry updated successfully",
     waitingListRemovedSuccess: "Removed from waiting list successfully",
+    failedToRemoveFromWaitingList: "Failed to remove from waiting list",
+    groupNumber: "Group #{{id}}",
+    pageOfTotal: "Page {{page}} of {{total}}",
     confirmRemoveWaitingList:
       "Are you sure you want to remove {{student}} from the waiting list?",
     pleaseSelectStudent: "Please select a student",
@@ -1638,6 +1641,9 @@ export const translations = {
     waitingListAddedSuccess: "Talaba navbatga muvaffaqiyatli qo'shildi",
     waitingListUpdatedSuccess: "Navbat yozuvi muvaffaqiyatli yangilandi",
     waitingListRemovedSuccess: "Navbatdan muvaffaqiyatli olib tashlandi",
+    failedToRemoveFromWaitingList: "Navbatdan olib tashlab bo'lmadi",
+    groupNumber: "Guruh #{{id}}",
+    pageOfTotal: "{{total}} dan {{page}}-sahifa",
     confirmRemoveWaitingList:
       "{{student}} ni navbatdan olib tashlashni xohlaysizmi?",
     pleaseSelectStudent: "Iltimos, talabani tanlang",
@@ -2638,6 +2644,9 @@ export const translations = {
     waitingListAddedSuccess: "Студент успешно добавлен в список ожидания",
     waitingListUpdatedSuccess: "Запись в списке ожидания успешно обновлена",
     waitingListRemovedSuccess: "Успешно удалено из списка ожидания",
+    failedToRemoveFromWaitingList: "Не удалось удалить из списка ожидания",
+    groupNumber: "Группа #{{id}}",
+    pageOfTotal: "Страница {{page}} из {{total}}",
     confirmRemoveWaitingList:
       "Вы уверены, что хотите удалить {{student}} из списка ожидания?",
     pleaseSelectStudent: "Пожалуйста, выберите студента",
