@@ -56,6 +56,8 @@ export function AssignTransactionDialog({
     queryKey: ['students-list'],
     queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
     enabled: open, // Only fetch when the dialog is open
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: contractsData, isLoading: isLoadingContracts } = useQuery({
@@ -77,11 +79,7 @@ export function AssignTransactionDialog({
         refetchType: "all"
       });
       queryClient.invalidateQueries({
-        queryKey: ['transactions'],
-        refetchType: "all"
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['all-transactions-stats'],
+        queryKey: ['transactions-with-name'],
         refetchType: "all"
       });
       onOpenChange(false);

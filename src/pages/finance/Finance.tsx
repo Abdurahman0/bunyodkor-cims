@@ -1,9 +1,12 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useEffect, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,37 +14,36 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableHead,
-  TableRow,
   TableCell,
-  TablePagination,
   TableEmpty,
+  TableHead,
+  TableHeader,
+  TablePagination,
+  TableRow,
 } from "@/components/ui/table";
 import { StatsCard } from "@/components/ui/charts";
 import { motion } from "framer-motion";
 import {
-  Plus,
-  Search,
-  TrendingUp,
-  CreditCard,
-  X,
-  Download,
-  Clock,
-  CheckCircle,
   AlertTriangle,
   Ban,
-  Trash2,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Download,
   Loader2,
+  Plus,
+  Search,
+  Trash2,
+  TrendingUp,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
-import { transactionService, studentService } from "@/services/api.service";
+import { transactionService } from "@/services/api.service";
 import type {
-  TransactionWithNameRead,
-  TransactionRead,
-  TransactionStatus,
   TransactionSource,
+  TransactionStatus,
+  TransactionWithNameRead,
 } from "@/types/api";
 import { TransactionDialog } from "./TransactionDialog";
 import toast from "react-hot-toast";
@@ -54,243 +56,72 @@ import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 export default function Finance() {
   const { t } = useLanguageStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [sourceFilter, setSourceFilter] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
 
+  const pageSize = 10;
   const debouncedSearch = useDebounce(search, 500);
 
-  // Helper for Cyrillic to Latin
-  const cyrillicToLatin = (text: string) => {
-    const map: Record<string, string> = {
-      А: "A",
-      а: "a",
-      Б: "B",
-      б: "b",
-      В: "V",
-      в: "v",
-      Г: "G",
-      г: "g",
-      Д: "D",
-      д: "d",
-      Е: "E",
-      е: "e",
-      Ё: "Yo",
-      ё: "yo",
-      Ж: "J",
-      ж: "j",
-      З: "Z",
-      з: "z",
-      И: "I",
-      и: "i",
-      Й: "Y",
-      й: "y",
-      К: "K",
-      к: "k",
-      Л: "L",
-      л: "l",
-      М: "M",
-      м: "m",
-      Н: "N",
-      н: "n",
-      О: "O",
-      о: "o",
-      П: "P",
-      п: "p",
-      Р: "R",
-      р: "r",
-      С: "S",
-      с: "s",
-      Т: "T",
-      т: "t",
-      У: "U",
-      у: "u",
-      Ф: "F",
-      ф: "f",
-      Х: "X",
-      х: "x",
-      Ц: "Ts",
-      ц: "ts",
-      Ч: "Ch",
-      ч: "ch",
-      Ш: "Sh",
-      ш: "sh",
-      Щ: "Sh",
-      щ: "sh",
-      Ъ: "'",
-      ъ: "'",
-      Ы: "I",
-      ы: "i",
-      Ь: "",
-      ь: "",
-      Э: "E",
-      э: "e",
-      Ю: "Yu",
-      ю: "yu",
-      Я: "Ya",
-      я: "ya",
-      Ғ: "G'",
-      ғ: "g'",
-      Қ: "Q",
-      қ: "q",
-      Ҳ: "H",
-      ҳ: "h",
-      Ў: "O'",
-      ў: "o'",
-    };
-    return text
-      .split("")
-      .map((char) => map[char] || char)
-      .join("");
-  };
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, statusFilter, sourceFilter]);
-
-  // Search students with multiple variations (Original, Latin, X/H swapped)
-  const { data: studentSearchResults } = useQuery({
-    queryKey: ["student-search-combined", debouncedSearch],
-    queryFn: async () => {
-      if (!debouncedSearch || debouncedSearch.length < 2) return [];
-
-      const latinSearch = cyrillicToLatin(debouncedSearch);
-      const queries = [
-        studentService.searchStudents(debouncedSearch),
-        studentService.searchStudents(latinSearch),
-      ];
-
-      // If latin search has X, also try H (common confusion in Uzbek)
-      if (latinSearch.includes("X") || latinSearch.includes("x")) {
-        queries.push(
-          studentService.searchStudents(
-            latinSearch.replace(/X/g, "H").replace(/x/g, "h"),
-          ),
-        );
-      }
-
-      const results = await Promise.all(queries);
-      const allStudents = results.flatMap((r) => r.data || []);
-      return Array.from(new Map(allStudents.map((s) => [s.id, s])).values());
-    },
-    enabled: !!debouncedSearch && debouncedSearch.length >= 2,
-  });
-
   const { data: unassignedData } = useQuery({
-    queryKey: ["unassigned-transactions"],
+    queryKey: ["unassigned-transactions-preview"],
     queryFn: () =>
       transactionService.getUnassignedTransactions({ page: 1, page_size: 5 }),
-    staleTime: 0, // Always refetch
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch ALL transactions with names for client-side filtering and stats
-  const { data: allTransactionsWithName, isLoading } = useQuery({
-    queryKey: ["all-transactions-with-name"],
-    queryFn: async () => {
-      // Fetch all transactions by making multiple requests if needed
-      let allTransactions: TransactionWithNameRead[] = [];
-      let currentPage = 1;
-      let hasMore = true;
-
-      while (hasMore) {
-        const response = await transactionService.getTransactionsWithName({
-          page: currentPage,
-          page_size: 100, // Backend maximum is 100
-        });
-
-        if (response.data && response.data.length > 0) {
-          allTransactions = [...allTransactions, ...response.data];
-
-          // Check if there are more pages
-          if (response.meta && currentPage < response.meta.total_pages) {
-            currentPage++;
-          } else {
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return allTransactions;
-    },
+  const { data: transactionsData, isLoading } = useQuery({
+    queryKey: [
+      "transactions-with-name",
+      page,
+      debouncedSearch,
+      statusFilter,
+      sourceFilter,
+    ],
+    queryFn: () =>
+      transactionService.getTransactionsWithName({
+        page,
+        page_size: pageSize,
+        search: debouncedSearch || undefined,
+        status: statusFilter || undefined,
+        source: sourceFilter || undefined,
+      }),
+    placeholderData: keepPreviousData,
+    staleTime: 30000,
   });
 
-  // Client-side filtering
-  const filteredTransactions = useMemo(() => {
-    if (!allTransactionsWithName) return [];
-    let result = allTransactionsWithName;
+  const transactions = useMemo(
+    () => transactionsData?.data ?? [],
+    [transactionsData?.data],
+  );
+  const totalPages = transactionsData?.meta?.total_pages || 1;
+  const totalItems = transactionsData?.meta?.total || 0;
 
-    if (debouncedSearch) {
-      const lowerSearch = debouncedSearch.toLowerCase();
-      const latinSearchTerm = cyrillicToLatin(debouncedSearch).toLowerCase();
-      const foundStudentIds = studentSearchResults?.map((s) => s.id) || [];
-
-      result = result.filter((t) => {
-        // 1. Check if transaction belongs to a student found via API search
-        if (t.student_id && foundStudentIds.includes(t.student_id)) {
-          return true;
-        }
-
-        // 2. Fallback to text matching on transaction fields
-        const studentName = t.student_full_name?.toLowerCase() || "";
-        const studentNameLatin = cyrillicToLatin(
-          t.student_full_name || ""
-        ).toLowerCase();
-
-        return (
-          studentName.includes(lowerSearch) ||
-          studentNameLatin.includes(latinSearchTerm) ||
-          t.id.toString().includes(lowerSearch) ||
-          (t.external_id && t.external_id.toLowerCase().includes(lowerSearch))
-        );
-      });
-    }
-
-    if (statusFilter) {
-      result = result.filter((t) => t.status === statusFilter);
-    }
-    if (sourceFilter) {
-      result = result.filter((t) => t.source === sourceFilter);
-    }
-
-    return result;
-  }, [
-    allTransactionsWithName,
-    debouncedSearch,
-    statusFilter,
-    sourceFilter,
-    studentSearchResults,
-  ]);
-
-  // Pagination
-  const paginatedTransactions = useMemo(() => {
-    const startIndex = (page - 1) * 10;
-    const endIndex = startIndex + 10;
-    return filteredTransactions.slice(startIndex, endIndex);
-  }, [filteredTransactions, page]);
-
-  const totalPages = Math.ceil(filteredTransactions.length / 10);
+  const displayedTransactions = useMemo(
+    () =>
+      [...transactions].sort(
+        (a, b) =>
+          new Date(b.paid_at || 0).getTime() - new Date(a.paid_at || 0).getTime(),
+      ),
+    [transactions],
+  );
 
   const cancelMutation = useMutation({
     mutationFn: (id: number) => transactionService.cancelTransaction(id),
     onSuccess: () => {
-      // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
-        queryKey: ["all-transactions-with-name"],
+        queryKey: ["transactions-with-name"],
         refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["finance-report"],
         refetchType: "all",
       });
-
-      // Invalidate dashboard queries
       queryClient.invalidateQueries({
         queryKey: ["dashboard-summary"],
         refetchType: "all",
@@ -299,13 +130,10 @@ export default function Finance() {
         queryKey: ["recent-transactions"],
         refetchType: "all",
       });
-
-      // Invalidate student detail page queries (all students)
       queryClient.invalidateQueries({
         queryKey: ["student-full-info"],
         refetchType: "all",
       });
-
       toast.success(t("transactionCancelled"));
     },
     onError: () => toast.error(t("failedToCancelTransaction")),
@@ -314,17 +142,14 @@ export default function Finance() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => transactionService.deleteTransaction(id),
     onSuccess: () => {
-      // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
-        queryKey: ["all-transactions-with-name"],
+        queryKey: ["transactions-with-name"],
         refetchType: "all",
       });
       queryClient.invalidateQueries({
         queryKey: ["finance-report"],
         refetchType: "all",
       });
-
-      // Invalidate dashboard queries
       queryClient.invalidateQueries({
         queryKey: ["dashboard-summary"],
         refetchType: "all",
@@ -333,13 +158,10 @@ export default function Finance() {
         queryKey: ["recent-transactions"],
         refetchType: "all",
       });
-
-      // Invalidate student detail page queries (all students)
       queryClient.invalidateQueries({
         queryKey: ["student-full-info"],
         refetchType: "all",
       });
-
       toast.success(t("transactionDeleted"));
     },
     onError: () => toast.error(t("failedToDeleteTransaction")),
@@ -349,22 +171,50 @@ export default function Finance() {
     setSearch("");
     setStatusFilter("");
     setSourceFilter("");
+    setPage(1);
   };
 
-  const hasActiveFilters = search || statusFilter || sourceFilter;
+  const hasActiveFilters = Boolean(search || statusFilter || sourceFilter);
 
   const handleExport = async () => {
-    try {
-      if (!filteredTransactions || filteredTransactions.length === 0) {
-        toast.error(t("noDataToExport"));
-        return;
+    const promise = (async () => {
+      const firstPage = await transactionService.getTransactionsWithName({
+        page: 1,
+        page_size: 100,
+        search: debouncedSearch || undefined,
+        status: statusFilter || undefined,
+        source: sourceFilter || undefined,
+      });
+
+      if (!firstPage.data || firstPage.data.length === 0) {
+        throw new Error("NO_DATA");
       }
 
-      exportTransactions(filteredTransactions);
-      toast.success(t("transactionsExported"));
-    } catch (error) {
-      toast.error(t("failedToExportTransactions"));
-    }
+      const pages = firstPage.meta?.total_pages || 1;
+      const rest = await Promise.all(
+        Array.from({ length: Math.max(pages - 1, 0) }, (_, idx) =>
+          transactionService.getTransactionsWithName({
+            page: idx + 2,
+            page_size: 100,
+            search: debouncedSearch || undefined,
+            status: statusFilter || undefined,
+            source: sourceFilter || undefined,
+          }),
+        ),
+      );
+
+      const all = [...firstPage.data, ...rest.flatMap((r) => r.data || [])];
+      exportTransactions(all);
+    })();
+
+    toast.promise(promise, {
+      loading: t("exportingData"),
+      success: t("transactionsExported"),
+      error: (error: Error) =>
+        error.message === "NO_DATA"
+          ? t("noDataToExport")
+          : t("failedToExportTransactions"),
+    });
   };
 
   const getStatusBadge = (status: TransactionStatus) => {
@@ -398,10 +248,10 @@ export default function Finance() {
         text: "text-blue-700 dark:text-blue-400",
       },
     };
-    const variant = variants[status!] || variants.pending;
+    const variant = variants[status] || variants.pending;
     return (
       <Badge className={`${variant.bg} ${variant.text} border-0 gap-1`}>
-        {variant.icon && <variant.icon className="w-3 h-3" />}
+        <variant.icon className="w-3 h-3" />
         {status}
       </Badge>
     );
@@ -409,25 +259,22 @@ export default function Finance() {
 
   const getSourceIcon = (source: TransactionSource) => {
     const icons: Record<string, string> = {
-      payme: "💳",
-      click: "📱",
-      bank: "🏦",
-      cash: "💵",
-      manual: "✍️",
+      payme: "P",
+      click: "C",
+      bank: "B",
+      cash: "$",
+      manual: "M",
     };
-    return icons[source!] || "💰";
+    return icons[source] || "$";
   };
 
   const formatSource = (source: TransactionSource) => {
-    // Remove any "Paymentsource." prefix and format properly
-    const cleanSource =
-      source?.toString().replace(/^.*\./, "").toLowerCase() || "";
-    return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
+    const clean = source?.toString().replace(/^.*\./, "").toLowerCase() || "";
+    return clean.charAt(0).toUpperCase() + clean.slice(1);
   };
 
-  const formatCurrency = (amount: number) => {
-    return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
-  };
+  const formatCurrency = (amount: number) =>
+    formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
 
   const formatPaymentMonths = (months: number[] | null | undefined) => {
     if (!months || months.length === 0) return "-";
@@ -445,24 +292,30 @@ export default function Finance() {
       t("november") || "Nov",
       t("december") || "Dec",
     ];
-    return months
+    return [...months]
       .sort((a, b) => a - b)
       .map((m) => monthNames[m - 1] || m)
       .join(", ");
   };
 
-  // Calculate statistics from ALL transactions, not just current page
-  const totalRevenue =
-    allTransactionsWithName
-      ?.filter((t) => t.status === "success")
-      .reduce((acc, t) => acc + t.amount, 0) || 0;
-  const pendingAmount =
-    allTransactionsWithName
-      ?.filter((t) => t.status === "pending")
-      .reduce((acc, t) => acc + t.amount, 0) || 0;
-  const successCount =
-    allTransactionsWithName?.filter((t) => t.status === "success").length ||
-    0;
+  // Fast stats from current page data (keeps UI responsive on large datasets)
+  const { totalRevenue, pendingAmount, successCount } = useMemo(() => {
+    let revenue = 0;
+    let pending = 0;
+    let success = 0;
+
+    for (const tx of transactions) {
+      if (tx.status === "success") {
+        revenue += tx.amount;
+        success += 1;
+      }
+      if (tx.status === "pending") {
+        pending += tx.amount;
+      }
+    }
+    return { totalRevenue: revenue, pendingAmount: pending, successCount: success };
+  }, [transactions]);
+
   const unassignedCount = unassignedData?.meta?.total || 0;
 
   return (
@@ -476,17 +329,10 @@ export default function Finance() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             {t("finance")}
           </h1>
-          <p className="text-muted-foreground mt-1">
-            {t("manageTransactions")}
-          </p>
+          <p className="text-muted-foreground mt-1">{t("manageTransactions")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={handleExport}
-          >
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">{t("export")}</span>
           </Button>
@@ -538,14 +384,20 @@ export default function Finance() {
                 <Input
                   placeholder={t("searchByStudentId") || "Search by name..."}
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
                   className="pl-10"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
                 <Select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setPage(1);
+                  }}
                   className="w-full sm:w-36"
                 >
                   <option value="">{t("allStatuses")}</option>
@@ -557,7 +409,10 @@ export default function Finance() {
                 </Select>
                 <Select
                   value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
+                  onChange={(e) => {
+                    setSourceFilter(e.target.value);
+                    setPage(1);
+                  }}
                   className="w-full sm:w-32"
                 >
                   <option value="">{t("allSources")}</option>
@@ -590,20 +445,14 @@ export default function Finance() {
               <TableRow>
                 <TableHead>#</TableHead>
                 <TableHead>{t("transaction")}</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  {t("source")}
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  {t("student")}
-                </TableHead>
+                <TableHead className="hidden md:table-cell">{t("source")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("student")}</TableHead>
                 <TableHead>{t("amount")}</TableHead>
                 <TableHead className="hidden md:table-cell">
                   {t("paymentMonth") || "Payment Month"}
                 </TableHead>
                 <TableHead>{t("status")}</TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  {t("date")}
-                </TableHead>
+                <TableHead className="hidden lg:table-cell">{t("date")}</TableHead>
                 <TableHead className="text-right">{t("actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -614,127 +463,105 @@ export default function Finance() {
                     <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        Transaksiyalar hisoblanmoqda...
+                        Transaksiyalar yuklanmoqda...
                       </p>
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : paginatedTransactions && paginatedTransactions.length > 0 ? (
-                (() => {
-                  const displayed = [...paginatedTransactions].sort(
-                    (a: TransactionWithNameRead, b: TransactionWithNameRead) =>
-                      new Date(b.paid_at!).getTime() -
-                      new Date(a.paid_at!).getTime(),
-                  );
-                  return displayed.map((transaction, idx) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        <p className="font-medium text-foreground text-sm">
-                          {(page - 1) * 10 + idx + 1}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl">
-                            {getSourceIcon(transaction.source)}
-                          </div>
-                          <div>
-                            {transaction.external_id && (
-                              <p className="text-xs text-muted-foreground">
-                                {transaction.external_id.substring(0, 20)}...
-                              </p>
-                            )}
-                          </div>
+              ) : displayedTransactions.length > 0 ? (
+                displayedTransactions.map((transaction, idx) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell>
+                      <p className="font-medium text-foreground text-sm">
+                        {(page - 1) * pageSize + idx + 1}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{getSourceIcon(transaction.source)}</div>
+                        <div>
+                          {transaction.external_id && (
+                            <p className="text-xs text-muted-foreground">
+                              {transaction.external_id.substring(0, 20)}...
+                            </p>
+                          )}
                         </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge variant="outline">
-                          {formatSource(transaction.source)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {transaction.student_full_name ? (
-                          <button
-                            onClick={() => {
-                              if (transaction.student_id) {
-                                navigate(`/students/${transaction.student_id}`);
-                              }
-                            }}
-                            disabled={!transaction.student_id}
-                            className={`text-sm ${
-                              transaction.student_id
-                                ? "cursor-pointer text-blue-600 dark:text-blue-400 hover:underline"
-                                : "text-muted-foreground cursor-not-allowed"
-                            }`}
-                          >
-                            {transaction.student_full_name}
-                          </button>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            {t("unassigned")}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-foreground text-sm sm:text-base">
-                          {formatCurrency(transaction.amount)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="outline">{formatSource(transaction.source)}</Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {transaction.student_full_name ? (
+                        <button
+                          onClick={() => {
+                            if (transaction.student_id) {
+                              navigate(`/students/${transaction.student_id}`);
+                            }
+                          }}
+                          disabled={!transaction.student_id}
+                          className={`text-sm ${
+                            transaction.student_id
+                              ? "cursor-pointer text-blue-600 dark:text-blue-400 hover:underline"
+                              : "text-muted-foreground cursor-not-allowed"
+                          }`}
+                        >
+                          {transaction.student_full_name}
+                        </button>
+                      ) : (
                         <span className="text-sm text-muted-foreground">
-                          {formatPaymentMonths(transaction.payment_months)}
+                          {t("unassigned")}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(transaction.status)}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <span className="text-sm text-muted-foreground">
-                          {format(
-                            new Date(transaction.paid_at!),
-                            "MMM d, yyyy HH:mm",
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {transaction.status === "pending" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                cancelMutation.mutate(transaction.id)
-                              }
-                              disabled={cancelMutation.isPending}
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                            >
-                              <Ban className="w-4 h-4" />
-                            </Button>
-                          )}
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-semibold text-foreground text-sm sm:text-base">
+                        {formatCurrency(transaction.amount)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-sm text-muted-foreground">
+                        {formatPaymentMonths(transaction.payment_months)}
+                      </span>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <span className="text-sm text-muted-foreground">
+                        {format(new Date(transaction.paid_at || 0), "MMM d, yyyy HH:mm")}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {transaction.status === "pending" && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                              deleteMutation.mutate(transaction.id)
-                            }
-                            disabled={deleteMutation.isPending}
+                            onClick={() => cancelMutation.mutate(transaction.id)}
+                            disabled={cancelMutation.isPending}
                             className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Ban className="w-4 h-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ));
-                })()
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(transaction.id)}
+                          disabled={deleteMutation.isPending}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : (
                 <TableEmpty
                   icon={<CreditCard className="w-12 h-12" />}
                   title={t("noTransactionsFound")}
                   description={
-                    hasActiveFilters
-                      ? t("adjustFilters")
-                      : t("transactionsWillAppear")
+                    hasActiveFilters ? t("adjustFilters") : t("transactionsWillAppear")
                   }
                   action={
                     hasActiveFilters ? (
@@ -756,15 +583,14 @@ export default function Finance() {
             <TablePagination
               currentPage={page}
               totalPages={totalPages}
-              totalItems={filteredTransactions.length}
-              pageSize={10}
+              totalItems={totalItems}
+              pageSize={pageSize}
               onPageChange={setPage}
             />
           )}
         </Card>
       </motion.div>
 
-      {/* Unassigned Transactions Section */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

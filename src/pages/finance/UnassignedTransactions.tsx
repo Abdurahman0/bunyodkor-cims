@@ -33,9 +33,8 @@ export function UnassignedTransactions() {
     queryKey: ["unassigned-transactions", page],
     queryFn: () =>
       transactionService.getUnassignedTransactions({ page, page_size: 10 }),
-    staleTime: 0, // Always refetch
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const handleOpenDialog = (transaction: TransactionRead) => {
@@ -132,11 +131,7 @@ export function UnassignedTransactions() {
             refetchType: "all",
           });
           queryClient.invalidateQueries({
-            queryKey: ["transactions"],
-            refetchType: "all",
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["all-transactions-stats"],
+            queryKey: ["transactions-with-name"],
             refetchType: "all",
           });
         }}

@@ -105,6 +105,8 @@ export function TransactionDialog({
     queryKey: ["students-list-full"],
     queryFn: () => studentService.getStudents({ page: 1, page_size: 2000 }),
     enabled: open,
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
   const {
@@ -207,11 +209,7 @@ export function TransactionDialog({
     onSuccess: () => {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
-        queryKey: ["transactions"],
-        refetchType: "all"
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["all-transactions-stats"],
+        queryKey: ["transactions-with-name"],
         refetchType: "all"
       });
       queryClient.invalidateQueries({
