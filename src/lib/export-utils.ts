@@ -16,6 +16,8 @@ export const exportToCSV = (data: any[], filename: string) => {
 
   // Create CSV content
   const csvContent = [
+    // Force Excel to use comma as separator regardless of OS locale
+    'sep=,',
     // Header row
     headers.join(','),
     // Data rows
@@ -31,7 +33,7 @@ export const exportToCSV = (data: any[], filename: string) => {
         return stringValue
       }).join(',')
     )
-  ].join('\n')
+  ].join('\r\n')
 
   // Create blob and download
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -88,6 +90,8 @@ export const exportToExcel = (data: any[], filename: string) => {
   // Create CSV content with UTF-8 BOM for Excel compatibility
   const bom = '\uFEFF'
   const csvContent = bom + [
+    // Force Excel to use comma as separator regardless of OS locale
+    'sep=,',
     // Header row
     allHeaders.join(','),
     // Data rows with row numbers
@@ -104,7 +108,7 @@ export const exportToExcel = (data: any[], filename: string) => {
       })
       return [rowNumber, ...rowData].join(',')
     })
-  ].join('\n')
+  ].join('\r\n')
 
   // Create blob and download
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
