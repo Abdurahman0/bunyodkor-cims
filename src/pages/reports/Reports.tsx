@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,8 @@ import { BarChart, DonutChart, StatsCard } from "@/components/ui/charts";
 import {
   reportService,
   groupService,
-  studentService,
 } from "@/services/api.service";
-import type { GroupRead, UnpaidStudentInfo } from "@/types/api";
+import type { DebtorItem, GroupRead } from "@/types/api";
 
 import PayersReport from "./PayersReport";
 import {
@@ -39,12 +38,12 @@ import {
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
-import { exportReport, downloadFile } from "@/lib/export-utils";
+import { exportReport } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
 import {
   formatCurrency as formatCurrencyUtil,
-  formatNumber,
 } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function Reports() {
   const { t } = useLanguageStore();
@@ -57,20 +56,8 @@ export default function Reports() {
   });
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
-
-  // Unpaid students filters
-  const [filterMode, setFilterMode] = useState<"month" | "dateRange">("month");
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(
-    currentMonth,
-  );
-  const [selectedMonths, setSelectedMonths] = useState<string>(""); // comma-separated months
-  const [unpaidDateRange, setUnpaidDateRange] = useState({
-    from: format(startOfMonth(new Date()), "yyyy-MM-dd"),
-    to: format(endOfMonth(new Date()), "yyyy-MM-dd"),
-  });
+  const [minDebtAmountInput, setMinDebtAmountInput] = useState("");
+  const minDebtAmount = useDebounce(minDebtAmountInput, 400);
 
   const { data: financeReport, isLoading: financeLoading } = useQuery({
     queryKey: ["finance-report", dateRange],
@@ -91,28 +78,27 @@ export default function Reports() {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups-list-all"],
     queryFn: async () => {
-      const allGroups: GroupRead[] = [];
-      let currentPage = 1;
-      let hasMore = true;
-      while (hasMore) {
-        const response = await groupService.getGroups({
-          page: currentPage,
-          page_size: 100,
-        });
-        if (response.data && response.data.length > 0) {
-          allGroups.push(...response.data);
-          if (response.meta && currentPage < response.meta.total_pages) {
-            currentPage++;
-          } else {
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
-        }
+      const firstPage = await groupService.getGroups({ page: 1, page_size: 100 });
+      const firstData = firstPage.data || [];
+      const totalPages = firstPage.meta?.total_pages || 1;
+
+      if (totalPages <= 1) {
+        return { data: firstData };
       }
-      return { data: allGroups };
+
+      const restPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, idx) =>
+          groupService.getGroups({ page: idx + 2, page_size: 100 }),
+        ),
+      );
+
+      return {
+        data: [...firstData, ...restPages.flatMap((page) => page.data || [])],
+      };
     },
     enabled: activeTab === "debtors",
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Normalize groups response in case API returns nested `data` (e.g. { data: { data: [...] } })
@@ -121,93 +107,66 @@ export default function Reports() {
     return groupsData.data;
   }, [groupsData]);
 
-  // Use unpaid students API instead of debtors report
   const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
-    queryKey: [
-      "unpaid-students",
-      debtorsPage,
-      selectedGroupId,
-      filterMode,
-      selectedYear,
-      selectedMonth,
-      selectedMonths,
-      unpaidDateRange,
-    ],
-    queryFn: () => {
-      const params: any = {
+    queryKey: ["debtors-report", debtorsPage, selectedGroupId, minDebtAmount],
+    queryFn: () =>
+      reportService.getDebtorsReport({
         page: debtorsPage,
-        page_size: 10,
+        page_size: 20,
         group_id: selectedGroupId || undefined,
-      };
-
-      if (filterMode === "month") {
-        params.year = selectedYear;
-        if (selectedMonths) {
-          params.months = selectedMonths;
-        } else if (selectedMonth) {
-          params.month = selectedMonth;
-        }
-      } else {
-        params.from_date = unpaidDateRange.from;
-        params.to_date = unpaidDateRange.to;
-      }
-
-      return studentService.getUnpaidStudents(params);
-    },
+        min_debt_amount:
+          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
+      }),
     enabled: activeTab === "debtors",
+    placeholderData: keepPreviousData,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
-  // Query to get the total debt amount
+  // Keep exact total debt without blocking table render
   const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
-    queryKey: [
-      "unpaid-students-total",
-      selectedGroupId,
-      filterMode,
-      selectedYear,
-      selectedMonth,
-      selectedMonths,
-      unpaidDateRange,
-    ],
+    queryKey: ["debtors-total-debt", selectedGroupId, minDebtAmount],
     queryFn: async () => {
-      const params: any = {
+      const firstPage = await reportService.getDebtorsReport({
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
-      };
+        min_debt_amount:
+          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
+      });
 
-      if (filterMode === "month") {
-        params.year = selectedYear;
-        if (selectedMonths) {
-          params.months = selectedMonths;
-        } else if (selectedMonth) {
-          params.month = selectedMonth;
-        }
-      } else {
-        params.from_date = unpaidDateRange.from;
-        params.to_date = unpaidDateRange.to;
-      }
+      const pages = firstPage.meta?.total_pages || 1;
+      const allPages =
+        pages > 1
+          ? await Promise.all(
+              Array.from({ length: pages - 1 }, (_, idx) =>
+                reportService.getDebtorsReport({
+                  page: idx + 2,
+                  page_size: 100,
+                  group_id: selectedGroupId || undefined,
+                  min_debt_amount:
+                    minDebtAmount.trim() === ""
+                      ? undefined
+                      : Number(minDebtAmount),
+                }),
+              ),
+            )
+          : [];
 
-      let totalDebt = 0;
-      let hasMore = true;
-      let currentPage = 1;
+      const combined = [
+        ...(firstPage.data || []),
+        ...allPages.flatMap((page) => page.data || []),
+      ];
+      const totalDebt = combined.reduce(
+        (sum, debtor) => sum + (debtor.debt_amount || 0),
+        0,
+      );
 
-      while (hasMore) {
-        params.page = currentPage;
-        const response = await studentService.getUnpaidStudents(params);
-        if (response.data && response.data.length > 0) {
-          totalDebt += response.data.reduce((sum, item) => sum + item.debt_amount, 0);
-          if (response.meta && currentPage < response.meta.total_pages) {
-            currentPage++;
-          } else {
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
       return { total_debt: totalDebt };
     },
     enabled: activeTab === "debtors",
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const totalDebtAmount = totalDebtData?.total_debt || 0;
@@ -220,14 +179,6 @@ export default function Reports() {
     const cleanSource =
       source?.toString().replace(/^.*\./, "").toLowerCase() || "";
     return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
-  };
-
-  // Helper to get Group Name by ID
-  const getGroupName = (groupId: number | null | undefined) => {
-    if (!groupId) return "N/A";
-    // Use loose equality to handle string/number mismatches
-    const group = groupsList.find((g: any) => g.id == groupId);
-    return group ? group.name : "N/A";
   };
 
   const tabs = [
@@ -256,33 +207,58 @@ export default function Reports() {
     })) || [];
 
   const handleDebtorsExport = async () => {
-    const params: any = {};
+    const promise = (async () => {
+      const params = {
+        group_id: selectedGroupId || undefined,
+        min_debt_amount:
+          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
+      };
+      const firstPage = await reportService.getDebtorsReport({
+        ...params,
+        page: 1,
+        page_size: 100,
+      });
 
-    if (selectedGroupId) {
-      params.group_id = selectedGroupId;
-    }
-    if (filterMode === "month") {
-      params.year = selectedYear;
-      if (selectedMonths) {
-        params.months = selectedMonths;
-      } else if (selectedMonth) {
-        params.month = selectedMonth;
+      if (!firstPage.data || firstPage.data.length === 0) {
+        throw new Error("NO_DATA");
       }
-    } else {
-      params.from_date = unpaidDateRange.from;
-      params.to_date = unpaidDateRange.to;
-    }
 
-    const promise = studentService.exportUnpaidStudents(params);
+      const totalPages = firstPage.meta?.total_pages || 1;
+      const restPages =
+        totalPages > 1
+          ? await Promise.all(
+              Array.from({ length: totalPages - 1 }, (_, idx) =>
+                reportService.getDebtorsReport({
+                  ...params,
+                  page: idx + 2,
+                  page_size: 100,
+                }),
+              ),
+            )
+          : [];
+
+      const allDebtors = [
+        ...firstPage.data,
+        ...restPages.flatMap((page) => page.data || []),
+      ];
+
+      const exportRows = allDebtors.map((item) => ({
+        "Student ID": item.student_id,
+        Student: item.student_name,
+        Group: item.group_name,
+        Contract: item.contract_number,
+        Debt: item.debt_amount,
+      }));
+
+      const date = format(new Date(), "yyyy-MM-dd");
+      exportReport(exportRows, `debtors-report-${date}`);
+    })();
 
     toast.promise(promise, {
       loading: t("exportingData"),
-      success: (blob) => {
-        const date = format(new Date(), "yyyy-MM-dd");
-        downloadFile(blob, `unpaid-students-report-${date}.xlsx`);
-        return t("exportedSuccessfully");
-      },
-      error: t("errorExportingData"),
+      success: t("exportedSuccessfully"),
+      error: (error: Error) =>
+        error.message === "NO_DATA" ? t("noDataToExport") : t("errorExportingData"),
     });
   };
 
@@ -670,167 +646,68 @@ export default function Reports() {
         >
           <Card>
             <CardContent className="p-4">
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Button
-                    variant={filterMode === "month" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterMode("month")}
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="w-64">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("group")}
+                  </label>
+                  <select
+                    value={selectedGroupId || ""}
+                    onChange={(e) => {
+                      setSelectedGroupId(
+                        e.target.value ? Number(e.target.value) : null,
+                      );
+                      setDebtorsPage(1);
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={groupsLoading}
                   >
-                    {t("byMonth")}
-                  </Button>
-                  <Button
-                    variant={filterMode === "dateRange" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterMode("dateRange")}
-                  >
-                    {t("byDateRange")}
-                  </Button>
+                    <option value="">{t("allGroups")}</option>
+                    {groupsLoading ? (
+                      <option value="" disabled>
+                        {t("loading")}
+                      </option>
+                    ) : groupsList && groupsList.length > 0 ? (
+                      groupsList.map((group: GroupRead) => (
+                        <option key={group.id} value={String(group.id)}>
+                          {group.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        {t("noGroupsAvailable")}
+                      </option>
+                    )}
+                  </select>
                 </div>
 
-                <div className="flex flex-wrap items-end gap-4">
-                  {filterMode === "month" ? (
-                    <>
-                      <div className="w-32">
-                        <label className="text-sm font-medium text-foreground mb-1 block">
-                          {t("year")}
-                        </label>
-                        <select
-                          value={selectedYear}
-                          onChange={(e) => {
-                            setSelectedYear(Number(e.target.value));
-                            setDebtorsPage(1);
-                          }}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {[
-                            currentYear - 2,
-                            currentYear - 1,
-                            currentYear,
-                            currentYear + 1,
-                          ].map((year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="w-48">
-                        <label className="text-sm font-medium text-foreground mb-1 block">
-                          {t("month")}
-                        </label>
-                        <select
-                          value={selectedMonth || ""}
-                          onChange={(e) => {
-                            setSelectedMonth(
-                              e.target.value ? Number(e.target.value) : null,
-                            );
-                            setSelectedMonths("");
-                            setDebtorsPage(1);
-                          }}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="">{t("allMonths")}</option>
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                            (month) => (
-                              <option key={month} value={month}>
-                                {format(new Date(2000, month - 1), "MMMM")}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </div>
-
-                      <div className="w-48">
-                        <label className="text-sm font-medium text-foreground mb-1 block">
-                          {t("multipleMonths")}
-                        </label>
-                        <Input
-                          value={selectedMonths}
-                          onChange={(e) => {
-                            setSelectedMonths(e.target.value);
-                            setSelectedMonth(null);
-                            setDebtorsPage(1);
-                          }}
-                          placeholder="1,2,3"
-                          className="h-10"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-1 block">
-                          {t("fromDate")}
-                        </label>
-                        <Input
-                          type="date"
-                          value={unpaidDateRange.from}
-                          onChange={(e) => {
-                            setUnpaidDateRange({
-                              ...unpaidDateRange,
-                              from: e.target.value,
-                            });
-                            setDebtorsPage(1);
-                          }}
-                          className="w-40"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-1 block">
-                          {t("toDate")}
-                        </label>
-                        <Input
-                          type="date"
-                          value={unpaidDateRange.to}
-                          onChange={(e) => {
-                            setUnpaidDateRange({
-                              ...unpaidDateRange,
-                              to: e.target.value,
-                            });
-                            setDebtorsPage(1);
-                          }}
-                          className="w-40"
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="w-64">
-                    <label className="text-sm font-medium text-foreground mb-1 block">
-                      {t("group")}
-                    </label>
-                    <select
-                      value={selectedGroupId || ""}
-                      onChange={(e) => {
-                        setSelectedGroupId(
-                          e.target.value ? Number(e.target.value) : null,
-                        );
-                        setDebtorsPage(1);
-                      }}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={groupsLoading}
-                    >
-                      <option value="">{t("allGroups")}</option>
-                      {groupsLoading ? (
-                        <option value="" disabled>
-                          {t("loading")}
-                        </option>
-                      ) : groupsList && groupsList.length > 0 ? (
-                        groupsList.map((group: GroupRead) => (
-                          <option key={group.id} value={String(group.id)}>
-                            {group.name}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>
-                          {t("noGroupsAvailable")}
-                        </option>
-                      )}
-                    </select>
-                  </div>
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    Min debt
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={minDebtAmountInput}
+                    onChange={(e) => {
+                      setMinDebtAmountInput(e.target.value);
+                      setDebtorsPage(1);
+                    }}
+                    placeholder="e.g. 800000"
+                    className="h-10"
+                  />
                 </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedGroupId(null);
+                    setMinDebtAmountInput("");
+                    setDebtorsPage(1);
+                  }}
+                >
+                  {t("clearFilters")}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -885,27 +762,19 @@ export default function Reports() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>{t("studentId") || "Student ID"}</TableHead>
                   <TableHead>{t("student")}</TableHead>
                   <TableHead>{t("group")}</TableHead>
-                  <TableHead>{t("phone")}</TableHead>
-                  <TableHead className="text-right [&>div]:justify-end">
-                    {t("activeContracts")}
-                  </TableHead>
-                  <TableHead className="text-right [&>div]:justify-end">
-                    {t("totalExpected")}
-                  </TableHead>
-                  <TableHead className="text-right [&>div]:justify-end">
-                    {t("totalPaid")}
-                  </TableHead>
+                  <TableHead>{t("contractNumber")}</TableHead>
                   <TableHead className="text-right [&>div]:justify-end">
                     {t("debtAmount")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {debtorsLoading || groupsLoading ? (
+                {debtorsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-36 text-center">
+                    <TableCell colSpan={5} className="h-36 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="text-sm font-medium">
@@ -915,31 +784,21 @@ export default function Reports() {
                     </TableCell>
                   </TableRow>
                 ) : debtorsData?.data && debtorsData.data.length > 0 ? (
-                  debtorsData.data.map((debtor: UnpaidStudentInfo) => (
-                    <TableRow key={debtor.student.id}>
+                  debtorsData.data.map((debtor: DebtorItem) => (
+                    <TableRow key={`${debtor.student_id}-${debtor.contract_number}`}>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        #{debtor.student_id}
+                      </TableCell>
                       <TableCell className="font-medium">
-                        {debtor.student.first_name} {debtor.student.last_name}
+                        {debtor.student_name}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
-                          {getGroupName(debtor.student.group_id)}
+                          {debtor.group_name}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {debtor.student.phone}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="secondary">
-                          {debtor.active_contracts_count}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {formatCurrency(debtor.total_expected)}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600 dark:text-green-400">
-                        {formatCurrency(debtor.total_paid)}
+                        <span className="text-sm">{debtor.contract_number}</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <span className="text-red-600 dark:text-red-400 font-medium">
@@ -963,7 +822,7 @@ export default function Reports() {
                 currentPage={debtorsPage}
                 totalPages={debtorsData.meta.total_pages}
                 totalItems={debtorsData.meta.total}
-                pageSize={10}
+                pageSize={20}
                 onPageChange={setDebtorsPage}
               />
             )}
