@@ -81,42 +81,61 @@ export const exportToExcel = (data: any[], filename: string) => {
     throw new Error('No data to export')
   }
 
-  // Get headers from first object keys
   const headers = Object.keys(data[0])
-
-  // Add "No" column as the first column
   const allHeaders = ['No', ...headers]
+  const escapeHtml = (value: unknown) =>
+    String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
 
-  // Create CSV content with UTF-8 BOM for Excel compatibility
-  const bom = '\uFEFF'
-  const csvContent = bom + [
-    // Force Excel to use comma as separator regardless of OS locale
-    'sep=,',
-    // Header row
-    allHeaders.join(','),
-    // Data rows with row numbers
-    ...data.map((row, index) => {
-      const rowNumber = index + 1
-      const rowData = headers.map(header => {
-        const value = row[header]
-        if (value === null || value === undefined) return ''
-        const stringValue = String(value)
-        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-          return `"${stringValue.replace(/"/g, '""')}"`
-        }
-        return stringValue
-      })
-      return [rowNumber, ...rowData].join(',')
+  const headerHtml = allHeaders
+    .map(
+      (header) =>
+        `<th style="background:#1f4e78;color:#fff;font-weight:700;border:1px solid #d9d9d9;padding:8px;text-align:left;">${escapeHtml(header)}</th>`,
+    )
+    .join('')
+
+  const rowsHtml = data
+    .map((row, index) => {
+      const cells = [index + 1, ...headers.map((h) => row[h])]
+        .map((value) => {
+          const isNumber = typeof value === 'number'
+          const align = isNumber ? 'right' : 'left'
+          return `<td style="border:1px solid #e5e7eb;padding:6px;text-align:${align};">${escapeHtml(value)}</td>`
+        })
+        .join('')
+      return `<tr>${cells}</tr>`
     })
-  ].join('\r\n')
+    .join('')
 
-  // Create blob and download
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 12px; }
+    tr:nth-child(even) td { background: #f8fafc; }
+  </style>
+</head>
+<body>
+  <table>
+    <thead><tr>${headerHtml}</tr></thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+</body>
+</html>`
+
+  const blob = new Blob(['\uFEFF', htmlContent], {
+    type: 'application/vnd.ms-excel;charset=utf-8;',
+  })
   const link = document.createElement('a')
   const url = URL.createObjectURL(blob)
 
   link.setAttribute('href', url)
-  link.setAttribute('download', `${filename}_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.csv`)
+  link.setAttribute('download', `${filename}_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xls`)
   link.style.visibility = 'hidden'
 
   document.body.appendChild(link)

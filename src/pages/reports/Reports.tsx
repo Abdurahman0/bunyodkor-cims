@@ -240,7 +240,7 @@ export default function Reports() {
       const allDebtors = [
         ...firstPage.data,
         ...restPages.flatMap((page) => page.data || []),
-      ];
+      ].sort((a, b) => b.debt_amount - a.debt_amount);
 
       const exportRows = allDebtors.map((item) => ({
         "Student ID": item.student_id,
