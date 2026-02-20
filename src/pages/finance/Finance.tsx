@@ -95,6 +95,13 @@ export default function Finance() {
     staleTime: 30000,
   });
 
+  const { data: transactionStatisticsData } = useQuery({
+    queryKey: ["transaction-statistics"],
+    queryFn: () => transactionService.getTransactionStatistics(),
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+
   const transactions = useMemo(
     () => transactionsData?.data ?? [],
     [transactionsData?.data],
@@ -131,6 +138,10 @@ export default function Finance() {
         refetchType: "all",
       });
       queryClient.invalidateQueries({
+        queryKey: ["transaction-statistics"],
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
         queryKey: ["student-full-info"],
         refetchType: "all",
       });
@@ -156,6 +167,10 @@ export default function Finance() {
       });
       queryClient.invalidateQueries({
         queryKey: ["recent-transactions"],
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["transaction-statistics"],
         refetchType: "all",
       });
       queryClient.invalidateQueries({
@@ -257,17 +272,6 @@ export default function Finance() {
     );
   };
 
-  const getSourceIcon = (source: TransactionSource) => {
-    const icons: Record<string, string> = {
-      payme: "P",
-      click: "C",
-      bank: "B",
-      cash: "$",
-      manual: "M",
-    };
-    return icons[source] || "$";
-  };
-
   const formatSource = (source: TransactionSource) => {
     const clean = source?.toString().replace(/^.*\./, "").toLowerCase() || "";
     return clean.charAt(0).toUpperCase() + clean.slice(1);
@@ -298,24 +302,7 @@ export default function Finance() {
       .join(", ");
   };
 
-  // Fast stats from current page data (keeps UI responsive on large datasets)
-  const { totalRevenue, pendingAmount, successCount } = useMemo(() => {
-    let revenue = 0;
-    let pending = 0;
-    let success = 0;
-
-    for (const tx of transactions) {
-      if (tx.status === "success") {
-        revenue += tx.amount;
-        success += 1;
-      }
-      if (tx.status === "pending") {
-        pending += tx.amount;
-      }
-    }
-    return { totalRevenue: revenue, pendingAmount: pending, successCount: success };
-  }, [transactions]);
-
+  const stats = transactionStatisticsData?.data;
   const unassignedCount = unassignedData?.meta?.total || 0;
 
   return (
@@ -347,22 +334,32 @@ export default function Finance() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
       >
         <StatsCard
-          title={t("totalRevenue")}
-          value={formatCurrency(totalRevenue)}
+          title={t("totalPaid") || "Total Paid"}
+          value={formatCurrency(stats?.total_paid || 0)}
           icon={<TrendingUp className="w-6 h-6" />}
         />
         <StatsCard
-          title={t("pendingAmount")}
-          value={formatCurrency(pendingAmount)}
-          icon={<Clock className="w-6 h-6" />}
+          title={t("successful")}
+          value={String(stats?.successful_transactions || 0)}
+          icon={<CheckCircle className="w-6 h-6" />}
         />
         <StatsCard
-          title={t("successful")}
-          value={successCount.toString()}
-          icon={<CheckCircle className="w-6 h-6" />}
+          title="Payme tx"
+          value={String(stats?.payme_transactions || 0)}
+          icon={<CreditCard className="w-6 h-6" />}
+        />
+        <StatsCard
+          title="Click tx"
+          value={String(stats?.click_transactions || 0)}
+          icon={<CreditCard className="w-6 h-6" />}
+        />
+        <StatsCard
+          title={`${t("bank")} tx`}
+          value={String(stats?.bank_transactions || 0)}
+          icon={<CreditCard className="w-6 h-6" />}
         />
         <StatsCard
           title={t("unassigned")}
@@ -477,16 +474,11 @@ export default function Finance() {
                       </p>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl">{getSourceIcon(transaction.source)}</div>
-                        <div>
-                          {transaction.external_id && (
-                            <p className="text-xs text-muted-foreground">
-                              {transaction.external_id.substring(0, 20)}...
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      {transaction.external_id && (
+                        <p className="text-xs text-muted-foreground">
+                          {transaction.external_id.substring(0, 20)}...
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <Badge variant="outline">{formatSource(transaction.source)}</Badge>

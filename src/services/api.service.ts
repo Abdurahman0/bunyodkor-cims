@@ -46,10 +46,12 @@ import type {
   ContractRead,
   ContractCreateRequest,
   ContractUpdateRequest,
+  ContractDatesUpdateRequest,
   // Transactions
   TransactionRead,
   ManualTransactionCreateRequest,
   AssignTransactionRequest,
+  TransactionStatisticsRead,
   // Attendance
   AttendanceRead,
   AttendanceCreateRequest,
@@ -957,6 +959,21 @@ export const contractService = {
   },
 
   /**
+   * Update only contract start/end dates
+   * PATCH /contracts/{contract_id}/dates
+   */
+  updateContractDates: async (
+    contractId: number,
+    data: ContractDatesUpdateRequest,
+  ): Promise<ApiResponse<ContractRead>> => {
+    const response = await apiClient.patch<ApiResponse<ContractRead>>(
+      `/contracts/${contractId}/dates`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
    * Update only the monthly fee for a contract
    * PATCH /contracts/{contract_id}/monthly-fee
    */
@@ -1183,6 +1200,13 @@ export interface GetTransactionsWithNameParams {
   search?: string;
 }
 
+export interface GetTransactionStatisticsParams {
+  from_date?: string;
+  to_date?: string;
+  group_id?: number;
+  status?: string;
+}
+
 export const transactionService = {
   /**
    * Get paginated list of transactions with student names
@@ -1194,6 +1218,20 @@ export const transactionService = {
     const response = await apiClient.get<
       ApiResponse<TransactionWithNameRead[]>
     >("/transactions/withname", { params });
+    return response.data;
+  },
+
+  /**
+   * Get transaction statistics
+   * GET /transactions/transactionstatistics
+   */
+  getTransactionStatistics: async (
+    params?: GetTransactionStatisticsParams,
+  ): Promise<ApiResponse<TransactionStatisticsRead>> => {
+    const response = await apiClient.get<ApiResponse<TransactionStatisticsRead>>(
+      "/transactions/transactionstatistics",
+      { params },
+    );
     return response.data;
   },
 

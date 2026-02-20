@@ -207,7 +207,10 @@ export function ContractDialog({
   const mutation = useMutation({
     mutationFn: (data: ContractCreateType | ContractUpdate) => {
       if (contract) {
-        return contractService.updateContract(contract.id, data);
+        return contractService.updateContractDates(contract.id, {
+          start_date: data.start_date,
+          end_date: data.end_date,
+        });
       }
       return contractService.createContract(data as ContractCreateType);
     },
@@ -299,6 +302,15 @@ export function ContractDialog({
     }
 
     // --- For all other statuses, perform the standard update with transformation ---
+    if (contract) {
+      mutation.mutate({
+        start_date: data.start_date,
+        end_date: data.end_date,
+      });
+      return;
+    }
+
+    // --- For contract creation, perform transformation and create ---
     const payload = { ...data };
 
     if (payload.custom_fields) {
@@ -569,7 +581,6 @@ export function ContractDialog({
                 {...register("start_date", {
                   required: t("startDateRequired"),
                 })}
-                disabled={!!contract}
               />
               {errors.start_date && (
                 <p className="text-sm text-red-500">
@@ -585,7 +596,6 @@ export function ContractDialog({
                 id="end_date"
                 type="date"
                 {...register("end_date", { required: t("endDateRequired") })}
-                disabled={!!contract}
               />
               {errors.end_date && (
                 <p className="text-sm text-red-500">

@@ -386,6 +386,10 @@ export interface ContractUpdateRequest {
   custom_fields?: any;
 }
 export type ContractUpdate = ContractUpdateRequest;
+export interface ContractDatesUpdateRequest {
+  start_date?: string;
+  end_date?: string;
+}
 export interface MonthlyFeeUpdateRequest {
   monthly_fee: number;
 }
@@ -427,6 +431,16 @@ export interface TransactionWithNameRead extends TransactionRead {
   description: string;
   updated_at: any;
   student_full_name: string;
+}
+
+export interface TransactionStatisticsRead {
+  from_date: string;
+  to_date: string;
+  total_paid: number;
+  successful_transactions: number;
+  click_transactions: number;
+  payme_transactions: number;
+  bank_transactions: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
