@@ -21,6 +21,7 @@ import { BarChart, DonutChart, StatsCard } from "@/components/ui/charts";
 import {
   reportService,
   groupService,
+  studentService,
 } from "@/services/api.service";
 import type { DebtorItem, GroupRead } from "@/types/api";
 
@@ -37,7 +38,7 @@ import {
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
-import { exportReport } from "@/lib/export-utils";
+import { downloadFile, exportReport } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
 import {
   formatCurrency as formatCurrencyUtil,
@@ -53,10 +54,15 @@ export default function Reports() {
     from: format(startOfMonth(new Date()), "yyyy-MM-dd"),
     to: format(endOfMonth(new Date()), "yyyy-MM-dd"),
   });
+  const currentYear = new Date().getFullYear();
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
-  const [selectedDebtMonth, setSelectedDebtMonth] = useState<number | null>(null);
   const [minDebtAmountInput, setMinDebtAmountInput] = useState("");
+  const [unpaidYear, setUnpaidYear] = useState<number | "">(currentYear);
+  const [unpaidMonth, setUnpaidMonth] = useState<number | "">("");
+  const [unpaidMonths, setUnpaidMonths] = useState("");
+  const [unpaidFromDate, setUnpaidFromDate] = useState("");
+  const [unpaidToDate, setUnpaidToDate] = useState("");
   const minDebtAmount = useDebounce(minDebtAmountInput, 400);
   const debtorsPageSize = 20;
   const monthOptions = useMemo(
@@ -125,8 +131,24 @@ export default function Reports() {
     return groupsData.data;
   }, [groupsData]);
 
-  const { data: debtorsAllData, isLoading: debtorsLoading } = useQuery({
-    queryKey: ["debtors-report-all", selectedGroupId, minDebtAmount],
+  const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
+    queryKey: ["debtors-report", debtorsPage, selectedGroupId, minDebtAmount],
+    queryFn: () =>
+      reportService.getDebtorsReport({
+        page: debtorsPage,
+        page_size: debtorsPageSize,
+        group_id: selectedGroupId || undefined,
+        min_debt_amount:
+          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
+      }),
+    enabled: activeTab === "debtors",
+    placeholderData: (prev) => prev,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
+    queryKey: ["debtors-total-debt", selectedGroupId, minDebtAmount],
     queryFn: async () => {
       const firstPage = await reportService.getDebtorsReport({
         page: 1,
@@ -158,65 +180,18 @@ export default function Reports() {
         ...(firstPage.data || []),
         ...allPages.flatMap((page) => page.data || []),
       ];
-      return combined;
+      const totalDebt = combined.reduce(
+        (sum, debtor) => sum + (debtor.debt_amount || 0),
+        0,
+      );
+      return { total_debt: totalDebt };
     },
     enabled: activeTab === "debtors",
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
 
-  const getDebtorMonths = (debtor: DebtorItem) => {
-    const anyDebtor = debtor as any;
-    const monthCandidates = [
-      anyDebtor.month,
-      anyDebtor.payment_month,
-      anyDebtor.debt_month,
-    ]
-      .map((value) => Number(value))
-      .filter((value) => Number.isInteger(value) && value >= 1 && value <= 12);
-
-    const monthsFromList = Array.isArray(anyDebtor.payment_months)
-      ? anyDebtor.payment_months
-          .map((value: unknown) => Number(value))
-          .filter((value: number) => Number.isInteger(value) && value >= 1 && value <= 12)
-      : [];
-
-    const monthsFromString = typeof anyDebtor.months === "string"
-      ? anyDebtor.months
-          .split(",")
-          .map((value: string) => Number(value.trim()))
-          .filter((value: number) => Number.isInteger(value) && value >= 1 && value <= 12)
-      : [];
-
-    return [...new Set([...monthCandidates, ...monthsFromList, ...monthsFromString])];
-  };
-
-  const filteredDebtors = useMemo(() => {
-    const allDebtors = debtorsAllData || [];
-    if (!selectedDebtMonth) {
-      return allDebtors;
-    }
-    return allDebtors.filter((debtor) =>
-      getDebtorMonths(debtor).includes(selectedDebtMonth),
-    );
-  }, [debtorsAllData, selectedDebtMonth]);
-
-  const totalDebtAmount = useMemo(
-    () =>
-      filteredDebtors.reduce(
-        (sum, debtor) => sum + (debtor.debt_amount || 0),
-        0,
-      ),
-    [filteredDebtors],
-  );
-
-  const paginatedDebtors = useMemo(() => {
-    const start = (debtorsPage - 1) * debtorsPageSize;
-    return filteredDebtors.slice(start, start + debtorsPageSize);
-  }, [filteredDebtors, debtorsPage, debtorsPageSize]);
-
-  const debtorsTotalItems = filteredDebtors.length;
-  const debtorsTotalPages = Math.max(1, Math.ceil(debtorsTotalItems / debtorsPageSize));
+  const totalDebtAmount = totalDebtData?.total_debt || 0;
 
   const formatCurrency = (amount: number) => {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
@@ -253,26 +228,41 @@ export default function Reports() {
       value: group.attendance_percentage,
     })) || [];
 
+  const getUnpaidExportParams = () => {
+    const params: {
+      year?: number;
+      month?: number;
+      months?: string;
+      from_date?: string;
+      to_date?: string;
+      group_id?: number;
+    } = {
+      group_id: selectedGroupId || undefined,
+    };
+
+    const hasDateRange = Boolean(unpaidFromDate || unpaidToDate);
+    if (hasDateRange) {
+      params.from_date = unpaidFromDate || undefined;
+      params.to_date = unpaidToDate || undefined;
+      return params;
+    }
+
+    params.year = unpaidYear === "" ? undefined : Number(unpaidYear);
+    params.month = unpaidMonth === "" ? undefined : Number(unpaidMonth);
+    params.months = unpaidMonths.trim() === "" ? undefined : unpaidMonths.trim();
+    return params;
+  };
+
   const handleDebtorsExport = async () => {
     const promise = (async () => {
-      if (filteredDebtors.length === 0) {
+      const blob = await studentService.exportUnpaidStudents(
+        getUnpaidExportParams(),
+      );
+      if (!blob || blob.size === 0) {
         throw new Error("NO_DATA");
       }
-
-      const allDebtors = [...filteredDebtors].sort(
-        (a, b) => b.debt_amount - a.debt_amount,
-      );
-
-      const exportRows = allDebtors.map((item) => ({
-        "Student ID": item.student_id,
-        Student: item.student_name,
-        Group: item.group_name,
-        Contract: item.contract_number,
-        Debt: item.debt_amount,
-      }));
-
       const date = format(new Date(), "yyyy-MM-dd");
-      exportReport(exportRows, `debtors-report-${date}`);
+      downloadFile(blob, `unpaid-students-${date}.xlsx`);
     })();
 
     toast.promise(promise, {
@@ -704,14 +694,41 @@ export default function Reports() {
 
                 <div className="w-56">
                   <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("paymentYear") || "Year"}
+                  </label>
+                  <select
+                    value={unpaidYear}
+                    onChange={(e) => {
+                      setUnpaidYear(e.target.value ? Number(e.target.value) : "");
+                      setDebtorsPage(1);
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{t("allYears") || "All years"}</option>
+                    {[
+                      currentYear - 2,
+                      currentYear - 1,
+                      currentYear,
+                      currentYear + 1,
+                    ].map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
                     {t("month") || "Month"}
                   </label>
                   <select
-                    value={selectedDebtMonth || ""}
+                    value={unpaidMonth}
                     onChange={(e) => {
-                      setSelectedDebtMonth(
-                        e.target.value ? Number(e.target.value) : null,
-                      );
+                      setUnpaidMonth(e.target.value ? Number(e.target.value) : "");
+                      if (e.target.value) {
+                        setUnpaidMonths("");
+                      }
                       setDebtorsPage(1);
                     }}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -723,6 +740,55 @@ export default function Reports() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("months") || "Months"}
+                  </label>
+                  <Input
+                    type="text"
+                    value={unpaidMonths}
+                    onChange={(e) => {
+                      setUnpaidMonths(e.target.value);
+                      if (e.target.value.trim() !== "") {
+                        setUnpaidMonth("");
+                      }
+                      setDebtorsPage(1);
+                    }}
+                    placeholder="1,2,3"
+                    className="h-10"
+                  />
+                </div>
+
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("fromDate")}
+                  </label>
+                  <Input
+                    type="date"
+                    value={unpaidFromDate}
+                    onChange={(e) => {
+                      setUnpaidFromDate(e.target.value);
+                      setDebtorsPage(1);
+                    }}
+                    className="h-10"
+                  />
+                </div>
+
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("toDate")}
+                  </label>
+                  <Input
+                    type="date"
+                    value={unpaidToDate}
+                    onChange={(e) => {
+                      setUnpaidToDate(e.target.value);
+                      setDebtorsPage(1);
+                    }}
+                    className="h-10"
+                  />
                 </div>
 
                 <div className="w-56">
@@ -746,8 +812,12 @@ export default function Reports() {
                   variant="outline"
                   onClick={() => {
                     setSelectedGroupId(null);
-                    setSelectedDebtMonth(null);
                     setMinDebtAmountInput("");
+                    setUnpaidYear(currentYear);
+                    setUnpaidMonth("");
+                    setUnpaidMonths("");
+                    setUnpaidFromDate("");
+                    setUnpaidToDate("");
                     setDebtorsPage(1);
                   }}
                 >
@@ -767,7 +837,7 @@ export default function Reports() {
                     {t("calculating")}
                   </span>
                 ) : (
-                  debtorsTotalItems
+                  debtorsData?.meta?.total || 0
                 )
               }
               icon={
@@ -781,7 +851,7 @@ export default function Reports() {
             <StatsCard
               title={t("totalDebtAmount")}
               value={
-                debtorsLoading ? (
+                totalDebtLoading ? (
                   <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t("calculating")}
@@ -791,7 +861,7 @@ export default function Reports() {
                 )
               }
               icon={
-                debtorsLoading ? (
+                totalDebtLoading ? (
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 ) : (
                   <CreditCard className="w-6 h-6" />
@@ -828,8 +898,8 @@ export default function Reports() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : paginatedDebtors.length > 0 ? (
-                  paginatedDebtors.map((debtor: DebtorItem) => (
+                ) : debtorsData?.data && debtorsData.data.length > 0 ? (
+                  debtorsData.data.map((debtor: DebtorItem) => (
                     <TableRow key={`${debtor.student_id}-${debtor.contract_number}`}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         #{debtor.student_id}
@@ -862,11 +932,11 @@ export default function Reports() {
               </TableBody>
             </Table>
 
-            {debtorsTotalPages > 1 && (
+            {debtorsData?.meta && debtorsData.meta.total_pages > 1 && (
               <TablePagination
                 currentPage={debtorsPage}
-                totalPages={debtorsTotalPages}
-                totalItems={debtorsTotalItems}
+                totalPages={debtorsData.meta.total_pages}
+                totalItems={debtorsData.meta.total}
                 pageSize={debtorsPageSize}
                 onPageChange={setDebtorsPage}
               />
