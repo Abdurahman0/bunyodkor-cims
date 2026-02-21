@@ -43,7 +43,6 @@ import { useLanguageStore } from "@/store/languageStore";
 import {
   formatCurrency as formatCurrencyUtil,
 } from "@/lib/utils";
-import { useDebounce } from "@/hooks/useDebounce";
 
 export default function Reports() {
   const { t } = useLanguageStore();
@@ -57,13 +56,11 @@ export default function Reports() {
   const currentYear = new Date().getFullYear();
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
-  const [minDebtAmountInput, setMinDebtAmountInput] = useState("");
   const [unpaidYear, setUnpaidYear] = useState<number | "">("");
   const [unpaidMonth, setUnpaidMonth] = useState<number | "">("");
   const [unpaidMonths, setUnpaidMonths] = useState("");
   const [unpaidFromDate, setUnpaidFromDate] = useState("");
   const [unpaidToDate, setUnpaidToDate] = useState("");
-  const minDebtAmount = useDebounce(minDebtAmountInput, 400);
   const debtorsPageSize = 20;
   const monthOptions = useMemo(
     () => [
@@ -165,14 +162,12 @@ export default function Reports() {
   };
 
   const { data: debtorsData, isLoading: isDebtorsBaseLoading } = useQuery({
-    queryKey: ["debtors-report", debtorsPage, selectedGroupId, minDebtAmount],
+    queryKey: ["debtors-report", debtorsPage, selectedGroupId],
     queryFn: () =>
       reportService.getDebtorsReport({
         page: debtorsPage,
         page_size: debtorsPageSize,
         group_id: selectedGroupId || undefined,
-        min_debt_amount:
-          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       }),
     enabled: activeTab === "debtors" && !hasUnpaidListFilter,
     placeholderData: (prev) => prev,
@@ -185,7 +180,6 @@ export default function Reports() {
       "debtors-report-filtered-unpaid",
       debtorsPage,
       selectedGroupId,
-      minDebtAmount,
       unpaidYear,
       unpaidMonth,
       unpaidMonths,
@@ -197,8 +191,6 @@ export default function Reports() {
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
-        min_debt_amount:
-          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       });
 
       const debtorsPages = debtorsFirstPage.meta?.total_pages || 1;
@@ -210,10 +202,6 @@ export default function Reports() {
                   page: idx + 2,
                   page_size: 100,
                   group_id: selectedGroupId || undefined,
-                  min_debt_amount:
-                    minDebtAmount.trim() === ""
-                      ? undefined
-                      : Number(minDebtAmount),
                 }),
               ),
             )
@@ -291,14 +279,12 @@ export default function Reports() {
   });
 
   const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
-    queryKey: ["debtors-total-debt", selectedGroupId, minDebtAmount],
+    queryKey: ["debtors-total-debt", selectedGroupId],
     queryFn: async () => {
       const firstPage = await reportService.getDebtorsReport({
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
-        min_debt_amount:
-          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       });
 
       const pages = firstPage.meta?.total_pages || 1;
@@ -310,10 +296,6 @@ export default function Reports() {
                   page: idx + 2,
                   page_size: 100,
                   group_id: selectedGroupId || undefined,
-                  min_debt_amount:
-                    minDebtAmount.trim() === ""
-                      ? undefined
-                      : Number(minDebtAmount),
                 }),
               ),
             )
@@ -918,28 +900,10 @@ export default function Reports() {
                   />
                 </div>
 
-                <div className="w-56">
-                  <label className="text-sm font-medium text-foreground mb-1 block">
-                    Min debt
-                  </label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={minDebtAmountInput}
-                    onChange={(e) => {
-                      setMinDebtAmountInput(e.target.value);
-                      setDebtorsPage(1);
-                    }}
-                    placeholder="e.g. 800000"
-                    className="h-10"
-                  />
-                </div>
-
                 <Button
                   variant="outline"
                   onClick={() => {
                     setSelectedGroupId(null);
-                    setMinDebtAmountInput("");
                     setUnpaidYear("");
                     setUnpaidMonth("");
                     setUnpaidMonths("");
