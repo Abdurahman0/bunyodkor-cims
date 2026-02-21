@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,7 @@ export default function Reports() {
   const [selectedDebtMonth, setSelectedDebtMonth] = useState<number | null>(null);
   const [minDebtAmountInput, setMinDebtAmountInput] = useState("");
   const minDebtAmount = useDebounce(minDebtAmountInput, 400);
+  const debtorsPageSize = 20;
   const monthOptions = useMemo(
     () => [
       { value: 1, label: t("january") || "January" },
@@ -124,43 +125,13 @@ export default function Reports() {
     return groupsData.data;
   }, [groupsData]);
 
-  const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
-    queryKey: [
-      "debtors-report",
-      debtorsPage,
-      selectedGroupId,
-      minDebtAmount,
-      selectedDebtMonth,
-    ],
-    queryFn: () =>
-      reportService.getDebtorsReport({
-        page: debtorsPage,
-        page_size: 20,
-        group_id: selectedGroupId || undefined,
-        payment_month: selectedDebtMonth || undefined,
-        min_debt_amount:
-          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
-      }),
-    enabled: activeTab === "debtors",
-    placeholderData: keepPreviousData,
-    staleTime: 30000,
-    refetchOnWindowFocus: false,
-  });
-
-  // Keep exact total debt without blocking table render
-  const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
-    queryKey: [
-      "debtors-total-debt",
-      selectedGroupId,
-      minDebtAmount,
-      selectedDebtMonth,
-    ],
+  const { data: debtorsAllData, isLoading: debtorsLoading } = useQuery({
+    queryKey: ["debtors-report-all", selectedGroupId, minDebtAmount],
     queryFn: async () => {
       const firstPage = await reportService.getDebtorsReport({
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
-        payment_month: selectedDebtMonth || undefined,
         min_debt_amount:
           minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       });
@@ -174,7 +145,6 @@ export default function Reports() {
                   page: idx + 2,
                   page_size: 100,
                   group_id: selectedGroupId || undefined,
-                  payment_month: selectedDebtMonth || undefined,
                   min_debt_amount:
                     minDebtAmount.trim() === ""
                       ? undefined
@@ -188,19 +158,65 @@ export default function Reports() {
         ...(firstPage.data || []),
         ...allPages.flatMap((page) => page.data || []),
       ];
-      const totalDebt = combined.reduce(
-        (sum, debtor) => sum + (debtor.debt_amount || 0),
-        0,
-      );
-
-      return { total_debt: totalDebt };
+      return combined;
     },
     enabled: activeTab === "debtors",
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
 
-  const totalDebtAmount = totalDebtData?.total_debt || 0;
+  const getDebtorMonths = (debtor: DebtorItem) => {
+    const anyDebtor = debtor as any;
+    const monthCandidates = [
+      anyDebtor.month,
+      anyDebtor.payment_month,
+      anyDebtor.debt_month,
+    ]
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value >= 1 && value <= 12);
+
+    const monthsFromList = Array.isArray(anyDebtor.payment_months)
+      ? anyDebtor.payment_months
+          .map((value: unknown) => Number(value))
+          .filter((value: number) => Number.isInteger(value) && value >= 1 && value <= 12)
+      : [];
+
+    const monthsFromString = typeof anyDebtor.months === "string"
+      ? anyDebtor.months
+          .split(",")
+          .map((value: string) => Number(value.trim()))
+          .filter((value: number) => Number.isInteger(value) && value >= 1 && value <= 12)
+      : [];
+
+    return [...new Set([...monthCandidates, ...monthsFromList, ...monthsFromString])];
+  };
+
+  const filteredDebtors = useMemo(() => {
+    const allDebtors = debtorsAllData || [];
+    if (!selectedDebtMonth) {
+      return allDebtors;
+    }
+    return allDebtors.filter((debtor) =>
+      getDebtorMonths(debtor).includes(selectedDebtMonth),
+    );
+  }, [debtorsAllData, selectedDebtMonth]);
+
+  const totalDebtAmount = useMemo(
+    () =>
+      filteredDebtors.reduce(
+        (sum, debtor) => sum + (debtor.debt_amount || 0),
+        0,
+      ),
+    [filteredDebtors],
+  );
+
+  const paginatedDebtors = useMemo(() => {
+    const start = (debtorsPage - 1) * debtorsPageSize;
+    return filteredDebtors.slice(start, start + debtorsPageSize);
+  }, [filteredDebtors, debtorsPage, debtorsPageSize]);
+
+  const debtorsTotalItems = filteredDebtors.length;
+  const debtorsTotalPages = Math.max(1, Math.ceil(debtorsTotalItems / debtorsPageSize));
 
   const formatCurrency = (amount: number) => {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
@@ -239,40 +255,13 @@ export default function Reports() {
 
   const handleDebtorsExport = async () => {
     const promise = (async () => {
-      const params = {
-        group_id: selectedGroupId || undefined,
-        payment_month: selectedDebtMonth || undefined,
-        min_debt_amount:
-          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
-      };
-      const firstPage = await reportService.getDebtorsReport({
-        ...params,
-        page: 1,
-        page_size: 100,
-      });
-
-      if (!firstPage.data || firstPage.data.length === 0) {
+      if (filteredDebtors.length === 0) {
         throw new Error("NO_DATA");
       }
 
-      const totalPages = firstPage.meta?.total_pages || 1;
-      const restPages =
-        totalPages > 1
-          ? await Promise.all(
-              Array.from({ length: totalPages - 1 }, (_, idx) =>
-                reportService.getDebtorsReport({
-                  ...params,
-                  page: idx + 2,
-                  page_size: 100,
-                }),
-              ),
-            )
-          : [];
-
-      const allDebtors = [
-        ...firstPage.data,
-        ...restPages.flatMap((page) => page.data || []),
-      ].sort((a, b) => b.debt_amount - a.debt_amount);
+      const allDebtors = [...filteredDebtors].sort(
+        (a, b) => b.debt_amount - a.debt_amount,
+      );
 
       const exportRows = allDebtors.map((item) => ({
         "Student ID": item.student_id,
@@ -778,7 +767,7 @@ export default function Reports() {
                     {t("calculating")}
                   </span>
                 ) : (
-                  debtorsData?.meta?.total || 0
+                  debtorsTotalItems
                 )
               }
               icon={
@@ -792,7 +781,7 @@ export default function Reports() {
             <StatsCard
               title={t("totalDebtAmount")}
               value={
-                totalDebtLoading ? (
+                debtorsLoading ? (
                   <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t("calculating")}
@@ -802,7 +791,7 @@ export default function Reports() {
                 )
               }
               icon={
-                totalDebtLoading ? (
+                debtorsLoading ? (
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 ) : (
                   <CreditCard className="w-6 h-6" />
@@ -839,8 +828,8 @@ export default function Reports() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : debtorsData?.data && debtorsData.data.length > 0 ? (
-                  debtorsData.data.map((debtor: DebtorItem) => (
+                ) : paginatedDebtors.length > 0 ? (
+                  paginatedDebtors.map((debtor: DebtorItem) => (
                     <TableRow key={`${debtor.student_id}-${debtor.contract_number}`}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         #{debtor.student_id}
@@ -873,12 +862,12 @@ export default function Reports() {
               </TableBody>
             </Table>
 
-            {debtorsData?.meta && debtorsData.meta.total_pages > 1 && (
+            {debtorsTotalPages > 1 && (
               <TablePagination
                 currentPage={debtorsPage}
-                totalPages={debtorsData.meta.total_pages}
-                totalItems={debtorsData.meta.total}
-                pageSize={20}
+                totalPages={debtorsTotalPages}
+                totalItems={debtorsTotalItems}
+                pageSize={debtorsPageSize}
                 onPageChange={setDebtorsPage}
               />
             )}
