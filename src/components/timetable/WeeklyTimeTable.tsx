@@ -33,6 +33,11 @@ const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => {
 // Week days
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const toHourSlot = (time: string) => {
+  const [hour] = time.split(":");
+  return `${hour.padStart(2, "0")}:00`;
+};
+
 // Color palette for groups (vibrant and modern)
 const GROUP_COLORS = [
   "bg-blue-500 border-blue-600 text-white hover:bg-blue-600",
@@ -80,7 +85,7 @@ export default function WeeklyTimeTable({
 
     sessions.forEach((session) => {
       const dateKey = session.session_date;
-      const timeKey = session.start_time.substring(0, 5); // HH:mm format
+      const timeKey = toHourSlot(session.start_time.substring(0, 5));
       const key = `${dateKey}-${timeKey}`;
 
       if (!map.has(key)) {

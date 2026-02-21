@@ -2,7 +2,7 @@
 import type { GroupRead, SessionCreateRequest } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { headCoachService } from "@/services/api.service";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,32 @@ interface SessionDialogProps {
   onSuccess: () => void;
 }
 
+const getDefaultSessionFormData = () => ({
+  group_id: undefined,
+  session_date: new Date().toISOString().split("T")[0],
+  start_time: "09:00",
+  end_time: "10:30",
+  topic: "",
+  description: "",
+  station: "Stadion",
+});
+
+const getInitialSessionFormData = (initialData?: Partial<SessionCreateRequest>) => {
+  const defaults = getDefaultSessionFormData();
+  if (!initialData) {
+    return defaults;
+  }
+
+  return {
+    ...defaults,
+    ...initialData,
+    station:
+      (initialData as any).station ||
+      (initialData as any).location ||
+      defaults.station,
+  };
+};
+
 export function SessionDialog({
   open,
   onOpenChange,
@@ -35,37 +61,13 @@ export function SessionDialog({
   onSuccess,
 }: SessionDialogProps) {
   const { t } = useLanguageStore();
-  const [formData, setFormData] = useState<Partial<SessionCreateRequest> & { station?: string }>({
-    group_id: undefined,
-    session_date: "",
-    start_time: "",
-    end_time: "",
-    topic: "", // This property exists in SessionCreateRequest
-    description: "",
-    station: "Stadion", // Default location
-  });
+  const [formData, setFormData] = useState<
+    Partial<SessionCreateRequest> & { station?: string; description?: string }
+  >(getInitialSessionFormData(initialData));
 
-  useEffect(() => {
-    if (open) {
-      if (initialData) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setFormData({
-          ...initialData, // Spread initialData first,
-          station: (initialData as any).station || (initialData as any).location || "Stadion",
-        } as any);
-      } else {
-        setFormData({
-          group_id: undefined,
-          session_date: new Date().toISOString().split("T")[0],
-          start_time: "09:00",
-          end_time: "10:30",
-          topic: "", // This property exists in SessionCreateRequest
-          description: "",
-          station: "Stadion",
-        });
-      }
-    }
-  }, [open, initialData, groups]);
+  const dialogDataKey = `${(initialData as any)?.id ?? "new"}-${
+    initialData?.session_date || ""
+  }-${initialData?.start_time || ""}`;
 
   const createSessionMutation = useMutation({
     mutationFn: (data: SessionCreateRequest) =>
@@ -73,9 +75,9 @@ export function SessionDialog({
     onSuccess: () => {
       toast.success(t("sessionCreatedSuccess"));
       onSuccess();
+      setFormData(getDefaultSessionFormData());
       onOpenChange(false);
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || t("failedToCreateSession"));
     },
@@ -87,6 +89,7 @@ export function SessionDialog({
     onSuccess: () => {
       toast.success(t("sessionUpdatedSuccess"));
       onSuccess();
+      setFormData(getDefaultSessionFormData());
       onOpenChange(false);
     },
     onError: (error: any) => {
@@ -141,10 +144,19 @@ export function SessionDialog({
   };
   const isPending =
     createSessionMutation.isPending || updateSessionMutation.isPending;
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen);
+    if (!nextOpen) {
+      setFormData(getDefaultSessionFormData());
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] px-6 sm:px-6">
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent
+        key={dialogDataKey}
+        className="sm:max-w-[425px] px-6 sm:px-6"
+      >
         <DialogHeader>
           <DialogTitle>
             {(initialData as any)?.id
@@ -256,7 +268,7 @@ export function SessionDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleDialogOpenChange(false)}
               disabled={isPending}
             >
               {t("cancel")}

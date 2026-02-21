@@ -44,12 +44,9 @@ import {
 } from "lucide-react";
 
 import { toast } from "react-hot-toast";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type {
   SessionCreateRequest,
   SessionRead,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  GroupsStatisticsResponse,
 } from "@/types/api";
 
 // Reusable Components
@@ -185,6 +182,13 @@ export default function HeadCoach() {
   const handleCreateNewSession = () => {
     setSessionDialogInitialData(undefined);
     setSessionDialogOpen(true);
+  };
+
+  const handleSessionDialogOpenChange = (open: boolean) => {
+    setSessionDialogOpen(open);
+    if (!open) {
+      setSessionDialogInitialData(undefined);
+    }
   };
 
   const handleDeleteRequest = (session: SessionRead) => {
@@ -482,8 +486,13 @@ export default function HeadCoach() {
       />
 
       <SessionDialog
+        key={`${sessionDialogOpen ? "open" : "closed"}-${
+          sessionDialogInitialData?.session_date || ""
+        }-${
+          sessionDialogInitialData?.start_time || ""
+        }`}
         open={sessionDialogOpen}
-        onOpenChange={setSessionDialogOpen}
+        onOpenChange={handleSessionDialogOpenChange}
         groups={groups}
         initialData={sessionDialogInitialData}
         onSuccess={() => {
@@ -491,6 +500,7 @@ export default function HeadCoach() {
           queryClient.invalidateQueries({
             queryKey: ["groups-statistics-headcoach"],
           });
+          setSessionDialogInitialData(undefined);
         }}
       />
 
