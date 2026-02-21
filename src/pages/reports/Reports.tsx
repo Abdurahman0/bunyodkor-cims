@@ -58,7 +58,7 @@ export default function Reports() {
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [minDebtAmountInput, setMinDebtAmountInput] = useState("");
-  const [unpaidYear, setUnpaidYear] = useState<number | "">(currentYear);
+  const [unpaidYear, setUnpaidYear] = useState<number | "">("");
   const [unpaidMonth, setUnpaidMonth] = useState<number | "">("");
   const [unpaidMonths, setUnpaidMonths] = useState("");
   const [unpaidFromDate, setUnpaidFromDate] = useState("");
@@ -131,7 +131,40 @@ export default function Reports() {
     return groupsData.data;
   }, [groupsData]);
 
-  const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
+  const hasUnpaidListFilter = Boolean(
+    unpaidYear !== "" ||
+      unpaidMonth !== "" ||
+      unpaidMonths.trim() !== "" ||
+      unpaidFromDate ||
+      unpaidToDate,
+  );
+
+  const getUnpaidFilterParams = () => {
+    const params: {
+      year?: number;
+      month?: number;
+      months?: string;
+      from_date?: string;
+      to_date?: string;
+      group_id?: number;
+    } = {
+      group_id: selectedGroupId || undefined,
+    };
+
+    const hasDateRange = Boolean(unpaidFromDate || unpaidToDate);
+    if (hasDateRange) {
+      params.from_date = unpaidFromDate || undefined;
+      params.to_date = unpaidToDate || undefined;
+      return params;
+    }
+
+    params.year = unpaidYear === "" ? undefined : Number(unpaidYear);
+    params.month = unpaidMonth === "" ? undefined : Number(unpaidMonth);
+    params.months = unpaidMonths.trim() === "" ? undefined : unpaidMonths.trim();
+    return params;
+  };
+
+  const { data: debtorsData, isLoading: isDebtorsBaseLoading } = useQuery({
     queryKey: ["debtors-report", debtorsPage, selectedGroupId, minDebtAmount],
     queryFn: () =>
       reportService.getDebtorsReport({
@@ -141,7 +174,117 @@ export default function Reports() {
         min_debt_amount:
           minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       }),
-    enabled: activeTab === "debtors",
+    enabled: activeTab === "debtors" && !hasUnpaidListFilter,
+    placeholderData: (prev) => prev,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: debtorsFilteredData, isLoading: isDebtorsFilteredLoading } = useQuery({
+    queryKey: [
+      "debtors-report-filtered-unpaid",
+      debtorsPage,
+      selectedGroupId,
+      minDebtAmount,
+      unpaidYear,
+      unpaidMonth,
+      unpaidMonths,
+      unpaidFromDate,
+      unpaidToDate,
+    ],
+    queryFn: async () => {
+      const debtorsFirstPage = await reportService.getDebtorsReport({
+        page: 1,
+        page_size: 100,
+        group_id: selectedGroupId || undefined,
+        min_debt_amount:
+          minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
+      });
+
+      const debtorsPages = debtorsFirstPage.meta?.total_pages || 1;
+      const debtorsRestPages =
+        debtorsPages > 1
+          ? await Promise.all(
+              Array.from({ length: debtorsPages - 1 }, (_, idx) =>
+                reportService.getDebtorsReport({
+                  page: idx + 2,
+                  page_size: 100,
+                  group_id: selectedGroupId || undefined,
+                  min_debt_amount:
+                    minDebtAmount.trim() === ""
+                      ? undefined
+                      : Number(minDebtAmount),
+                }),
+              ),
+            )
+          : [];
+
+      const allDebtors = [
+        ...(debtorsFirstPage.data || []),
+        ...debtorsRestPages.flatMap((page) => page.data || []),
+      ];
+
+      const unpaidFirstPage = await studentService.getUnpaidStudents({
+        ...getUnpaidFilterParams(),
+        page: 1,
+        page_size: 100,
+      });
+
+      const unpaidPages = unpaidFirstPage.meta?.total_pages || 1;
+      const unpaidRestPages =
+        unpaidPages > 1
+          ? await Promise.all(
+              Array.from({ length: unpaidPages - 1 }, (_, idx) =>
+                studentService.getUnpaidStudents({
+                  ...getUnpaidFilterParams(),
+                  page: idx + 2,
+                  page_size: 100,
+                }),
+              ),
+            )
+          : [];
+
+      const allUnpaid = [
+        ...(unpaidFirstPage.data || []),
+        ...unpaidRestPages.flatMap((page) => page.data || []),
+      ];
+
+      const unpaidStudentIds = new Set<number>();
+      allUnpaid.forEach((item: any) => {
+        const studentId = Number(item.student_id ?? item.student?.id);
+        if (Number.isFinite(studentId)) {
+          unpaidStudentIds.add(studentId);
+        }
+      });
+
+      const filteredDebtors = allDebtors.filter((debtor) =>
+        unpaidStudentIds.has(debtor.student_id),
+      );
+
+      const total = filteredDebtors.length;
+      const total_pages = Math.max(1, Math.ceil(total / debtorsPageSize));
+      const startIndex = (debtorsPage - 1) * debtorsPageSize;
+      const paginated = filteredDebtors.slice(
+        startIndex,
+        startIndex + debtorsPageSize,
+      );
+      const totalDebt = filteredDebtors.reduce(
+        (sum, debtor) => sum + (debtor.debt_amount || 0),
+        0,
+      );
+
+      return {
+        data: paginated,
+        meta: {
+          page: debtorsPage,
+          page_size: debtorsPageSize,
+          total,
+          total_pages,
+        },
+        total_debt: totalDebt,
+      };
+    },
+    enabled: activeTab === "debtors" && hasUnpaidListFilter,
     placeholderData: (prev) => prev,
     staleTime: 30000,
     refetchOnWindowFocus: false,
@@ -186,12 +329,21 @@ export default function Reports() {
       );
       return { total_debt: totalDebt };
     },
-    enabled: activeTab === "debtors",
+    enabled: activeTab === "debtors" && !hasUnpaidListFilter,
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
 
-  const totalDebtAmount = totalDebtData?.total_debt || 0;
+  const effectiveDebtorsData = hasUnpaidListFilter ? debtorsFilteredData : debtorsData;
+  const debtorsLoading = hasUnpaidListFilter
+    ? isDebtorsFilteredLoading
+    : isDebtorsBaseLoading;
+  const totalDebtAmount = hasUnpaidListFilter
+    ? debtorsFilteredData?.total_debt || 0
+    : totalDebtData?.total_debt || 0;
+  const isTotalDebtLoading = hasUnpaidListFilter
+    ? isDebtorsFilteredLoading
+    : totalDebtLoading;
 
   const formatCurrency = (amount: number) => {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
@@ -228,35 +380,10 @@ export default function Reports() {
       value: group.attendance_percentage,
     })) || [];
 
-  const getUnpaidExportParams = () => {
-    const params: {
-      year?: number;
-      month?: number;
-      months?: string;
-      from_date?: string;
-      to_date?: string;
-      group_id?: number;
-    } = {
-      group_id: selectedGroupId || undefined,
-    };
-
-    const hasDateRange = Boolean(unpaidFromDate || unpaidToDate);
-    if (hasDateRange) {
-      params.from_date = unpaidFromDate || undefined;
-      params.to_date = unpaidToDate || undefined;
-      return params;
-    }
-
-    params.year = unpaidYear === "" ? undefined : Number(unpaidYear);
-    params.month = unpaidMonth === "" ? undefined : Number(unpaidMonth);
-    params.months = unpaidMonths.trim() === "" ? undefined : unpaidMonths.trim();
-    return params;
-  };
-
   const handleDebtorsExport = async () => {
     const promise = (async () => {
       const blob = await studentService.exportUnpaidStudents(
-        getUnpaidExportParams(),
+        getUnpaidFilterParams(),
       );
       if (!blob || blob.size === 0) {
         throw new Error("NO_DATA");
@@ -813,7 +940,7 @@ export default function Reports() {
                   onClick={() => {
                     setSelectedGroupId(null);
                     setMinDebtAmountInput("");
-                    setUnpaidYear(currentYear);
+                    setUnpaidYear("");
                     setUnpaidMonth("");
                     setUnpaidMonths("");
                     setUnpaidFromDate("");
@@ -837,7 +964,7 @@ export default function Reports() {
                     {t("calculating")}
                   </span>
                 ) : (
-                  debtorsData?.meta?.total || 0
+                  effectiveDebtorsData?.meta?.total || 0
                 )
               }
               icon={
@@ -851,7 +978,7 @@ export default function Reports() {
             <StatsCard
               title={t("totalDebtAmount")}
               value={
-                totalDebtLoading ? (
+                isTotalDebtLoading ? (
                   <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t("calculating")}
@@ -861,7 +988,7 @@ export default function Reports() {
                 )
               }
               icon={
-                totalDebtLoading ? (
+                isTotalDebtLoading ? (
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 ) : (
                   <CreditCard className="w-6 h-6" />
@@ -898,8 +1025,8 @@ export default function Reports() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : debtorsData?.data && debtorsData.data.length > 0 ? (
-                  debtorsData.data.map((debtor: DebtorItem) => (
+                ) : effectiveDebtorsData?.data && effectiveDebtorsData.data.length > 0 ? (
+                  effectiveDebtorsData.data.map((debtor: DebtorItem) => (
                     <TableRow key={`${debtor.student_id}-${debtor.contract_number}`}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         #{debtor.student_id}
@@ -932,11 +1059,11 @@ export default function Reports() {
               </TableBody>
             </Table>
 
-            {debtorsData?.meta && debtorsData.meta.total_pages > 1 && (
+            {effectiveDebtorsData?.meta && effectiveDebtorsData.meta.total_pages > 1 && (
               <TablePagination
                 currentPage={debtorsPage}
-                totalPages={debtorsData.meta.total_pages}
-                totalItems={debtorsData.meta.total}
+                totalPages={effectiveDebtorsData.meta.total_pages}
+                totalItems={effectiveDebtorsData.meta.total}
                 pageSize={debtorsPageSize}
                 onPageChange={setDebtorsPage}
               />
