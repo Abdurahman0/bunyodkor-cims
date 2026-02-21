@@ -1799,6 +1799,7 @@ export const reportService = {
   getDebtorsReport: async (params?: {
     group_id?: number;
     min_debt_amount?: number;
+    payment_month?: number;
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<DebtorItem[]>> => {

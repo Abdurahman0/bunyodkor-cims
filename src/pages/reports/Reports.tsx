@@ -1,4 +1,3 @@
-/* eslint-disable no-case-declarations */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
@@ -56,8 +55,26 @@ export default function Reports() {
   });
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [selectedDebtMonth, setSelectedDebtMonth] = useState<number | null>(null);
   const [minDebtAmountInput, setMinDebtAmountInput] = useState("");
   const minDebtAmount = useDebounce(minDebtAmountInput, 400);
+  const monthOptions = useMemo(
+    () => [
+      { value: 1, label: t("january") || "January" },
+      { value: 2, label: t("february") || "February" },
+      { value: 3, label: t("march") || "March" },
+      { value: 4, label: t("april") || "April" },
+      { value: 5, label: t("may") || "May" },
+      { value: 6, label: t("june") || "June" },
+      { value: 7, label: t("july") || "July" },
+      { value: 8, label: t("august") || "August" },
+      { value: 9, label: t("september") || "September" },
+      { value: 10, label: t("october") || "October" },
+      { value: 11, label: t("november") || "November" },
+      { value: 12, label: t("december") || "December" },
+    ],
+    [t],
+  );
 
   const { data: financeReport, isLoading: financeLoading } = useQuery({
     queryKey: ["finance-report", dateRange],
@@ -108,12 +125,19 @@ export default function Reports() {
   }, [groupsData]);
 
   const { data: debtorsData, isLoading: debtorsLoading } = useQuery({
-    queryKey: ["debtors-report", debtorsPage, selectedGroupId, minDebtAmount],
+    queryKey: [
+      "debtors-report",
+      debtorsPage,
+      selectedGroupId,
+      minDebtAmount,
+      selectedDebtMonth,
+    ],
     queryFn: () =>
       reportService.getDebtorsReport({
         page: debtorsPage,
         page_size: 20,
         group_id: selectedGroupId || undefined,
+        payment_month: selectedDebtMonth || undefined,
         min_debt_amount:
           minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       }),
@@ -125,12 +149,18 @@ export default function Reports() {
 
   // Keep exact total debt without blocking table render
   const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
-    queryKey: ["debtors-total-debt", selectedGroupId, minDebtAmount],
+    queryKey: [
+      "debtors-total-debt",
+      selectedGroupId,
+      minDebtAmount,
+      selectedDebtMonth,
+    ],
     queryFn: async () => {
       const firstPage = await reportService.getDebtorsReport({
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
+        payment_month: selectedDebtMonth || undefined,
         min_debt_amount:
           minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       });
@@ -144,6 +174,7 @@ export default function Reports() {
                   page: idx + 2,
                   page_size: 100,
                   group_id: selectedGroupId || undefined,
+                  payment_month: selectedDebtMonth || undefined,
                   min_debt_amount:
                     minDebtAmount.trim() === ""
                       ? undefined
@@ -210,6 +241,7 @@ export default function Reports() {
     const promise = (async () => {
       const params = {
         group_id: selectedGroupId || undefined,
+        payment_month: selectedDebtMonth || undefined,
         min_debt_amount:
           minDebtAmount.trim() === "" ? undefined : Number(minDebtAmount),
       };
@@ -683,6 +715,29 @@ export default function Reports() {
 
                 <div className="w-56">
                   <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("month") || "Month"}
+                  </label>
+                  <select
+                    value={selectedDebtMonth || ""}
+                    onChange={(e) => {
+                      setSelectedDebtMonth(
+                        e.target.value ? Number(e.target.value) : null,
+                      );
+                      setDebtorsPage(1);
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{t("allMonths") || "All months"}</option>
+                    {monthOptions.map((month) => (
+                      <option key={month.value} value={month.value}>
+                        {month.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
                     Min debt
                   </label>
                   <Input
@@ -702,6 +757,7 @@ export default function Reports() {
                   variant="outline"
                   onClick={() => {
                     setSelectedGroupId(null);
+                    setSelectedDebtMonth(null);
                     setMinDebtAmountInput("");
                     setDebtorsPage(1);
                   }}

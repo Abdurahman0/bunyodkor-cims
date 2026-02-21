@@ -181,6 +181,15 @@ const TablePagination = ({
 }: TablePaginationProps) => {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, totalItems)
+  const getVisiblePages = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+
+    const pages = new Set<number>([1, totalPages, currentPage - 1, currentPage, currentPage + 1])
+    return [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b)
+  }
+  const visiblePages = getVisiblePages()
 
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30 dark:bg-muted/10">
@@ -201,27 +210,23 @@ const TablePagination = ({
           Previous
         </Button>
         <div className="flex items-center gap-1">
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            let pageNum: number
-            if (totalPages <= 5) {
-              pageNum = i + 1
-            } else if (currentPage <= 3) {
-              pageNum = i + 1
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 4 + i
-            } else {
-              pageNum = currentPage - 2 + i
-            }
+          {visiblePages.map((pageNum, index) => {
+            const prevPage = visiblePages[index - 1]
+            const hasGap = prevPage && pageNum - prevPage > 1
             return (
-              <Button
-                key={pageNum}
-                variant={currentPage === pageNum ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => onPageChange(pageNum)}
-                className="w-8 h-8 p-0"
-              >
-                {pageNum}
-              </Button>
+              <React.Fragment key={pageNum}>
+                {hasGap && (
+                  <span className="px-1 text-muted-foreground select-none">...</span>
+                )}
+                <Button
+                  variant={currentPage === pageNum ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => onPageChange(pageNum)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNum}
+                </Button>
+              </React.Fragment>
             )
           })}
         </div>
