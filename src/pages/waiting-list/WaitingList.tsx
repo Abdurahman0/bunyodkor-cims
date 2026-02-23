@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { waitingListService, groupService } from "@/services/api.service";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Plus,
   Edit,
   Trash2,
@@ -31,6 +37,8 @@ export default function WaitingList() {
   const [selectedEntry, setSelectedEntry] = useState<WaitingListRead | null>(
     null
   );
+  const [viewEntry, setViewEntry] = useState<WaitingListRead | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -237,7 +245,16 @@ export default function WaitingList() {
                         <div>
                           <h3 className="font-semibold text-foreground flex items-center gap-2">
                             <User className="w-4 h-4" />
-                            {entry.student_first_name} {entry.student_last_name}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setViewEntry(entry);
+                                setIsViewDialogOpen(true);
+                              }}
+                              className="text-left text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              {entry.student_first_name} {entry.student_last_name}
+                            </button>
                           </h3>
                           <div className="text-sm text-muted-foreground">
                             {t("birthYear") || "Birth Year"}: {entry.birth_year}
@@ -384,6 +401,53 @@ export default function WaitingList() {
           queryClient.invalidateQueries({ queryKey: ["waiting-list"] });
         }}
       />
+
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("studentInformation") || "Student Information"}</DialogTitle>
+          </DialogHeader>
+          {viewEntry && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-muted-foreground">{t("firstName") || "First Name"}</div>
+                <div className="font-medium">{viewEntry.student_first_name}</div>
+                <div className="text-muted-foreground">{t("lastName") || "Last Name"}</div>
+                <div className="font-medium">{viewEntry.student_last_name}</div>
+                <div className="text-muted-foreground">{t("birthYear") || "Birth Year"}</div>
+                <div className="font-medium">{viewEntry.birth_year}</div>
+                <div className="text-muted-foreground">{t("group") || "Group"}</div>
+                <div className="font-medium">{getGroupName(viewEntry.group_id)}</div>
+                <div className="text-muted-foreground">{t("priority") || "Priority"}</div>
+                <div className="font-medium">{viewEntry.priority}</div>
+                <div className="text-muted-foreground">{t("createdAt") || "Created At"}</div>
+                <div className="font-medium">
+                  {format(new Date(viewEntry.created_at), "MMM d, yyyy HH:mm")}
+                </div>
+              </div>
+              <div className="border-t pt-3 space-y-2">
+                <div className="font-semibold">{t("parentInformation") || "Parent Information"}</div>
+                <div>
+                  <span className="text-muted-foreground">{t("father") || "Father"}: </span>
+                  <span className="font-medium">{viewEntry.father_name}</span>
+                  <span className="text-muted-foreground"> ({viewEntry.father_phone})</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{t("mother") || "Mother"}: </span>
+                  <span className="font-medium">{viewEntry.mother_name}</span>
+                  <span className="text-muted-foreground"> ({viewEntry.mother_phone})</span>
+                </div>
+              </div>
+              {viewEntry.notes && (
+                <div className="border-t pt-3">
+                  <div className="font-semibold mb-1">{t("notes") || "Notes"}</div>
+                  <p className="text-muted-foreground">{viewEntry.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
