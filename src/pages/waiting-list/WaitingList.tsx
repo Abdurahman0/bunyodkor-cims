@@ -26,6 +26,7 @@ import {
   AlertCircle,
   User,
   Phone,
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
@@ -405,8 +406,18 @@ export default function WaitingList() {
         }}
       />
 
-<Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden">
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent
+          className="max-w-md sm:max-w-lg p-0 overflow-hidden"
+        >
+          <button
+            type="button"
+            onClick={() => setIsViewDialogOpen(false)}
+            className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground z-10"
+            aria-label={t("close") || "Close"}
+          >
+            <X className="h-4 w-4" />
+          </button>
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="flex items-center gap-2 text-xl">
               {t("studentInformation") || "O'quvchi Ma'lumotlari"}
