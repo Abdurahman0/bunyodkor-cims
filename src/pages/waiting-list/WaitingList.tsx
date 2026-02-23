@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -402,48 +403,111 @@ export default function WaitingList() {
         }}
       />
 
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t("studentInformation") || "Student Information"}</DialogTitle>
+<Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              {t("studentInformation") || "O'quvchi Ma'lumotlari"}
+            </DialogTitle>
           </DialogHeader>
+          
           {viewEntry && (
-            <div className="space-y-4 text-sm">
+            <div className="px-6 pb-6 space-y-6 overflow-y-auto max-h-[80vh]">
+              
+              {/* Asosiy ma'lumotlar va Avatar */}
+              <div className="flex items-center gap-4 bg-muted/40 p-4 rounded-xl border border-border/50 mt-2">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex shrink-0 items-center justify-center text-white text-2xl font-bold shadow-sm">
+                  {viewEntry.student_first_name.charAt(0)}
+                  {viewEntry.student_last_name.charAt(0)}
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-xl font-bold leading-none text-foreground">
+                    {viewEntry.student_first_name} {viewEntry.student_last_name}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <Badge variant="outline" className="gap-1 bg-background">
+                      <Users className="w-3 h-3" />
+                      {getGroupName(viewEntry.group_id)}
+                    </Badge>
+                    <Badge className={getPriorityColor(viewEntry.priority, viewEntry.group_id)}>
+                      {t("priority") || "Ustuvorlik"}: {viewEntry.priority}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Qo'shimcha detallar gridi */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="text-muted-foreground">{t("firstName") || "First Name"}</div>
-                <div className="font-medium">{viewEntry.student_first_name}</div>
-                <div className="text-muted-foreground">{t("lastName") || "Last Name"}</div>
-                <div className="font-medium">{viewEntry.student_last_name}</div>
-                <div className="text-muted-foreground">{t("birthYear") || "Birth Year"}</div>
-                <div className="font-medium">{viewEntry.birth_year}</div>
-                <div className="text-muted-foreground">{t("group") || "Group"}</div>
-                <div className="font-medium">{getGroupName(viewEntry.group_id)}</div>
-                <div className="text-muted-foreground">{t("priority") || "Priority"}</div>
-                <div className="font-medium">{viewEntry.priority}</div>
-                <div className="text-muted-foreground">{t("createdAt") || "Created At"}</div>
-                <div className="font-medium">
-                  {format(new Date(viewEntry.created_at), "MMM d, yyyy HH:mm")}
+                <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {t("birthYear") || "Tug'ilgan yili"}
+                  </span>
+                  <p className="font-medium text-foreground">{viewEntry.birth_year}</p>
+                </div>
+                <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {t("createdAt") || "Yaratilgan vaqti"}
+                  </span>
+                  <p className="font-medium text-foreground">
+                    {format(new Date(viewEntry.created_at), "MMM d, yyyy HH:mm")}
+                  </p>
                 </div>
               </div>
-              <div className="border-t pt-3 space-y-2">
-                <div className="font-semibold">{t("parentInformation") || "Parent Information"}</div>
-                <div>
-                  <span className="text-muted-foreground">{t("father") || "Father"}: </span>
-                  <span className="font-medium">{viewEntry.father_name}</span>
-                  <span className="text-muted-foreground"> ({viewEntry.father_phone})</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("mother") || "Mother"}: </span>
-                  <span className="font-medium">{viewEntry.mother_name}</span>
-                  <span className="text-muted-foreground"> ({viewEntry.mother_phone})</span>
+
+              {/* Ota-ona ma'lumotlari */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm flex items-center gap-2 text-foreground">
+                  <Users className="w-4 h-4 text-primary" />
+                  {t("parentInformation") || "Ota-Ona Ma'lumotlari"}
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {/* Ota */}
+                  <div className="bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t("father") || "Ota"}
+                    </span>
+                    <div className="font-semibold text-foreground mt-0.5">{viewEntry.father_name}</div>
+                    <a 
+                      href={`tel:${viewEntry.father_phone}`} 
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 mt-2"
+                    >
+                      <Phone className="w-3.5 h-3.5" /> 
+                      {viewEntry.father_phone}
+                    </a>
+                  </div>
+                  
+                  {/* Ona */}
+                  <div className="bg-purple-50/50 dark:bg-purple-950/20 p-3 rounded-xl border border-purple-100 dark:border-purple-900/50">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t("mother") || "Ona"}
+                    </span>
+                    <div className="font-semibold text-foreground mt-0.5">{viewEntry.mother_name}</div>
+                    <a 
+                      href={`tel:${viewEntry.mother_phone}`} 
+                      className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1.5 mt-2"
+                    >
+                      <Phone className="w-3.5 h-3.5" /> 
+                      {viewEntry.mother_phone}
+                    </a>
+                  </div>
                 </div>
               </div>
+
+              {/* Izohlar */}
               {viewEntry.notes && (
-                <div className="border-t pt-3">
-                  <div className="font-semibold mb-1">{t("notes") || "Notes"}</div>
-                  <p className="text-muted-foreground">{viewEntry.notes}</p>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm flex items-center gap-2 text-foreground">
+                    <AlertCircle className="w-4 h-4 text-primary" />
+                    {t("notes") || "Izoh"}
+                  </h4>
+                  <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/50 text-sm leading-relaxed">
+                    {viewEntry.notes}
+                  </div>
                 </div>
               )}
+
             </div>
           )}
         </DialogContent>
