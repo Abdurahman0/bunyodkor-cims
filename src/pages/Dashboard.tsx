@@ -351,6 +351,8 @@ export default function Dashboard() {
               <LineChart
                 data={revenueData}
                 height={250}
+                curved={false}
+                startFromZero
                 showArea
                 showDots
                 showValues={false}

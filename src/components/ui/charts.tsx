@@ -235,6 +235,7 @@ interface LineChartProps extends BaseChartProps {
   showDots?: boolean
   showArea?: boolean
   gridLines?: boolean
+  startFromZero?: boolean
 }
 
 export const LineChart = ({
@@ -245,6 +246,7 @@ export const LineChart = ({
   showArea = true,
   showLegend = true,
   gridLines = true,
+  startFromZero = false,
   animate = true,
   className,
 }: LineChartProps) => {
@@ -259,8 +261,10 @@ export const LineChart = ({
   const chartWidth = width - padding * 2
   const chartHeight = height - padding * 2
 
-  const maxValue = Math.max(...data.map((d) => d.value))
-  const minValue = Math.min(...data.map((d) => d.value))
+  const maxValue = Math.max(...data.map((d) => d.value), 0)
+  const minValue = startFromZero
+    ? Math.min(0, ...data.map((d) => d.value))
+    : Math.min(...data.map((d) => d.value))
   const valueRange = maxValue - minValue || 1
 
   const points = data.map((d, i) => ({
