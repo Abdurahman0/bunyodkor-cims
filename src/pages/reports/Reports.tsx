@@ -56,6 +56,7 @@ export default function Reports() {
   const currentYear = new Date().getFullYear();
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [minDebtAmount, setMinDebtAmount] = useState<number | "">("");
   const [unpaidYear, setUnpaidYear] = useState<number | "">("");
   const [unpaidMonth, setUnpaidMonth] = useState<number | "">("");
   const [unpaidMonths, setUnpaidMonths] = useState("");
@@ -166,6 +167,7 @@ export default function Reports() {
 
   const getDebtorsExportParams = () => ({
     group_id: selectedGroupId || undefined,
+    min_debt_amount: minDebtAmount === "" ? undefined : Number(minDebtAmount),
     year: unpaidYear === "" ? undefined : Number(unpaidYear),
     month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
   });
@@ -175,6 +177,7 @@ export default function Reports() {
       "debtors-report",
       debtorsPage,
       selectedGroupId,
+      minDebtAmount,
       unpaidYear,
       unpaidMonth,
     ],
@@ -183,6 +186,8 @@ export default function Reports() {
         page: debtorsPage,
         page_size: debtorsPageSize,
         group_id: selectedGroupId || undefined,
+        min_debt_amount:
+          minDebtAmount === "" ? undefined : Number(minDebtAmount),
         year: unpaidYear === "" ? undefined : Number(unpaidYear),
         month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
       }),
@@ -197,6 +202,7 @@ export default function Reports() {
       "debtors-report-filtered-unpaid",
       debtorsPage,
       selectedGroupId,
+      minDebtAmount,
       unpaidYear,
       unpaidMonth,
       unpaidMonths,
@@ -208,6 +214,8 @@ export default function Reports() {
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
+        min_debt_amount:
+          minDebtAmount === "" ? undefined : Number(minDebtAmount),
       });
 
       const debtorsPages = debtorsFirstPage.meta?.total_pages || 1;
@@ -219,6 +227,8 @@ export default function Reports() {
                   page: idx + 2,
                   page_size: 100,
                   group_id: selectedGroupId || undefined,
+                  min_debt_amount:
+                    minDebtAmount === "" ? undefined : Number(minDebtAmount),
                 }),
               ),
             )
@@ -296,12 +306,20 @@ export default function Reports() {
   });
 
   const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
-    queryKey: ["debtors-total-debt", selectedGroupId, unpaidYear, unpaidMonth],
+    queryKey: [
+      "debtors-total-debt",
+      selectedGroupId,
+      minDebtAmount,
+      unpaidYear,
+      unpaidMonth,
+    ],
     queryFn: async () => {
       const firstPage = await reportService.getDebtorsReport({
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
+        min_debt_amount:
+          minDebtAmount === "" ? undefined : Number(minDebtAmount),
         year: unpaidYear === "" ? undefined : Number(unpaidYear),
         month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
       });
@@ -315,6 +333,8 @@ export default function Reports() {
                   page: idx + 2,
                   page_size: 100,
                   group_id: selectedGroupId || undefined,
+                  min_debt_amount:
+                    minDebtAmount === "" ? undefined : Number(minDebtAmount),
                   year: unpaidYear === "" ? undefined : Number(unpaidYear),
                   month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
                 }),
@@ -820,6 +840,24 @@ export default function Reports() {
 
                 <div className="w-56">
                   <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("minDebtAmount") || "Min debt amount"}
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={minDebtAmount as any}
+                    onChange={(e) => {
+                      setMinDebtAmount(
+                        e.target.value ? Number(e.target.value) : "",
+                      );
+                      setDebtorsPage(1);
+                    }}
+                    className="h-10"
+                  />
+                </div>
+
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
                     {t("paymentYear") || "Year"}
                   </label>
                   <select
@@ -921,6 +959,7 @@ export default function Reports() {
                   variant="outline"
                   onClick={() => {
                     setSelectedGroupId(null);
+                    setMinDebtAmount("");
                     setUnpaidYear("");
                     setUnpaidMonth("");
                     setUnpaidMonths("");
