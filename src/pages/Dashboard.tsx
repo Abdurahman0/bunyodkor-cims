@@ -75,39 +75,42 @@ export default function Dashboard() {
     },
   });
 
-  const { data: revenueTransactionsData } = useQuery({
-    queryKey: ["revenue-transactions"],
+  const { data: weeklyFinanceTrendData } = useQuery({
+    queryKey: ["dashboard-finance-weekly", format(new Date(), "yyyy-MM-dd")],
     queryFn: async () => {
-      const today = format(new Date(), "yyyy-MM-dd");
-      const weekAgo = format(
-        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        "yyyy-MM-dd",
+      const today = new Date();
+      const days = Array.from({ length: 7 }, (_, idx) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (6 - idx));
+        return format(d, "yyyy-MM-dd");
+      });
+
+      const dailyReports = await Promise.all(
+        days.map(async (date) => {
+          try {
+            const res = await reportService.getFinanceReport({
+              from_date: date,
+              to_date: date,
+            });
+
+            return {
+              date,
+              label: format(parseISO(date), "EEE"),
+              tooltipLabel: format(parseISO(date), "EEEE, MMM d, yyyy"),
+              value: Number(res.data?.total_revenue || 0),
+            };
+          } catch {
+            return {
+              date,
+              label: format(parseISO(date), "EEE"),
+              tooltipLabel: format(parseISO(date), "EEEE, MMM d, yyyy"),
+              value: 0,
+            };
+          }
+        }),
       );
 
-      let allTransactions: TransactionRead[] = [];
-      let page = 1;
-      let hasMore = true;
-
-      while (hasMore) {
-        const response = await transactionService.getTransactions({
-          from_date: weekAgo,
-          to_date: today,
-          page: page,
-          page_size: 100,
-        });
-
-        if (response.data && response.data.length > 0) {
-          allTransactions = [...allTransactions, ...response.data];
-          if (response.meta && page < response.meta.total_pages) {
-            page++;
-          } else {
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
-      return { data: allTransactions };
+      return dailyReports;
     },
   });
 
@@ -219,39 +222,10 @@ export default function Dashboard() {
       value: item.transaction_count,
     })) || [];
 
-  // Process revenue data from transactions (last 7 days)
+  // Process weekly revenue trend from /reports/finance (daily totals for last 7 days)
   const revenueData = useMemo(() => {
-    const transactions = revenueTransactionsData?.data || [];
-    const dailyRevenue: { [key: string]: number } = {};
-
-    // Initialize last 7 days with 0
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const dateKey = format(d, "yyyy-MM-dd");
-      dailyRevenue[dateKey] = 0;
-    }
-
-    // Sum up transactions by day (only last 7 days, only success status)
-    transactions.forEach((tx: TransactionRead) => {
-      if (tx.paid_at && tx.status === "success") {
-        const txDate = new Date(tx.paid_at);
-        const dateKey = format(txDate, "yyyy-MM-dd");
-        if (dailyRevenue.hasOwnProperty(dateKey)) {
-          dailyRevenue[dateKey] += Number(tx.amount) || 0;
-        }
-      }
-    });
-
-    // Convert to chart format
-    return Object.keys(dailyRevenue)
-      .sort()
-      .map((date) => ({
-        label: format(parseISO(date), "EEE"),
-        value: dailyRevenue[date],
-      }));
-  }, [revenueTransactionsData]);
+    return weeklyFinanceTrendData || [];
+  }, [weeklyFinanceTrendData]);
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({

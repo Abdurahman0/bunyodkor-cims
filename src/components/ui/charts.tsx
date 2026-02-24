@@ -7,6 +7,7 @@ interface ChartDataPoint {
   label: string
   value: number
   color?: string
+  tooltipLabel?: string
 }
 
 interface BaseChartProps {
@@ -250,6 +251,10 @@ export const LineChart = ({
   animate = true,
   className,
 }: LineChartProps) => {
+  const [selectedPointIndex, setSelectedPointIndex] = React.useState<number | null>(
+    null
+  )
+
   if (!data || data.length === 0) {
     return (
       <div className={cn('w-full', className)} style={{ height }} />
@@ -350,10 +355,12 @@ export const LineChart = ({
               key={i}
               cx={point.x}
               cy={point.y}
-              r={5}
+              r={selectedPointIndex === i ? 6 : 5}
               fill="hsl(var(--background))"
               stroke="hsl(var(--primary))"
-              strokeWidth={2}
+              strokeWidth={selectedPointIndex === i ? 3 : 2}
+              className="cursor-pointer"
+              onClick={() => setSelectedPointIndex(i)}
               initial={animate ? { scale: 0 } : undefined}
               animate={{ scale: 1 }}
               transition={{ duration: 0.3, delay: 0.5 + i * 0.1 }}
@@ -369,6 +376,17 @@ export const LineChart = ({
               {item.label}
             </span>
           ))}
+        </div>
+      )}
+
+      {selectedPointIndex !== null && data[selectedPointIndex] && (
+        <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+          <div className="font-medium text-foreground">
+            {data[selectedPointIndex].tooltipLabel || data[selectedPointIndex].label}
+          </div>
+          <div className="text-muted-foreground">
+            {data[selectedPointIndex].value.toLocaleString()}
+          </div>
         </div>
       )}
     </div>
