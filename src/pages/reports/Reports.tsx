@@ -484,7 +484,11 @@ export default function Reports() {
           </p>
         </div>
         {activeTab !== "payers" && (
-          <Button variant="outline" className="gap-2" onClick={handleExport}>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={activeTab === "debtors" ? handleDebtorsExport : handleExport}
+          >
             <Download className="w-4 h-4" />
             {t("exportReport")}
           </Button>
