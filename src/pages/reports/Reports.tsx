@@ -844,24 +844,6 @@ export default function Reports() {
 
                 <div className="w-56">
                   <label className="text-sm font-medium text-foreground mb-1 block">
-                    {t("minDebtAmount") || "Min debt amount"}
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={minDebtAmount as any}
-                    onChange={(e) => {
-                      setMinDebtAmount(
-                        e.target.value ? Number(e.target.value) : "",
-                      );
-                      setDebtorsPage(1);
-                    }}
-                    className="h-10"
-                  />
-                </div>
-
-                <div className="w-56">
-                  <label className="text-sm font-medium text-foreground mb-1 block">
                     {t("paymentYear") || "Year"}
                   </label>
                   <select

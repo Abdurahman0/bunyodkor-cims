@@ -216,23 +216,6 @@ const PayersReport: FC = () => {
 
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">
-                {t("minPaidAmount")}
-              </label>
-              <Input
-                type="number"
-                value={minPaidAmount as any}
-                onChange={(e) => {
-                  setMinPaidAmount(
-                    e.target.value ? Number(e.target.value) : "",
-                  );
-                  setPage(1);
-                }}
-                className="h-10 w-40"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">
                 {t("fromDate")}
               </label>
               <Input
