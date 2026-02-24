@@ -46,7 +46,8 @@ export const BarChart = ({
   animate = true,
   className,
 }: BarChartProps) => {
-  const maxValue = Math.max(...data.map((d) => d.value))
+  const maxValue = Math.max(...data.map((d) => d.value), 0)
+  const safeMaxValue = maxValue > 0 ? maxValue : 1
   const coloredData = data.map((d, i) => ({
     ...d,
     color: d.color || chartColors[i % chartColors.length],
@@ -68,7 +69,7 @@ export const BarChart = ({
                 className="h-full rounded-full"
                 style={{ backgroundColor: item.color }}
                 initial={animate ? { width: 0 } : undefined}
-                animate={{ width: `${(item.value / maxValue) * 100}%` }}
+                animate={{ width: `${(item.value / safeMaxValue) * 100}%` }}
                 transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
               />
             </div>
@@ -95,7 +96,7 @@ export const BarChart = ({
               className="w-full rounded-t-md min-h-[4px]"
               style={{ backgroundColor: item.color }}
               initial={animate ? { height: 0 } : undefined}
-              animate={{ height: `${(item.value / maxValue) * 100}%` }}
+              animate={{ height: `${(item.value / safeMaxValue) * 100}%` }}
               transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
             />
           </div>
@@ -138,6 +139,7 @@ export const DonutChart = ({
   className,
 }: DonutChartProps) => {
   const total = data.reduce((sum, d) => sum + d.value, 0)
+  const safeTotal = total > 0 ? total : 1
   const coloredData = data.map((d, i) => ({
     ...d,
     color: d.color || chartColors[i % chartColors.length],
@@ -162,8 +164,9 @@ export const DonutChart = ({
             className="text-muted"
           />
           {/* Data segments */}
-          {coloredData.map((item, index) => {
-            const percentage = item.value / total
+          {total > 0 &&
+            coloredData.map((item, index) => {
+              const percentage = item.value / safeTotal
             const strokeDasharray = circumference
             const strokeDashoffset = circumference * (1 - percentage)
             const offset = currentOffset
@@ -190,7 +193,7 @@ export const DonutChart = ({
                 transition={{ duration: 1, delay: index * 0.15, ease: 'easeOut' }}
               />
             )
-          })}
+            })}
         </svg>
         {/* Center content */}
         {donut && (centerLabel || centerValue) && (
@@ -245,6 +248,12 @@ export const LineChart = ({
   animate = true,
   className,
 }: LineChartProps) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className={cn('w-full', className)} style={{ height }} />
+    )
+  }
+
   const padding = 40
   const width = 400
   const chartWidth = width - padding * 2
@@ -255,7 +264,7 @@ export const LineChart = ({
   const valueRange = maxValue - minValue || 1
 
   const points = data.map((d, i) => ({
-    x: padding + (i / (data.length - 1)) * chartWidth,
+    x: padding + ((data.length === 1 ? 0 : i / (data.length - 1)) * chartWidth),
     y: padding + chartHeight - ((d.value - minValue) / valueRange) * chartHeight,
     ...d,
   }))

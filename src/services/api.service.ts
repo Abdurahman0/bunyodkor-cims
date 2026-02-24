@@ -1797,11 +1797,13 @@ export const reportService = {
    * GET /reports/debtors
    */
   getDebtorsReport: async (params?: {
-    group_id?: number;
-    min_debt_amount?: number;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<DebtorItem[]>> => {
+      group_id?: number;
+      min_debt_amount?: number;
+      year?: number;
+      month?: number;
+      page?: number;
+      page_size?: number;
+    }): Promise<ApiResponse<DebtorItem[]>> => {
     const response = await apiClient.get<ApiResponse<DebtorItem[]>>(
       "/reports/debtors",
       { params },
@@ -1813,10 +1815,11 @@ export const reportService = {
    * GET /reports/payers
    */
   getPayers: async (params?: {
-    payment_year?: number;
-    group_id?: number;
-    min_paid_amount?: number;
-    from_date?: string;
+      payment_year?: number;
+      payment_month?: number;
+      group_id?: number;
+      min_paid_amount?: number;
+      from_date?: string;
     to_date?: string;
     page?: number;
     page_size?: number;
@@ -1825,6 +1828,42 @@ export const reportService = {
       "/reports/payers",
       { params },
     );
+    return response.data;
+  },
+
+  /**
+   * Export Debtors Report
+   * GET /reports/debtors/export
+   */
+  exportDebtorsReport: async (params?: {
+    group_id?: number;
+    min_debt_amount?: number;
+    year?: number;
+    month?: number;
+  }): Promise<Blob> => {
+    const response = await apiClient.get<Blob>("/reports/debtors/export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
+  /**
+   * Export Payers Report
+   * GET /reports/payers/export
+   */
+  exportPayersReport: async (params?: {
+    payment_year?: number;
+    payment_month?: number;
+    group_id?: number;
+    min_paid_amount?: number;
+    from_date?: string;
+    to_date?: string;
+  }): Promise<Blob> => {
+    const response = await apiClient.get<Blob>("/reports/payers/export", {
+      params,
+      responseType: "blob",
+    });
     return response.data;
   },
 };

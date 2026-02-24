@@ -359,7 +359,7 @@ export interface ContractRead {
   birth_certificate_url: string | null;
   contract_images_urls: string | null;
   final_pdf_url: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   custom_fields: any | null;
   terminated_at: string | null;
   terminated_by_user_id: number | null;
@@ -382,7 +382,7 @@ export interface ContractUpdateRequest {
   end_date?: string;
   monthly_fee?: number;
   status?: ContractStatus;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   custom_fields?: any;
 }
 export type ContractUpdate = ContractUpdateRequest;

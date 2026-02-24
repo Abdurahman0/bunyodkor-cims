@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { reportService, groupService } from "@/services/api.service";
 import { useLanguageStore } from "@/store/languageStore";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { exportReport } from "@/lib/export-utils";
+import { exportReport, downloadFile } from "@/lib/export-utils";
 import toast from "react-hot-toast";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
@@ -30,6 +30,7 @@ const PayersReport: FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [paymentYear, setPaymentYear] = useState<number | "">(currentYear);
+  const [paymentMonth, setPaymentMonth] = useState<number | "">("");
   const [groupId, setGroupId] = useState<number | null>(null);
   const [minPaidAmount, setMinPaidAmount] = useState<number | "">("");
   const [fromDate, setFromDate] = useState(
@@ -74,6 +75,7 @@ const PayersReport: FC = () => {
       page,
       pageSize,
       paymentYear,
+      paymentMonth,
       groupId,
       minPaidAmount,
       fromDate,
@@ -82,6 +84,7 @@ const PayersReport: FC = () => {
     queryFn: () => {
       const params: any = { page, page_size: pageSize };
       if (paymentYear !== "") params.payment_year = paymentYear;
+      if (paymentMonth !== "") params.payment_month = paymentMonth;
       if (groupId) params.group_id = groupId;
       if (minPaidAmount !== "") params.min_paid_amount = minPaidAmount;
       if (fromDate) params.from_date = fromDate;
@@ -95,45 +98,33 @@ const PayersReport: FC = () => {
     formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
 
   const handleExport = async () => {
-    try {
-      const toastId = toast.loading(t("exportingData"));
-      const params: any = { page: 1, page_size: 100000 };
+    const promise = (async () => {
+      const params: any = {};
       if (paymentYear !== "") params.payment_year = paymentYear;
+      if (paymentMonth !== "") params.payment_month = paymentMonth;
       if (groupId) params.group_id = groupId;
       if (minPaidAmount !== "") params.min_paid_amount = minPaidAmount;
       if (fromDate) params.from_date = fromDate;
       if (toDate) params.to_date = toDate;
 
-      const resp = await reportService.getPayers(params);
+      const blob = await reportService.exportPayersReport(params);
 
-      if (!resp?.data || resp.data.length === 0) {
-        toast.error(t("noDataToExport"), { id: toastId });
-        return;
+      if (!blob || blob.size === 0) {
+        throw new Error("NO_DATA");
       }
-      
-      const allItems = resp.data;
 
-      const exportData = allItems.map((item: any) => {
-        const groupFromList = groupsList.find(
-          (g: any) => g.id === item.group_id,
-        );
-        return {
-          "Student ID": item.student_id,
-          "Student Name": item.student_name,
-          Group:
-            item.group_name || (groupFromList ? groupFromList.name : "N/A"),
-          Contract: item.contract_number,
-          "Payment Year": item.payment_year,
-          "Payment Months": (item.payment_months || []).join(","),
-          "Total Paid": item.total_paid,
-        };
-      });
+      const date = format(new Date(), "yyyy-MM-dd");
+      downloadFile(blob, `payers-report-${date}.xlsx`);
+    })();
 
-      exportReport(exportData, `payers-report-${paymentYear || "all"}`);
-      toast.success(t("exportedSuccessfully"), { id: toastId });
-    } catch (err) {
-      toast.error(t("errorExportingData"));
-    }
+    toast.promise(promise, {
+      loading: t("exportingData"),
+      success: t("exportedSuccessfully"),
+      error: (error: Error) =>
+        error.message === "NO_DATA"
+          ? t("noDataToExport")
+          : t("errorExportingData"),
+    });
   };
 
   return (
@@ -167,6 +158,27 @@ const PayersReport: FC = () => {
                   </option>
                 ))}
                 <option value="">{t("allYears")}</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">
+                {t("month") || "Month"}
+              </label>
+              <select
+                value={paymentMonth}
+                onChange={(e) => {
+                  setPaymentMonth(e.target.value ? Number(e.target.value) : "");
+                  setPage(1);
+                }}
+                className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">{t("allMonths") || "All months"}</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
               </select>
             </div>
 

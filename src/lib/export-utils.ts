@@ -5,7 +5,7 @@ import type { TransactionWithNameRead } from '@/types/api'
 /**
  * Download data as CSV file
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export const exportToCSV = (data: any[], filename: string) => {
   if (!data || data.length === 0) {
     throw new Error('No data to export')
@@ -54,7 +54,7 @@ export const exportToCSV = (data: any[], filename: string) => {
 /**
  * Download data as JSON file
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export const exportToJSON = (data: any, filename: string) => {
   const jsonContent = JSON.stringify(data, null, 2)
 

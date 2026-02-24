@@ -19,7 +19,7 @@ import { motion } from "framer-motion";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { useLanguageStore } from "@/store/languageStore";
 import type { CurrentUserResponse, LoginRequest } from "@/types/api";
 

@@ -28,7 +28,7 @@ import {
   attendanceService,
 } from "@/services/api.service";
 import type { TransactionRead, GroupRead, AttendanceRead } from "@/types/api";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
@@ -239,7 +239,7 @@ export default function Dashboard() {
         const txDate = new Date(tx.paid_at);
         const dateKey = format(txDate, "yyyy-MM-dd");
         if (dailyRevenue.hasOwnProperty(dateKey)) {
-          dailyRevenue[dateKey] += tx.amount;
+          dailyRevenue[dateKey] += Number(tx.amount) || 0;
         }
       }
     });
@@ -248,7 +248,7 @@ export default function Dashboard() {
     return Object.keys(dailyRevenue)
       .sort()
       .map((date) => ({
-        label: format(new Date(date), "EEE"),
+        label: format(parseISO(date), "EEE"),
         value: dailyRevenue[date],
       }));
   }, [revenueTransactionsData]);
@@ -267,7 +267,7 @@ export default function Dashboard() {
     const late = attendances.filter((a) => a.status === "late").length;
 
     return [
-      { label: t("present"), value: present || 1, color: "hsl(142, 71%, 45%)" },
+      { label: t("present"), value: present || 0, color: "hsl(142, 71%, 45%)" },
       { label: t("absent"), value: absent || 0, color: "hsl(0, 84%, 60%)" },
       { label: t("late"), value: late || 0, color: "hsl(47, 96%, 53%)" },
     ];

@@ -105,7 +105,7 @@ export default function Archive() {
 
   // Safe access to stats data with default values
   // Handle both possible API response structures: { data: {...} } or direct {...}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const stats: any = statsData?.data?.data || statsData?.data || {
     active_count: 0,
     archived_count: 0,

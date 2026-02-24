@@ -74,7 +74,7 @@ const routesConfig = [
 ];
 
 // Foydalanuvchi uchun birinchi ruxsat etilgan sahifani topish
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
   if (!user) return "/login";
   if (user.is_super_admin) return "/"; // Super admin dashboardga kira oladi

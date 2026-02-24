@@ -88,7 +88,7 @@ const getStatusBadge = (status: string) => {
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const formatSource = (source: any) => {
   const cleanSource =
     source?.toString().replace(/^.*\./, "").toLowerCase() || "";
@@ -398,7 +398,7 @@ export default function StudentDetailPage() {
     attendances,
   } = data.data as StudentFullInfo;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const getDisplayParents = (): any[] => {
     console.log("[STUDENT DETAIL] Getting parent info");
     console.log("[STUDENT DETAIL] Parents from API:", parents);
@@ -418,7 +418,7 @@ export default function StudentDetailPage() {
 
       for (const contract of sortedContracts) {
         console.log("[STUDENT DETAIL] Processing contract:", contract.id);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         let customFields: any = contract.custom_fields;
 
         if (!customFields) {
@@ -738,7 +738,7 @@ export default function StudentDetailPage() {
           <CardContent>
             {parentsList.length > 0 ? (
               <div className="space-y-3">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                { }
                 {parentsList.map((parent: ParentRead | any, index) => (
                   <div
                     key={parent.id || index}
@@ -798,7 +798,7 @@ export default function StudentDetailPage() {
           <CardContent>
             {guardiansList.length > 0 ? (
               <div className="space-y-3">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                { }
                 {guardiansList.map((guardian: ParentRead | any, index) => (
                   <div
                     key={guardian.id || index}

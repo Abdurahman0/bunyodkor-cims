@@ -135,6 +135,9 @@ export default function Reports() {
       unpaidFromDate ||
       unpaidToDate,
   );
+  const hasAdvancedUnpaidListFilter = Boolean(
+    unpaidMonths.trim() !== "" || unpaidFromDate || unpaidToDate,
+  );
 
   const getUnpaidFilterParams = () => {
     const params: {
@@ -161,15 +164,29 @@ export default function Reports() {
     return params;
   };
 
+  const getDebtorsExportParams = () => ({
+    group_id: selectedGroupId || undefined,
+    year: unpaidYear === "" ? undefined : Number(unpaidYear),
+    month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
+  });
+
   const { data: debtorsData, isLoading: isDebtorsBaseLoading } = useQuery({
-    queryKey: ["debtors-report", debtorsPage, selectedGroupId],
+    queryKey: [
+      "debtors-report",
+      debtorsPage,
+      selectedGroupId,
+      unpaidYear,
+      unpaidMonth,
+    ],
     queryFn: () =>
       reportService.getDebtorsReport({
         page: debtorsPage,
         page_size: debtorsPageSize,
         group_id: selectedGroupId || undefined,
+        year: unpaidYear === "" ? undefined : Number(unpaidYear),
+        month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
       }),
-    enabled: activeTab === "debtors" && !hasUnpaidListFilter,
+    enabled: activeTab === "debtors" && !hasAdvancedUnpaidListFilter,
     placeholderData: (prev) => prev,
     staleTime: 30000,
     refetchOnWindowFocus: false,
@@ -272,19 +289,21 @@ export default function Reports() {
         total_debt: totalDebt,
       };
     },
-    enabled: activeTab === "debtors" && hasUnpaidListFilter,
+    enabled: activeTab === "debtors" && hasAdvancedUnpaidListFilter,
     placeholderData: (prev) => prev,
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
 
   const { data: totalDebtData, isLoading: totalDebtLoading } = useQuery({
-    queryKey: ["debtors-total-debt", selectedGroupId],
+    queryKey: ["debtors-total-debt", selectedGroupId, unpaidYear, unpaidMonth],
     queryFn: async () => {
       const firstPage = await reportService.getDebtorsReport({
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
+        year: unpaidYear === "" ? undefined : Number(unpaidYear),
+        month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
       });
 
       const pages = firstPage.meta?.total_pages || 1;
@@ -296,6 +315,8 @@ export default function Reports() {
                   page: idx + 2,
                   page_size: 100,
                   group_id: selectedGroupId || undefined,
+                  year: unpaidYear === "" ? undefined : Number(unpaidYear),
+                  month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
                 }),
               ),
             )
@@ -311,20 +332,20 @@ export default function Reports() {
       );
       return { total_debt: totalDebt };
     },
-    enabled: activeTab === "debtors" && !hasUnpaidListFilter,
+    enabled: activeTab === "debtors" && !hasAdvancedUnpaidListFilter,
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
 
-  const effectiveDebtorsData = hasUnpaidListFilter ? debtorsFilteredData : debtorsData;
+  const effectiveDebtorsData = hasAdvancedUnpaidListFilter ? debtorsFilteredData : debtorsData;
   const debtorsLoading = hasUnpaidListFilter
-    ? isDebtorsFilteredLoading
+    ? (hasAdvancedUnpaidListFilter ? isDebtorsFilteredLoading : isDebtorsBaseLoading)
     : isDebtorsBaseLoading;
-  const totalDebtAmount = hasUnpaidListFilter
+  const totalDebtAmount = hasAdvancedUnpaidListFilter
     ? debtorsFilteredData?.total_debt || 0
     : totalDebtData?.total_debt || 0;
   const isTotalDebtLoading = hasUnpaidListFilter
-    ? isDebtorsFilteredLoading
+    ? (hasAdvancedUnpaidListFilter ? isDebtorsFilteredLoading : totalDebtLoading)
     : totalDebtLoading;
 
   const formatCurrency = (amount: number) => {
@@ -364,14 +385,14 @@ export default function Reports() {
 
   const handleDebtorsExport = async () => {
     const promise = (async () => {
-      const blob = await studentService.exportUnpaidStudents(
-        getUnpaidFilterParams(),
+      const blob = await reportService.exportDebtorsReport(
+        getDebtorsExportParams(),
       );
       if (!blob || blob.size === 0) {
         throw new Error("NO_DATA");
       }
       const date = format(new Date(), "yyyy-MM-dd");
-      downloadFile(blob, `unpaid-students-${date}.xlsx`);
+      downloadFile(blob, `debtors-report-${date}.xlsx`);
     })();
 
     toast.promise(promise, {
@@ -417,10 +438,6 @@ export default function Reports() {
           }));
           reportType = "attendance-report";
           break;
-
-        case "debtors":
-          await handleDebtorsExport();
-          return; // Early return to avoid running the old logic
       }
 
       if (dataToExport) {
