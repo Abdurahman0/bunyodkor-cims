@@ -37,6 +37,99 @@ export default function Dashboard() {
   const { user } = useAuthStore();
   const { t, language } = useLanguageStore();
 
+  const formatChartDate = (date: Date, type: "short" | "long") => {
+    const day = date.getDate();
+    const weekdayIndex = date.getDay();
+    const monthIndex = date.getMonth();
+
+    const names = {
+      uz: {
+        weekdaysShort: ["Yak", "Dush", "Sesh", "Chor", "Pay", "Juma", "Shan"],
+        weekdaysLong: [
+          "Yakshanba",
+          "Dushanba",
+          "Seshanba",
+          "Chorshanba",
+          "Payshanba",
+          "Juma",
+          "Shanba",
+        ],
+        months: [
+          "Yanvar",
+          "Fevral",
+          "Mart",
+          "Aprel",
+          "May",
+          "Iyun",
+          "Iyul",
+          "Avgust",
+          "Sentabr",
+          "Oktabr",
+          "Noyabr",
+          "Dekabr",
+        ],
+      },
+      ru: {
+        weekdaysShort: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+        weekdaysLong: [
+          "Воскресенье",
+          "Понедельник",
+          "Вторник",
+          "Среда",
+          "Четверг",
+          "Пятница",
+          "Суббота",
+        ],
+        months: [
+          "Январь",
+          "Февраль",
+          "Март",
+          "Апрель",
+          "Май",
+          "Июнь",
+          "Июль",
+          "Август",
+          "Сентябрь",
+          "Октябрь",
+          "Ноябрь",
+          "Декабрь",
+        ],
+      },
+      en: {
+        weekdaysShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        weekdaysLong: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ],
+        months: [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ],
+      },
+    } as const;
+
+    const lang = language === "ru" ? "ru" : language === "en" ? "en" : "uz";
+    const dict = names[lang];
+
+    if (type === "short") return dict.weekdaysShort[weekdayIndex];
+    return `${day} ${dict.weekdaysLong[weekdayIndex]}, ${dict.months[monthIndex]}`;
+  };
+
   const { data: summaryData } = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: () => reportService.getDashboardSummary(),
@@ -220,23 +313,13 @@ export default function Dashboard() {
 
   // Process weekly revenue trend from /reports/finance (daily totals for last 7 days)
   const revenueData = useMemo(() => {
-    const locale =
-      language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
-
     return (weeklyFinanceTrendData || []).map((item) => {
       const dateObj = new Date(`${item.date}T00:00:00`);
 
       return {
         ...item,
-        label: new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
-          dateObj,
-        ),
-        tooltipLabel: new Intl.DateTimeFormat(locale, {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        }).format(dateObj),
+        label: formatChartDate(dateObj, "short"),
+        tooltipLabel: formatChartDate(dateObj, "long"),
       };
     });
   }, [weeklyFinanceTrendData, language]);
