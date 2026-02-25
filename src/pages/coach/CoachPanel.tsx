@@ -916,8 +916,8 @@ export default function CoachPanel() {
               <CardContent>
                 <Select
                   value={selectedGroupForStats || ""}
-                  onValueChange={(value) => {
-                    setSelectedGroupForStats(value);
+                  onChange={(e) => {
+                    setSelectedGroupForStats(e.target.value);
                   }}
                 >
                   <option value="" disabled>
