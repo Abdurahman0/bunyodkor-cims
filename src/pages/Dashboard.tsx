@@ -28,14 +28,14 @@ import {
   attendanceService,
 } from "@/services/api.service";
 import type { TransactionRead, GroupRead, AttendanceRead } from "@/types/api";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
 
   const { data: summaryData } = useQuery({
     queryKey: ["dashboard-summary"],
@@ -95,15 +95,11 @@ export default function Dashboard() {
 
             return {
               date,
-              label: format(parseISO(date), "EEE"),
-              tooltipLabel: format(parseISO(date), "EEEE, MMM d, yyyy"),
               value: Number(res.data?.total_revenue || 0),
             };
           } catch {
             return {
               date,
-              label: format(parseISO(date), "EEE"),
-              tooltipLabel: format(parseISO(date), "EEEE, MMM d, yyyy"),
               value: 0,
             };
           }
@@ -224,8 +220,26 @@ export default function Dashboard() {
 
   // Process weekly revenue trend from /reports/finance (daily totals for last 7 days)
   const revenueData = useMemo(() => {
-    return weeklyFinanceTrendData || [];
-  }, [weeklyFinanceTrendData]);
+    const locale =
+      language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
+
+    return (weeklyFinanceTrendData || []).map((item) => {
+      const dateObj = new Date(`${item.date}T00:00:00`);
+
+      return {
+        ...item,
+        label: new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+          dateObj,
+        ),
+        tooltipLabel: new Intl.DateTimeFormat(locale, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }).format(dateObj),
+      };
+    });
+  }, [weeklyFinanceTrendData, language]);
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({

@@ -360,6 +360,8 @@ export const LineChart = ({
               stroke="hsl(var(--primary))"
               strokeWidth={selectedPointIndex === i ? 3 : 2}
               className="cursor-pointer"
+              onMouseEnter={() => setSelectedPointIndex(i)}
+              onMouseLeave={() => setSelectedPointIndex(null)}
               onClick={() => setSelectedPointIndex(i)}
               initial={animate ? { scale: 0 } : undefined}
               animate={{ scale: 1 }}
