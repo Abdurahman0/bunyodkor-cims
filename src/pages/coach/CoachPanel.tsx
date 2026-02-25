@@ -465,12 +465,12 @@ export default function CoachPanel() {
                                   <Clock className="w-3.5 h-3.5 text-blue-500" />
                                   {session.start_time} - {session.end_time}
                                 </span>
-                                {session.location && (
-                                  <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    {session.location}
-                                  </span>
-                                )}
+                              {(session.location || session.station) && (
+                                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  {session.location || session.station}
+                                </span>
+                              )}
                               </div>
                             </div>
                           </button>
@@ -519,10 +519,12 @@ export default function CoachPanel() {
                                 {selectedSession.start_time} -{" "}
                                 {selectedSession.end_time}
                               </span>
-                              {selectedSession.location && (
+                              {(selectedSession.location ||
+                                selectedSession.station) && (
                                 <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
                                   <MapPin className="w-4 h-4" />
-                                  {selectedSession.location}
+                                  {selectedSession.location ||
+                                    selectedSession.station}
                                 </span>
                               )}
                             </div>
