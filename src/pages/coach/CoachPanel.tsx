@@ -1106,12 +1106,12 @@ export default function CoachPanel() {
               {uploadKonspektMutation.isPending ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("upload") || "Upload"}
+                  {t("upload") || "Yuklash"}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
                   <Upload className="h-4 w-4" />
-                  {t("upload")}
+                  {t("upload") || "Yuklash"}
                 </span>
               )}
             </Button>
