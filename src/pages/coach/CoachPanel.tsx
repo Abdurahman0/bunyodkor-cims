@@ -4,6 +4,7 @@ import {
   useState,
   useMemo,
   useEffect,
+  useRef,
   type SetStateAction,
   type JSXElementConstructor,
   type Key,
@@ -92,6 +93,7 @@ export default function CoachPanel() {
   >({});
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -157,7 +159,7 @@ export default function CoachPanel() {
         if (!selectedGroup) return Promise.resolve({ data: [] });
         return groupService.getGroupStudents(selectedGroup.id);
       },
-      select: (res) => res.data,
+      select: (res: any) => res.data,
       enabled: !!selectedGroup,
     },
   );
@@ -166,7 +168,7 @@ export default function CoachPanel() {
     {
       queryKey: ["my-attendances"],
       queryFn: () => coachService.getMyAttendances({}),
-      select: (res) => res.data,
+      select: (res: any) => res.data,
     },
   );
 
@@ -217,6 +219,9 @@ export default function CoachPanel() {
       toast.success(t("konspektUploaded") || "Konspekt uploaded successfully!");
       setUploadDialogOpen(false);
       setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       queryClient.invalidateQueries({
         queryKey: ["coach-sessions", selectedDate],
       });
@@ -274,6 +279,20 @@ export default function CoachPanel() {
       sessionId: selectedSession.id,
       file: selectedFile,
     });
+  };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const formatCurrency = (amount: number) =>
@@ -904,7 +923,7 @@ export default function CoachPanel() {
                   <option value="" disabled>
                     {t("selectGroup")}
                   </option>
-                  {Array.isArray(groupsData) && groupsData.map(
+                  {Array.isArray(groupsData) && (groupsData as any[]).map(
                     (group: {
                       id: Key | null | undefined;
                       name: ReactNode;
@@ -968,40 +987,132 @@ export default function CoachPanel() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+      <Dialog
+        open={uploadDialogOpen}
+        onOpenChange={(open) => {
+          setUploadDialogOpen(open);
+          if (!open && !uploadKonspektMutation.isPending) {
+            clearSelectedFile();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[560px] p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-5 border-b bg-slate-50/70 dark:bg-slate-900/40">
             <DialogTitle>{t("uploadKonspekt")}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="mt-1">
               {t("uploadKonspektDescription")}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+
+          <div className="px-6 py-5 space-y-4">
+            {selectedSession && (
+              <div className="rounded-lg border bg-slate-50/60 dark:bg-slate-900/30 p-4 space-y-2">
+                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {selectedSession.topic || t("attendanceList")}
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-400">
+                  {groupsData?.find(
+                    (g: { id: number }) => g.id === selectedSession.group_id,
+                  )?.name || t("unknownGroup")}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {selectedSession.start_time} - {selectedSession.end_time}
+                  </span>
+                  {(selectedSession.location || selectedSession.station) && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-2 py-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {selectedSession.location || selectedSession.station}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             <input
+              ref={fileInputRef}
+              id="konspekt-file-upload"
               type="file"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="sr-only"
               onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
             />
-            {selectedFile && (
-              <p className="text-sm text-muted-foreground">
-                {selectedFile.name}
+
+            <label
+              htmlFor="konspekt-file-upload"
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+                selectedFile
+                  ? "border-primary/40 bg-primary/5"
+                  : "border-slate-300 dark:border-slate-700 hover:border-primary/40 hover:bg-slate-50 dark:hover:bg-slate-900/20"
+              }`}
+            >
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <Upload className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {selectedFile
+                  ? "Fayl tanlandi"
+                  : "PDF yoki DOC faylni tanlang"}
               </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Klik qiling va faylni yuklang (PDF, DOC, DOCX)
+              </p>
+            </label>
+
+            {selectedFile ? (
+              <div className="flex items-start justify-between gap-3 rounded-lg border bg-card p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {selectedFile.name}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {formatFileSize(selectedFile.size)}
+                    {selectedFile.type ? ` • ${selectedFile.type}` : ""}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={clearSelectedFile}
+                  disabled={uploadKonspektMutation.isPending}
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20 p-3 text-xs text-slate-600 dark:text-slate-400">
+                Konspekt fayli darsga biriktiriladi va keyin ko'rish/yuklab olish
+                uchun saqlanadi.
+              </div>
             )}
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="px-6 py-4 border-t bg-slate-50/70 dark:bg-slate-900/40">
             <Button
               variant="outline"
               onClick={() => setUploadDialogOpen(false)}
+              disabled={uploadKonspektMutation.isPending}
             >
               {t("cancel")}
             </Button>
             <Button
               onClick={handleUploadKonspekt}
               disabled={!selectedFile || uploadKonspektMutation.isPending}
+              className="min-w-28"
             >
               {uploadKonspektMutation.isPending ? (
-                <Loader2 className="animate-spin" />
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("upload") || "Upload"}
+                </span>
               ) : (
-                t("upload")
+                <span className="inline-flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  {t("upload")}
+                </span>
               )}
             </Button>
           </DialogFooter>
