@@ -399,11 +399,76 @@ export interface ContractTerminateRequest {
   terminated_at: string;
 }
 
+export interface SuccessfulPaymentItem {
+  transaction_id: number;
+  amount: number;
+  source: TransactionSource;
+  paid_at: string;
+  payment_year: number;
+  payment_months: number[];
+}
+
+export interface TerminatedStudentItem {
+  contract_id: number;
+  contract_number: string;
+  original_contract_number: string | null;
+  start_date: string;
+  end_date: string;
+  monthly_fee: number;
+  contract_status: ContractStatus | string;
+  student_id: number;
+  student_first_name: string;
+  student_last_name: string;
+  student_phone: string | null;
+  student_group_id: number | null;
+  student_group_name: string | null;
+  student_group_identifier: string | null;
+  terminated_at: string;
+  termination_reason: string | null;
+  terminated_by_user_id: number | null;
+  terminated_by_full_name: string | null;
+  successful_payments_count: number;
+  successful_payments_total: number;
+  successful_payments: SuccessfulPaymentItem[];
+}
+
+export interface TerminatedUnpaidReportItem {
+  contract_id: number;
+  contract_number: string;
+  original_contract_number: string | null;
+  student_id: number;
+  student_first_name: string;
+  student_last_name: string;
+  student_phone: string | null;
+  contract_group_id: number | null;
+  contract_group_name: string | null;
+  contract_group_identifier: string | null;
+  current_student_group_id: number | null;
+  current_student_group_name: string | null;
+  contract_start_date: string;
+  contract_end_date: string;
+  terminated_at: string;
+  effective_end_date: string;
+  terminated_by_user_id: number | null;
+  terminated_by_full_name: string | null;
+  termination_reason: string | null;
+  monthly_fee: number;
+  paid_months: string[];
+  unpaid_months: string[];
+  expected_months_count: number;
+  paid_months_count: number;
+  unpaid_months_count: number;
+  total_expected: number;
+  total_paid: number;
+  debt_amount: number;
+}
+
 // ============================================================================
 // Transaction Types
 // ============================================================================
 
 export type TransactionSource = "payme" | "click" | "bank" | "cash" | "manual";
+export type SettlementType = "payment" | "waiver_spravka";
 export type TransactionStatus =
   | "pending"
   | "success"
@@ -419,6 +484,8 @@ export interface TransactionRead {
   status: TransactionStatus;
   paid_at: string;
   comment: string | null;
+  settlement_type?: SettlementType | string | null;
+  settlement_document_url?: string | null;
   payment_year: number | null;
   payment_months: number[];
   student_id: number | null;

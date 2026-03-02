@@ -88,6 +88,8 @@ import type {
   GroupsStatisticsResponse,
   ContractWithStudentNameRead,
   TransactionWithNameRead,
+  TerminatedStudentItem,
+  TerminatedUnpaidReportItem,
 } from "@/types/api";
 
 // ============================================================================
@@ -867,6 +869,8 @@ export const groupService = {
 // ============================================================================
 
 export interface GetContractsParams {
+  archive_year?: number;
+  include_archived?: boolean;
   status?: string;
   student_id?: number;
   group_id?: number;
@@ -883,6 +887,16 @@ export interface GetContractsWithStudentNameParams {
   student_id?: number;
   group_id?: number;
   contract_number?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface GetTerminatedContractsParams {
+  archive_year?: number;
+  group_id?: number;
+  search?: string;
+  terminated_from?: string;
+  terminated_to?: string;
   page?: number;
   page_size?: number;
 }
@@ -911,6 +925,54 @@ export const contractService = {
     const response = await apiClient.get<ApiResponse<ContractRead[]>>(
       "/contracts",
       { params },
+    );
+    return response.data;
+  },
+
+  /**
+   * Get terminated students with payment details
+   * GET /contracts/terminated-students
+   */
+  getTerminatedStudents: async (
+    params?: GetTerminatedContractsParams,
+  ): Promise<ApiResponse<TerminatedStudentItem[]>> => {
+    const response = await apiClient.get<ApiResponse<TerminatedStudentItem[]>>(
+      "/contracts/terminated-students",
+      { params },
+    );
+    return response.data;
+  },
+
+  /**
+   * Get terminated contracts unpaid report
+   * GET /contracts/terminated-unpaid-report
+   */
+  getTerminatedUnpaidReport: async (
+    params?: GetTerminatedContractsParams,
+  ): Promise<ApiResponse<TerminatedUnpaidReportItem[]>> => {
+    const response = await apiClient.get<
+      ApiResponse<TerminatedUnpaidReportItem[]>
+    >("/contracts/terminated-unpaid-report", { params });
+    return response.data;
+  },
+
+  /**
+   * Export terminated contracts unpaid report
+   * GET /contracts/terminated-unpaid-report/export
+   */
+  exportTerminatedUnpaidReport: async (params?: {
+    archive_year?: number;
+    group_id?: number;
+    search?: string;
+    terminated_from?: string;
+    terminated_to?: string;
+  }): Promise<Blob> => {
+    const response = await apiClient.get<Blob>(
+      "/contracts/terminated-unpaid-report/export",
+      {
+        params,
+        responseType: "blob",
+      },
     );
     return response.data;
   },
@@ -1274,6 +1336,25 @@ export const transactionService = {
     const response = await apiClient.post<ApiResponse<TransactionRead>>(
       "/transactions/manual",
       data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Create manual transaction with optional proof file
+   * POST /transactions/manual/with-proof
+   */
+  createManualTransactionWithProof: async (
+    formData: FormData,
+  ): Promise<ApiResponse<TransactionRead>> => {
+    const response = await apiClient.post<ApiResponse<TransactionRead>>(
+      "/transactions/manual/with-proof",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
     );
     return response.data;
   },

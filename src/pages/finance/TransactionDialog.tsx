@@ -22,7 +22,7 @@ import { Calendar, X, Check, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
-import type { ContractRead, StudentRead } from "@/types/api";
+import type { ContractRead, SettlementType, StudentRead } from "@/types/api";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -36,6 +36,17 @@ interface TransactionFormData {
   payment_year: number;
   payment_months: string;
   comment?: string;
+}
+
+interface CreateTransactionPayload {
+  amount: number;
+  source: TransactionSource;
+  contract_number: string;
+  payment_year: number;
+  payment_months: number[];
+  comment?: string;
+  settlement_type: SettlementType;
+  proof_file: File | null;
 }
 
 // Backenddan keladigan ContractRead turini kengaytiramiz
@@ -54,6 +65,9 @@ export function TransactionDialog({
   const [showContractDropdown, setShowContractDropdown] = useState(false);
   const [selectedContract, setSelectedContract] =
     useState<ContractWithStudent | null>(null);
+  const [settlementType, setSettlementType] =
+    useState<SettlementType>("payment");
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debouncedContractSearch = useDebounce(contractSearch, 300);
@@ -187,6 +201,8 @@ export function TransactionDialog({
       setContractSearch("");
       setSelectedContract(null);
       setSelectedMonths([]);
+      setSettlementType("payment");
+      setProofFile(null);
     }
   }, [open]);
 
@@ -205,7 +221,39 @@ export function TransactionDialog({
   }, []);
 
   const mutation = useMutation({
-    mutationFn: transactionService.createManualTransaction,
+    mutationFn: async (payload: CreateTransactionPayload) => {
+      const paidAt = new Date().toISOString();
+      const shouldUseProofEndpoint =
+        payload.proof_file !== null || payload.settlement_type !== "payment";
+
+      if (shouldUseProofEndpoint) {
+        const formData = new FormData();
+        formData.append("contract_number", payload.contract_number);
+        formData.append("source", payload.source);
+        formData.append("amount", String(payload.amount));
+        formData.append("payment_year", String(payload.payment_year));
+        formData.append("payment_months", payload.payment_months.join(","));
+        formData.append("settlement_type", payload.settlement_type);
+        if (payload.comment) {
+          formData.append("comment", payload.comment);
+        }
+        formData.append("paid_at", paidAt);
+        if (payload.proof_file) {
+          formData.append("proof_file", payload.proof_file);
+        }
+        return transactionService.createManualTransactionWithProof(formData);
+      }
+
+      return transactionService.createManualTransaction({
+        amount: payload.amount,
+        source: payload.source,
+        contract_number: payload.contract_number,
+        payment_year: payload.payment_year,
+        payment_months: payload.payment_months,
+        comment: payload.comment,
+        paid_at: paidAt,
+      });
+    },
     onSuccess: () => {
       // Invalidate AND refetch finance section queries
       queryClient.invalidateQueries({
@@ -242,6 +290,8 @@ export function TransactionDialog({
       );
       reset();
       setSelectedMonths([]);
+      setSettlementType("payment");
+      setProofFile(null);
       onOpenChange(false);
     },
     // --- ERROR QISMI O'ZGARTIRILDI ---
@@ -291,7 +341,8 @@ export function TransactionDialog({
       payment_year: data.payment_year,
       payment_months: paymentMonthsArray,
       comment: data.comment,
-      paid_at: new Date().toISOString(),
+      settlement_type: settlementType,
+      proof_file: proofFile,
     });
   };
 
@@ -335,6 +386,35 @@ export function TransactionDialog({
               <option value="payme">Payme</option>
               <option value="click">Click</option>
             </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="settlement_type">
+              Settlement Type
+            </Label>
+            <Select
+              id="settlement_type"
+              value={settlementType}
+              onChange={(e) =>
+                setSettlementType(e.target.value as SettlementType)
+              }
+            >
+              <option value="payment">Payment</option>
+              <option value="waiver_spravka">
+                Waiver (Spravka)
+              </option>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="proof_file">
+              Payment Proof ({t("optional") || "optional"})
+            </Label>
+            <Input
+              id="proof_file"
+              type="file"
+              onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+            />
           </div>
 
           {/* Shartnoma raqami (Autocomplete) */}

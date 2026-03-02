@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Link } from "react-router-dom";
-import { studentService } from "@/services/api.service"; // studentService qo'shildi
-import { toast } from "react-hot-toast"; // Xabar chiqarish uchun
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
+import { toast } from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,38 +12,48 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableHead,
-  TableRow,
   TableCell,
   TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { contractService, groupService } from "@/services/api.service";
 import { useGroupsStore } from "@/store/groupsStore";
+import { useLanguageStore } from "@/store/languageStore";
+import { useDebounce } from "@/hooks/useDebounce";
+import { downloadFile } from "@/lib/export-utils";
+import { ContractDialog } from "./ContractDialog";
+import type {
+  ContractWithStudentNameRead,
+  TerminatedStudentItem,
+  TerminatedUnpaidReportItem,
+} from "@/types/api";
 import {
-  Search,
-  Edit,
-  FileText,
   CalendarDays,
-  User,
-  Users,
-  CreditCard,
-  X,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
+  Download,
+  Edit,
+  FileText,
   Loader2,
+  Search,
+  User,
+  Users,
+  X,
 } from "lucide-react";
-import { format } from "date-fns";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useLanguageStore } from "@/store/languageStore";
-import { ContractDialog } from "./ContractDialog";
-import type { ContractWithStudentNameRead } from "@/types/api";
+
+type ContractsView = "contracts" | "terminated-students" | "terminated-unpaid";
 
 export default function Contracts() {
   const { t } = useLanguageStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+
+  const [view, setView] = useState<ContractsView>("contracts");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -56,206 +64,167 @@ export default function Contracts() {
   const [archiveYearFilter, setArchiveYearFilter] = useState<
     number | undefined
   >(undefined);
-  // const [includeArchived, setIncludeArchived] = useState(false);
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const [terminatedFrom, setTerminatedFrom] = useState("");
+  const [terminatedTo, setTerminatedTo] = useState("");
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] =
     useState<ContractWithStudentNameRead | null>(null);
-  const queryClient = useQueryClient();
 
-  // Use global groups store
-  const {
-    groupsData: allGroupsData,
-    isLoading: isLoadingGroups,
-    fetchGroups,
-  } = useGroupsStore();
+  const { groupsData: allGroupsData, isLoading: isLoadingGroups, fetchGroups } =
+    useGroupsStore();
 
-  // Fetch groups on component mount if not already loaded
   useEffect(() => {
     if (!allGroupsData && !isLoadingGroups) {
       fetchGroups();
     }
   }, [allGroupsData, isLoadingGroups, fetchGroups]);
 
-  // Read group_id and contract_id from URL parameters
   useEffect(() => {
-    let newGroupFilter: number | undefined = undefined;
-    let newContractIdFilter: number | undefined = undefined;
-
     const groupId = searchParams.get("group_id");
-    if (groupId) {
-      newGroupFilter = parseInt(groupId, 10);
-    }
-
     const contractId = searchParams.get("contract_id");
-    if (contractId) {
-      newContractIdFilter = parseInt(contractId, 10);
-    }
-
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGroupFilter(newGroupFilter);
-    setContractIdFilter(newContractIdFilter);
+    setGroupFilter(groupId ? parseInt(groupId, 10) : undefined);
+    setContractIdFilter(contractId ? parseInt(contractId, 10) : undefined);
   }, [searchParams]);
 
   const debouncedSearch = useDebounce(search, 500);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { data, isLoading, error } = useQuery({
+  const contractsQuery = useQuery({
     queryKey: [
       "contracts",
       page,
       debouncedSearch,
       statusFilter,
       groupFilter,
-      contractIdFilter,
       archiveYearFilter,
+      includeArchived,
+      contractIdFilter,
+      view,
     ],
     queryFn: async () => {
-      try {
-        const params = {
-          page,
-          page_size: 10,
-          contract_number: debouncedSearch || undefined,
-          status: statusFilter || undefined,
-          group_id: groupFilter,
-          archive_year: archiveYearFilter,
-        };
+      const params = {
+        page,
+        page_size: 10,
+        contract_number: debouncedSearch || undefined,
+        status: statusFilter || undefined,
+        group_id: groupFilter,
+        archive_year: archiveYearFilter,
+        include_archived: includeArchived,
+      };
 
-        // 1. IKKALA APIGA BIR VAQTDA SO'ROV YUBORAMIZ
-        const [withNameRes, standardRes] = await Promise.all([
-          contractService.getContractsWithStudentName(params), // Ismlar uchun
-          contractService.getContracts(params), // IDlar uchun
-        ]);
+      const [withNameRes, standardRes] = await Promise.all([
+        contractService.getContractsWithStudentName(params),
+        contractService.getContracts({
+          ...params,
+          contract_id: contractIdFilter,
+        }),
+      ]);
 
-        // 2. NATIJALARNI BIRLASHTIRAMIZ (MERGE)
-        const mergedData = withNameRes.data.map((contractWithName: any) => {
-          // Ikkinchi natijadan IDsi bir xil bo'lgan shartnomani topamiz
+      const mergedData = withNameRes.data
+        .map((contractWithName: any) => {
           const standardContract = standardRes.data.find(
             (c: any) => c.id === contractWithName.id,
           );
-
-          // Topilgan shartnomadan "student_id" ni olib qo'shamiz
           return {
             ...contractWithName,
             student_id: standardContract?.student_id,
           };
-        });
+        })
+        .filter((contract: ContractWithStudentNameRead) =>
+          contractIdFilter ? contract.id === contractIdFilter : true,
+        );
 
-        // 3. TAYYOR MA'LUMOTNI QAYTARAMIZ
-        return {
-          ...withNameRes,
-          data: mergedData,
-        };
-      } catch (err) {
-        console.error("[CONTRACTS] Error fetching contracts:", err);
-        throw err;
-      }
+      return {
+        ...withNameRes,
+        data: mergedData,
+        meta: {
+          ...withNameRes.meta,
+          total: contractIdFilter ? mergedData.length : withNameRes.meta?.total,
+          total_pages: contractIdFilter ? 1 : withNameRes.meta?.total_pages,
+        },
+      };
     },
+    enabled: view === "contracts",
   });
 
-  // // Removed student data fetching
-  // const {
-  //   data: studentsData,
-  //   isLoading: isLoadingStudents,
-  // } = useQuery({
-  //   queryKey: ["students-list"],
-  //   queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }), // Fetch all students
-  //   staleTime: 0,
-  // });
+  const terminatedStudentsQuery = useQuery({
+    queryKey: [
+      "contracts-terminated-students",
+      page,
+      debouncedSearch,
+      groupFilter,
+      archiveYearFilter,
+      terminatedFrom,
+      terminatedTo,
+      view,
+    ],
+    queryFn: () =>
+      contractService.getTerminatedStudents({
+        archive_year: archiveYearFilter,
+        group_id: groupFilter,
+        search: debouncedSearch || undefined,
+        terminated_from: terminatedFrom || undefined,
+        terminated_to: terminatedTo || undefined,
+        page,
+        page_size: 10,
+      }),
+    enabled: view === "terminated-students",
+  });
 
-  // Fetch group details if filtering by group
+  const terminatedUnpaidQuery = useQuery({
+    queryKey: [
+      "contracts-terminated-unpaid",
+      page,
+      debouncedSearch,
+      groupFilter,
+      archiveYearFilter,
+      terminatedFrom,
+      terminatedTo,
+      view,
+    ],
+    queryFn: () =>
+      contractService.getTerminatedUnpaidReport({
+        archive_year: archiveYearFilter,
+        group_id: groupFilter,
+        search: debouncedSearch || undefined,
+        terminated_from: terminatedFrom || undefined,
+        terminated_to: terminatedTo || undefined,
+        page,
+        page_size: 10,
+      }),
+    enabled: view === "terminated-unpaid",
+  });
+
   const { data: groupData } = useQuery({
     queryKey: ["group", groupFilter],
     queryFn: () => groupService.getGroup(groupFilter!),
     enabled: !!groupFilter,
   });
 
-  // const deleteMutation = useMutation({
-  //   mutationFn: (id: number) => contractService.deleteContract(id),
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: ["contracts"] });
-  //     toast.success(
-  //       t("contractDeletedSuccess" as any) || "Contract deleted successfully"
-  //     );
-  //   },
-  //   onError: (error: any) => {
-  //     const detail = error.response?.data?.detail;
-  //     let errorMessage = "Failed to delete contract";
+  const currentData =
+    view === "contracts"
+      ? contractsQuery.data
+      : view === "terminated-students"
+        ? terminatedStudentsQuery.data
+        : terminatedUnpaidQuery.data;
 
-  //     if (Array.isArray(detail) && detail.length > 0) {
-  //       errorMessage = detail[0].msg || detail[0].message || errorMessage;
-  //     } else if (typeof detail === "string") {
-  //       errorMessage = detail;
-  //     }
-
-  //     toast.error(errorMessage);
-  //   },
-  // });
+  const isLoading =
+    view === "contracts"
+      ? contractsQuery.isLoading
+      : view === "terminated-students"
+        ? terminatedStudentsQuery.isLoading
+        : terminatedUnpaidQuery.isLoading;
 
   const handleOpenDialog = (contract?: ContractWithStudentNameRead) => {
     setSelectedContract(contract || null);
     setIsDialogOpen(true);
   };
 
-  // const handleDelete = (contract: ContractRead) => {
-  //   if (
-  //     confirm(
-  //       t("confirmDeleteContract", {
-  //         number: contract.contract_number,
-  //       }) as string
-  //     )
-  //   ) {
-  //     deleteMutation.mutate(contract.id);
-  //   }
-  // };
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleStudentClick = async (e: React.MouseEvent, contract: any) => {
-    e.stopPropagation();
-
-    // 1. Agar ID bo'lsa, darhol o'tamiz
-    if (contract.student_id) {
-      navigate(`/students/${contract.student_id}`);
-      return;
-    }
-
-    const toastId = toast.loading("Talaba qidirilmoqda...");
-
-    try {
-      // 2. Ism bo'yicha qidirish
-      const response = await studentService.getStudents({
-        page: 1,
-        page_size: 100,
-        search: contract.student_full_name,
-      });
-
-      if (response.data && response.data.length > 0) {
-        // 3. Tug'ilgan yil bo'yicha aniqlashtirish
-        const foundStudent = response.data.find(
-          (s: any) =>
-            s.birth_year === contract.birth_year ||
-            s.full_name === contract.student_full_name,
-        );
-
-        const targetStudent = foundStudent || response.data[0];
-
-        toast.success("Topildi!", { id: toastId });
-        navigate(`/students/${targetStudent.id}`);
-      } else {
-        toast.error("Talaba topilmadi", { id: toastId });
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Xatolik", { id: toastId });
-    }
-  };
-
-  // Simplified: student_full_name is now directly available on the contract object
-  const getStudentName = (contract: ContractWithStudentNameRead) => {
-    return contract.student_full_name || t("unknown") || "Noma'lum";
-  };
-
   const formatCurrency = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined) return "-";
-    return new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
+    return `${new Intl.NumberFormat("uz-UZ").format(amount)} UZS`;
   };
 
   const getStatusBadge = (status: string) => {
@@ -287,18 +256,16 @@ export default function Contracts() {
     };
     return (
       <Badge
-        className={`${variants[status]?.bg} ${variants[status]?.text} border-0`}
+        className={`${variants[status]?.bg || "bg-muted"} ${variants[status]?.text || "text-foreground"} border-0`}
       >
         {t(status as any) || status}
       </Badge>
     );
   };
 
-  // --- Handlers for Filters & Search ---
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    setPage(1); // Reset page on search
+    setPage(1);
   };
 
   const handleClearSearch = () => {
@@ -308,7 +275,7 @@ export default function Contracts() {
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStatusFilter(e.target.value);
-    setPage(1); // Reset page on filter
+    setPage(1);
   };
 
   const handleArchiveYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -317,47 +284,71 @@ export default function Contracts() {
     setPage(1);
   };
 
-  // const handleIncludeArchivedChange = (
-  //   e: React.ChangeEvent<HTMLInputElement>,
-  // ) => {
-  //   setIncludeArchived(e.target.checked);
-  //   setPage(1);
-  // };
-
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("");
     setGroupFilter(undefined);
     setContractIdFilter(undefined);
     setArchiveYearFilter(undefined);
-    // setIncludeArchived(false);
+    setIncludeArchived(false);
+    setTerminatedFrom("");
+    setTerminatedTo("");
     setPage(1);
   };
 
-  const hasActiveFilters =
+  const hasActiveFilters = Boolean(
     search ||
-    statusFilter ||
-    groupFilter ||
-    contractIdFilter ||
-    archiveYearFilter;
+      groupFilter ||
+      archiveYearFilter ||
+      contractIdFilter ||
+      (view === "contracts" && (statusFilter || includeArchived)) ||
+      (view !== "contracts" && (terminatedFrom || terminatedTo)),
+  );
 
-  // --- Pagination Logic ---
-  const totalPages = data?.meta?.total_pages || 1;
+  const handleViewChange = (nextView: ContractsView) => {
+    setView(nextView);
+    setPage(1);
+    setStatusFilter("");
+  };
+
+  const handleExportTerminatedUnpaid = async () => {
+    const promise = (async () => {
+      const blob = await contractService.exportTerminatedUnpaidReport({
+        archive_year: archiveYearFilter,
+        group_id: groupFilter,
+        search: debouncedSearch || undefined,
+        terminated_from: terminatedFrom || undefined,
+        terminated_to: terminatedTo || undefined,
+      });
+
+      if (!blob || blob.size === 0) {
+        throw new Error("NO_DATA");
+      }
+
+      const date = format(new Date(), "yyyy-MM-dd");
+      downloadFile(blob, `terminated-unpaid-report-${date}.xlsx`);
+    })();
+
+    toast.promise(promise, {
+      loading: t("exportingData"),
+      success: t("reportExported"),
+      error: (error: Error) =>
+        error.message === "NO_DATA"
+          ? t("noDataToExport")
+          : t("failedToExportReport"),
+    });
+  };
+
+  const totalPages = currentData?.meta?.total_pages || 1;
 
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
-
-    // If 7 or fewer pages, show all
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-
-    // If current page is near the start
     if (page <= 4) {
       return [1, 2, 3, 4, 5, "...", totalPages];
     }
-
-    // If current page is near the end
     if (page >= totalPages - 3) {
       return [
         1,
@@ -369,8 +360,6 @@ export default function Contracts() {
         totalPages,
       ];
     }
-
-    // If current page is in the middle
     return [1, "...", page - 1, page, page + 1, "...", totalPages];
   };
 
@@ -388,6 +377,33 @@ export default function Contracts() {
             {t("contracts")}
           </h1>
           <p className="text-muted-foreground mt-1">{t("manageContracts")}</p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant={view === "contracts" ? "default" : "outline"}
+            onClick={() => handleViewChange("contracts")}
+          >
+            {t("contractsList")}
+          </Button>
+          <Button
+            variant={view === "terminated-students" ? "default" : "outline"}
+            onClick={() => handleViewChange("terminated-students")}
+          >
+            {t("terminatedStudents" as any) || "Terminated Students"}
+          </Button>
+          <Button
+            variant={view === "terminated-unpaid" ? "default" : "outline"}
+            onClick={() => handleViewChange("terminated-unpaid")}
+          >
+            {t("terminatedUnpaidReport" as any) || "Terminated Unpaid Report"}
+          </Button>
+          {view === "terminated-unpaid" && (
+            <Button variant="outline" onClick={handleExportTerminatedUnpaid}>
+              <Download className="w-4 h-4 mr-2" />
+              {t("exportReport")}
+            </Button>
+          )}
         </div>
       </motion.div>
 
@@ -416,27 +432,29 @@ export default function Contracts() {
                   </button>
                 )}
               </div>
+
               <div className="flex gap-2 flex-wrap">
-                <Select
-                  value={statusFilter}
-                  onChange={handleStatusChange}
-                  className="w-40"
-                >
-                  <option value="">{t("allStatuses")}</option>
-                  <option value="active">{t("active")}</option>
-                  <option value="expired">{t("expired")}</option>
-                  <option value="cancelled">{t("cancelled")}</option>
-                  <option value="terminated">{t("terminated")}</option>
-                  <option value="archived">{t("archived")}</option>
-                  <option value="deleted">{t("deleted")}</option>
-                </Select>
+                {view === "contracts" && (
+                  <Select
+                    value={statusFilter}
+                    onChange={handleStatusChange}
+                    className="w-40"
+                  >
+                    <option value="">{t("allStatuses")}</option>
+                    <option value="active">{t("active")}</option>
+                    <option value="expired">{t("expired")}</option>
+                    <option value="cancelled">{t("cancelled")}</option>
+                    <option value="archived">{t("archived")}</option>
+                    <option value="deleted">{t("deleted")}</option>
+                  </Select>
+                )}
+
                 <Select
                   value={archiveYearFilter?.toString() || ""}
                   onChange={handleArchiveYearChange}
                   className="w-40"
                 >
                   <option value="">{t("allYears")}</option>
-                  {/* Assuming years from -5 to +5 from current year */}
                   {Array.from({ length: 11 }, (_, i) => {
                     const year = new Date().getFullYear() - 5 + i;
                     return (
@@ -446,59 +464,77 @@ export default function Contracts() {
                     );
                   })}
                 </Select>
-                {/* <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="includeArchived"
-                    checked={includeArchived}
-                    onChange={handleIncludeArchivedChange}
-                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor="includeArchived"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {t("includeArchived") || "Include Archived"}
-                  </label>
-                </div> */}
+
                 <Select
                   value={groupFilter?.toString() || ""}
                   onChange={(e) => {
                     setGroupFilter(
-                      e.target.value ? parseInt(e.target.value) : undefined,
+                      e.target.value ? parseInt(e.target.value, 10) : undefined,
                     );
+                    setPage(1);
                   }}
                   className="w-48"
                 >
                   <option value="">{t("allGroups")}</option>
                   {allGroupsData && Array.isArray(allGroupsData)
-                    ? // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                      allGroupsData.map((yearGroup: any, yearIndex: number) => {
+                    ? allGroupsData.map((yearGroup: any) => {
                         if (
                           !yearGroup?.groups ||
                           !Array.isArray(yearGroup.groups)
                         ) {
-                          // Empty block statement.
                           return null;
                         }
-
                         return yearGroup.groups
-                          .filter(
-                            (group: any) => group && group.id && group.name,
-                          )
-                          .map((group: any) => {
-                            return (
-                              <option
-                                key={`group-${group.id}`}
-                                value={String(group.id)}
-                              >
-                                {group.name}
-                              </option>
-                            );
-                          });
+                          .filter((group: any) => group && group.id && group.name)
+                          .map((group: any) => (
+                            <option
+                              key={`group-${group.id}`}
+                              value={String(group.id)}
+                            >
+                              {group.name}
+                            </option>
+                          ));
                       })
                     : null}
                 </Select>
+
+                {view === "contracts" && (
+                  <label className="flex items-center gap-2 px-3 text-sm border rounded-md">
+                    <input
+                      type="checkbox"
+                      checked={includeArchived}
+                      onChange={(e) => {
+                        setIncludeArchived(e.target.checked);
+                        setPage(1);
+                      }}
+                    />
+                    {t("includeArchived" as any) || "Include archived"}
+                  </label>
+                )}
+
+                {view !== "contracts" && (
+                  <>
+                    <Input
+                      type="date"
+                      value={terminatedFrom}
+                      onChange={(e) => {
+                        setTerminatedFrom(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-40"
+                    />
+                    <Input
+                      type="date"
+                      value={terminatedTo}
+                      onChange={(e) => {
+                        setTerminatedTo(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-40"
+                    />
+                  </>
+                )}
+
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>
                     <X className="w-4 h-4" />
@@ -554,14 +590,21 @@ export default function Contracts() {
       >
         <Card>
           <CardHeader className="border-b border-border">
-            <CardTitle className="text-lg">{t("contractsList")}</CardTitle>
+            <CardTitle className="text-lg">
+              {view === "contracts"
+                ? t("contractsList")
+                : view === "terminated-students"
+                  ? t("terminatedStudents" as any) || "Terminated Students"
+                  : t("terminatedUnpaidReport" as any) ||
+                    "Terminated Unpaid Report"}
+            </CardTitle>
           </CardHeader>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">
-                {t("contractsLoading")}
+                {t("loading") || "Loading..."}
               </span>
             </div>
           ) : (
@@ -570,126 +613,200 @@ export default function Contracts() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("contractNumber")}</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      {t("student")}
-                    </TableHead>
-                    <TableHead className="hidden lg:table-cell">
-                      {t("period")}
-                    </TableHead>
-                    <TableHead>{t("monthlyFee")}</TableHead>
-                    <TableHead>{t("status")}</TableHead>
-                    {/* O'zgartirish: [&>div]:justify-end klassi qo'shildi */}
-                    <TableHead className="text-right [&>div]:justify-end">
-                      {t("actions")}
-                    </TableHead>
+                    <TableHead>{t("student")}</TableHead>
+                    {view === "contracts" ? (
+                      <>
+                        <TableHead className="hidden lg:table-cell">
+                          {t("period")}
+                        </TableHead>
+                        <TableHead>{t("monthlyFee")}</TableHead>
+                        <TableHead>{t("status")}</TableHead>
+                        <TableHead className="text-right [&>div]:justify-end">
+                          {t("actions")}
+                        </TableHead>
+                      </>
+                    ) : view === "terminated-students" ? (
+                      <>
+                        <TableHead>{t("group")}</TableHead>
+                        <TableHead>{t("terminatedAt" as any) || "Terminated"}</TableHead>
+                        <TableHead>
+                          {t("paymentsTotal" as any) || "Payments Total"}
+                        </TableHead>
+                        <TableHead>{t("reason") || "Reason"}</TableHead>
+                      </>
+                    ) : (
+                      <>
+                        <TableHead>{t("group")}</TableHead>
+                        <TableHead>{t("terminatedAt" as any) || "Terminated"}</TableHead>
+                        <TableHead>{t("paid") || "Paid"}</TableHead>
+                        <TableHead>{t("unpaid") || "Unpaid"}</TableHead>
+                        <TableHead>{t("debt") || "Debt"}</TableHead>
+                      </>
+                    )}
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {data?.data && data.data.length > 0 ? (
-                    data.data.map((contract: ContractWithStudentNameRead) => (
-                      <TableRow key={contract.id}>
+                  {view === "contracts" ? (
+                    currentData?.data && currentData.data.length > 0 ? (
+                      (currentData.data as ContractWithStudentNameRead[]).map(
+                        (contract) => (
+                          <TableRow key={contract.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-muted-foreground" />
+                                <span className="font-medium">
+                                  {contract.contract_number}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div
+                                className="flex items-center gap-2 cursor-pointer group select-none"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (contract.student_id) {
+                                    navigate(`/students/${contract.student_id}`);
+                                  }
+                                }}
+                              >
+                                <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
+                                  {contract.student_full_name ||
+                                    t("unknown") ||
+                                    "Noma'lum"}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <div className="text-sm">
+                                <div className="flex items-center gap-1">
+                                  <CalendarDays className="w-3 h-3 text-muted-foreground" />
+                                  {contract.start_date
+                                    ? format(
+                                        new Date(contract.start_date),
+                                        "MMM d, yyyy",
+                                      )
+                                    : "-"}
+                                </div>
+                                <div className="text-muted-foreground">
+                                  to{" "}
+                                  {contract.end_date
+                                    ? format(new Date(contract.end_date), "MMM d, yyyy")
+                                    : "-"}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                                <span className="font-medium">
+                                  {formatCurrency(contract.monthly_fee)}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {contract.status ? (
+                                getStatusBadge(contract.status)
+                              ) : (
+                                <Badge variant="secondary">
+                                  {t("unknown") || "Noma'lum"}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleOpenDialog(contract)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )
+                    ) : (
+                      <TableEmpty
+                        icon={<FileText className="w-12 h-12" />}
+                        title={t("noContractsFound")}
+                        description={t("contractsCreatedHere")}
+                      />
+                    )
+                  ) : view === "terminated-students" ? (
+                    currentData?.data && currentData.data.length > 0 ? (
+                      (currentData.data as TerminatedStudentItem[]).map((item) => (
+                        <TableRow key={item.contract_id}>
+                          <TableCell>{item.contract_number}</TableCell>
+                          <TableCell>
+                            {`${item.student_first_name || ""} ${item.student_last_name || ""}`.trim() ||
+                              "-"}
+                          </TableCell>
+                          <TableCell>{item.student_group_name || "-"}</TableCell>
+                          <TableCell>
+                            {item.terminated_at
+                              ? format(
+                                  new Date(item.terminated_at),
+                                  "MMM d, yyyy HH:mm",
+                                )
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(item.successful_payments_total)}
+                          </TableCell>
+                          <TableCell>{item.termination_reason || "-"}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableEmpty
+                        icon={<FileText className="w-12 h-12" />}
+                        title={t("noDataToExport")}
+                        description={
+                          t("noTerminatedStudents" as any) ||
+                          "No terminated students found."
+                        }
+                      />
+                    )
+                  ) : currentData?.data && currentData.data.length > 0 ? (
+                    (currentData.data as TerminatedUnpaidReportItem[]).map((item) => (
+                      <TableRow key={item.contract_id}>
+                        <TableCell>{item.contract_number}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              {contract.contract_number}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div
-                            className="flex items-center gap-2 cursor-pointer group select-none"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Endi bizda student_id aniq bor!
-                              if (contract.student_id) {
-                                navigate(`/students/${contract.student_id}`);
-                              } else {
-                                console.warn("Student ID topilmadi");
-                              }
-                            }}
-                          >
-                            <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
-                              {getStudentName(contract)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <div className="text-sm">
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="w-3 h-3 text-muted-foreground" />
-                              {contract.start_date
-                                ? format(
-                                    new Date(contract.start_date),
-                                    "MMM d, yyyy",
-                                  )
-                                : "-"}
-                            </div>
-                            <div className="text-muted-foreground">
-                              to{" "}
-                              {contract.end_date
-                                ? format(
-                                    new Date(contract.end_date),
-                                    "MMM d, yyyy",
-                                  )
-                                : "-"}
-                            </div>
-                          </div>
+                          {`${item.student_first_name || ""} ${item.student_last_name || ""}`.trim() ||
+                            "-"}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            <CreditCard className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              {contract.monthly_fee
-                                ? formatCurrency(contract.monthly_fee)
-                                : "-"}
-                            </span>
-                          </div>
+                          {item.contract_group_name ||
+                            item.current_student_group_name ||
+                            "-"}
                         </TableCell>
                         <TableCell>
-                          {contract.status ? (
-                            getStatusBadge(contract.status)
-                          ) : (
-                            <Badge variant="secondary">
-                              {t("unknown") || "Noma'lum"}
-                            </Badge>
-                          )}
+                          {item.terminated_at
+                            ? format(new Date(item.terminated_at), "MMM d, yyyy HH:mm")
+                            : "-"}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenDialog(contract)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            {/* <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(contract)}
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button> */}
-                          </div>
-                        </TableCell>
+                        <TableCell>{item.paid_months_count}</TableCell>
+                        <TableCell>{item.unpaid_months_count}</TableCell>
+                        <TableCell>{formatCurrency(item.debt_amount)}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableEmpty
                       icon={<FileText className="w-12 h-12" />}
-                      title={t("noContractsFound")}
-                      description={t("contractsCreatedHere")}
+                      title={t("noDataToExport")}
+                      description={
+                        t("noTerminatedUnpaidData" as any) ||
+                        "No terminated unpaid report data found."
+                      }
                     />
                   )}
                 </TableBody>
               </Table>
 
-              {/* Pagination Controls */}
-              {data?.meta && data.meta.total_pages > 1 && (
+              {currentData?.meta && (currentData.meta.total_pages || 0) > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-4 pb-4">
                   <Button
                     variant="outline"
