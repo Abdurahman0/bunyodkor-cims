@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -32,8 +32,10 @@ import type {
 } from "@/types/api";
 import {
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   CreditCard,
   Download,
   Edit,
@@ -70,6 +72,8 @@ export default function Contracts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] =
     useState<ContractWithStudentNameRead | null>(null);
+  const [expandedTerminatedContractId, setExpandedTerminatedContractId] =
+    useState<number | null>(null);
 
   const { groupsData: allGroupsData, isLoading: isLoadingGroups, fetchGroups } =
     useGroupsStore();
@@ -224,6 +228,11 @@ export default function Contracts() {
     return `${new Intl.NumberFormat("uz-UZ").format(amount)} UZS`;
   };
 
+  const formatSource = (source: string | null | undefined) => {
+    const clean = source?.toString().replace(/^.*\./, "").toLowerCase() || "";
+    return clean ? clean.charAt(0).toUpperCase() + clean.slice(1) : "-";
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { bg: string; text: string }> = {
       active: {
@@ -289,6 +298,7 @@ export default function Contracts() {
     setArchiveYearFilter(undefined);
     setTerminatedFrom("");
     setTerminatedTo("");
+    setExpandedTerminatedContractId(null);
     setPage(1);
   };
 
@@ -305,6 +315,7 @@ export default function Contracts() {
     setView(nextView);
     setPage(1);
     setStatusFilter("");
+    setExpandedTerminatedContractId(null);
   };
 
   const handleExportTerminatedUnpaid = async () => {
@@ -717,28 +728,202 @@ export default function Contracts() {
                     )
                   ) : view === "terminated-students" ? (
                     currentData?.data && currentData.data.length > 0 ? (
-                      (currentData.data as TerminatedStudentItem[]).map((item) => (
-                        <TableRow key={item.contract_id}>
-                          <TableCell>{item.contract_number}</TableCell>
-                          <TableCell>
-                            {`${item.student_first_name || ""} ${item.student_last_name || ""}`.trim() ||
-                              "-"}
-                          </TableCell>
-                          <TableCell>{item.student_group_name || "-"}</TableCell>
-                          <TableCell>
-                            {item.terminated_at
-                              ? format(
-                                  new Date(item.terminated_at),
-                                  "MMM d, yyyy HH:mm",
+                      (currentData.data as TerminatedStudentItem[]).map((item) => {
+                        const isExpanded =
+                          expandedTerminatedContractId === item.contract_id;
+                        const fullStudentName = `${item.student_first_name || ""} ${item.student_last_name || ""}`.trim();
+
+                        return (
+                          <Fragment key={item.contract_id}>
+                            <TableRow
+                              className="cursor-pointer hover:bg-muted/40"
+                              onClick={() =>
+                                setExpandedTerminatedContractId((prev) =>
+                                  prev === item.contract_id ? null : item.contract_id,
                                 )
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            {formatCurrency(item.successful_payments_total)}
-                          </TableCell>
-                          <TableCell>{item.termination_reason || "-"}</TableCell>
-                        </TableRow>
-                      ))
+                              }
+                            >
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                  )}
+                                  <span className="font-medium">
+                                    {item.contract_number}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>{fullStudentName || "-"}</TableCell>
+                              <TableCell>{item.student_group_name || "-"}</TableCell>
+                              <TableCell>
+                                {item.terminated_at
+                                  ? format(
+                                      new Date(item.terminated_at),
+                                      "MMM d, yyyy HH:mm",
+                                    )
+                                  : "-"}
+                              </TableCell>
+                              <TableCell>
+                                {formatCurrency(item.successful_payments_total)}
+                              </TableCell>
+                              <TableCell>{item.termination_reason || "-"}</TableCell>
+                            </TableRow>
+
+                            {isExpanded && (
+                              <TableRow className="bg-muted/20">
+                                <TableCell colSpan={6}>
+                                  <div className="space-y-4 p-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("contractNumber")}
+                                        </p>
+                                        <p className="font-medium">
+                                          {item.contract_number || "-"}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("student")}
+                                        </p>
+                                        <p className="font-medium">
+                                          {fullStudentName || "-"}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("phoneNumber")}
+                                        </p>
+                                        <p className="font-medium">
+                                          {item.student_phone || "-"}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("group")}
+                                        </p>
+                                        <p className="font-medium">
+                                          {item.student_group_name || "-"}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("monthlyFee")}
+                                        </p>
+                                        <p className="font-medium">
+                                          {formatCurrency(item.monthly_fee)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("terminatedBy") || "Terminated by"}
+                                        </p>
+                                        <p className="font-medium">
+                                          {item.terminated_by_full_name ||
+                                            (item.terminated_by_user_id
+                                              ? `ID: ${item.terminated_by_user_id}`
+                                              : "-")}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("paymentsTotal")}
+                                        </p>
+                                        <p className="font-medium">
+                                          {formatCurrency(item.successful_payments_total)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">
+                                          {t("paymentsCount") || "Payments count"}
+                                        </p>
+                                        <p className="font-medium">
+                                          {item.successful_payments_count ?? 0}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <p className="text-sm font-semibold">
+                                        {t("successfulPayments") || "Successful payments"}
+                                      </p>
+                                      {item.successful_payments &&
+                                      item.successful_payments.length > 0 ? (
+                                        <div className="overflow-x-auto rounded-md border border-border">
+                                          <table className="w-full text-sm">
+                                            <thead className="bg-muted/40">
+                                              <tr>
+                                                <th className="px-3 py-2 text-left font-medium">
+                                                  ID
+                                                </th>
+                                                <th className="px-3 py-2 text-left font-medium">
+                                                  {t("source")}
+                                                </th>
+                                                <th className="px-3 py-2 text-left font-medium">
+                                                  {t("amount")}
+                                                </th>
+                                                <th className="px-3 py-2 text-left font-medium">
+                                                  {t("date")}
+                                                </th>
+                                                <th className="px-3 py-2 text-left font-medium">
+                                                  {t("paymentYear") || "Year"}
+                                                </th>
+                                                <th className="px-3 py-2 text-left font-medium">
+                                                  {t("paymentMonth") || "Months"}
+                                                </th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {item.successful_payments.map((payment) => (
+                                                <tr
+                                                  key={payment.transaction_id}
+                                                  className="border-t border-border"
+                                                >
+                                                  <td className="px-3 py-2">
+                                                    #{payment.transaction_id}
+                                                  </td>
+                                                  <td className="px-3 py-2">
+                                                    {formatSource(payment.source)}
+                                                  </td>
+                                                  <td className="px-3 py-2">
+                                                    {formatCurrency(payment.amount)}
+                                                  </td>
+                                                  <td className="px-3 py-2">
+                                                    {payment.paid_at
+                                                      ? format(
+                                                          new Date(payment.paid_at),
+                                                          "MMM d, yyyy HH:mm",
+                                                        )
+                                                      : "-"}
+                                                  </td>
+                                                  <td className="px-3 py-2">
+                                                    {payment.payment_year || "-"}
+                                                  </td>
+                                                  <td className="px-3 py-2">
+                                                    {payment.payment_months?.length
+                                                      ? payment.payment_months.join(", ")
+                                                      : "-"}
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      ) : (
+                                        <p className="text-sm text-muted-foreground">
+                                          {t("noData") || "No data"}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </Fragment>
+                        );
+                      })
                     ) : (
                       <TableEmpty
                         icon={<FileText className="w-12 h-12" />}
