@@ -243,9 +243,9 @@ export const translations = {
     assign: "Assign",
     noUnassignedTransactions: "No Unassigned Transactions",
     allIncomingPaymentsAssigned: "All incoming payments have been assigned.",
-    settlementType: "Settlement Type",
-    settlementPayment: "Payment",
-    waiverSpravka: "Waiver (Spravka)",
+    settlementType: "Payment Type",
+    settlementPayment: "Regular Payment",
+    waiverSpravka: "Waiver (Certificate)",
     paymentProof: "Payment Proof",
 
     // Coach Panel
@@ -1224,10 +1224,10 @@ export const translations = {
     assign: "Tayinlash",
     noUnassignedTransactions: "Tayinlanmagan tranzaksiyalar yo'q",
     allIncomingPaymentsAssigned: "Barcha kiruvchi to'lovlar tayinlangan.",
-    settlementType: "Hisob-kitob turi",
-    settlementPayment: "To'lov",
+    settlementType: "To'lov turi",
+    settlementPayment: "Oddiy to'lov",
     waiverSpravka: "Imtiyoz (spravka)",
-    paymentProof: "To'lov isboti",
+    paymentProof: "To'lov cheki",
 
     // Coach Panel
     myGroups: "Mening guruhlarim",
@@ -2219,8 +2219,8 @@ export const translations = {
     assign: "Назначить",
     noUnassignedTransactions: "Нет неназначенных транзакций",
     allIncomingPaymentsAssigned: "Все входящие платежи были назначены.",
-    settlementType: "Тип расчета",
-    settlementPayment: "Оплата",
+    settlementType: "Тип платежа",
+    settlementPayment: "Обычная оплата",
     waiverSpravka: "Льгота (справка)",
     paymentProof: "Подтверждение оплаты",
 
