@@ -241,7 +241,9 @@ export function TransactionDialog({
         if (payload.proof_file) {
           formData.append("proof_file", payload.proof_file);
         }
-        return transactionService.createManualTransactionWithProof(formData);
+        return transactionService.createManualTransactionWithProof(formData, {
+          suppressGlobalErrorToast: true,
+        });
       }
 
       return transactionService.createManualTransaction({
@@ -252,6 +254,8 @@ export function TransactionDialog({
         payment_months: payload.payment_months,
         comment: payload.comment,
         paid_at: paidAt,
+      }, {
+        suppressGlobalErrorToast: true,
       });
     },
     onSuccess: () => {
@@ -304,8 +308,17 @@ export function TransactionDialog({
       if (Array.isArray(detail) && detail.length > 0) {
         errorMessage = detail[0].msg || detail[0].message || errorMessage;
       } else if (typeof detail === "string") {
+        const normalizedDetail = detail.toLowerCase();
+
         // Backend xabarlarini o'zbekchaga o'girish
-        if (detail.includes("Contract not found")) {
+        if (
+          normalizedDetail.includes("cannot identify image file") ||
+          normalizedDetail.includes("failed to upload file as pdf")
+        ) {
+          errorMessage = t("invalidProofFileFormat");
+        } else if (normalizedDetail.includes("failed to upload proof file")) {
+          errorMessage = t("failedToUploadProofFile");
+        } else if (detail.includes("Contract not found")) {
           errorMessage = t("contractNotFound");
         } else if (detail.includes("Student not found")) {
           errorMessage = t("studentNotFound");

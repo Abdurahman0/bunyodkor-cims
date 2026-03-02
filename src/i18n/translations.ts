@@ -584,6 +584,9 @@ export const translations = {
     // Transaction form
     transactionCreatedSuccess: "Transaction created successfully",
     failedToCreateTransaction: "Failed to create transaction",
+    failedToUploadProofFile: "Failed to upload proof file. Please try again.",
+    invalidProofFileFormat:
+      "Invalid proof file format. Upload a valid image or PDF file.",
     selectAtLeastOneMonth: "Please select at least one month",
     amountRequired: "Amount is required",
     amountMustBeGreaterThanZero: "Amount must be greater than 0",
@@ -1574,6 +1577,10 @@ export const translations = {
     // Transaction form
     transactionCreatedSuccess: "Tranzaksiya muvaffaqiyatli yaratildi",
     failedToCreateTransaction: "Tranzaksiyani yaratib bo'lmadi",
+    failedToUploadProofFile:
+      "Isbot faylini yuklab bo'lmadi. Qaytadan urinib ko'ring.",
+    invalidProofFileFormat:
+      "Isbot fayli noto'g'ri formatda. To'g'ri rasm yoki PDF yuklang.",
     selectAtLeastOneMonth: "Iltimos, kamida bitta oy tanlang",
     amountRequired: "Miqdor talab qilinadi",
     amountMustBeGreaterThanZero: "Miqdor 0 dan katta bo'lishi kerak",
@@ -2567,6 +2574,10 @@ export const translations = {
     // Transaction form
     transactionCreatedSuccess: "Транзакция успешно создана",
     failedToCreateTransaction: "Не удалось создать транзакцию",
+    failedToUploadProofFile:
+      "Не удалось загрузить файл подтверждения. Попробуйте снова.",
+    invalidProofFileFormat:
+      "Неверный формат файла подтверждения. Загрузите корректное изображение или PDF.",
     selectAtLeastOneMonth: "Пожалуйста, выберите хотя бы один месяц",
     amountRequired: "Сумма обязательна",
     amountMustBeGreaterThanZero: "Сумма должна быть больше 0",

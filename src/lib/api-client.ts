@@ -96,15 +96,37 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    const suppressGlobalErrorToast = Boolean(
+      (originalRequest as { suppressGlobalErrorToast?: boolean } | undefined)
+        ?.suppressGlobalErrorToast,
+    );
+
+    const showGlobalError = (
+      message: string,
+      context?: Record<string, unknown>,
+    ) => {
+      if (suppressGlobalErrorToast) {
+        console.error("[API ERROR]", {
+          message,
+          status: error.response?.status,
+          url: originalRequest?.url,
+          method: originalRequest?.method,
+          ...(context ?? {}),
+        });
+        return;
+      }
+
+      showLimitedToast.error(message);
+    };
 
     // Handle different error scenarios
     if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
       // Timeout error
-      showLimitedToast.error(getTranslation("errorTimeout"));
+      showGlobalError(getTranslation("errorTimeout"));
     } else if (error.code === "ERR_NETWORK") {
       // Network error - backend might be down
       if (import.meta.env.VITE_USE_MOCK_API !== "true") {
-        showLimitedToast.error(getTranslation("errorNetwork"));
+        showGlobalError(getTranslation("errorNetwork"));
       }
     } else if (error.response?.status === 401 && !originalRequest._retry) {
       // Try to refresh token
@@ -178,9 +200,9 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     } else if (error.response?.status === 403) {
-      showLimitedToast.error(getTranslation("errorPermissionDenied"));
+      showGlobalError(getTranslation("errorPermissionDenied"));
     } else if (error.response?.status >= 500) {
-      showLimitedToast.error(getTranslation("errorServerError"));
+      showGlobalError(getTranslation("errorServerError"));
     } else {
       // Handle validation errors (422) and other errors
       const detail = error.response?.data?.detail;
@@ -211,8 +233,10 @@ apiClient.interceptors.response.use(
           url: originalRequest?.url,
         });
       } else {
-        // Show all other errors as toast in UI
-        showLimitedToast.error(message);
+        // Show all other errors as toast unless caller suppresses global toasts
+        showGlobalError(message, {
+          detail: error.response?.data?.detail,
+        });
       }
     }
 

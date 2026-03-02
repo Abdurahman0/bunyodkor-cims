@@ -1269,6 +1269,10 @@ export interface GetTransactionStatisticsParams {
   status?: string;
 }
 
+export interface RequestOptions {
+  suppressGlobalErrorToast?: boolean;
+}
+
 export const transactionService = {
   /**
    * Get paginated list of transactions with student names
@@ -1332,10 +1336,16 @@ export const transactionService = {
    */
   createManualTransaction: async (
     data: ManualTransactionCreateRequest,
+    options?: RequestOptions,
   ): Promise<ApiResponse<TransactionRead>> => {
+    const requestConfig = {
+      suppressGlobalErrorToast: options?.suppressGlobalErrorToast,
+    };
+
     const response = await apiClient.post<ApiResponse<TransactionRead>>(
       "/transactions/manual",
       data,
+      requestConfig,
     );
     return response.data;
   },
@@ -1346,15 +1356,19 @@ export const transactionService = {
    */
   createManualTransactionWithProof: async (
     formData: FormData,
+    options?: RequestOptions,
   ): Promise<ApiResponse<TransactionRead>> => {
+    const requestConfig = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      suppressGlobalErrorToast: options?.suppressGlobalErrorToast,
+    };
+
     const response = await apiClient.post<ApiResponse<TransactionRead>>(
       "/transactions/manual/with-proof",
       formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
+      requestConfig,
     );
     return response.data;
   },
