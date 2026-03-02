@@ -390,7 +390,7 @@ export function TransactionDialog({
 
           <div className="space-y-1">
             <Label htmlFor="settlement_type">
-              Settlement Type
+              {t("settlementType")}
             </Label>
             <Select
               id="settlement_type"
@@ -399,16 +399,16 @@ export function TransactionDialog({
                 setSettlementType(e.target.value as SettlementType)
               }
             >
-              <option value="payment">Payment</option>
+              <option value="payment">{t("settlementPayment")}</option>
               <option value="waiver_spravka">
-                Waiver (Spravka)
+                {t("waiverSpravka")}
               </option>
             </Select>
           </div>
 
           <div className="space-y-1">
             <Label htmlFor="proof_file">
-              Payment Proof ({t("optional") || "optional"})
+              {t("paymentProof")} ({t("optional") || "optional"})
             </Label>
             <Input
               id="proof_file"

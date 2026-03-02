@@ -386,13 +386,13 @@ export default function Contracts() {
             variant={view === "terminated-students" ? "default" : "outline"}
             onClick={() => handleViewChange("terminated-students")}
           >
-            Bekor qilingan talabalar
+            {t("terminatedStudents")}
           </Button>
           <Button
             variant={view === "terminated-unpaid" ? "default" : "outline"}
             onClick={() => handleViewChange("terminated-unpaid")}
           >
-            Bekor qilinganlar qarz hisoboti
+            {t("terminatedUnpaidReport")}
           </Button>
           {view === "terminated-unpaid" && (
             <Button variant="outline" onClick={handleExportTerminatedUnpaid}>
@@ -576,8 +576,8 @@ export default function Contracts() {
               {view === "contracts"
                 ? t("contractsList")
                 : view === "terminated-students"
-                  ? "Bekor qilingan talabalar"
-                  : "Bekor qilinganlar qarz hisoboti"}
+                  ? t("terminatedStudents")
+                  : t("terminatedUnpaidReport")}
             </CardTitle>
           </CardHeader>
 
@@ -610,7 +610,7 @@ export default function Contracts() {
                       <>
                         <TableHead>{t("group")}</TableHead>
                         <TableHead>{t("terminatedAt")}</TableHead>
-                        <TableHead>To'lovlar jami</TableHead>
+                        <TableHead>{t("paymentsTotal")}</TableHead>
                         <TableHead>{t("reason") || "Reason"}</TableHead>
                       </>
                     ) : (
@@ -743,7 +743,7 @@ export default function Contracts() {
                       <TableEmpty
                         icon={<FileText className="w-12 h-12" />}
                         title={t("noDataToExport")}
-                        description={"Bekor qilingan talabalar topilmadi."}
+                        description={t("noTerminatedStudents")}
                       />
                     )
                   ) : currentData?.data && currentData.data.length > 0 ? (
@@ -773,7 +773,7 @@ export default function Contracts() {
                     <TableEmpty
                       icon={<FileText className="w-12 h-12" />}
                       title={t("noDataToExport")}
-                      description={"Bekor qilinganlar bo'yicha qarz ma'lumoti topilmadi."}
+                      description={t("noTerminatedUnpaidData")}
                     />
                   )}
                 </TableBody>

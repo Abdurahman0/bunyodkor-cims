@@ -205,6 +205,11 @@ export const translations = {
       "Contracts are created together with students.",
     enterStudentId: "Enter student ID",
     saveContract: "Save Contract",
+    terminatedStudents: "Terminated Students",
+    terminatedUnpaidReport: "Terminated Unpaid Report",
+    paymentsTotal: "Payments Total",
+    noTerminatedStudents: "No terminated students found.",
+    noTerminatedUnpaidData: "No terminated unpaid report data found.",
 
     // Finance
     addTransaction: "Add Transaction",
@@ -238,6 +243,10 @@ export const translations = {
     assign: "Assign",
     noUnassignedTransactions: "No Unassigned Transactions",
     allIncomingPaymentsAssigned: "All incoming payments have been assigned.",
+    settlementType: "Settlement Type",
+    settlementPayment: "Payment",
+    waiverSpravka: "Waiver (Spravka)",
+    paymentProof: "Payment Proof",
 
     // Coach Panel
     myGroups: "My Groups",
@@ -1176,6 +1185,12 @@ export const translations = {
       "Shartnomalar talabalar bilan birga yaratiladi.",
     enterStudentId: "Talaba ID kiriting",
     saveContract: "Shartnomani saqlash",
+    terminatedStudents: "Bekor qilingan talabalar",
+    terminatedUnpaidReport: "Bekor qilinganlar qarz hisoboti",
+    paymentsTotal: "To'lovlar jami",
+    noTerminatedStudents: "Bekor qilingan talabalar topilmadi.",
+    noTerminatedUnpaidData:
+      "Bekor qilinganlar bo'yicha qarz ma'lumoti topilmadi.",
 
     // Finance
     addTransaction: "Tranzaksiya qo'shish",
@@ -1209,6 +1224,10 @@ export const translations = {
     assign: "Tayinlash",
     noUnassignedTransactions: "Tayinlanmagan tranzaksiyalar yo'q",
     allIncomingPaymentsAssigned: "Barcha kiruvchi to'lovlar tayinlangan.",
+    settlementType: "Hisob-kitob turi",
+    settlementPayment: "To'lov",
+    waiverSpravka: "Imtiyoz (spravka)",
+    paymentProof: "To'lov isboti",
 
     // Coach Panel
     myGroups: "Mening guruhlarim",
@@ -2162,6 +2181,11 @@ export const translations = {
     contractsCreatedWithStudents: "Контракты создаются вместе со студентами.",
     enterStudentId: "Введите ID студента",
     saveContract: "Сохранить контракт",
+    terminatedStudents: "Расторгнутые студенты",
+    terminatedUnpaidReport: "Отчет по долгам расторгнутых",
+    paymentsTotal: "Всего оплат",
+    noTerminatedStudents: "Расторгнутые студенты не найдены.",
+    noTerminatedUnpaidData: "Нет данных по долгам расторгнутых контрактов.",
 
     // Finance
     addTransaction: "Добавить транзакцию",
@@ -2195,6 +2219,10 @@ export const translations = {
     assign: "Назначить",
     noUnassignedTransactions: "Нет неназначенных транзакций",
     allIncomingPaymentsAssigned: "Все входящие платежи были назначены.",
+    settlementType: "Тип расчета",
+    settlementPayment: "Оплата",
+    waiverSpravka: "Льгота (справка)",
+    paymentProof: "Подтверждение оплаты",
 
     // Coach Panel
     myGroups: "Мои группы",
