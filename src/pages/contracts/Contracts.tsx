@@ -64,7 +64,6 @@ export default function Contracts() {
   const [archiveYearFilter, setArchiveYearFilter] = useState<
     number | undefined
   >(undefined);
-  const [includeArchived, setIncludeArchived] = useState(false);
   const [terminatedFrom, setTerminatedFrom] = useState("");
   const [terminatedTo, setTerminatedTo] = useState("");
 
@@ -99,7 +98,6 @@ export default function Contracts() {
       statusFilter,
       groupFilter,
       archiveYearFilter,
-      includeArchived,
       contractIdFilter,
       view,
     ],
@@ -111,7 +109,6 @@ export default function Contracts() {
         status: statusFilter || undefined,
         group_id: groupFilter,
         archive_year: archiveYearFilter,
-        include_archived: includeArchived,
       };
 
       const [withNameRes, standardRes] = await Promise.all([
@@ -290,7 +287,6 @@ export default function Contracts() {
     setGroupFilter(undefined);
     setContractIdFilter(undefined);
     setArchiveYearFilter(undefined);
-    setIncludeArchived(false);
     setTerminatedFrom("");
     setTerminatedTo("");
     setPage(1);
@@ -301,7 +297,7 @@ export default function Contracts() {
       groupFilter ||
       archiveYearFilter ||
       contractIdFilter ||
-      (view === "contracts" && (statusFilter || includeArchived)) ||
+      (view === "contracts" && statusFilter) ||
       (view !== "contracts" && (terminatedFrom || terminatedTo)),
   );
 
@@ -390,13 +386,13 @@ export default function Contracts() {
             variant={view === "terminated-students" ? "default" : "outline"}
             onClick={() => handleViewChange("terminated-students")}
           >
-            {t("terminatedStudents" as any) || "Terminated Students"}
+            Bekor qilingan talabalar
           </Button>
           <Button
             variant={view === "terminated-unpaid" ? "default" : "outline"}
             onClick={() => handleViewChange("terminated-unpaid")}
           >
-            {t("terminatedUnpaidReport" as any) || "Terminated Unpaid Report"}
+            Bekor qilinganlar qarz hisoboti
           </Button>
           {view === "terminated-unpaid" && (
             <Button variant="outline" onClick={handleExportTerminatedUnpaid}>
@@ -498,20 +494,6 @@ export default function Contracts() {
                     : null}
                 </Select>
 
-                {view === "contracts" && (
-                  <label className="flex items-center gap-2 px-3 text-sm border rounded-md">
-                    <input
-                      type="checkbox"
-                      checked={includeArchived}
-                      onChange={(e) => {
-                        setIncludeArchived(e.target.checked);
-                        setPage(1);
-                      }}
-                    />
-                    {t("includeArchived" as any) || "Include archived"}
-                  </label>
-                )}
-
                 {view !== "contracts" && (
                   <>
                     <Input
@@ -594,9 +576,8 @@ export default function Contracts() {
               {view === "contracts"
                 ? t("contractsList")
                 : view === "terminated-students"
-                  ? t("terminatedStudents" as any) || "Terminated Students"
-                  : t("terminatedUnpaidReport" as any) ||
-                    "Terminated Unpaid Report"}
+                  ? "Bekor qilingan talabalar"
+                  : "Bekor qilinganlar qarz hisoboti"}
             </CardTitle>
           </CardHeader>
 
@@ -628,16 +609,14 @@ export default function Contracts() {
                     ) : view === "terminated-students" ? (
                       <>
                         <TableHead>{t("group")}</TableHead>
-                        <TableHead>{t("terminatedAt" as any) || "Terminated"}</TableHead>
-                        <TableHead>
-                          {t("paymentsTotal" as any) || "Payments Total"}
-                        </TableHead>
+                        <TableHead>{t("terminatedAt")}</TableHead>
+                        <TableHead>To'lovlar jami</TableHead>
                         <TableHead>{t("reason") || "Reason"}</TableHead>
                       </>
                     ) : (
                       <>
                         <TableHead>{t("group")}</TableHead>
-                        <TableHead>{t("terminatedAt" as any) || "Terminated"}</TableHead>
+                        <TableHead>{t("terminatedAt")}</TableHead>
                         <TableHead>{t("paid") || "Paid"}</TableHead>
                         <TableHead>{t("unpaid") || "Unpaid"}</TableHead>
                         <TableHead>{t("debt") || "Debt"}</TableHead>
@@ -764,10 +743,7 @@ export default function Contracts() {
                       <TableEmpty
                         icon={<FileText className="w-12 h-12" />}
                         title={t("noDataToExport")}
-                        description={
-                          t("noTerminatedStudents" as any) ||
-                          "No terminated students found."
-                        }
+                        description={"Bekor qilingan talabalar topilmadi."}
                       />
                     )
                   ) : currentData?.data && currentData.data.length > 0 ? (
@@ -797,10 +773,7 @@ export default function Contracts() {
                     <TableEmpty
                       icon={<FileText className="w-12 h-12" />}
                       title={t("noDataToExport")}
-                      description={
-                        t("noTerminatedUnpaidData" as any) ||
-                        "No terminated unpaid report data found."
-                      }
+                      description={"Bekor qilinganlar bo'yicha qarz ma'lumoti topilmadi."}
                     />
                   )}
                 </TableBody>
