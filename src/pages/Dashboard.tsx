@@ -212,7 +212,12 @@ export default function Dashboard() {
       }, {});
 
       allTransactions.forEach((transaction) => {
-        const paidAtDate = String(transaction.paid_at || "").slice(0, 10);
+        if (!transaction.paid_at) return;
+        const paidAt = new Date(transaction.paid_at);
+        if (Number.isNaN(paidAt.getTime())) return;
+
+        // Use local date to avoid UTC shift (today's payments appearing as yesterday)
+        const paidAtDate = format(paidAt, "yyyy-MM-dd");
         if (paidAtDate in totalsByDate) {
           totalsByDate[paidAtDate] += Number(transaction.amount || 0);
         }
