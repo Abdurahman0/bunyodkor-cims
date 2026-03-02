@@ -975,7 +975,7 @@ export function StudentWithContractDialog({
                     <Input
                       {...register("buyurtmachi_fio", { required: true })}
                       readOnly={customerType !== "other"}
-                      className={customerType !== "other" ? "bg-gray-100" : ""}
+                      className={customerType !== "other" ? "bg-muted" : ""}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -994,7 +994,7 @@ export function StudentWithContractDialog({
                         {...register("buyurtmachi_phone", { required: true })}
                         readOnly={customerType !== "other"}
                         className={
-                          customerType !== "other" ? "bg-gray-100" : ""
+                          customerType !== "other" ? "bg-muted" : ""
                         }
                       />
                     </div>

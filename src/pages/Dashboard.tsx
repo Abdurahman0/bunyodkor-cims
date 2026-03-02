@@ -167,7 +167,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: weeklyFinanceTrendData } = useQuery({
+  const { data: weeklyRevenueTrendData } = useQuery({
     queryKey: ["dashboard-finance-weekly", format(new Date(), "yyyy-MM-dd")],
     queryFn: async () => {
       const today = new Date();
@@ -177,28 +177,51 @@ export default function Dashboard() {
         return format(d, "yyyy-MM-dd");
       });
 
-      const dailyReports = await Promise.all(
-        days.map(async (date) => {
-          try {
-            const res = await reportService.getFinanceReport({
-              from_date: date,
-              to_date: date,
-            });
+      const firstPage = await transactionService.getTransactions({
+        page: 1,
+        page_size: 100,
+        from_date: days[0],
+        to_date: days[days.length - 1],
+        status: "success",
+      });
 
-            return {
-              date,
-              value: Number(res.data?.total_revenue || 0),
-            };
-          } catch {
-            return {
-              date,
-              value: 0,
-            };
-          }
-        }),
-      );
+      const totalPages = firstPage.meta?.total_pages || 1;
+      const restPages =
+        totalPages > 1
+          ? await Promise.all(
+              Array.from({ length: totalPages - 1 }, (_, idx) =>
+                transactionService.getTransactions({
+                  page: idx + 2,
+                  page_size: 100,
+                  from_date: days[0],
+                  to_date: days[days.length - 1],
+                  status: "success",
+                }),
+              ),
+            )
+          : [];
 
-      return dailyReports;
+      const allTransactions: TransactionRead[] = [
+        ...(firstPage.data || []),
+        ...restPages.flatMap((page) => page.data || []),
+      ];
+
+      const totalsByDate = days.reduce<Record<string, number>>((acc, date) => {
+        acc[date] = 0;
+        return acc;
+      }, {});
+
+      allTransactions.forEach((transaction) => {
+        const paidAtDate = String(transaction.paid_at || "").slice(0, 10);
+        if (paidAtDate in totalsByDate) {
+          totalsByDate[paidAtDate] += Number(transaction.amount || 0);
+        }
+      });
+
+      return days.map((date) => ({
+        date,
+        value: totalsByDate[date] || 0,
+      }));
     },
   });
 
@@ -310,9 +333,9 @@ export default function Dashboard() {
       value: item.transaction_count,
     })) || [];
 
-  // Process weekly revenue trend from /reports/finance (daily totals for last 7 days)
+  // Process weekly revenue trend from successful transactions for last 7 days
   const revenueData = useMemo(() => {
-    return (weeklyFinanceTrendData || []).map((item) => {
+    return (weeklyRevenueTrendData || []).map((item) => {
       const dateObj = new Date(`${item.date}T00:00:00`);
 
       return {
@@ -321,7 +344,7 @@ export default function Dashboard() {
         tooltipLabel: formatChartDate(dateObj, "long"),
       };
     });
-  }, [weeklyFinanceTrendData, language]);
+  }, [weeklyRevenueTrendData, language]);
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({
