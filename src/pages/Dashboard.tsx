@@ -177,56 +177,28 @@ export default function Dashboard() {
         return format(d, "yyyy-MM-dd");
       });
 
-      const firstPage = await transactionService.getTransactions({
-        page: 1,
-        page_size: 100,
-        from_date: days[0],
-        to_date: days[days.length - 1],
-        status: "success",
-      });
+      const dailyReports = await Promise.all(
+        days.map(async (date) => {
+          try {
+            const res = await reportService.getFinanceReport({
+              from_date: date,
+              to_date: date,
+            });
 
-      const totalPages = firstPage.meta?.total_pages || 1;
-      const restPages =
-        totalPages > 1
-          ? await Promise.all(
-              Array.from({ length: totalPages - 1 }, (_, idx) =>
-                transactionService.getTransactions({
-                  page: idx + 2,
-                  page_size: 100,
-                  from_date: days[0],
-                  to_date: days[days.length - 1],
-                  status: "success",
-                }),
-              ),
-            )
-          : [];
+            return {
+              date,
+              value: Number(res.data?.total_revenue || 0),
+            };
+          } catch {
+            return {
+              date,
+              value: 0,
+            };
+          }
+        }),
+      );
 
-      const allTransactions: TransactionRead[] = [
-        ...(firstPage.data || []),
-        ...restPages.flatMap((page) => page.data || []),
-      ];
-
-      const totalsByDate = days.reduce<Record<string, number>>((acc, date) => {
-        acc[date] = 0;
-        return acc;
-      }, {});
-
-      allTransactions.forEach((transaction) => {
-        if (!transaction.paid_at) return;
-        const paidAt = new Date(transaction.paid_at);
-        if (Number.isNaN(paidAt.getTime())) return;
-
-        // Use local date to avoid UTC shift (today's payments appearing as yesterday)
-        const paidAtDate = format(paidAt, "yyyy-MM-dd");
-        if (paidAtDate in totalsByDate) {
-          totalsByDate[paidAtDate] += Number(transaction.amount || 0);
-        }
-      });
-
-      return days.map((date) => ({
-        date,
-        value: totalsByDate[date] || 0,
-      }));
+      return dailyReports;
     },
   });
 
@@ -338,18 +310,24 @@ export default function Dashboard() {
       value: item.transaction_count,
     })) || [];
 
-  // Process weekly revenue trend from successful transactions for last 7 days
+  // Process weekly revenue trend and keep today's point in sync with summary card
   const revenueData = useMemo(() => {
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const todayRevenue = Number(summary?.today_revenue || 0);
+
     return (weeklyRevenueTrendData || []).map((item) => {
       const dateObj = new Date(`${item.date}T00:00:00`);
+      const syncedValue =
+        item.date === todayStr && todayRevenue > 0 ? todayRevenue : item.value;
 
       return {
         ...item,
+        value: syncedValue,
         label: formatChartDate(dateObj, "short"),
         tooltipLabel: formatChartDate(dateObj, "long"),
       };
     });
-  }, [weeklyRevenueTrendData, language]);
+  }, [weeklyRevenueTrendData, language, summary?.today_revenue]);
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({
