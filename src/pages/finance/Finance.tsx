@@ -66,6 +66,8 @@ export default function Finance() {
 
   const pageSize = 10;
   const debouncedSearch = useDebounce(search, 500);
+  const normalizedSearch = debouncedSearch.trim().toLowerCase();
+  const isSearchingByName = normalizedSearch.length > 0;
 
   const { data: unassignedData } = useQuery({
     queryKey: ["unassigned-transactions-preview"],
@@ -87,10 +89,50 @@ export default function Finance() {
       transactionService.getTransactionsWithName({
         page,
         page_size: pageSize,
-        search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         source: sourceFilter || undefined,
       }),
+    enabled: !isSearchingByName,
+    placeholderData: keepPreviousData,
+    staleTime: 30000,
+  });
+
+  const { data: searchSourceTransactions, isLoading: isSearchLoading } = useQuery({
+    queryKey: [
+      "transactions-with-name-local-search",
+      normalizedSearch,
+      statusFilter,
+      sourceFilter,
+    ],
+    queryFn: async () => {
+      const firstPage = await transactionService.getTransactionsWithName({
+        page: 1,
+        page_size: 100,
+        status: statusFilter || undefined,
+        source: sourceFilter || undefined,
+      });
+
+      const pages = firstPage.meta?.total_pages || 1;
+      const restPages =
+        pages > 1
+          ? await Promise.all(
+              Array.from({ length: pages - 1 }, (_, idx) =>
+                transactionService.getTransactionsWithName({
+                  page: idx + 2,
+                  page_size: 100,
+                  status: statusFilter || undefined,
+                  source: sourceFilter || undefined,
+                }),
+              ),
+            )
+          : [];
+
+      return [
+        ...(firstPage.data || []),
+        ...restPages.flatMap((response) => response.data || []),
+      ];
+    },
+    enabled: isSearchingByName,
     placeholderData: keepPreviousData,
     staleTime: 30000,
   });
@@ -102,12 +144,47 @@ export default function Finance() {
     refetchOnWindowFocus: false,
   });
 
-  const transactions = useMemo(
-    () => transactionsData?.data ?? [],
-    [transactionsData?.data],
-  );
-  const totalPages = transactionsData?.meta?.total_pages || 1;
-  const totalItems = transactionsData?.meta?.total || 0;
+  const filteredTransactions = useMemo(() => {
+    if (!isSearchingByName) {
+      return transactionsData?.data ?? [];
+    }
+
+    return (searchSourceTransactions || []).filter((transaction) => {
+      const studentName = (transaction.student_full_name || "").toLowerCase();
+      const externalId = (transaction.external_id || "").toLowerCase();
+      const transactionId = String(transaction.id);
+
+      return (
+        studentName.includes(normalizedSearch) ||
+        externalId.includes(normalizedSearch) ||
+        transactionId.includes(normalizedSearch)
+      );
+    });
+  }, [
+    isSearchingByName,
+    transactionsData?.data,
+    searchSourceTransactions,
+    normalizedSearch,
+  ]);
+
+  const transactions = useMemo(() => {
+    if (!isSearchingByName) {
+      return filteredTransactions;
+    }
+
+    const start = (page - 1) * pageSize;
+    return filteredTransactions.slice(start, start + pageSize);
+  }, [isSearchingByName, filteredTransactions, page, pageSize]);
+
+  const totalItems = isSearchingByName
+    ? filteredTransactions.length
+    : (transactionsData?.meta?.total ?? 0);
+
+  const totalPages = isSearchingByName
+    ? Math.max(1, Math.ceil(totalItems / pageSize))
+    : (transactionsData?.meta?.total_pages ?? 1);
+
+  const isTableLoading = isSearchingByName ? isSearchLoading : isLoading;
 
   const displayedTransactions = useMemo(
     () =>
@@ -193,10 +270,18 @@ export default function Finance() {
 
   const handleExport = async () => {
     const promise = (async () => {
+      if (isSearchingByName) {
+        if (filteredTransactions.length === 0) {
+          throw new Error("NO_DATA");
+        }
+
+        exportTransactions(filteredTransactions);
+        return;
+      }
+
       const firstPage = await transactionService.getTransactionsWithName({
         page: 1,
         page_size: 100,
-        search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         source: sourceFilter || undefined,
       });
@@ -211,7 +296,6 @@ export default function Finance() {
           transactionService.getTransactionsWithName({
             page: idx + 2,
             page_size: 100,
-            search: debouncedSearch || undefined,
             status: statusFilter || undefined,
             source: sourceFilter || undefined,
           }),
@@ -454,7 +538,7 @@ export default function Finance() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {isTableLoading ? (
                 <TableRow>
                   <TableCell colSpan={9} className="h-36 text-center">
                     <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">

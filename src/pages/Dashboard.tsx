@@ -155,14 +155,13 @@ export default function Dashboard() {
   const { data: financeData } = useQuery({
     queryKey: ["dashboard-finance"],
     queryFn: () => {
-      // Check if finance report also needs datetime format or accepts date format
       const today = format(new Date(), "yyyy-MM-dd");
-      const weekAgo = format(
-        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      const thirtyDaysAgo = format(
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         "yyyy-MM-dd",
       );
       return reportService.getFinanceReport({
-        from_date: weekAgo,
+        from_date: thirtyDaysAgo,
         to_date: today,
       });
     },
@@ -439,7 +438,7 @@ export default function Dashboard() {
                 {t("paymentSources")}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                {t("distributionByMethod")}
+                {t("distributionByMethod")} - {t("last30Days")}
               </p>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-6">
