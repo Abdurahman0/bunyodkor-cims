@@ -62,7 +62,8 @@ export default function Finance() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [sourceFilter, setSourceFilter] = useState<string>("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const [isSpravkaDialogOpen, setIsSpravkaDialogOpen] = useState(false);
 
   const pageSize = 10;
   const debouncedSearch = useDebounce(search, 500);
@@ -407,9 +408,13 @@ export default function Finance() {
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">{t("export")}</span>
           </Button>
-          <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+          <Button onClick={() => setIsManualDialogOpen(true)} className="gap-2">
             <Plus className="w-6 h-6" />
-            <span className="hidden sm:inline">{t("addTransaction")}</span>
+            <span className="hidden sm:inline">Tranzaksiya qo'shish</span>
+          </Button>
+          <Button variant="secondary" onClick={() => setIsSpravkaDialogOpen(true)} className="gap-2">
+            <Plus className="w-6 h-6" />
+            <span className="hidden sm:inline">Spravka qo'shish</span>
           </Button>
         </div>
       </motion.div>
@@ -645,10 +650,19 @@ export default function Finance() {
                         {t("clearFilters")}
                       </Button>
                     ) : (
-                      <Button onClick={() => setIsDialogOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t("addTransaction")}
-                      </Button>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button onClick={() => setIsManualDialogOpen(true)}>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Tranzaksiya qo'shish
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setIsSpravkaDialogOpen(true)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Spravka qo'shish
+                        </Button>
+                      </div>
                     )
                   }
                 />
@@ -675,7 +689,16 @@ export default function Finance() {
         <UnassignedTransactions />
       </motion.div>
 
-      <TransactionDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <TransactionDialog
+        open={isManualDialogOpen}
+        onOpenChange={setIsManualDialogOpen}
+        mode="manual"
+      />
+      <TransactionDialog
+        open={isSpravkaDialogOpen}
+        onOpenChange={setIsSpravkaDialogOpen}
+        mode="spravka"
+      />
     </div>
   );
 }

@@ -27,6 +27,7 @@ import type { ContractRead, StudentRead } from "@/types/api";
 interface TransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode: "manual" | "spravka";
 }
 
 interface TransactionFormData {
@@ -55,9 +56,11 @@ type ContractWithStudent = ContractRead & { student?: StudentRead };
 export function TransactionDialog({
   open,
   onOpenChange,
+  mode,
 }: TransactionDialogProps) {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
+  const isSpravkaMode = mode === "spravka";
 
   // States
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
@@ -346,10 +349,7 @@ export function TransactionDialog({
     // ---------------------------------
   });
 
-  const onSubmit = (
-    data: TransactionFormData,
-    mode: CreateTransactionPayload["mode"],
-  ) => {
+  const onSubmit = (data: TransactionFormData) => {
     const paymentMonthsArray = data.payment_months
       .split(",")
       .map((m) => parseInt(m.trim()))
@@ -360,7 +360,7 @@ export function TransactionDialog({
       return;
     }
 
-    if (mode === "spravka") {
+    if (isSpravkaMode) {
       if (!proofFile || !isPdfFile(proofFile)) {
         toast.error(t("invalidProofFileFormat"));
         return;
@@ -374,13 +374,10 @@ export function TransactionDialog({
       payment_year: data.payment_year,
       payment_months: paymentMonthsArray,
       comment: data.comment,
-      proof_file: mode === "spravka" ? proofFile : null,
+      proof_file: isSpravkaMode ? proofFile : null,
       mode,
     });
   };
-
-  const handleManualSubmit = handleSubmit((data) => onSubmit(data, "manual"));
-  const handleSpravkaSubmit = handleSubmit((data) => onSubmit(data, "spravka"));
 
   // Tanlangan shartnoma uchun talaba ma'lumotini olish
   const currentStudent = selectedContract
@@ -394,10 +391,12 @@ export function TransactionDialog({
         onClose={() => onOpenChange(false)}
       >
         <DialogHeader>
-          <DialogTitle>{t("addTransaction")}</DialogTitle>
+          <DialogTitle>
+            {isSpravkaMode ? "Spravka qo'shish" : t("addTransaction")}
+          </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleManualSubmit} className="p-6 pt-0 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
           <div className="space-y-1">
             <Label htmlFor="amount">{t("amount")} (UZS)</Label>
             <Input
@@ -424,20 +423,20 @@ export function TransactionDialog({
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="proof_file">
-              {t("paymentProof")} ({t("optional") || "optional"})
-            </Label>
-            <Input
-              id="proof_file"
-              type="file"
-              accept="application/pdf,.pdf,image/*"
-              onChange={handleProofFileChange}
-            />
-            <p className="text-xs text-muted-foreground">
-              Spravka qo'shishda: PDF
-            </p>
-          </div>
+          {isSpravkaMode && (
+            <div className="space-y-1">
+              <Label htmlFor="proof_file">
+                {t("paymentProof")} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="proof_file"
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={handleProofFileChange}
+              />
+              <p className="text-xs text-muted-foreground">PDF</p>
+            </div>
+          )}
 
           {/* Shartnoma raqami (Autocomplete) */}
           <div
@@ -682,14 +681,11 @@ export function TransactionDialog({
               {t("cancel")}
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? t("saving") : "Tranzaksiya qo'shish"}
-            </Button>
-            <Button
-              type="button"
-              disabled={mutation.isPending}
-              onClick={handleSpravkaSubmit}
-            >
-              {mutation.isPending ? t("saving") : "Spravka qo'shish"}
+              {mutation.isPending
+                ? t("saving")
+                : isSpravkaMode
+                  ? "Spravka qo'shish"
+                  : "Tranzaksiya qo'shish"}
             </Button>
           </div>
         </form>
