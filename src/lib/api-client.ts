@@ -223,6 +223,10 @@ apiClient.interceptors.response.use(
         message.includes("less than or equal to") ||
         (typeof detail === "string" &&
           detail.includes("less than or equal to"));
+      const normalizedMessage = message.toLowerCase();
+      const isShortDateValidationError =
+        normalizedMessage.includes("valid date or datetime") &&
+        normalizedMessage.includes("too short");
 
       if (isLimitValidationError) {
         // Only log limit validation errors to console, don't show toast
@@ -231,6 +235,15 @@ apiClient.interceptors.response.use(
           detail: error.response?.data?.detail,
           status: error.response?.status,
           url: originalRequest?.url,
+        });
+      } else if (isShortDateValidationError) {
+        // Date query params may be temporarily empty while user edits filters
+        console.warn("API Validation Error (short date input):", {
+          message,
+          detail: error.response?.data?.detail,
+          status: error.response?.status,
+          url: originalRequest?.url,
+          method: originalRequest?.method,
         });
       } else {
         // Show all other errors as toast unless caller suppresses global toasts
