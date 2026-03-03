@@ -32,11 +32,11 @@ interface TransactionDialogProps {
 
 interface TransactionFormData {
   amount: number;
-  source: TransactionSource;
   contract_number: string;
   payment_year: number;
   payment_months: string;
   comment?: string;
+  file_type: "malumotnoma" | "spravka";
 }
 
 interface CreateTransactionPayload {
@@ -133,10 +133,10 @@ export function TransactionDialog({
   } = useForm<TransactionFormData>({
     defaultValues: {
       amount: 0,
-      source: "bank",
       contract_number: "",
       payment_year: new Date().getFullYear(),
       payment_months: "",
+      file_type: "malumotnoma",
     },
   });
 
@@ -376,11 +376,11 @@ export function TransactionDialog({
 
     mutation.mutate({
       amount: isSpravkaMode ? 0 : data.amount,
-      source: data.source,
+      source: "bank",
       contract_number: data.contract_number,
       payment_year: data.payment_year,
       payment_months: paymentMonthsArray,
-      comment: data.comment,
+      comment: isSpravkaMode ? data.file_type : data.comment,
       proof_file: isSpravkaMode ? proofFile : null,
       mode,
     });
@@ -434,14 +434,15 @@ export function TransactionDialog({
             )}
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="source">{t("paymentSource")}</Label>
-            <Select id="source" {...register("source")}>
-              <option value="bank">{t("bankTransfer")}</option>
-              <option value="payme">Payme</option>
-              <option value="click">Click</option>
-            </Select>
-          </div>
+          {isSpravkaMode && (
+            <div className="space-y-1">
+              <Label htmlFor="file_type">{t("fileType")}</Label>
+              <Select id="file_type" {...register("file_type")}>
+                <option value="malumotnoma">{t("fileTypeMalumotnoma")}</option>
+                <option value="spravka">{t("fileTypeSpravka")}</option>
+              </Select>
+            </div>
+          )}
 
           {isSpravkaMode && (
             <div className="space-y-1">
@@ -681,16 +682,18 @@ export function TransactionDialog({
             )}
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="comment">
-              {t("comment")} ({t("optional")})
-            </Label>
-            <Input
-              id="comment"
-              placeholder={t("monthlyPayment")}
-              {...register("comment")}
-            />
-          </div>
+          {!isSpravkaMode && (
+            <div className="space-y-1">
+              <Label htmlFor="comment">
+                {t("comment")} ({t("optional")})
+              </Label>
+              <Input
+                id="comment"
+                placeholder={t("monthlyPayment")}
+                {...register("comment")}
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button
