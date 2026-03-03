@@ -235,19 +235,33 @@ export default function Dashboard() {
     return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
   };
 
-  // Fetch recent attendances (today's attendances)
+  // Fetch today's attendances using full-day datetime bounds
   const { data: recentAttendancesData } = useQuery({
-    queryKey: ["recent-attendances"],
+    queryKey: ["recent-attendances", format(new Date(), "yyyy-MM-dd")],
     queryFn: () => {
-      const today = format(new Date(), "yyyy-MM-dd");
+      const now = new Date();
+      const dayStart = new Date(now);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(now);
+      dayEnd.setHours(23, 59, 59, 999);
+
       return attendanceService.getAllAttendances({
-        from_date: today,
-        to_date: today,
+        from_date: format(dayStart, "yyyy-MM-dd'T'HH:mm:ss"),
+        to_date: format(dayEnd, "yyyy-MM-dd'T'HH:mm:ss"),
         page: 1,
-        page_size: 10,
+        page_size: 200,
       });
     },
   });
+
+  const recentAttendances = useMemo(
+    () =>
+      [...(recentAttendancesData?.data || [])].sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      ),
+    [recentAttendancesData?.data],
+  );
 
   // Extract unique student IDs from transactions and attendances
   const uniqueStudentIds = useMemo(() => {
@@ -349,7 +363,7 @@ export default function Dashboard() {
 
   // Process attendance data from recent attendances
   const attendanceChartData = (() => {
-    const attendances = recentAttendancesData?.data || [];
+    const attendances = recentAttendances;
     const present = attendances.filter((a) => a.status === "present").length;
     const absent = attendances.filter((a) => a.status === "absent").length;
     const late = attendances.filter((a) => a.status === "late").length;
@@ -742,9 +756,8 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentAttendancesData?.data &&
-                recentAttendancesData.data.length > 0 ? (
-                  recentAttendancesData.data
+                {recentAttendances.length > 0 ? (
+                  recentAttendances
                     .slice(0, 8)
                     .map((attendance: AttendanceRead) => (
                       <div
