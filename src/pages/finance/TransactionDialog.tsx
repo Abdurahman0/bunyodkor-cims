@@ -200,7 +200,7 @@ export function TransactionDialog({
     setSelectedContract(contract as ContractWithStudent);
     setContractSearch(contract.contract_number);
     setValue("contract_number", contract.contract_number);
-    setValue("amount", contract.monthly_fee);
+    setValue("amount", isSpravkaMode ? 0 : contract.monthly_fee);
     setShowContractDropdown(false);
   };
 
@@ -210,6 +210,12 @@ export function TransactionDialog({
       setSelectedContract(null);
     }
   }, [contractSearch, selectedContract]);
+
+  useEffect(() => {
+    if (open && isSpravkaMode) {
+      setValue("amount", 0);
+    }
+  }, [open, isSpravkaMode, setValue]);
 
   useEffect(() => {
     if (!open) {
@@ -368,7 +374,7 @@ export function TransactionDialog({
     }
 
     mutation.mutate({
-      amount: data.amount,
+      amount: isSpravkaMode ? 0 : data.amount,
       source: data.source,
       contract_number: data.contract_number,
       payment_year: data.payment_year,
@@ -404,11 +410,22 @@ export function TransactionDialog({
               type="number"
               placeholder="0"
               {...register("amount", {
-                required: t("amountRequired"),
                 valueAsNumber: true,
-                min: { value: 1, message: t("amountMustBeGreaterThanZero") },
+                ...(isSpravkaMode
+                  ? {}
+                  : {
+                      required: t("amountRequired"),
+                      min: {
+                        value: 1,
+                        message: t("amountMustBeGreaterThanZero"),
+                      },
+                    }),
               })}
+              readOnly={isSpravkaMode}
             />
+            {isSpravkaMode && (
+              <p className="text-xs text-muted-foreground">Spravka uchun amount: 0</p>
+            )}
             {errors.amount && (
               <p className="text-sm text-red-500">{errors.amount.message}</p>
             )}
