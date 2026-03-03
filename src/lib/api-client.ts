@@ -227,6 +227,10 @@ apiClient.interceptors.response.use(
       const isShortDateValidationError =
         normalizedMessage.includes("valid date or datetime") &&
         normalizedMessage.includes("too short");
+      const isDatetimeSentForDateFieldError =
+        normalizedMessage.includes(
+          "datetimes provided to dates should have zero time",
+        ) || normalizedMessage.includes("be exact dates");
 
       if (isLimitValidationError) {
         // Only log limit validation errors to console, don't show toast
@@ -239,6 +243,15 @@ apiClient.interceptors.response.use(
       } else if (isShortDateValidationError) {
         // Date query params may be temporarily empty while user edits filters
         console.warn("API Validation Error (short date input):", {
+          message,
+          detail: error.response?.data?.detail,
+          status: error.response?.status,
+          url: originalRequest?.url,
+          method: originalRequest?.method,
+        });
+      } else if (isDatetimeSentForDateFieldError) {
+        // Backend expects date-only values for some filters; log only
+        console.warn("API Validation Error (datetime passed to date field):", {
           message,
           detail: error.response?.data?.detail,
           status: error.response?.status,

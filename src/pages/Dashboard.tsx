@@ -28,7 +28,7 @@ import {
   attendanceService,
 } from "@/services/api.service";
 import type { TransactionRead, GroupRead, AttendanceRead } from "@/types/api";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
@@ -235,32 +235,37 @@ export default function Dashboard() {
     return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
   };
 
-  // Fetch today's attendances using full-day datetime bounds
+  // Fetch attendance data with date-only params (API expects exact dates)
   const { data: recentAttendancesData } = useQuery({
     queryKey: ["recent-attendances", format(new Date(), "yyyy-MM-dd")],
     queryFn: () => {
-      const now = new Date();
-      const dayStart = new Date(now);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(now);
-      dayEnd.setHours(23, 59, 59, 999);
+      const today = new Date();
+      const fromDate = format(subDays(today, 1), "yyyy-MM-dd");
+      const toDate = format(today, "yyyy-MM-dd");
 
       return attendanceService.getAllAttendances({
-        from_date: format(dayStart, "yyyy-MM-dd'T'HH:mm:ss"),
-        to_date: format(dayEnd, "yyyy-MM-dd'T'HH:mm:ss"),
+        from_date: fromDate,
+        to_date: toDate,
         page: 1,
         page_size: 200,
       });
     },
   });
 
+  const todayDateKey = format(new Date(), "yyyy-MM-dd");
   const recentAttendances = useMemo(
     () =>
-      [...(recentAttendancesData?.data || [])].sort(
+      [...(recentAttendancesData?.data || [])]
+        .filter(
+          (attendance) =>
+            format(new Date(attendance.created_at), "yyyy-MM-dd") ===
+            todayDateKey,
+        )
+        .sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       ),
-    [recentAttendancesData?.data],
+    [recentAttendancesData?.data, todayDateKey],
   );
 
   // Extract unique student IDs from transactions and attendances
