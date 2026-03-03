@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
@@ -22,7 +22,7 @@ import { Calendar, X, Check, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
-import type { ContractRead, SettlementType, StudentRead } from "@/types/api";
+import type { ContractRead, StudentRead } from "@/types/api";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -45,8 +45,8 @@ interface CreateTransactionPayload {
   payment_year: number;
   payment_months: number[];
   comment?: string;
-  settlement_type: SettlementType;
-  proof_file: File | null;
+  proof_file?: File | null;
+  mode: "manual" | "spravka";
 }
 
 // Backenddan keladigan ContractRead turini kengaytiramiz
@@ -65,8 +65,6 @@ export function TransactionDialog({
   const [showContractDropdown, setShowContractDropdown] = useState(false);
   const [selectedContract, setSelectedContract] =
     useState<ContractWithStudent | null>(null);
-  const [settlementType, setSettlementType] =
-    useState<SettlementType>("payment");
   const [proofFile, setProofFile] = useState<File | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -180,6 +178,21 @@ export function TransactionDialog({
     setValue("payment_months", newSelectedMonths.join(", "));
   };
 
+  const isPdfFile = (file: File) =>
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf");
+
+  const handleProofFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setProofFile(null);
+      return;
+    }
+
+    setProofFile(file);
+  };
+
   const handleContractSelect = (contract: ContractRead) => {
     setSelectedContract(contract as ContractWithStudent);
     setContractSearch(contract.contract_number);
@@ -201,7 +214,6 @@ export function TransactionDialog({
       setContractSearch("");
       setSelectedContract(null);
       setSelectedMonths([]);
-      setSettlementType("payment");
       setProofFile(null);
     }
   }, [open]);
@@ -223,17 +235,16 @@ export function TransactionDialog({
   const mutation = useMutation({
     mutationFn: async (payload: CreateTransactionPayload) => {
       const paidAt = new Date().toISOString();
-      const shouldUseProofEndpoint =
-        payload.proof_file !== null || payload.settlement_type !== "payment";
 
-      if (shouldUseProofEndpoint) {
+      if (payload.mode === "spravka") {
         const formData = new FormData();
         formData.append("contract_number", payload.contract_number);
         formData.append("source", payload.source);
         formData.append("amount", String(payload.amount));
         formData.append("payment_year", String(payload.payment_year));
         formData.append("payment_months", payload.payment_months.join(","));
-        formData.append("settlement_type", payload.settlement_type);
+        formData.append("settlement_type", "waiver_spravka");
+        formData.append("waiver_spravka", "true");
         if (payload.comment) {
           formData.append("comment", payload.comment);
         }
@@ -294,7 +305,6 @@ export function TransactionDialog({
       );
       reset();
       setSelectedMonths([]);
-      setSettlementType("payment");
       setProofFile(null);
       onOpenChange(false);
     },
@@ -336,7 +346,10 @@ export function TransactionDialog({
     // ---------------------------------
   });
 
-  const onSubmit = (data: TransactionFormData) => {
+  const onSubmit = (
+    data: TransactionFormData,
+    mode: CreateTransactionPayload["mode"],
+  ) => {
     const paymentMonthsArray = data.payment_months
       .split(",")
       .map((m) => parseInt(m.trim()))
@@ -347,6 +360,13 @@ export function TransactionDialog({
       return;
     }
 
+    if (mode === "spravka") {
+      if (!proofFile || !isPdfFile(proofFile)) {
+        toast.error(t("invalidProofFileFormat"));
+        return;
+      }
+    }
+
     mutation.mutate({
       amount: data.amount,
       source: data.source,
@@ -354,10 +374,13 @@ export function TransactionDialog({
       payment_year: data.payment_year,
       payment_months: paymentMonthsArray,
       comment: data.comment,
-      settlement_type: settlementType,
-      proof_file: proofFile,
+      proof_file: mode === "spravka" ? proofFile : null,
+      mode,
     });
   };
+
+  const handleManualSubmit = handleSubmit((data) => onSubmit(data, "manual"));
+  const handleSpravkaSubmit = handleSubmit((data) => onSubmit(data, "spravka"));
 
   // Tanlangan shartnoma uchun talaba ma'lumotini olish
   const currentStudent = selectedContract
@@ -374,7 +397,7 @@ export function TransactionDialog({
           <DialogTitle>{t("addTransaction")}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
+        <form onSubmit={handleManualSubmit} className="p-6 pt-0 space-y-4">
           <div className="space-y-1">
             <Label htmlFor="amount">{t("amount")} (UZS)</Label>
             <Input
@@ -402,32 +425,18 @@ export function TransactionDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="settlement_type">
-              {t("settlementType")}
-            </Label>
-            <Select
-              id="settlement_type"
-              value={settlementType}
-              onChange={(e) =>
-                setSettlementType(e.target.value as SettlementType)
-              }
-            >
-              <option value="payment">{t("settlementPayment")}</option>
-              <option value="waiver_spravka">
-                {t("waiverSpravka")}
-              </option>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
             <Label htmlFor="proof_file">
               {t("paymentProof")} ({t("optional") || "optional"})
             </Label>
             <Input
               id="proof_file"
               type="file"
-              onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+              accept="application/pdf,.pdf,image/*"
+              onChange={handleProofFileChange}
             />
+            <p className="text-xs text-muted-foreground">
+              Spravka qo'shishda: PDF
+            </p>
           </div>
 
           {/* Shartnoma raqami (Autocomplete) */}
@@ -673,7 +682,14 @@ export function TransactionDialog({
               {t("cancel")}
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? t("saving") : t("save")}
+              {mutation.isPending ? t("saving") : "Tranzaksiya qo'shish"}
+            </Button>
+            <Button
+              type="button"
+              disabled={mutation.isPending}
+              onClick={handleSpravkaSubmit}
+            >
+              {mutation.isPending ? t("saving") : "Spravka qo'shish"}
             </Button>
           </div>
         </form>
