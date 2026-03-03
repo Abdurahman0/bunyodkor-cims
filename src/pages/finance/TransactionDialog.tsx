@@ -181,7 +181,8 @@ export function TransactionDialog({
     setValue("payment_months", newSelectedMonths.join(", "));
   };
 
-  const isPdfFile = (file: File) =>
+  const isAllowedProofFile = (file: File) =>
+    file.type.startsWith("image/") ||
     file.type === "application/pdf" ||
     file.name.toLowerCase().endsWith(".pdf");
 
@@ -367,7 +368,7 @@ export function TransactionDialog({
     }
 
     if (isSpravkaMode) {
-      if (!proofFile || !isPdfFile(proofFile)) {
+      if (!proofFile || !isAllowedProofFile(proofFile)) {
         toast.error(t("invalidProofFileFormat"));
         return;
       }
@@ -450,10 +451,10 @@ export function TransactionDialog({
               <Input
                 id="proof_file"
                 type="file"
-                accept="application/pdf,.pdf"
+                accept="application/pdf,.pdf,image/*"
                 onChange={handleProofFileChange}
               />
-              <p className="text-xs text-muted-foreground">PDF</p>
+              <p className="text-xs text-muted-foreground">PDF yoki rasm</p>
             </div>
           )}
 
