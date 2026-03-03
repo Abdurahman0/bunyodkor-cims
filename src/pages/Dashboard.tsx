@@ -1,6 +1,6 @@
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +37,7 @@ export default function Dashboard() {
   const { user } = useAuthStore();
   const { t, language } = useLanguageStore();
 
-  const formatChartDate = (date: Date, type: "short" | "long") => {
+  const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
     const day = date.getDate();
     const weekdayIndex = date.getDay();
     const monthIndex = date.getMonth();
@@ -128,7 +128,7 @@ export default function Dashboard() {
 
     if (type === "short") return dict.weekdaysShort[weekdayIndex];
     return `${day} ${dict.weekdaysLong[weekdayIndex]}, ${dict.months[monthIndex]}`;
-  };
+  }, [language]);
 
   const { data: summaryData } = useQuery({
     queryKey: ["dashboard-summary"],
@@ -171,14 +171,25 @@ export default function Dashboard() {
     queryKey: ["dashboard-finance-weekly", format(new Date(), "yyyy-MM-dd")],
     queryFn: async () => {
       const today = new Date();
-      const days = Array.from({ length: 7 }, (_, idx) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() - (6 - idx));
-        return format(d, "yyyy-MM-dd");
+      today.setHours(0, 0, 0, 0);
+      const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ...
+      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - daysFromMonday);
+
+      const weekDates = Array.from({ length: 7 }, (_, idx) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + idx);
+        return d;
       });
 
       const dailyReports = await Promise.all(
-        days.map(async (date) => {
+        weekDates.map(async (dateObj) => {
+          const date = format(dateObj, "yyyy-MM-dd");
+          if (dateObj > today) {
+            return { date, value: 0 };
+          }
+
           try {
             const res = await reportService.getFinanceReport({
               from_date: date,
@@ -314,11 +325,12 @@ export default function Dashboard() {
   const revenueData = useMemo(() => {
     const todayStr = format(new Date(), "yyyy-MM-dd");
     const todayRevenue = Number(summary?.today_revenue || 0);
+    const safeTodayRevenue = Number.isFinite(todayRevenue) ? todayRevenue : 0;
 
     return (weeklyRevenueTrendData || []).map((item) => {
       const dateObj = new Date(`${item.date}T00:00:00`);
-      const syncedValue =
-        item.date === todayStr && todayRevenue > 0 ? todayRevenue : item.value;
+      const baseValue = Number.isFinite(item.value) ? item.value : 0;
+      const syncedValue = item.date === todayStr ? safeTodayRevenue : baseValue;
 
       return {
         ...item,
@@ -327,7 +339,7 @@ export default function Dashboard() {
         tooltipLabel: formatChartDate(dateObj, "long"),
       };
     });
-  }, [weeklyRevenueTrendData, language, summary?.today_revenue]);
+  }, [weeklyRevenueTrendData, formatChartDate, summary?.today_revenue]);
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({
@@ -418,7 +430,7 @@ export default function Dashboard() {
                   {t("revenueOverview")}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {t("weeklyRevenueTrends")}
+                  {t("weeklyRevenueTrends")} - {t("weeklyRangeMondayToSunday")}
                 </p>
               </div>
               <TrendingUp className="w-5 h-5 text-green-500" />

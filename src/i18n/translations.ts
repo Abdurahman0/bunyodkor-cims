@@ -85,6 +85,7 @@ export const translations = {
     quickActions: "Quick Actions",
     activeGroups: "Active Groups",
     weeklyRevenueTrends: "Weekly revenue trends",
+    weeklyRangeMondayToSunday: "From Monday to Sunday",
     distributionByMethod: "Distribution by method",
     studentAttendanceStatus: "Student attendance status",
     latestPaymentActivity: "Latest payment activity",
@@ -1070,6 +1071,7 @@ export const translations = {
     quickActions: "Tez harakatlar",
     activeGroups: "Faol guruhlar",
     weeklyRevenueTrends: "Haftalik daromad tendentsiyalari",
+    weeklyRangeMondayToSunday: "Dushanbadan Yakshanbagacha",
     distributionByMethod: "Usul bo'yicha taqsimlash",
     studentAttendanceStatus: "Talabalar davomati holati",
     latestPaymentActivity: "Oxirgi to'lov faoliyati",
@@ -2073,6 +2075,7 @@ export const translations = {
     quickActions: "Быстрые действия",
     activeGroups: "Активные группы",
     weeklyRevenueTrends: "Еженедельные тенденции доходов",
+    weeklyRangeMondayToSunday: "From Monday to Sunday",
     distributionByMethod: "Распределение по методам",
     studentAttendanceStatus: "Статус посещаемости студентов",
     latestPaymentActivity: "Последняя платежная активность",
@@ -2985,3 +2988,5 @@ export const translations = {
 
 export type Language = "en" | "uz" | "ru";
 export type TranslationKey = keyof typeof translations.en;
+
+
