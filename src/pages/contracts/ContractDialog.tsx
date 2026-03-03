@@ -20,6 +20,7 @@ import { contractService, studentService } from "@/services/api.service";
 import type {
   ContractRead,
   ContractCreate as ContractCreateType, // Renamed to avoid conflict with local type
+  ContractTerminateRequest,
   ContractUpdate,
   StudentRead,
 } from "@/types/api";
@@ -42,7 +43,7 @@ const openPdfUrl = async (url: string) => {
 };
 
 // Accept various PDF responses: string URL, data-url, plain base64, or object { pdf_url | pdf | data }
-const openPdfResponse = async (resp: any) => {
+const openPdfResponse = async (resp: unknown) => {
   try {
     if (!resp) return;
 
@@ -101,6 +102,14 @@ const openPdfResponse = async (resp: any) => {
   }
 };
 
+const extractErrorDetail = (error: unknown): unknown => {
+  if (typeof error !== "object" || error === null) return undefined;
+  const maybeError = error as {
+    response?: { data?: { detail?: unknown } };
+  };
+  return maybeError.response?.data?.detail;
+};
+
 interface ContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -124,6 +133,7 @@ export function ContractDialog({
 }: ContractDialogProps) {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
+  const [dialogMode, setDialogMode] = useState<"edit" | "terminate">("edit");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(
     null,
   );
@@ -135,6 +145,18 @@ export function ContractDialog({
     watch,
     formState: { errors },
   } = useForm<ContractFormData>();
+
+  const {
+    register: registerTerminate,
+    handleSubmit: handleTerminateSubmit,
+    reset: resetTerminate,
+    formState: { errors: terminateErrors },
+  } = useForm<ContractTerminateRequest>({
+    defaultValues: {
+      termination_reason: "",
+      terminated_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    },
+  });
 
   const studentIdValue = watch("student_id");
 
@@ -185,11 +207,19 @@ export function ContractDialog({
 
   useEffect(() => {
     if (open) {
+      setDialogMode("edit");
       if (contract) {
         reset({
           ...contract,
           start_date: format(new Date(contract.start_date), "yyyy-MM-dd"),
           end_date: format(new Date(contract.end_date), "yyyy-MM-dd"),
+          status: contract.status === "archived" ? "archived" : "active",
+        });
+        resetTerminate({
+          termination_reason: contract.termination_reason || "",
+          terminated_at: contract.terminated_at
+            ? format(new Date(contract.terminated_at), "yyyy-MM-dd'T'HH:mm")
+            : format(new Date(), "yyyy-MM-dd'T'HH:mm"),
         });
       } else {
         reset({
@@ -200,16 +230,21 @@ export function ContractDialog({
           monthly_fee: "",
           status: "active",
         });
+        resetTerminate({
+          termination_reason: "",
+          terminated_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        });
       }
     }
-  }, [contract, open, reset]);
+  }, [contract, open, reset, resetTerminate]);
 
   const mutation = useMutation({
     mutationFn: (data: ContractCreateType | ContractUpdate) => {
       if (contract) {
-        return contractService.updateContractDates(contract.id, {
+        return contractService.updateContract(contract.id, {
           start_date: data.start_date,
           end_date: data.end_date,
+          status: data.status,
         });
       }
       return contractService.createContract(data as ContractCreateType);
@@ -239,7 +274,7 @@ export function ContractDialog({
               typeof pdfResponse === "object" &&
               pdfResponse !== null &&
               "pdf_url" in pdfResponse
-                ? (pdfResponse as any).pdf_url
+                ? (pdfResponse as { pdf_url: string }).pdf_url
                 : pdfResponse;
 
             if (url && typeof url === "string") {
@@ -255,8 +290,8 @@ export function ContractDialog({
       onOpenChange(false);
       if (onSuccess) onSuccess();
     },
-    onError: (error: any) => {
-      const detail = error.response?.data?.detail;
+    onError: (error: unknown) => {
+      const detail = extractErrorDetail(error);
       let errorMessage = t("anErrorOccurred");
 
       if (Array.isArray(detail) && detail.length > 0) {
@@ -269,43 +304,43 @@ export function ContractDialog({
     },
   });
 
+  const terminateMutation = useMutation({
+    mutationFn: (data: ContractTerminateRequest) => {
+      if (!contract) {
+        throw new Error("Contract not found");
+      }
+      return contractService.terminateContract(contract.id, {
+        termination_reason: data.termination_reason,
+        terminated_at: new Date(data.terminated_at).toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success(t("successfullySaved"));
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
+    },
+    onError: (error: unknown) => {
+      const detail = extractErrorDetail(error);
+      let errorMessage = t("anErrorOccurred");
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+      toast.error(errorMessage);
+    },
+  });
+
   const onSubmit = (data: ContractFormData) => {
     const today = new Date().toISOString();
-
-    // If status is 'terminated' or 'cancelled', use the terminate endpoint
-    if (data.status === "terminated" || data.status === "cancelled") {
-      if (!contract) return; // Should not happen
-      const terminatePayload = {
-        termination_reason: "Terminated by user via dialog",
-        terminated_at: today,
-      };
-      // Use a promise toast to give user feedback on the specific action
-      toast.promise(
-        contractService.terminateContract(contract.id, terminatePayload),
-        {
-          loading: t("terminatingContract"),
-          success: () => {
-            queryClient.invalidateQueries({ queryKey: ["contracts"] });
-            onOpenChange(false);
-            if (onSuccess) onSuccess();
-            return t("contractTerminatedSuccess");
-          },
-          error: (err: any) => {
-            const detail = err.response?.data?.detail;
-            if (Array.isArray(detail)) return detail[0].msg;
-            if (typeof detail === 'string') return detail;
-            return t("anErrorOccurred");
-          },
-        }
-      );
-      return; // Stop execution here
-    }
 
     // --- For all other statuses, perform the standard update with transformation ---
     if (contract) {
       mutation.mutate({
         start_date: data.start_date,
         end_date: data.end_date,
+        status: data.status,
       });
       return;
     }
@@ -423,6 +458,14 @@ export function ContractDialog({
     mutation.mutate(finalPayload);
   };
 
+  const onSubmitTerminate = (data: ContractTerminateRequest) => {
+    if (!data.termination_reason?.trim()) {
+      toast.error(t("reason"));
+      return;
+    }
+    terminateMutation.mutate(data);
+  };
+
   const selectedStudent = selectedStudentData?.data;
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
@@ -447,7 +490,27 @@ export function ContractDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
+        {contract && (
+          <div className="px-6 pt-0 pb-2 flex gap-2">
+            <Button
+              type="button"
+              variant={dialogMode === "edit" ? "default" : "outline"}
+              onClick={() => setDialogMode("edit")}
+            >
+              {t("editContract")}
+            </Button>
+            <Button
+              type="button"
+              variant={dialogMode === "terminate" ? "default" : "outline"}
+              onClick={() => setDialogMode("terminate")}
+            >
+              {t("terminated")}
+            </Button>
+          </div>
+        )}
+
+        {(!contract || dialogMode === "edit") && (
+          <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
           <div className="space-y-1">
             <Label htmlFor="contract_number">
               {t("contractNumber")} <span className="text-red-500">*</span>
@@ -632,7 +695,7 @@ export function ContractDialog({
               </Label>
               <Select id="status" {...register("status")}>
                 <option value="active">{t("active")}</option>
-                <option value="cancelled">{t("cancelled")}</option>
+                <option value="archived">{t("archived")}</option>
               </Select>
             </div>
           </div>
@@ -650,7 +713,66 @@ export function ContractDialog({
             </Button>
           </div>
         </form>
+        )}
+
+        {contract && dialogMode === "terminate" && (
+          <form
+            onSubmit={handleTerminateSubmit(onSubmitTerminate)}
+            className="p-6 pt-0 space-y-4"
+          >
+            <div className="space-y-1">
+              <Label htmlFor="termination_reason">
+                {t("terminationReason")} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="termination_reason"
+                placeholder={t("reason")}
+                {...registerTerminate("termination_reason", {
+                  required: t("reason"),
+                })}
+              />
+              {terminateErrors.termination_reason && (
+                <p className="text-sm text-red-500">
+                  {terminateErrors.termination_reason.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="terminated_at">
+                {t("terminatedAt")} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="terminated_at"
+                type="datetime-local"
+                {...registerTerminate("terminated_at", {
+                  required: t("terminatedAt"),
+                })}
+              />
+              {terminateErrors.terminated_at && (
+                <p className="text-sm text-red-500">
+                  {terminateErrors.terminated_at.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 mt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                {t("cancel")}
+              </Button>
+              <Button type="submit" disabled={terminateMutation.isPending}>
+                {terminateMutation.isPending ? t("saving") : t("terminated")}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
+
+

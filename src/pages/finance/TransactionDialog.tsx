@@ -398,7 +398,7 @@ export function TransactionDialog({
       >
         <DialogHeader>
           <DialogTitle>
-            {isSpravkaMode ? "Spravka qo'shish" : t("addTransaction")}
+            {isSpravkaMode ? t("addSpravka") : t("addTransaction")}
           </DialogTitle>
         </DialogHeader>
 
@@ -424,7 +424,9 @@ export function TransactionDialog({
               readOnly={isSpravkaMode}
             />
             {isSpravkaMode && (
-              <p className="text-xs text-muted-foreground">Spravka uchun amount: 0</p>
+              <p className="text-xs text-muted-foreground">
+                {t("spravkaAmountZero")}
+              </p>
             )}
             {errors.amount && (
               <p className="text-sm text-red-500">{errors.amount.message}</p>
@@ -701,8 +703,8 @@ export function TransactionDialog({
               {mutation.isPending
                 ? t("saving")
                 : isSpravkaMode
-                  ? "Spravka qo'shish"
-                  : "Tranzaksiya qo'shish"}
+                  ? t("addSpravka")
+                  : t("addTransaction")}
             </Button>
           </div>
         </form>

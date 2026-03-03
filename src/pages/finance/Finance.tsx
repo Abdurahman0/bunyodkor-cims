@@ -421,7 +421,7 @@ export default function Finance() {
             className="gap-2"
           >
             <Plus className="w-6 h-6" />
-            <span className="hidden sm:inline">Tranzaksiya qo'shish</span>
+            <span className="hidden sm:inline">{t("addTransaction")}</span>
           </Button>
           <Button
             type="button"
@@ -430,7 +430,7 @@ export default function Finance() {
             className="gap-2"
           >
             <Plus className="w-6 h-6" />
-            <span className="hidden sm:inline">Spravka qo'shish</span>
+            <span className="hidden sm:inline">{t("addSpravka")}</span>
           </Button>
         </div>
       </motion.div>
@@ -672,7 +672,7 @@ export default function Finance() {
                           onClick={() => setActiveDialog("manual")}
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Tranzaksiya qo'shish
+                          {t("addTransaction")}
                         </Button>
                         <Button
                           type="button"
@@ -680,7 +680,7 @@ export default function Finance() {
                           onClick={() => setActiveDialog("spravka")}
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Spravka qo'shish
+                          {t("addSpravka")}
                         </Button>
                       </div>
                     )

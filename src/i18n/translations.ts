@@ -213,6 +213,8 @@ export const translations = {
 
     // Finance
     addTransaction: "Add Transaction",
+    addSpravka: "Add Certificate",
+    spravkaAmountZero: "Amount for certificate: 0",
     transactionsList: "Transactions List",
     transactionId: "Transaction ID",
     amount: "Amount",
@@ -1197,6 +1199,8 @@ export const translations = {
 
     // Finance
     addTransaction: "Tranzaksiya qo'shish",
+    addSpravka: "Spravka qo'shish",
+    spravkaAmountZero: "Spravka uchun amount: 0",
     transactionsList: "Tranzaksiyalar ro'yxati",
     transactionId: "Tranzaksiya ID",
     amount: "Summa",
@@ -2196,6 +2200,8 @@ export const translations = {
 
     // Finance
     addTransaction: "Добавить транзакцию",
+    addSpravka: "Добавить справку",
+    spravkaAmountZero: "Для справки сумма: 0",
     transactionsList: "Список транзакций",
     transactionId: "ID транзакции",
     amount: "Сумма",
