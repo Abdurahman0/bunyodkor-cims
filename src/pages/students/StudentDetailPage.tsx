@@ -2,7 +2,11 @@
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { studentService, contractService } from "@/services/api.service";
+import {
+  studentService,
+  contractService,
+  transactionService,
+} from "@/services/api.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -108,6 +112,10 @@ export default function StudentDetailPage() {
   );
   const [isReplaceDialogOpen, setIsReplaceDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [transactionToDelete, setTransactionToDelete] =
+    useState<TransactionRead | null>(null);
+  const [isDeleteTransactionDialogOpen, setIsDeleteTransactionDialogOpen] =
+    useState(false);
 
   const formatSource = (source: string | null | undefined) => {
     const cleanSource =
@@ -187,6 +195,33 @@ export default function StudentDetailPage() {
       } else if (typeof detail === "string") {
         errorMessage = detail;
       }
+      toast.error(errorMessage);
+    },
+  });
+
+  const deleteTransactionMutation = useMutation({
+    mutationFn: (transactionId: number) =>
+      transactionService.deleteTransaction(transactionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info", studentId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success(t("transactionDeleted") || "Transaction deleted");
+      setIsDeleteTransactionDialogOpen(false);
+      setTransactionToDelete(null);
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      let errorMessage =
+        t("failedToDeleteTransaction") || "Failed to delete transaction";
+
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+
       toast.error(errorMessage);
     },
   });
@@ -1026,21 +1061,35 @@ export default function StudentDetailPage() {
                         {transaction.comment || "-"}
                       </TableCell>
                       <TableCell>
-                        {transaction.settlement_document_url ? (
+                        <div className="flex items-center gap-2">
+                          {transaction.settlement_document_url ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                openPdfUrl(transaction.settlement_document_url!)
+                              }
+                              className="gap-1"
+                            >
+                              <Eye className="w-4 h-4" />
+                              {t("view")}
+                            </Button>
+                          ) : (
+                            <span>-</span>
+                          )}
                           <Button
-                            variant="outline"
+                            variant="destructive"
                             size="sm"
-                            onClick={() =>
-                              openPdfUrl(transaction.settlement_document_url!)
-                            }
                             className="gap-1"
+                            onClick={() => {
+                              setTransactionToDelete(transaction);
+                              setIsDeleteTransactionDialogOpen(true);
+                            }}
                           >
-                            <Eye className="w-4 h-4" />
-                            {t("view")}
+                            <Trash2 className="w-4 h-4" />
+                            {t("delete")}
                           </Button>
-                        ) : (
-                          "-"
-                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -1168,6 +1217,64 @@ export default function StudentDetailPage() {
                 <>
                   <Trash2 className="w-4 h-4" />
                   {t("confirmPermanentDelete")}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isDeleteTransactionDialogOpen}
+        onOpenChange={setIsDeleteTransactionDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md pb-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-red-600 dark:text-red-500">
+              <AlertTriangle />
+              {t("confirmDelete")}
+            </DialogTitle>
+            <DialogDescription className="pt-4 text-left">
+              {t("areYouSureDeleteTransaction") ||
+                "Are you sure you want to delete this transaction?"}
+              {transactionToDelete ? (
+                <span className="block mt-2 font-medium text-foreground">
+                  #{transactionToDelete.id} -{" "}
+                  {new Intl.NumberFormat("en-US").format(
+                    transactionToDelete.amount,
+                  )}{" "}
+                  UZS
+                </span>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteTransactionDialogOpen(false);
+                setTransactionToDelete(null);
+              }}
+              className="flex-1"
+              disabled={deleteTransactionMutation.isPending}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!transactionToDelete) return;
+                deleteTransactionMutation.mutate(transactionToDelete.id);
+              }}
+              disabled={deleteTransactionMutation.isPending || !transactionToDelete}
+              className="flex-1 gap-2"
+            >
+              {deleteTransactionMutation.isPending ? (
+                t("deleting")
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  {t("delete")}
                 </>
               )}
             </Button>
