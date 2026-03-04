@@ -59,18 +59,19 @@ export default function Contracts() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const currentYear = new Date().getFullYear();
 
   const [view, setView] = useState<ContractsView>("contracts");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [groupFilter, setGroupFilter] = useState<number | undefined>(undefined);
   const [contractIdFilter, setContractIdFilter] = useState<number | undefined>(
     undefined,
   );
   const [archiveYearFilter, setArchiveYearFilter] = useState<
     number | undefined
-  >(undefined);
+  >(currentYear);
   const [terminatedFrom, setTerminatedFrom] = useState("");
   const [terminatedTo, setTerminatedTo] = useState("");
 
@@ -324,10 +325,10 @@ export default function Contracts() {
 
   const clearFilters = () => {
     setSearch("");
-    setStatusFilter("");
+    setStatusFilter(view === "contracts" ? "active" : "");
     setGroupFilter(undefined);
     setContractIdFilter(undefined);
-    setArchiveYearFilter(undefined);
+    setArchiveYearFilter(currentYear);
     setTerminatedFrom("");
     setTerminatedTo("");
     setExpandedTerminatedContractId(null);
@@ -346,7 +347,8 @@ export default function Contracts() {
   const handleViewChange = (nextView: ContractsView) => {
     setView(nextView);
     setPage(1);
-    setStatusFilter("");
+    setStatusFilter(nextView === "contracts" ? "active" : "");
+    setArchiveYearFilter(currentYear);
     setExpandedTerminatedContractId(null);
   };
 

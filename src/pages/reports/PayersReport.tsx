@@ -26,11 +26,13 @@ import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
 const PayersReport: FC = () => {
   const { t } = useLanguageStore();
-  const currentYear = new Date().getFullYear();
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [paymentYear, setPaymentYear] = useState<number | "">(currentYear);
-  const [paymentMonth, setPaymentMonth] = useState<number | "">("");
+  const [paymentMonth, setPaymentMonth] = useState<number | "">(currentMonth);
   const [groupId, setGroupId] = useState<number | null>(null);
   const [minPaidAmount, setMinPaidAmount] = useState<number | "">("");
   const [fromDate, setFromDate] = useState(

@@ -46,7 +46,9 @@ import {
 
 export default function Reports() {
   const { t } = useLanguageStore();
-  const currentYear = new Date().getFullYear();
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
   const [activeTab, setActiveTab] = useState<
     "finance" | "attendance" | "debtors" | "payers"
   >("finance");
@@ -57,8 +59,8 @@ export default function Reports() {
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [minDebtAmount, setMinDebtAmount] = useState<number | "">("");
-  const [unpaidYear, setUnpaidYear] = useState<number | "">("");
-  const [unpaidMonth, setUnpaidMonth] = useState<number | "">("");
+  const [unpaidYear, setUnpaidYear] = useState<number | "">(currentYear);
+  const [unpaidMonth, setUnpaidMonth] = useState<number | "">(currentMonth);
   const [unpaidMonths, setUnpaidMonths] = useState("");
   const [unpaidFromDate, setUnpaidFromDate] = useState("");
   const [unpaidToDate, setUnpaidToDate] = useState("");
@@ -946,8 +948,8 @@ export default function Reports() {
                   onClick={() => {
                     setSelectedGroupId(null);
                     setMinDebtAmount("");
-                    setUnpaidYear("");
-                    setUnpaidMonth("");
+                    setUnpaidYear(currentYear);
+                    setUnpaidMonth(currentMonth);
                     setUnpaidMonths("");
                     setUnpaidFromDate("");
                     setUnpaidToDate("");

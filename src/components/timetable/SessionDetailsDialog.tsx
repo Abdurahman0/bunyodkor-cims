@@ -58,12 +58,6 @@ export default function SessionDetailsDialog({
     return ((endInMin - startInMin) / 60).toFixed(1);
   };
 
-  const currentStudents =
-    group?.active_students_count ??
-    group?.current_student_count ??
-    (group as any)?.students_count ??
-    0;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0 pb-8">
@@ -161,12 +155,6 @@ export default function SessionDetailsDialog({
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t("birthYear") || "Birth Year"}:</span>
                       <span className="font-medium">{group.birth_year}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t("capacity") || "Capacity"}:</span>
-                      <span className="font-medium">
-                        {currentStudents} / {group.capacity}
-                      </span>
                     </div>
                   </div>
                 </div>
