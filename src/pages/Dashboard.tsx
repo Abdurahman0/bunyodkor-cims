@@ -1,7 +1,7 @@
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useMemo } from "react";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard, DonutChart, LineChart } from "@/components/ui/charts";
@@ -37,7 +37,32 @@ export default function Dashboard() {
   const { user } = useAuthStore();
   const { t, language } = useLanguageStore();
 
-  const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
+  
+const queryClient = useQueryClient();
+
+// "Rolling day" key so all date-based widgets refresh automatically at 00:00
+const [dayKey, setDayKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
+
+useEffect(() => {
+  const now = new Date();
+  const nextMidnight = new Date(now);
+  nextMidnight.setHours(24, 0, 0, 0); // next 00:00
+
+  const ms = nextMidnight.getTime() - now.getTime();
+  const timer = window.setTimeout(() => {
+    const newKey = format(new Date(), "yyyy-MM-dd");
+    setDayKey(newKey);
+
+    // Refresh date-dependent queries
+    queryClient.invalidateQueries({ queryKey: ["dashboard-summary", dayKey] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-finance", dayKey] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-finance-rolling-week"] });
+    queryClient.invalidateQueries({ queryKey: ["recent-attendances"] });
+  }, ms + 250);
+
+  return () => window.clearTimeout(timer);
+}, [queryClient]);
+const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
     const day = date.getDate();
     const weekdayIndex = date.getDay();
     const monthIndex = date.getMonth();
@@ -155,7 +180,7 @@ export default function Dashboard() {
   const { data: financeData } = useQuery({
     queryKey: ["dashboard-finance"],
     queryFn: () => {
-      const today = format(new Date(), "yyyy-MM-dd");
+      const today = dayKey;
       const thirtyDaysAgo = format(
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         "yyyy-MM-dd",
@@ -168,50 +193,42 @@ export default function Dashboard() {
   });
 
   const { data: weeklyRevenueTrendData } = useQuery({
-    queryKey: ["dashboard-finance-weekly", format(new Date(), "yyyy-MM-dd")],
-    queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ...
-      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - daysFromMonday);
+  queryKey: ["dashboard-finance-rolling-week", dayKey],
+  queryFn: async () => {
+    // Rolling 7 days: [today-6 ... today], anchored to local midnight
+    const today = new Date(`${dayKey}T00:00:00`);
+    today.setHours(0, 0, 0, 0);
 
-      const weekDates = Array.from({ length: 7 }, (_, idx) => {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + idx);
-        return d;
-      });
+    const dates = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (6 - i));
+      return d;
+    });
 
-      const dailyReports = await Promise.all(
-        weekDates.map(async (dateObj) => {
-          const date = format(dateObj, "yyyy-MM-dd");
-          if (dateObj > today) {
-            return { date, value: 0 };
-          }
+    const dailyReports = await Promise.all(
+      dates.map(async (d) => {
+        const date = format(d, "yyyy-MM-dd");
+        try {
+          const res = await reportService.getFinanceReport({
+            from_date: date,
+            to_date: date,
+          });
 
-          try {
-            const res = await reportService.getFinanceReport({
-              from_date: date,
-              to_date: date,
-            });
+          return {
+            date,
+            value: Number(res.data?.total_revenue || 0),
+          };
+        } catch {
+          return { date, value: 0 };
+        }
+      }),
+    );
 
-            return {
-              date,
-              value: Number(res.data?.total_revenue || 0),
-            };
-          } catch {
-            return {
-              date,
-              value: 0,
-            };
-          }
-        }),
-      );
-
-      return dailyReports;
-    },
-  });
+    return dailyReports;
+  },
+  staleTime: 60 * 1000,
+  refetchOnWindowFocus: false,
+});
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -237,11 +254,11 @@ export default function Dashboard() {
 
   // Fetch attendance data with date-only params (API expects exact dates)
   const { data: recentAttendancesData } = useQuery({
-    queryKey: ["recent-attendances", format(new Date(), "yyyy-MM-dd")],
+    queryKey: ["recent-attendances", dayKey],
     queryFn: () => {
-      const today = new Date();
+      const today = new Date(`${dayKey}T00:00:00`);
       const fromDate = format(subDays(today, 1), "yyyy-MM-dd");
-      const toDate = format(today, "yyyy-MM-dd");
+      const toDate = dayKey;
 
       return attendanceService.getAllAttendances({
         from_date: fromDate,
@@ -252,7 +269,7 @@ export default function Dashboard() {
     },
   });
 
-  const todayDateKey = format(new Date(), "yyyy-MM-dd");
+  const todayDateKey = dayKey;
   const recentAttendances = useMemo(
     () =>
       [...(recentAttendancesData?.data || [])]

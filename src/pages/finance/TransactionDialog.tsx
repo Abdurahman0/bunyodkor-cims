@@ -32,11 +32,12 @@ interface TransactionDialogProps {
 
 interface TransactionFormData {
   amount: number;
+  source: "bank" | "payme" | "click";
   contract_number: string;
   payment_year: number;
   payment_months: string;
   comment?: string;
-  file_type: "malumotnoma" | "spravka";
+  file_type: "malumotnoma" | "bildirgi";
 }
 
 interface CreateTransactionPayload {
@@ -133,6 +134,7 @@ export function TransactionDialog({
   } = useForm<TransactionFormData>({
     defaultValues: {
       amount: 0,
+      source: "bank",
       contract_number: "",
       payment_year: new Date().getFullYear(),
       payment_months: "",
@@ -215,6 +217,12 @@ export function TransactionDialog({
   useEffect(() => {
     if (open && isSpravkaMode) {
       setValue("amount", 0);
+    }
+  }, [open, isSpravkaMode, setValue]);
+
+  useEffect(() => {
+    if (open && !isSpravkaMode) {
+      setValue("source", "bank");
     }
   }, [open, isSpravkaMode, setValue]);
 
@@ -376,7 +384,7 @@ export function TransactionDialog({
 
     mutation.mutate({
       amount: isSpravkaMode ? 0 : data.amount,
-      source: "bank",
+      source: isSpravkaMode ? "bank" : data.source,
       contract_number: data.contract_number,
       payment_year: data.payment_year,
       payment_months: paymentMonthsArray,
@@ -439,7 +447,7 @@ export function TransactionDialog({
               <Label htmlFor="file_type">{t("fileType")}</Label>
               <Select id="file_type" {...register("file_type")}>
                 <option value="malumotnoma">{t("fileTypeMalumotnoma")}</option>
-                <option value="spravka">{t("fileTypeSpravka")}</option>
+                <option value="bildirgi">{t("fileTypeBildirgi")}</option>
               </Select>
             </div>
           )}
@@ -681,6 +689,17 @@ export function TransactionDialog({
               </div>
             )}
           </div>
+
+          {!isSpravkaMode && (
+            <div className="space-y-1">
+              <Label htmlFor="source">{t("paymentSource")}</Label>
+              <Select id="source" {...register("source")}>
+                <option value="bank">{t("bank")}</option>
+                <option value="payme">{t("payme")}</option>
+                <option value="click">{t("click")}</option>
+              </Select>
+            </div>
+          )}
 
           {!isSpravkaMode && (
             <div className="space-y-1">

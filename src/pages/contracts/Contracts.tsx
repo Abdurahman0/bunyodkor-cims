@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
@@ -19,7 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { contractService, groupService } from "@/services/api.service";
+import {
+  contractService,
+  groupService,
+  studentService,
+} from "@/services/api.service";
 import { useGroupsStore } from "@/store/groupsStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -42,6 +46,7 @@ import {
   FileText,
   Loader2,
   Search,
+  Trash2,
   User,
   Users,
   X,
@@ -222,6 +227,33 @@ export default function Contracts() {
     setSelectedContract(contract || null);
     setIsDialogOpen(true);
   };
+
+  const deleteTerminatedStudentMutation = useMutation({
+    mutationFn: (studentId: number) => studentService.deleteStudent(studentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["contracts-terminated-students"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["contracts-terminated-unpaid"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["students-count"] });
+      toast.success(t("studentDeleted"));
+    },
+    onError: (error: any) => {
+      const detail = error?.response?.data?.detail;
+      let errorMessage = t("failedToDeleteStudent");
+
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+
+      toast.error(errorMessage);
+    },
+  });
 
   const formatCurrency = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined) return "-";
@@ -623,6 +655,9 @@ export default function Contracts() {
                         <TableHead>{t("terminatedAt")}</TableHead>
                         <TableHead>{t("paymentsTotal")}</TableHead>
                         <TableHead>{t("reason") || "Reason"}</TableHead>
+                        <TableHead className="text-right [&>div]:justify-end">
+                          {t("actions")}
+                        </TableHead>
                       </>
                     ) : (
                       <>
@@ -769,11 +804,36 @@ export default function Contracts() {
                                 {formatCurrency(item.successful_payments_total)}
                               </TableCell>
                               <TableCell>{item.termination_reason || "-"}</TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                                  disabled={deleteTerminatedStudentMutation.isPending}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!item.student_id) return;
+
+                                    const fullName = `${item.student_first_name || ""} ${item.student_last_name || ""}`.trim();
+                                    const confirmDelete = window.confirm(
+                                      `${t("confirmDeleteStudent")} ${fullName || `ID: ${item.student_id}`}?`,
+                                    );
+
+                                    if (!confirmDelete) return;
+                                    deleteTerminatedStudentMutation.mutate(
+                                      item.student_id,
+                                    );
+                                  }}
+                                  title={t("deleteStudent")}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </TableCell>
                             </TableRow>
 
                             {isExpanded && (
                               <TableRow className="bg-muted/20">
-                                <TableCell colSpan={6}>
+                                <TableCell colSpan={7}>
                                   <div className="space-y-4 p-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
                                       <div>

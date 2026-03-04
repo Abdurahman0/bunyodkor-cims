@@ -31,8 +31,12 @@ import {
   Search,
   Download,
 } from "lucide-react";
-import { attendanceService, studentService } from "@/services/api.service";
-import type { AttendanceRead } from "@/types/api";
+import {
+  attendanceService,
+  sessionService,
+  studentService,
+} from "@/services/api.service";
+import type { AttendanceRead, SessionRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import toast from "react-hot-toast";
 
@@ -53,6 +57,63 @@ export default function Attendance() {
         page_size: 20,
       }),
   });
+
+  const { data: sessionsData } = useQuery({
+    queryKey: ["sessions-for-attendance", fromDate, toDate],
+    queryFn: async () => {
+      const firstPage = await sessionService.getSessions({
+        from_date: fromDate,
+        to_date: toDate,
+        page: 1,
+        page_size: 100,
+      });
+
+      const totalPages = firstPage.meta?.total_pages || 1;
+      if (totalPages <= 1) {
+        return firstPage.data || [];
+      }
+
+      const restPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, idx) =>
+          sessionService.getSessions({
+            from_date: fromDate,
+            to_date: toDate,
+            page: idx + 2,
+            page_size: 100,
+          }),
+        ),
+      );
+
+      return [
+        ...(firstPage.data || []),
+        ...restPages.flatMap((response) => response.data || []),
+      ];
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+
+  const sessionsMap = useMemo(() => {
+    const map = new Map<number, SessionRead>();
+    (sessionsData || []).forEach((session) => {
+      if (session?.id) {
+        map.set(session.id, session);
+      }
+    });
+    return map;
+  }, [sessionsData]);
+
+  const truncateTopic = (topic: string) => {
+    const words = topic.trim().split(/\s+/).filter(Boolean);
+    if (words.length <= 3) return topic;
+    return `${words.slice(0, 3).join(" ")}...`;
+  };
+
+  const getSessionLabel = (sessionId: number) => {
+    const topic = sessionsMap.get(sessionId)?.topic;
+    if (!topic) return `Session #${sessionId}`;
+    return truncateTopic(topic);
+  };
 
   // Extract unique student IDs from attendance data
   const uniqueStudentIds = useMemo(() => {
@@ -130,14 +191,16 @@ export default function Attendance() {
 
       // For now, create a simple CSV export
       const attendances = attendanceData?.data || [];
-      const csvHeader = "Date,Student,Group,Session,Status,Comment\n";
+      const csvHeader = "Date,Student,Session,Status,Comment\n";
       const csvRows = attendances
         .map((a: AttendanceRead) => {
           const studentName = getStudentName(a.student_id);
           const date = format(new Date(a.created_at), "yyyy-MM-dd HH:mm");
           const status = getStatusLabel(a.status);
           const comment = a.comment || "";
-          return `"${date}","${studentName}","Session #${a.session_id}","${status}","${comment}"`;
+          const sessionTopic = sessionsMap.get(a.session_id)?.topic;
+          const sessionLabel = sessionTopic || `Session #${a.session_id}`;
+          return `"${date}","${studentName}","${sessionLabel}","${status}","${comment}"`;
         })
         .join("\n");
 
@@ -393,7 +456,7 @@ export default function Attendance() {
                       </TableCell>
                       <TableCell>
                         <p className="text-sm text-muted-foreground">
-                          Session #{attendance.session_id}
+                          {getSessionLabel(attendance.session_id)}
                         </p>
                       </TableCell>
                       <TableCell>

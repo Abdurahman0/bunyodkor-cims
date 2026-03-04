@@ -46,14 +46,14 @@ import {
 
 export default function Reports() {
   const { t } = useLanguageStore();
+  const currentYear = new Date().getFullYear();
   const [activeTab, setActiveTab] = useState<
     "finance" | "attendance" | "debtors" | "payers"
   >("finance");
   const [dateRange, setDateRange] = useState({
-    from: format(startOfMonth(new Date()), "yyyy-MM-dd"),
-    to: format(endOfMonth(new Date()), "yyyy-MM-dd"),
+    from: `${currentYear}-01-01`,
+    to: `${currentYear}-12-31`,
   });
-  const currentYear = new Date().getFullYear();
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [minDebtAmount, setMinDebtAmount] = useState<number | "">("");
