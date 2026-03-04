@@ -467,7 +467,7 @@ export default function StudentDetailPage() {
       </div>
     );
   }
-
+  
   const {
     student,
     parents,
@@ -479,8 +479,6 @@ export default function StudentDetailPage() {
   } = data.data as StudentFullInfo;
 
   const activeContract = contracts?.find((c) => c.status === "active") || null;
-
-   
   const getDisplayParents = (): any[] => {
     console.log("[STUDENT DETAIL] Getting parent info");
     console.log("[STUDENT DETAIL] Parents from API:", parents);
@@ -500,7 +498,7 @@ export default function StudentDetailPage() {
 
       for (const contract of sortedContracts) {
         console.log("[STUDENT DETAIL] Processing contract:", contract.id);
-         
+        
         let customFields: any = contract.custom_fields;
 
         if (!customFields) {

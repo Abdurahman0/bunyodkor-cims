@@ -19,7 +19,6 @@ import {
   TablePagination,
   TableEmpty,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   CheckCircle,
@@ -29,16 +28,15 @@ import {
   Calendar,
   Users,
   Search,
-  Download,
 } from "lucide-react";
 import {
   attendanceService,
-  sessionService,
+  headCoachService,
+  groupService,
   studentService,
 } from "@/services/api.service";
 import type { AttendanceRead, SessionRead } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
-import toast from "react-hot-toast";
 
 export default function Attendance() {
   const { t } = useLanguageStore();
@@ -46,24 +44,51 @@ export default function Attendance() {
   const [fromDate, setFromDate] = useState(DEFAULT_FROM);
   const [toDate, setToDate] = useState(DEFAULT_TO);
   const [searchStudent, setSearchStudent] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState("all");
+  const [selectedStudentId, setSelectedStudentId] = useState("all");
+
+  const { data: groupsFilterData } = useQuery({
+    queryKey: ["attendance-groups-filter"],
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: studentsFilterData } = useQuery({
+    queryKey: ["attendance-students-filter"],
+    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: attendanceData, isLoading } = useQuery({
-    queryKey: ["all-attendances", page, fromDate, toDate],
+    queryKey: [
+      "all-attendances",
+      page,
+      fromDate,
+      toDate,
+      selectedGroupId,
+      selectedStudentId,
+    ],
     queryFn: () =>
       attendanceService.getAllAttendances({
         from_date: fromDate,
         to_date: toDate,
+        group_id:
+          selectedGroupId === "all" ? undefined : Number(selectedGroupId),
+        student_id:
+          selectedStudentId === "all" ? undefined : Number(selectedStudentId),
         page,
         page_size: 20,
       }),
   });
 
   const { data: sessionsData } = useQuery({
-    queryKey: ["sessions-for-attendance", fromDate, toDate],
+    queryKey: ["sessions-for-attendance", fromDate, toDate, selectedGroupId],
     queryFn: async () => {
-      const firstPage = await sessionService.getSessions({
+      const firstPage = await headCoachService.getAllSessions({
         from_date: fromDate,
         to_date: toDate,
+        group_id:
+          selectedGroupId === "all" ? undefined : Number(selectedGroupId),
         page: 1,
         page_size: 100,
       });
@@ -75,9 +100,11 @@ export default function Attendance() {
 
       const restPages = await Promise.all(
         Array.from({ length: totalPages - 1 }, (_, idx) =>
-          sessionService.getSessions({
+          headCoachService.getAllSessions({
             from_date: fromDate,
             to_date: toDate,
+            group_id:
+              selectedGroupId === "all" ? undefined : Number(selectedGroupId),
             page: idx + 2,
             page_size: 100,
           }),
@@ -185,45 +212,6 @@ export default function Attendance() {
     }
   };
 
-  const handleExport = async () => {
-    try {
-      toast.loading(t("exportingData") || "Exporting data...");
-
-      // For now, create a simple CSV export
-      const attendances = attendanceData?.data || [];
-      const csvHeader = "Date,Student,Session,Status,Comment\n";
-      const csvRows = attendances
-        .map((a: AttendanceRead) => {
-          const studentName = getStudentName(a.student_id);
-          const date = format(new Date(a.created_at), "yyyy-MM-dd HH:mm");
-          const status = getStatusLabel(a.status);
-          const comment = a.comment || "";
-          const sessionTopic = sessionsMap.get(a.session_id)?.topic;
-          const sessionLabel = sessionTopic || `Session #${a.session_id}`;
-          return `"${date}","${studentName}","${sessionLabel}","${status}","${comment}"`;
-        })
-        .join("\n");
-
-      const csvContent = csvHeader + csvRows;
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `attendance_${fromDate}_to_${toDate}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.dismiss();
-      toast.success(t("exportedSuccessfully") || "Data exported successfully!");
-    } catch (error) {
-      console.error(error);
-      toast.dismiss();
-      toast.error(t("errorExportingData") || "Error exporting data");
-    }
-  };
-
   // Filter attendances by student search
   const filteredAttendances = (attendanceData?.data || []).filter(
     (attendance: AttendanceRead) => {
@@ -269,10 +257,6 @@ export default function Attendance() {
             </p>
           </div>
         </div>
-        <Button onClick={handleExport} className="gap-2">
-          <Download className="w-4 h-4" />
-          {t("export") || "Export"}
-        </Button>
       </motion.div>
 
       {/* Statistics */}
@@ -359,7 +343,7 @@ export default function Attendance() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground mb-2 block">
                   {t("fromDate") || "From Date"}
@@ -399,6 +383,48 @@ export default function Attendance() {
                     className="pl-10"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">
+                  {t("group") || "Group"}
+                </label>
+                <select
+                  value={selectedGroupId}
+                  onChange={(e) => {
+                    setSelectedGroupId(e.target.value);
+                    setPage(1);
+                  }}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
+                >
+                  <option value="all">{t("allGroups") || "All groups"}</option>
+                  {(groupsFilterData?.data || []).map((group) => (
+                    <option key={group.id} value={String(group.id)}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">
+                  {t("student") || "Student"}
+                </label>
+                <select
+                  value={selectedStudentId}
+                  onChange={(e) => {
+                    setSelectedStudentId(e.target.value);
+                    setPage(1);
+                  }}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
+                >
+                  <option value="all">
+                    {t("allStudents") || "All students"}
+                  </option>
+                  {(studentsFilterData?.data || []).map((student) => (
+                    <option key={student.id} value={String(student.id)}>
+                      {`${student.first_name || ""} ${student.last_name || ""}`.trim() || `#${student.id}`}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </CardContent>

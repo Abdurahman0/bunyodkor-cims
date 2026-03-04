@@ -37,32 +37,38 @@ export default function Dashboard() {
   const { user } = useAuthStore();
   const { t, language } = useLanguageStore();
 
-  
-const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-// "Rolling day" key so all date-based widgets refresh automatically at 00:00
-const [dayKey, setDayKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  // "Rolling day" key so all date-based widgets refresh automatically at 00:00
+  const [dayKey, setDayKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
 
-useEffect(() => {
-  const now = new Date();
-  const nextMidnight = new Date(now);
-  nextMidnight.setHours(24, 0, 0, 0); // next 00:00
+  const parseLocalDateKey = useCallback((dateKey: string) => {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }, []);
 
-  const ms = nextMidnight.getTime() - now.getTime();
-  const timer = window.setTimeout(() => {
-    const newKey = format(new Date(), "yyyy-MM-dd");
-    setDayKey(newKey);
+  useEffect(() => {
+    const now = new Date();
+    const currentDay = parseLocalDateKey(dayKey);
+    const nextMidnight = new Date(currentDay);
+    nextMidnight.setDate(currentDay.getDate() + 1);
+    nextMidnight.setHours(0, 0, 0, 0);
 
-    // Refresh date-dependent queries
-    queryClient.invalidateQueries({ queryKey: ["dashboard-summary", dayKey] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-finance", dayKey] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-finance-rolling-week"] });
-    queryClient.invalidateQueries({ queryKey: ["recent-attendances"] });
-  }, ms + 250);
+    const ms = Math.max(nextMidnight.getTime() - now.getTime(), 0);
+    const timer = window.setTimeout(() => {
+      const newKey = format(new Date(), "yyyy-MM-dd");
+      setDayKey(newKey);
 
-  return () => window.clearTimeout(timer);
-}, [queryClient]);
-const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-finance"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-finance-rolling-week"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-attendances"] });
+    }, ms + 250);
+
+    return () => window.clearTimeout(timer);
+  }, [dayKey, parseLocalDateKey, queryClient]);
+
+  const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
     const day = date.getDate();
     const weekdayIndex = date.getDay();
     const monthIndex = date.getMonth();
@@ -156,7 +162,7 @@ const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
   }, [language]);
 
   const { data: summaryData } = useQuery({
-    queryKey: ["dashboard-summary"],
+    queryKey: ["dashboard-summary", dayKey],
     queryFn: () => reportService.getDashboardSummary(),
   });
   const summary = summaryData?.data;
@@ -178,11 +184,11 @@ const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
   });
 
   const { data: financeData } = useQuery({
-    queryKey: ["dashboard-finance"],
+    queryKey: ["dashboard-finance", dayKey],
     queryFn: () => {
       const today = dayKey;
       const thirtyDaysAgo = format(
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        subDays(parseLocalDateKey(dayKey), 30),
         "yyyy-MM-dd",
       );
       return reportService.getFinanceReport({
@@ -193,42 +199,42 @@ const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
   });
 
   const { data: weeklyRevenueTrendData } = useQuery({
-  queryKey: ["dashboard-finance-rolling-week", dayKey],
-  queryFn: async () => {
-    // Rolling 7 days: [today-6 ... today], anchored to local midnight
-    const today = new Date(`${dayKey}T00:00:00`);
-    today.setHours(0, 0, 0, 0);
+    queryKey: ["dashboard-finance-rolling-week", dayKey],
+    queryFn: async () => {
+      // Rolling 7 days: [today-6 ... today], based on local date key
+      const today = parseLocalDateKey(dayKey);
+      today.setHours(0, 0, 0, 0);
 
-    const dates = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - (6 - i));
-      return d;
-    });
+      const dates = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (6 - i));
+        return d;
+      });
 
-    const dailyReports = await Promise.all(
-      dates.map(async (d) => {
-        const date = format(d, "yyyy-MM-dd");
-        try {
-          const res = await reportService.getFinanceReport({
-            from_date: date,
-            to_date: date,
-          });
+      const dailyReports = await Promise.all(
+        dates.map(async (d) => {
+          const date = format(d, "yyyy-MM-dd");
+          try {
+            const res = await reportService.getFinanceReport({
+              from_date: date,
+              to_date: date,
+            });
 
-          return {
-            date,
-            value: Number(res.data?.total_revenue || 0),
-          };
-        } catch {
-          return { date, value: 0 };
-        }
-      }),
-    );
+            return {
+              date,
+              value: Number(res.data?.total_revenue || 0),
+            };
+          } catch {
+            return { date, value: 0 };
+          }
+        }),
+      );
 
-    return dailyReports;
-  },
-  staleTime: 60 * 1000,
-  refetchOnWindowFocus: false,
-});
+      return dailyReports;
+    },
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -256,7 +262,7 @@ const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
   const { data: recentAttendancesData } = useQuery({
     queryKey: ["recent-attendances", dayKey],
     queryFn: () => {
-      const today = new Date(`${dayKey}T00:00:00`);
+      const today = parseLocalDateKey(dayKey);
       const fromDate = format(subDays(today, 1), "yyyy-MM-dd");
       const toDate = dayKey;
 
@@ -359,12 +365,12 @@ const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
 
   // Process weekly revenue trend and keep today's point in sync with summary card
   const revenueData = useMemo(() => {
-    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const todayStr = dayKey;
     const todayRevenue = Number(summary?.today_revenue || 0);
     const safeTodayRevenue = Number.isFinite(todayRevenue) ? todayRevenue : 0;
 
     return (weeklyRevenueTrendData || []).map((item) => {
-      const dateObj = new Date(`${item.date}T00:00:00`);
+      const dateObj = parseLocalDateKey(item.date);
       const baseValue = Number.isFinite(item.value) ? item.value : 0;
       const syncedValue = item.date === todayStr ? safeTodayRevenue : baseValue;
 
@@ -375,7 +381,7 @@ const formatChartDate = useCallback((date: Date, type: "short" | "long") => {
         tooltipLabel: formatChartDate(dateObj, "long"),
       };
     });
-  }, [weeklyRevenueTrendData, formatChartDate, summary?.today_revenue]);
+  }, [weeklyRevenueTrendData, dayKey, formatChartDate, parseLocalDateKey, summary?.today_revenue]);
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({

@@ -36,45 +36,6 @@ interface SessionDetailsDialogProps {
   showActions?: boolean;
 }
 
-const normalizeScheduleDays = (raw?: string) => {
-  if (!raw) return "-";
-
-  const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const aliases: Record<string, string> = {
-    mon: "Mon",
-    monday: "Mon",
-    tue: "Tue",
-    tues: "Tue",
-    tuesday: "Tue",
-    wed: "Wed",
-    wen: "Wed",
-    wednesday: "Wed",
-    thu: "Thu",
-    thur: "Thu",
-    thurs: "Thu",
-    thursday: "Thu",
-    fri: "Fri",
-    friday: "Fri",
-    sat: "Sat",
-    saturday: "Sat",
-    sun: "Sun",
-    sunday: "Sun",
-  };
-
-  const normalized = raw
-    .split(/[^a-zA-Z]+/)
-    .map((token) => token.trim().toLowerCase())
-    .filter(Boolean)
-    .map((token) => aliases[token])
-    .filter(Boolean);
-
-  if (normalized.length === 0) return raw;
-
-  const unique = Array.from(new Set(normalized));
-  unique.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
-  return unique.join("-");
-};
-
 export default function SessionDetailsDialog({
   session,
   group,
@@ -200,12 +161,6 @@ export default function SessionDetailsDialog({
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t("birthYear") || "Birth Year"}:</span>
                       <span className="font-medium">{group.birth_year}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t("schedule") || "Schedule"}:</span>
-                      <span className="font-medium">
-                        {normalizeScheduleDays(group.schedule_days)} - {group.schedule_time}
-                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t("capacity") || "Capacity"}:</span>
