@@ -448,7 +448,7 @@ export default function Finance() {
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
       >
         <StatsCard
-          title={t("totalDueAmount") || "Total Due"}
+          title={`${t("totalPaid")} (01-01-2026 - 31-12-2026)`}
           value={formatCurrency(stats?.total_paid || 0)}
           icon={<TrendingUp className="w-6 h-6" />}
         />

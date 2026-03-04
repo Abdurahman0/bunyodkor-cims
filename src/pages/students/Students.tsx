@@ -52,6 +52,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 import { useGroupsStore } from "@/store/groupsStore";
 
+type GroupOption = {
+  id: number;
+  name: string;
+};
+
 export default function Students() {
   const { t } = useLanguageStore();
   const navigate = useNavigate();
@@ -61,6 +66,17 @@ export default function Students() {
   const [statusFilter, setStatusFilter] = useState<string>("active");
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [archiveYearFilter, setArchiveYearFilter] = useState<string>("");
+  const currentYear = new Date().getFullYear();
+  const [exportFromDate, setExportFromDate] = useState<string>(
+    `${currentYear}-01-01`,
+  );
+  const [exportToDate, setExportToDate] = useState<string>(
+    `${currentYear}-12-31`,
+  );
+  const [exportGroupId, setExportGroupId] = useState<string>("");
+  const [exportStatus, setExportStatus] = useState<string>("");
+  const [isComprehensiveExporting, setIsComprehensiveExporting] =
+    useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentRead | null>(
     null,
   );
@@ -84,7 +100,8 @@ export default function Students() {
   } = useGroupsStore();
 
   // Flatten grouped data into single array
-  const allGroups = groupsData?.flatMap((yearGroup) => yearGroup.groups) || [];
+  const allGroups: GroupOption[] =
+    groupsData?.flatMap((yearGroup) => yearGroup.groups as GroupOption[]) || [];
 
   // Fetch groups on component mount if not already loaded
   useEffect(() => {
@@ -220,38 +237,40 @@ export default function Students() {
   };
 
   const handleExportComprehensiveData = async () => {
-    try {
-      toast.loading(t("exportingData"));
+    if (exportFromDate && exportToDate && exportFromDate > exportToDate) {
+      toast.error(t("dateRangeInvalid"));
+      return;
+    }
 
-      // Get date range for current year
-      const currentYear = new Date().getFullYear();
-      const fromDate = `${currentYear}-01-01`;
-      const toDate = new Date().toISOString().split("T")[0];
+    const toastId = toast.loading(t("exportingData"));
+    try {
+      setIsComprehensiveExporting(true);
 
       const blob = await studentService.exportComprehensiveStudentData({
-        from_date: fromDate,
-        to_date: toDate,
-        status: statusFilter || undefined,
+        from_date: exportFromDate || undefined,
+        to_date: exportToDate || undefined,
+        group_id: exportGroupId ? parseInt(exportGroupId, 10) : undefined,
+        status: exportStatus || undefined,
       });
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `all_students_comprehensive_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
+      link.download = `students_comprehensive_${exportFromDate || "from"}_${exportToDate || "to"}.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.dismiss();
+      toast.dismiss(toastId);
       toast.success(t("exportedSuccessfully"));
     } catch (error) {
       console.error(error);
-      toast.dismiss();
+      toast.dismiss(toastId);
       toast.error(t("errorExportingData"));
+    } finally {
+      setIsComprehensiveExporting(false);
     }
   };
 
@@ -323,20 +342,6 @@ export default function Students() {
             <span className="hidden sm:inline">{t("export")}</span>
             <span className="sm:hidden">1</span>
           </Button> */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 bg-primary/10 hover:bg-primary/20"
-            onClick={handleExportComprehensiveData}
-            title={t("exportAllStudentsData")}
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden lg:inline">
-              {t("exportAllStudentsData")}
-            </span>
-            <span className="hidden sm:inline lg:hidden">{t("exportAll")}</span>
-            <span className="sm:hidden font-bold">{t("full") || "Full"}</span>
-          </Button>
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">{t("addStudent")}</span>
@@ -402,6 +407,99 @@ export default function Students() {
         ))}
       </motion.div>
 
+      {/* Comprehensive Export Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
+        <Card className="border-border/50 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg">
+              {t("comprehensiveStudentsExport")}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {t("comprehensiveStudentsExportDescription")}
+            </p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex flex-col xl:flex-row gap-3 xl:items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
+                <div className="space-y-1">
+                  <label htmlFor="export_from_date" className="text-sm">
+                    {t("fromDate")}
+                  </label>
+                  <Input
+                    id="export_from_date"
+                    type="date"
+                    value={exportFromDate}
+                    onChange={(e) => setExportFromDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="export_to_date" className="text-sm">
+                    {t("toDate")}
+                  </label>
+                  <Input
+                    id="export_to_date"
+                    type="date"
+                    value={exportToDate}
+                    onChange={(e) => setExportToDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="export_group_id" className="text-sm">
+                    {t("group")}
+                  </label>
+                  <Select
+                    id="export_group_id"
+                    value={exportGroupId}
+                    onChange={(e) => setExportGroupId(e.target.value)}
+                    disabled={isLoadingGroups}
+                  >
+                    <option value="">{t("allGroups")}</option>
+                    {!isLoadingGroups && allGroups.length > 0
+                      ? allGroups.map((group) => (
+                          <option key={`export-group-${group.id}`} value={group.id}>
+                            {group.name}
+                          </option>
+                        ))
+                      : null}
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="export_status" className="text-sm">
+                    {t("status")}
+                  </label>
+                  <Select
+                    id="export_status"
+                    value={exportStatus}
+                    onChange={(e) => setExportStatus(e.target.value)}
+                  >
+                    <option value="">{t("allStatuses")}</option>
+                    <option value="active">{t("active")}</option>
+                    <option value="archived">{t("archived")}</option>
+                    <option value="deleted">{t("deleted")}</option>
+                  </Select>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                className="gap-2 xl:self-end bg-primary/10 hover:bg-primary/20"
+                onClick={handleExportComprehensiveData}
+                disabled={isComprehensiveExporting}
+                title={t("exportAllStudentsData")}
+              >
+                <Download className="w-4 h-4" />
+                {isComprehensiveExporting
+                  ? t("exportingData")
+                  : t("exportAllStudentsData")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Filters */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -447,7 +545,7 @@ export default function Students() {
                     {isLoadingGroups ? t("loading") : t("allGroups")}
                   </option>
                   {!isLoadingGroups && allGroups.length > 0
-                    ? allGroups.map((group: any) => (
+                    ? allGroups.map((group) => (
                         <option
                           key={`group-${group.id}`}
                           value={String(group.id)}
@@ -492,7 +590,7 @@ export default function Students() {
                     {t("group")}:{" "}
                     {
                       allGroups.find(
-                        (g: any) => g?.id?.toString() === groupFilter,
+                        (g) => g?.id?.toString() === groupFilter,
                       )?.name
                     }
                   </Badge>

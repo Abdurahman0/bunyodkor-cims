@@ -761,7 +761,7 @@ export default function StudentDetailPage() {
                     setIsTerminateDialogOpen(true);
                   }}
                 >
-                  {t("terminated")}
+                  {t("cancelContractAction")}
                 </Button>
               </div>
             </div>
@@ -1364,14 +1364,12 @@ export default function StudentDetailPage() {
       {/* Terminate Contract Dialog */}
       <Dialog open={isTerminateDialogOpen} onOpenChange={setIsTerminateDialogOpen}>
   <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden">
-    {/* HEADER */}
     <div className="px-6 py-5 border-b border-border/60">
       <DialogHeader className="space-y-2">
         <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-500">
           <AlertTriangle className="w-5 h-5" />
-          {t("terminated")}
+          {t("cancelContractAction")}
         </DialogTitle>
-
         <DialogDescription className="text-sm">
           {activeContract?.contract_number ? (
             <span className="inline-flex items-center gap-2">
@@ -1388,10 +1386,7 @@ export default function StudentDetailPage() {
         </DialogDescription>
       </DialogHeader>
     </div>
-
-    {/* BODY */}
     <div className="px-6 py-5 space-y-4">
-      {/* Reason */}
       <div className="space-y-2">
         <label
           htmlFor="termination_reason"
@@ -1498,7 +1493,7 @@ export default function StudentDetailPage() {
           ) : (
             <span className="inline-flex items-center gap-2">
               <Trash2 className="w-4 h-4" />
-              {t("terminated")}
+              {t("cancelContractAction")}
             </span>
           )}
         </Button>

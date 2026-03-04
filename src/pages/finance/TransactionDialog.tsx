@@ -454,6 +454,13 @@ export function TransactionDialog({
 
           {isSpravkaMode && (
             <div className="space-y-1">
+              <Label htmlFor="spravka_source">{t("paymentSource")}</Label>
+              <Input id="spravka_source" value={t("manual")} readOnly />
+            </div>
+          )}
+
+          {isSpravkaMode && (
+            <div className="space-y-1">
               <Label htmlFor="proof_file">
                 {t("paymentProof")} <span className="text-red-500">*</span>
               </Label>
