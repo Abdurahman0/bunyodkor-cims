@@ -55,6 +55,45 @@ import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog"; 
 import { SessionDialog } from "@/pages/coach/SessionDialog"; // Corrected import
 import { useLanguageStore } from "@/store/languageStore";
 
+const normalizeScheduleDays = (raw?: string) => {
+  if (!raw) return "-";
+
+  const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const aliases: Record<string, string> = {
+    mon: "Mon",
+    monday: "Mon",
+    tue: "Tue",
+    tues: "Tue",
+    tuesday: "Tue",
+    wed: "Wed",
+    wen: "Wed",
+    wednesday: "Wed",
+    thu: "Thu",
+    thur: "Thu",
+    thurs: "Thu",
+    thursday: "Thu",
+    fri: "Fri",
+    friday: "Fri",
+    sat: "Sat",
+    saturday: "Sat",
+    sun: "Sun",
+    sunday: "Sun",
+  };
+
+  const normalized = raw
+    .split(/[^a-zA-Z]+/)
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean)
+    .map((token) => aliases[token])
+    .filter(Boolean);
+
+  if (normalized.length === 0) return raw;
+
+  const unique = Array.from(new Set(normalized));
+  unique.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+  return unique.join("-");
+};
+
 export default function HeadCoach() {
   const queryClient = useQueryClient();
 
@@ -79,7 +118,11 @@ export default function HeadCoach() {
   const { data: groups = [], isLoading: isGroupsLoading } = useQuery({
     queryKey: ["headCoachGroups"],
     queryFn: () => headCoachService.getAllGroups(),
-    select: (data) => data.data,
+    select: (data) =>
+      data.data.map((group) => ({
+        ...group,
+        schedule_days: normalizeScheduleDays(group.schedule_days),
+      })),
   });
 
   const { data: sessions = [], isLoading: isSessionsLoading } = useQuery({
@@ -162,45 +205,6 @@ export default function HeadCoach() {
     group?.current_student_count ??
     group?.students_count ??
     0;
-
-  const normalizeScheduleDays = (raw?: string) => {
-    if (!raw) return "-";
-
-    const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const aliases: Record<string, string> = {
-      mon: "Mon",
-      monday: "Mon",
-      tue: "Tue",
-      tues: "Tue",
-      tuesday: "Tue",
-      wed: "Wed",
-      wen: "Wed",
-      wednesday: "Wed",
-      thu: "Thu",
-      thur: "Thu",
-      thurs: "Thu",
-      thursday: "Thu",
-      fri: "Fri",
-      friday: "Fri",
-      sat: "Sat",
-      saturday: "Sat",
-      sun: "Sun",
-      sunday: "Sun",
-    };
-
-    const normalized = raw
-      .split(/[^a-zA-Z]+/)
-      .map((token) => token.trim().toLowerCase())
-      .filter(Boolean)
-      .map((token) => aliases[token])
-      .filter(Boolean);
-
-    if (normalized.length === 0) return raw;
-
-    const unique = Array.from(new Set(normalized));
-    unique.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
-    return unique.join("-");
-  };
 
   const getCoachName = (coachId: number | undefined) => {
     if (!coachId || !coachesData) return "N/A";

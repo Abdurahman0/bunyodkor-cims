@@ -89,13 +89,39 @@ export function GroupDialog({
 }: GroupDialogProps) {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
+  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<GroupFormData>();
+
+  const selectedScheduleDays = normalizeScheduleDays(watch("schedule_days") || "")
+    .split("-")
+    .filter(Boolean);
+
+  const toggleScheduleDay = (day: string) => {
+    const current = new Set(selectedScheduleDays);
+    if (current.has(day)) {
+      current.delete(day);
+    } else {
+      current.add(day);
+    }
+
+    const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const next = Array.from(current).sort(
+      (a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b),
+    );
+    setValue("schedule_days", next.join("-"), {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  };
 
   const { data: coachesData } = useQuery({
     queryKey: ["coaches"],
@@ -274,13 +300,32 @@ export function GroupDialog({
               <Label htmlFor="schedule_days">
                 {t("scheduleDays")} <span className="text-red-500">*</span>
               </Label>
-              <Input
+              <div className="grid grid-cols-4 gap-2">
+                {weekDays.map((day) => {
+                  const isSelected = selectedScheduleDays.includes(day);
+                  return (
+                    <Button
+                      key={day}
+                      type="button"
+                      variant={isSelected ? "default" : "outline"}
+                      className="h-9 px-2 text-xs"
+                      onClick={() => toggleScheduleDay(day)}
+                    >
+                      {day}
+                    </Button>
+                  );
+                })}
+              </div>
+              <input
+                type="hidden"
                 id="schedule_days"
-                placeholder="Mon, Wed, Fri"
                 {...register("schedule_days", {
                   required: t("scheduleDaysRequired"),
                 })}
               />
+              <div className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {normalizeScheduleDays(watch("schedule_days") || "") || "-"}
+              </div>
               {errors.schedule_days && (
                 <p className="text-sm text-red-500">
                   {errors.schedule_days.message}
