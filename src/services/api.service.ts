@@ -60,6 +60,7 @@ import type {
   // Sessions
   SessionRead,
   SessionCreateRequest,
+  SessionBulkCreateRequest,
   // Gate
   GateLogRead,
   GateCallbackRequest,
@@ -1654,11 +1655,27 @@ export const headCoachService = {
    */
   getAllSessions: async (params?: {
     date?: string;
+    from_date?: string;
+    to_date?: string;
     group_id?: number;
   }): Promise<ApiResponse<SessionRead[]>> => {
     const response = await apiClient.get<ApiResponse<SessionRead[]>>(
       "/head-coach/sessions",
       { params },
+    );
+    return response.data;
+  },
+
+  /**
+   * Create multiple training sessions in one request
+   * POST /head-coach/sessions/bulk
+   */
+  createSessionsBulk: async (
+    data: SessionBulkCreateRequest,
+  ): Promise<ApiResponse<SessionRead[]>> => {
+    const response = await apiClient.post<ApiResponse<SessionRead[]>>(
+      "/head-coach/sessions/bulk",
+      data,
     );
     return response.data;
   },

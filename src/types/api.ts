@@ -606,6 +606,10 @@ export interface SessionUpdateRequest {
   group_id?: number;
 }
 
+export interface SessionBulkCreateRequest {
+  sessions: SessionCreateRequest[];
+}
+
 // ============================================================================
 // Head Coach Types
 // ============================================================================

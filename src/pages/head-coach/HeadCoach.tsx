@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { addDays, format, startOfWeek } from "date-fns";
 import {
   groupService,
   headCoachService,
@@ -100,6 +101,9 @@ export default function HeadCoach() {
   // --- States ---
   const [activeTab, setActiveTab] = useState("overview");
   const [filterGroupId, setFilterGroupId] = useState<string>("all");
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
+    startOfWeek(new Date(), { weekStartsOn: 1 }),
+  );
   const [selectedSession, setSelectedSession] = useState<SessionRead | null>(
     null,
   );
@@ -114,6 +118,16 @@ export default function HeadCoach() {
   );
   const { t } = useLanguageStore();
 
+  const weekFromDate = useMemo(
+    () => format(currentWeekStart, "yyyy-MM-dd"),
+    [currentWeekStart],
+  );
+
+  const weekToDate = useMemo(
+    () => format(addDays(currentWeekStart, 6), "yyyy-MM-dd"),
+    [currentWeekStart],
+  );
+
   // --- API Queries ---
   const { data: groups = [], isLoading: isGroupsLoading } = useQuery({
     queryKey: ["headCoachGroups"],
@@ -126,12 +140,15 @@ export default function HeadCoach() {
   });
 
   const { data: sessions = [], isLoading: isSessionsLoading } = useQuery({
-    queryKey: ["sessions", filterGroupId],
+    queryKey: ["sessions", filterGroupId, weekFromDate, weekToDate],
     queryFn: () =>
       headCoachService.getAllSessions(
-        filterGroupId === "all"
-          ? undefined
-          : { group_id: Number(filterGroupId) },
+        {
+          from_date: weekFromDate,
+          to_date: weekToDate,
+          group_id:
+            filterGroupId === "all" ? undefined : Number(filterGroupId),
+        },
       ),
     select: (data) => data.data,
   });
@@ -163,6 +180,61 @@ export default function HeadCoach() {
       toast.error(
         err.response?.data?.detail || t("sessionDeleteError"),
       );
+    },
+  });
+
+  const copyWeekMutation = useMutation({
+    mutationFn: async (weekStart: Date) => {
+      const fromDate = format(weekStart, "yyyy-MM-dd");
+      const toDate = format(addDays(weekStart, 6), "yyyy-MM-dd");
+
+      const sourceResponse = await headCoachService.getAllSessions({
+        from_date: fromDate,
+        to_date: toDate,
+        group_id: filterGroupId === "all" ? undefined : Number(filterGroupId),
+      });
+
+      const sourceSessions = sourceResponse.data || [];
+      if (sourceSessions.length === 0) {
+        throw new Error("NO_SESSIONS");
+      }
+
+      const parseIsoDateAsLocal = (value: string) => {
+        const [y, m, d] = value.split("-").map(Number);
+        return new Date(y, (m || 1) - 1, d || 1);
+      };
+
+      const sessionsForNextWeek = sourceSessions.map((session) => ({
+        session_date: format(
+          addDays(parseIsoDateAsLocal(session.session_date), 7),
+          "yyyy-MM-dd",
+        ),
+        topic: session.topic,
+        start_time: session.start_time,
+        end_time: session.end_time,
+        station: session.station,
+        group_id: session.group_id,
+      }));
+
+      return headCoachService.createSessionsBulk({
+        sessions: sessionsForNextWeek,
+      });
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      const copiedCount = response.data?.length ?? 0;
+      toast.success(
+        `${t("weekCopiedToNextSuccess")} (${copiedCount})`,
+      );
+    },
+    onError: (error: unknown) => {
+      if (error instanceof Error && error.message === "NO_SESSIONS") {
+        toast.error(t("noSessionsInSelectedWeek"));
+        return;
+      }
+
+      const err = error as { response?: { data?: { detail?: string } } };
+      toast.error(err.response?.data?.detail || t("weekCopyFailed"));
     },
   });
 
@@ -442,6 +514,12 @@ export default function HeadCoach() {
               groups={groups}
               onSessionClick={handleSessionClick}
               onTimeSlotClick={handleTimeSlotClick}
+              currentWeekStart={currentWeekStart}
+              onCurrentWeekStartChange={setCurrentWeekStart}
+              onCopyWeekToNext={(weekStart) => copyWeekMutation.mutate(weekStart)}
+              isCopyingWeek={copyWeekMutation.isPending}
+              copyWeekLabel={t("copyWeekToNext")}
+              copyingWeekLabel={t("copyingWeek")}
               showCreateButton
             />
           )}

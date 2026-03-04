@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   ChevronLeft,
   ChevronRight,
+  Copy,
   Plus,
   Clock,
   MapPin,
@@ -20,6 +21,12 @@ interface WeeklyTimeTableProps {
   groups: GroupRead[];
   onSessionClick?: (session: SessionRead) => void;
   onTimeSlotClick?: (date: string, time: string) => void;
+  onCopyWeekToNext?: (weekStart: Date) => void;
+  isCopyingWeek?: boolean;
+  currentWeekStart?: Date;
+  onCurrentWeekStartChange?: (weekStart: Date) => void;
+  copyWeekLabel?: string;
+  copyingWeekLabel?: string;
   showCreateButton?: boolean;
   className?: string;
 }
@@ -57,12 +64,28 @@ export default function WeeklyTimeTable({
   groups,
   onSessionClick,
   onTimeSlotClick,
+  onCopyWeekToNext,
+  isCopyingWeek = false,
+  currentWeekStart,
+  onCurrentWeekStartChange,
+  copyWeekLabel = "Copy To Next Week",
+  copyingWeekLabel = "Copying...",
   showCreateButton = true,
   className,
 }: WeeklyTimeTableProps) {
-  const [currentWeekStart, setCurrentWeekStart] = useState(
+  const [localWeekStart, setLocalWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 }), // Monday
   );
+
+  const weekStart = currentWeekStart ?? localWeekStart;
+
+  const setWeekStart = (nextWeekStart: Date) => {
+    if (onCurrentWeekStartChange) {
+      onCurrentWeekStartChange(nextWeekStart);
+      return;
+    }
+    setLocalWeekStart(nextWeekStart);
+  };
 
   // Create color map for groups
   const groupColorMap = useMemo(() => {
@@ -75,8 +98,8 @@ export default function WeeklyTimeTable({
 
   // Get week dates
   const weekDates = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i)),
-    [currentWeekStart],
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart],
   );
 
   // Organize sessions by date and time
@@ -109,11 +132,11 @@ export default function WeeklyTimeTable({
   };
 
   const handlePreviousWeek = () => {
-    setCurrentWeekStart(subWeeks(currentWeekStart, 1));
+    setWeekStart(subWeeks(weekStart, 1));
   };
 
   const handleNextWeek = () => {
-    setCurrentWeekStart(addWeeks(currentWeekStart, 1));
+    setWeekStart(addWeeks(weekStart, 1));
   };
 
   const handleTimeSlotClick = (date: Date, timeSlot: string) => {
@@ -140,14 +163,27 @@ export default function WeeklyTimeTable({
             <div className="flex items-center gap-3">
               <CalendarIcon className="w-5 h-5 text-muted-foreground" />
               <span className="text-lg font-semibold">
-                {format(currentWeekStart, "MMM d")} -{" "}
-                {format(addDays(currentWeekStart, 6), "MMM d, yyyy")}
+                {format(weekStart, "MMM d")} -{" "}
+                {format(addDays(weekStart, 6), "MMM d, yyyy")}
               </span>
             </div>
 
-            <Button variant="outline" size="icon" onClick={handleNextWeek}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {onCopyWeekToNext && (
+                <Button
+                  variant="secondary"
+                  onClick={() => onCopyWeekToNext(weekStart)}
+                  disabled={isCopyingWeek}
+                  className="gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  {isCopyingWeek ? copyingWeekLabel : copyWeekLabel}
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={handleNextWeek}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

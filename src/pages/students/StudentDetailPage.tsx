@@ -1139,8 +1139,8 @@ export default function StudentDetailPage() {
                       <TableCell className="text-sm text-muted-foreground">
                         {transaction.comment || "-"}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+                      <TableCell className="text-right">
+                        <div className="inline-flex w-full min-w-[180px] items-center justify-end gap-2">
                           {transaction.settlement_document_url ? (
                             <Button
                               variant="outline"
@@ -1148,18 +1148,18 @@ export default function StudentDetailPage() {
                               onClick={() =>
                                 openPdfUrl(transaction.settlement_document_url!)
                               }
-                              className="gap-1"
+                              className="h-8 min-w-[84px] justify-center gap-1 whitespace-nowrap"
                             >
                               <Eye className="w-4 h-4" />
                               {t("view")}
                             </Button>
                           ) : (
-                            <span>-</span>
+                            <div className="h-8 min-w-[84px]" aria-hidden="true" />
                           )}
                           <Button
                             variant="destructive"
                             size="sm"
-                            className="gap-1"
+                            className="h-8 min-w-[84px] justify-center gap-1 whitespace-nowrap"
                             onClick={() => {
                               setTransactionToDelete(transaction);
                               setIsDeleteTransactionDialogOpen(true);
