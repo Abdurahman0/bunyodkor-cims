@@ -759,7 +759,7 @@
     archiveYearButton: "Archive Year",
     unarchiveButton: "Unarchive",
     terminatedContractsYear: "Terminated Contracts ({{year}})",
-    contractNumber: "Contract в„–",
+    contractNumber: "Contract Number",
     studentId: "Student ID",
     terminatedDate: "Terminated Date",
     reason: "Reason",
@@ -966,7 +966,7 @@
     deleteStudentWarning:
       "Permanently deleting the student will destroy all their data.",
     clickButtonToConfirm: "Click the button to proceed with the confirmation.",
-    permanentDeleteWarning: "вљ пёЏ PERMANENT DELETION WARNING",
+    permanentDeleteWarning: "WARNING: PERMANENT DELETION",
     permanentDeleteStudent:
       "Are you sure you want to permanently delete this student",
     thisActionCannotBeUndone: "This action cannot be undone",
@@ -1780,7 +1780,7 @@
     archiveYearButton: "Yilni Arxivlash",
     unarchiveButton: "Arxivdan Chiqarish",
     terminatedContractsYear: "Bekor Qilingan Shartnomalar ({{year}})",
-    contractNumber: "Shartnoma в„–",
+    contractNumber: "Shartnoma raqami",
     studentId: "Talaba ID",
     terminatedDate: "Bekor Qilingan Sana",
     reason: "Sabab",
@@ -1994,7 +1994,7 @@
     deleteStudentWarning:
       "Talabani butunlay o'chirish uning barcha ma'lumotlarini yo'q qiladi.",
     clickButtonToConfirm: "Tasdiqlash uchun tugmani bosing.",
-    permanentDeleteWarning: "вљ пёЏ DOIMIY O'CHIRISH OGOHLANTIRISHI",
+    permanentDeleteWarning: "OGOHLANTIRISH: DOIMIY O'CHIRISH",
     permanentDeleteStudent:
       "Haqiqatan ham bu talabani butunlay o'chirib tashlamoqchimisiz",
     thisActionCannotBeUndone: "Bu amalni qaytarib bo'lmaydi",

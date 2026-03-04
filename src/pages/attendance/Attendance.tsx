@@ -45,17 +45,28 @@ export default function Attendance() {
   const [toDate, setToDate] = useState(DEFAULT_TO);
   const [searchStudent, setSearchStudent] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState("all");
-  const [selectedStudentId, setSelectedStudentId] = useState("all");
 
   const { data: groupsFilterData } = useQuery({
     queryKey: ["attendance-groups-filter"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
-    staleTime: 5 * 60 * 1000,
-  });
+    queryFn: async () => {
+      const firstPage = await groupService.getGroups({ page: 1, page_size: 100 });
+      const totalPages = firstPage.meta?.total_pages || 1;
 
-  const { data: studentsFilterData } = useQuery({
-    queryKey: ["attendance-students-filter"],
-    queryFn: () => studentService.getStudents({ page: 1, page_size: 100000 }),
+      if (totalPages <= 1) {
+        return firstPage.data || [];
+      }
+
+      const restPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, idx) =>
+          groupService.getGroups({ page: idx + 2, page_size: 100 }),
+        ),
+      );
+
+      return [
+        ...(firstPage.data || []),
+        ...restPages.flatMap((response) => response.data || []),
+      ];
+    },
     staleTime: 5 * 60 * 1000,
   });
 
@@ -66,7 +77,6 @@ export default function Attendance() {
       fromDate,
       toDate,
       selectedGroupId,
-      selectedStudentId,
     ],
     queryFn: () =>
       attendanceService.getAllAttendances({
@@ -74,8 +84,6 @@ export default function Attendance() {
         to_date: toDate,
         group_id:
           selectedGroupId === "all" ? undefined : Number(selectedGroupId),
-        student_id:
-          selectedStudentId === "all" ? undefined : Number(selectedStudentId),
         page,
         page_size: 20,
       }),
@@ -343,7 +351,7 @@ export default function Attendance() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground mb-2 block">
                   {t("fromDate") || "From Date"}
@@ -397,31 +405,9 @@ export default function Attendance() {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
                 >
                   <option value="all">{t("allGroups") || "All groups"}</option>
-                  {(groupsFilterData?.data || []).map((group) => (
+                  {(groupsFilterData || []).map((group) => (
                     <option key={group.id} value={String(group.id)}>
                       {group.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  {t("student") || "Student"}
-                </label>
-                <select
-                  value={selectedStudentId}
-                  onChange={(e) => {
-                    setSelectedStudentId(e.target.value);
-                    setPage(1);
-                  }}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
-                >
-                  <option value="all">
-                    {t("allStudents") || "All students"}
-                  </option>
-                  {(studentsFilterData?.data || []).map((student) => (
-                    <option key={student.id} value={String(student.id)}>
-                      {`${student.first_name || ""} ${student.last_name || ""}`.trim() || `#${student.id}`}
                     </option>
                   ))}
                 </select>
