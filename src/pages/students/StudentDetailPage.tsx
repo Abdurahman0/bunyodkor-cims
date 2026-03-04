@@ -1361,78 +1361,150 @@ export default function StudentDetailPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Terminate Contract Dialog */}
       <Dialog open={isTerminateDialogOpen} onOpenChange={setIsTerminateDialogOpen}>
-        <DialogContent className="sm:max-w-md pb-6">
-          <DialogHeader>
-            <DialogTitle className="text-red-600 dark:text-red-500">
+  <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden">
+    {/* HEADER */}
+    <div className="px-6 py-5 border-b border-border/60">
+      <DialogHeader className="space-y-2">
+        <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-500">
+          <AlertTriangle className="w-5 h-5" />
+          {t("terminated")}
+        </DialogTitle>
+
+        <DialogDescription className="text-sm">
+          {activeContract?.contract_number ? (
+            <span className="inline-flex items-center gap-2">
+              <Badge variant="secondary" className="font-mono">
+                {activeContract.contract_number}
+              </Badge>
+              <span className="text-muted-foreground">
+                {t("contractNumber")}
+              </span>
+            </span>
+          ) : (
+            t("noContracts")
+          )}
+        </DialogDescription>
+      </DialogHeader>
+    </div>
+
+    {/* BODY */}
+    <div className="px-6 py-5 space-y-4">
+      {/* Reason */}
+      <div className="space-y-2">
+        <label
+          htmlFor="termination_reason"
+          className="text-sm font-medium flex items-center justify-between"
+        >
+          <span className="inline-flex items-center gap-2">
+            <FileText className="w-4 h-4 text-muted-foreground" />
+            {t("terminationReason")}
+          </span>
+          <span className="text-xs text-red-500">*</span>
+        </label>
+
+        <input
+          id="termination_reason"
+          value={terminationReason}
+          onChange={(e) => setTerminationReason(e.target.value)}
+          placeholder={t("reason")}
+          className="
+            w-full h-11 rounded-xl border border-border bg-background px-4
+            text-foreground shadow-sm outline-none
+            focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/40
+            transition
+          "
+        />
+
+        <p className="text-xs text-muted-foreground">
+          {t("replaceContractPdfDescription") /* xohlasang boshqa help text qo'y */}
+        </p>
+      </div>
+
+      {/* Datetime */}
+      <div className="space-y-2">
+        <label
+          htmlFor="terminated_at"
+          className="text-sm font-medium flex items-center justify-between"
+        >
+          <span className="inline-flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            {t("terminatedAt")}
+          </span>
+          <span className="text-xs text-red-500">*</span>
+        </label>
+
+        <div className="relative">
+          <input
+            id="terminated_at"
+            type="datetime-local"
+            value={terminatedAt}
+            onChange={(e) => setTerminatedAt(e.target.value)}
+            className="
+              w-full h-11 rounded-xl border border-border bg-background px-4 pr-11
+              text-foreground shadow-sm outline-none
+              focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/40
+              transition
+            "
+          />
+          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* FOOTER */}
+    <div className="px-6 py-5 border-t border-border/60 bg-muted/20">
+      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+        <Button
+          variant="outline"
+          className="sm:w-auto"
+          onClick={() => setIsTerminateDialogOpen(false)}
+          disabled={terminateContractMutation.isPending}
+        >
+          {t("cancel")}
+        </Button>
+
+        <Button
+          variant="destructive"
+          className="sm:w-auto"
+          disabled={terminateContractMutation.isPending || !activeContract}
+          onClick={() => {
+            if (!activeContract) return;
+
+            if (!terminationReason.trim()) {
+              toast.error(t("reason"));
+              return;
+            }
+            if (!terminatedAt) {
+              toast.error(t("terminatedAt"));
+              return;
+            }
+
+            terminateContractMutation.mutate({
+              contractId: activeContract.id,
+              termination_reason: terminationReason.trim(),
+              terminated_at: terminatedAt,
+            });
+          }}
+        >
+          {terminateContractMutation.isPending ? (
+            <span className="inline-flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              {t("saving")}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <Trash2 className="w-4 h-4" />
               {t("terminated")}
-            </DialogTitle>
-            <DialogDescription className="pt-2">
-              {activeContract?.contract_number
-                ? `${t("contractNumber")}: ${activeContract.contract_number}`
-                : t("noContracts")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div className="space-y-1">
-              <label htmlFor="termination_reason" className="text-sm font-medium">
-                {t("terminationReason")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="termination_reason"
-                className="w-full border rounded px-3 py-2 bg-background text-foreground"
-                value={terminationReason}
-                onChange={(e) => setTerminationReason(e.target.value)}
-                placeholder={t("reason")}
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="terminated_at" className="text-sm font-medium">
-                {t("terminatedAt")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="terminated_at"
-                type="datetime-local"
-                className="w-full border rounded px-3 py-2 bg-background text-foreground"
-                value={terminatedAt}
-                onChange={(e) => setTerminatedAt(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex gap-3 mt-6">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setIsTerminateDialogOpen(false)}
-              disabled={terminateContractMutation.isPending}
-            >
-              {t("cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1"
-              disabled={terminateContractMutation.isPending || !activeContract}
-              onClick={() => {
-                if (!activeContract) return;
-                if (!terminationReason.trim()) {
-                  toast.error(t("reason"));
-                  return;
-                }
-                if (!terminatedAt) {
-                  toast.error(t("terminatedAt"));
-                  return;
-                }
-                terminateContractMutation.mutate({
-                  contractId: activeContract.id,
-                  termination_reason: terminationReason.trim(),
-                  terminated_at: terminatedAt,
-                });
-              }}
-            >
-              {terminateContractMutation.isPending ? t("saving") : t("terminated")}
-            </Button>
-          </div>
-        </DialogContent>
+            </span>
+          )}
+        </Button>
+      </div>
+    </div>
+  </DialogContent>
       </Dialog>
 
       {/* Edit Contract Dialog */}
