@@ -789,158 +789,182 @@ export default function StudentDetailPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>{t("information")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("group")}</span>
-              <span className="font-medium">
-                {group?.name || t("notAssigned")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("coach")}</span>
-              <span className="font-medium">
-                {coach?.full_name || t("notAssigned")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Face ID</span>
-              <Badge variant="secondary">
-                {student.face_id || t("notSet")}
-              </Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("joinedDate")}</span>
-              <span className="font-medium">
-                {format(new Date(student.created_at!), "dd.MM.yyyy")}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* LEFT COLUMN: INFORMATION */}
+        <div className="lg:col-span-1">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <CardTitle>{t("information")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="flex justify-between items-center py-2.5 border-b border-border/50">
+                <span className="text-sm text-muted-foreground">{t("group")}</span>
+                <span className="text-sm font-medium text-right">
+                  {group?.name || t("notAssigned")}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 border-b border-border/50">
+                <span className="text-sm text-muted-foreground">{t("coach")}</span>
+                <span className="text-sm font-medium text-right">
+                  {coach?.full_name || t("notAssigned")}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 border-b border-border/50">
+                <span className="text-sm text-muted-foreground">Face ID</span>
+                <Badge variant="secondary" className="font-mono">
+                  {student.face_id || t("notSet")}
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-sm text-muted-foreground">{t("joinedDate")}</span>
+                <span className="text-sm font-medium text-right">
+                  {format(new Date(student.created_at!), "dd.MM.yyyy")}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* PARENTS SECTION */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" /> {t("parents")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {parentsList.length > 0 ? (
-              <div className="space-y-3">
-                { }
-                {parentsList.map((parent: ParentRead | any, index) => (
-                  <div
-                    key={parent.id || index}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-muted/50 gap-2"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 mt-1">
-                        <User className="w-4 h-4" />
+        {/* RIGHT COLUMN: PARENTS & GUARDIANS */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {/* PARENTS SECTION */}
+          <Card>
+            <CardHeader className="pb-4 border-b border-border/30">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Users className="w-5 h-5 text-primary" /> {t("parents")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {parentsList.length > 0 ? (
+                <div className="grid gap-4">
+                  {parentsList.map((parent: ParentRead | any, index) => (
+                    <div
+                      key={parent.id || index}
+                      className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-muted/40 hover:shadow-sm transition-all gap-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 shrink-0 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 flex items-center justify-center font-bold text-lg">
+                          {parent.first_name?.charAt(0) || <User className="w-5 h-5" />}
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-base leading-none">
+                              {parent.first_name} {parent.last_name}
+                            </h4>
+                            <Badge variant="secondary" className="px-2 py-0 text-xs font-medium rounded-md bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                              {parent.relationship_type}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-sm text-muted-foreground">
+                            {parent.email && <span>{parent.email}</span>}
+                            {parent.is_from_contract && (
+                              <span className="flex items-center gap-1 text-xs">
+                                <FileText className="w-3.5 h-3.5" />
+                                {t("fromContract")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-lg">
-                          {parent.first_name} {parent.last_name}
-                        </p>
-                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                          {parent.relationship_type}
-                        </p>
-                        {parent.email && (
-                          <p className="text-sm text-muted-foreground">
-                            {parent.email}
-                          </p>
-                        )}
-                        {parent.is_from_contract && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] mt-1 h-5"
-                          >
-                            {t("fromContract")}
-                          </Badge>
-                        )}
-                      </div>
+                      
+                      {parent.phone ? (
+                        <a
+                          href={`tel:${parent.phone.replace(/\D/g, "")}`}
+                          className="flex items-center gap-2.5 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors shrink-0"
+                        >
+                          <Phone className="w-4 h-4" />
+                          <span className="text-sm font-medium font-mono">
+                            {parent.phone}
+                          </span>
+                        </a>
+                      ) : (
+                        <span className="text-sm text-muted-foreground px-4 py-2 border border-dashed rounded-lg">
+                          {t("noPhone")}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-sm flex items-center gap-2 bg-background dark:bg-muted/30 px-3 py-1.5 rounded border">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-mono text-foreground">
-                        {parent.phone || t("noPhone")}
-                      </span>
-                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                  <div className="p-3 bg-muted rounded-full mb-3">
+                    <Users className="w-6 h-6 opacity-40" />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("noParentInfo")}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  <p className="text-sm">{t("noParentInfo")}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* GUARDIANS SECTION */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" /> {t("guardian")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {guardiansList.length > 0 ? (
-              <div className="space-y-3">
-                { }
-                {guardiansList.map((guardian: ParentRead | any, index) => (
-                  <div
-                    key={guardian.id || index}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 gap-2"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 mt-1">
-                        <User className="w-4 h-4" />
+          {/* GUARDIANS SECTION */}
+          <Card>
+            <CardHeader className="pb-4 border-b border-border/30">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <User className="w-5 h-5 text-amber-500" /> {t("guardian")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {guardiansList.length > 0 ? (
+                <div className="grid gap-4">
+                  {guardiansList.map((guardian: ParentRead | any, index) => (
+                    <div
+                      key={guardian.id || index}
+                      className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-amber-200/50 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-950/10 hover:shadow-sm transition-all gap-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 shrink-0 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
+                          {guardian.first_name?.charAt(0) || <User className="w-5 h-5" />}
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-base leading-none">
+                              {guardian.first_name} {guardian.last_name}
+                            </h4>
+                            <Badge variant="outline" className="px-2 py-0 text-xs font-medium rounded-md border-amber-200 text-amber-600 dark:border-amber-800 dark:text-amber-400">
+                              {guardian.relationship_type}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-sm text-muted-foreground">
+                            {guardian.email && <span>{guardian.email}</span>}
+                            {guardian.is_from_contract && (
+                              <span className="flex items-center gap-1 text-xs text-amber-600/70 dark:text-amber-400/70">
+                                <FileText className="w-3.5 h-3.5" />
+                                {t("fromContract")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-lg">
-                          {guardian.first_name} {guardian.last_name}
-                        </p>
-                        <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                          {guardian.relationship_type}
-                        </p>
-                        {guardian.email && (
-                          <p className="text-sm text-muted-foreground">
-                            {guardian.email}
-                          </p>
-                        )}
-                        {guardian.is_from_contract && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] mt-1 h-5"
-                          >
-                            {t("fromContract")}
-                          </Badge>
-                        )}
-                      </div>
+
+                      {guardian.phone ? (
+                        <a
+                          href={`tel:${guardian.phone.replace(/\D/g, "")}`}
+                          className="flex items-center gap-2.5 px-4 py-2 rounded-lg bg-amber-100/50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-500 hover:text-white transition-colors shrink-0 border border-amber-200/50 dark:border-amber-800/50"
+                        >
+                          <Phone className="w-4 h-4" />
+                          <span className="text-sm font-medium font-mono">
+                            {guardian.phone}
+                          </span>
+                        </a>
+                      ) : (
+                        <span className="text-sm text-muted-foreground px-4 py-2 border border-dashed rounded-lg">
+                          {t("noPhone")}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-sm flex items-center gap-2 bg-background dark:bg-muted/30 px-3 py-1.5 rounded border">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-mono text-foreground">
-                        {guardian.phone || t("noPhone")}
-                      </span>
-                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                  <div className="p-3 bg-muted rounded-full mb-3">
+                    <User className="w-6 h-6 opacity-40" />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <User className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p>{t("noGuardianInfo")}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  <p className="text-sm">{t("noGuardianInfo")}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card>
