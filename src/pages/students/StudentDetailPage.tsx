@@ -116,6 +116,11 @@ export default function StudentDetailPage() {
     useState<TransactionRead | null>(null);
   const [isDeleteTransactionDialogOpen, setIsDeleteTransactionDialogOpen] =
     useState(false);
+  const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false);
+  const [terminationReason, setTerminationReason] = useState("");
+  const [terminatedAt, setTerminatedAt] = useState(
+    format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+  );
 
   const formatSource = (source: string | null | undefined) => {
     const cleanSource =
@@ -237,6 +242,42 @@ export default function StudentDetailPage() {
       toast.success(t("contractUpdatedSuccess") || "Contract updated");
       setIsEditContractDialogOpen(false);
       setContractToUpdate(null);
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      let errorMessage = t("anErrorOccurred") || "An error occurred";
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+      toast.error(errorMessage);
+    },
+  });
+
+  const terminateContractMutation = useMutation({
+    mutationFn: ({
+      contractId,
+      termination_reason,
+      terminated_at,
+    }: {
+      contractId: number;
+      termination_reason: string;
+      terminated_at: string;
+    }) =>
+      contractService.terminateContract(contractId, {
+        termination_reason,
+        terminated_at: new Date(terminated_at).toISOString(),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["student-full-info", studentId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success(t("contractUpdatedSuccess") || "Contract terminated");
+      setIsTerminateDialogOpen(false);
+      setTerminationReason("");
+      setTerminatedAt(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     },
     onError: (error: any) => {
       const detail = error.response?.data?.detail;
@@ -436,6 +477,8 @@ export default function StudentDetailPage() {
     transactions,
     attendances,
   } = data.data as StudentFullInfo;
+
+  const activeContract = contracts?.find((c) => c.status === "active") || null;
 
    
   const getDisplayParents = (): any[] => {
@@ -706,9 +749,21 @@ export default function StudentDetailPage() {
                 {t("contractNumber")}
               </p>
               <p className="text-2xl font-bold">
-                {contracts?.find((c) => c.status === "active")
-                  ?.contract_number || "-"}
+                {activeContract?.contract_number || "-"}
               </p>
+              <div className="mt-3">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={!activeContract}
+                  onClick={() => {
+                    if (!activeContract) return;
+                    setIsTerminateDialogOpen(true);
+                  }}
+                >
+                  {t("terminated")}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1277,6 +1332,80 @@ export default function StudentDetailPage() {
                   {t("delete")}
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTerminateDialogOpen} onOpenChange={setIsTerminateDialogOpen}>
+        <DialogContent className="sm:max-w-md pb-6">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 dark:text-red-500">
+              {t("terminated")}
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              {activeContract?.contract_number
+                ? `${t("contractNumber")}: ${activeContract.contract_number}`
+                : t("noContracts")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1">
+              <label htmlFor="termination_reason" className="text-sm font-medium">
+                {t("terminationReason")} <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="termination_reason"
+                className="w-full border rounded px-3 py-2 bg-background text-foreground"
+                value={terminationReason}
+                onChange={(e) => setTerminationReason(e.target.value)}
+                placeholder={t("reason")}
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="terminated_at" className="text-sm font-medium">
+                {t("terminatedAt")} <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="terminated_at"
+                type="datetime-local"
+                className="w-full border rounded px-3 py-2 bg-background text-foreground"
+                value={terminatedAt}
+                onChange={(e) => setTerminatedAt(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setIsTerminateDialogOpen(false)}
+              disabled={terminateContractMutation.isPending}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              disabled={terminateContractMutation.isPending || !activeContract}
+              onClick={() => {
+                if (!activeContract) return;
+                if (!terminationReason.trim()) {
+                  toast.error(t("reason"));
+                  return;
+                }
+                if (!terminatedAt) {
+                  toast.error(t("terminatedAt"));
+                  return;
+                }
+                terminateContractMutation.mutate({
+                  contractId: activeContract.id,
+                  termination_reason: terminationReason.trim(),
+                  terminated_at: terminatedAt,
+                });
+              }}
+            >
+              {terminateContractMutation.isPending ? t("saving") : t("terminated")}
             </Button>
           </div>
         </DialogContent>

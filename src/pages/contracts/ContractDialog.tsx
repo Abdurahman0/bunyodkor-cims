@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
@@ -20,7 +20,6 @@ import { contractService, studentService } from "@/services/api.service";
 import type {
   ContractRead,
   ContractCreate as ContractCreateType, // Renamed to avoid conflict with local type
-  ContractTerminateRequest,
   ContractUpdate,
   StudentRead,
 } from "@/types/api";
@@ -132,8 +131,6 @@ export function ContractDialog({
   onSuccess,
 }: ContractDialogProps) {
   const { t } = useLanguageStore();
-  const queryClient = useQueryClient();
-  const [dialogMode, setDialogMode] = useState<"edit" | "terminate">("edit");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(
     null,
   );
@@ -145,18 +142,6 @@ export function ContractDialog({
     watch,
     formState: { errors },
   } = useForm<ContractFormData>();
-
-  const {
-    register: registerTerminate,
-    handleSubmit: handleTerminateSubmit,
-    reset: resetTerminate,
-    formState: { errors: terminateErrors },
-  } = useForm<ContractTerminateRequest>({
-    defaultValues: {
-      termination_reason: "",
-      terminated_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    },
-  });
 
   const studentIdValue = watch("student_id");
 
@@ -207,19 +192,12 @@ export function ContractDialog({
 
   useEffect(() => {
     if (open) {
-      setDialogMode("edit");
       if (contract) {
         reset({
           ...contract,
           start_date: format(new Date(contract.start_date), "yyyy-MM-dd"),
           end_date: format(new Date(contract.end_date), "yyyy-MM-dd"),
           status: contract.status === "archived" ? "archived" : "active",
-        });
-        resetTerminate({
-          termination_reason: contract.termination_reason || "",
-          terminated_at: contract.terminated_at
-            ? format(new Date(contract.terminated_at), "yyyy-MM-dd'T'HH:mm")
-            : format(new Date(), "yyyy-MM-dd'T'HH:mm"),
         });
       } else {
         reset({
@@ -230,13 +208,9 @@ export function ContractDialog({
           monthly_fee: "",
           status: "active",
         });
-        resetTerminate({
-          termination_reason: "",
-          terminated_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-        });
       }
     }
-  }, [contract, open, reset, resetTerminate]);
+  }, [contract, open, reset]);
 
   const mutation = useMutation({
     mutationFn: (data: ContractCreateType | ContractUpdate) => {
@@ -300,34 +274,6 @@ export function ContractDialog({
         errorMessage = detail;
       }
 
-      toast.error(errorMessage);
-    },
-  });
-
-  const terminateMutation = useMutation({
-    mutationFn: (data: ContractTerminateRequest) => {
-      if (!contract) {
-        throw new Error("Contract not found");
-      }
-      return contractService.terminateContract(contract.id, {
-        termination_reason: data.termination_reason,
-        terminated_at: new Date(data.terminated_at).toISOString(),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      toast.success(t("successfullySaved"));
-      onOpenChange(false);
-      if (onSuccess) onSuccess();
-    },
-    onError: (error: unknown) => {
-      const detail = extractErrorDetail(error);
-      let errorMessage = t("anErrorOccurred");
-      if (Array.isArray(detail) && detail.length > 0) {
-        errorMessage = detail[0].msg || detail[0].message || errorMessage;
-      } else if (typeof detail === "string") {
-        errorMessage = detail;
-      }
       toast.error(errorMessage);
     },
   });
@@ -458,14 +404,6 @@ export function ContractDialog({
     mutation.mutate(finalPayload);
   };
 
-  const onSubmitTerminate = (data: ContractTerminateRequest) => {
-    if (!data.termination_reason?.trim()) {
-      toast.error(t("reason"));
-      return;
-    }
-    terminateMutation.mutate(data);
-  };
-
   const selectedStudent = selectedStudentData?.data;
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
@@ -490,27 +428,7 @@ export function ContractDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {contract && (
-          <div className="px-6 pt-0 pb-2 flex gap-2">
-            <Button
-              type="button"
-              variant={dialogMode === "edit" ? "default" : "outline"}
-              onClick={() => setDialogMode("edit")}
-            >
-              {t("editContract")}
-            </Button>
-            <Button
-              type="button"
-              variant={dialogMode === "terminate" ? "default" : "outline"}
-              onClick={() => setDialogMode("terminate")}
-            >
-              {t("terminated")}
-            </Button>
-          </div>
-        )}
-
-        {(!contract || dialogMode === "edit") && (
-          <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
           <div className="space-y-1">
             <Label htmlFor="contract_number">
               {t("contractNumber")} <span className="text-red-500">*</span>
@@ -713,63 +631,6 @@ export function ContractDialog({
             </Button>
           </div>
         </form>
-        )}
-
-        {contract && dialogMode === "terminate" && (
-          <form
-            onSubmit={handleTerminateSubmit(onSubmitTerminate)}
-            className="p-6 pt-0 space-y-4"
-          >
-            <div className="space-y-1">
-              <Label htmlFor="termination_reason">
-                {t("terminationReason")} <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="termination_reason"
-                placeholder={t("reason")}
-                {...registerTerminate("termination_reason", {
-                  required: t("reason"),
-                })}
-              />
-              {terminateErrors.termination_reason && (
-                <p className="text-sm text-red-500">
-                  {terminateErrors.termination_reason.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="terminated_at">
-                {t("terminatedAt")} <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="terminated_at"
-                type="datetime-local"
-                {...registerTerminate("terminated_at", {
-                  required: t("terminatedAt"),
-                })}
-              />
-              {terminateErrors.terminated_at && (
-                <p className="text-sm text-red-500">
-                  {terminateErrors.terminated_at.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 mt-6 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("cancel")}
-              </Button>
-              <Button type="submit" disabled={terminateMutation.isPending}>
-                {terminateMutation.isPending ? t("saving") : t("terminated")}
-              </Button>
-            </div>
-          </form>
-        )}
       </DialogContent>
     </Dialog>
   );
