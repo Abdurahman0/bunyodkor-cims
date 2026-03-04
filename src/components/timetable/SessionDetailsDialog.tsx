@@ -36,11 +36,49 @@ interface SessionDetailsDialogProps {
   showActions?: boolean;
 }
 
+const normalizeScheduleDays = (raw?: string) => {
+  if (!raw) return "-";
+
+  const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const aliases: Record<string, string> = {
+    mon: "Mon",
+    monday: "Mon",
+    tue: "Tue",
+    tues: "Tue",
+    tuesday: "Tue",
+    wed: "Wed",
+    wen: "Wed",
+    wednesday: "Wed",
+    thu: "Thu",
+    thur: "Thu",
+    thurs: "Thu",
+    thursday: "Thu",
+    fri: "Fri",
+    friday: "Fri",
+    sat: "Sat",
+    saturday: "Sat",
+    sun: "Sun",
+    sunday: "Sun",
+  };
+
+  const normalized = raw
+    .split(/[^a-zA-Z]+/)
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean)
+    .map((token) => aliases[token])
+    .filter(Boolean);
+
+  if (normalized.length === 0) return raw;
+
+  const unique = Array.from(new Set(normalized));
+  unique.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+  return unique.join("-");
+};
+
 export default function SessionDetailsDialog({
   session,
   group,
   open,
-  station,
   onOpenChange,
   groupColorClass = "bg-blue-500",
   onEdit,
@@ -59,11 +97,16 @@ export default function SessionDetailsDialog({
     return ((endInMin - startInMin) / 60).toFixed(1);
   };
 
+  const currentStudents =
+    group?.active_students_count ??
+    group?.current_student_count ??
+    (group as any)?.students_count ??
+    0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0 pb-8">
         <div className="relative">
-          {/* Close Button */}
           <button
             onClick={() => onOpenChange(false)}
             className="absolute right-4 top-4 z-10 rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
@@ -77,8 +120,7 @@ export default function SessionDetailsDialog({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Badge className={cn("text-white", groupColorClass)}>
-                    {group?.name ||
-                      `${t("group") || "Group"} ${session.group_id}`}
+                    {group?.name || `${t("group") || "Group"} ${session.group_id}`}
                   </Badge>
                   <Badge variant="outline" className="gap-1">
                     <Clock className="w-3 h-3" />
@@ -93,7 +135,6 @@ export default function SessionDetailsDialog({
           </div>
 
           <div className="px-6 pb-6 space-y-4">
-            {/* Date & Time */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -118,36 +159,27 @@ export default function SessionDetailsDialog({
 
             <Separator />
 
-     {/* Station / Location qismi */}
-{(session.location || (session as any).station) ? (
-  <>
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
-        <MapPin className="w-4 h-4" />
-        <span className="font-medium">
-          {t("location") || "Location"}
-        </span>
-      </div>
-      <p className="text-sm pl-6 font-medium text-foreground">
-        {session.location || (session as any).station}
-      </p>
-    </div>
-    <Separator />
-  </>
-) : (
-  /* Test uchun: Agar ma'lumot kelmasa ham "No Location" deb chiqsin desangiz buni qo'ying */
-  null 
-)}
+            {(session.location || (session as any).station) && (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                    <MapPin className="w-4 h-4" />
+                    <span className="font-medium">{t("location") || "Location"}</span>
+                  </div>
+                  <p className="text-sm pl-6 font-medium text-foreground">
+                    {session.location || (session as any).station}
+                  </p>
+                </div>
+                <Separator />
+              </>
+            )}
 
-            {/* Description / Izoh */}
             {session.description && (
               <>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
                     <AlignLeft className="w-4 h-4" />
-                    <span className="font-medium">
-                      {t("description") || "Description"}
-                    </span>
+                    <span className="font-medium">{t("description") || "Description"}</span>
                   </div>
                   <p className="text-sm pl-6 text-foreground whitespace-pre-wrap leading-relaxed">
                     {session.description}
@@ -157,37 +189,28 @@ export default function SessionDetailsDialog({
               </>
             )}
 
-            {/* Group Details */}
             {group && (
               <>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="w-4 h-4" />
-                    <span className="font-medium">
-                      {t("groupInfo") || "Group Information"}
-                    </span>
+                    <span className="font-medium">{t("groupInfo") || "Group Information"}</span>
                   </div>
                   <div className="pl-6 space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {t("birthYear") || "Birth Year"}:
-                      </span>
+                      <span className="text-muted-foreground">{t("birthYear") || "Birth Year"}:</span>
                       <span className="font-medium">{group.birth_year}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {t("schedule") || "Schedule"}:
-                      </span>
+                      <span className="text-muted-foreground">{t("schedule") || "Schedule"}:</span>
                       <span className="font-medium">
-                        {group.schedule_days} • {group.schedule_time}
+                        {normalizeScheduleDays(group.schedule_days)} - {group.schedule_time}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {t("capacity") || "Capacity"}:
-                      </span>
+                      <span className="text-muted-foreground">{t("capacity") || "Capacity"}:</span>
                       <span className="font-medium">
-                        {group.active_students_count || 0} / {group.capacity}
+                        {currentStudents} / {group.capacity}
                       </span>
                     </div>
                   </div>
@@ -196,23 +219,18 @@ export default function SessionDetailsDialog({
               </>
             )}
 
-            {/* Session Info */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <FileText className="w-4 h-4" />
-                <span className="font-medium">
-                  {t("sessionDetails") || "Session Details"}
-                </span>
+                <span className="font-medium">{t("sessionDetails") || "Session Details"}</span>
               </div>
               <div className="pl-6 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Session ID:</span>
+                  <span className="text-muted-foreground">{t("sessionId") || "Session ID"}:</span>
                   <span className="font-medium">#{session.id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    {t("created") || "Created"}:
-                  </span>
+                  <span className="text-muted-foreground">{t("created") || "Created"}:</span>
                   <span className="font-medium">
                     {format(new Date(session.created_at), "MMM d, yyyy HH:mm")}
                   </span>
@@ -221,7 +239,6 @@ export default function SessionDetailsDialog({
             </div>
           </div>
 
-          {/* Actions Footer (for Head Coach) */}
           {showActions && (onEdit || onDelete) && (
             <DialogFooter className="gap-3 px-6 pb-6 border-t pt-6">
               {onDelete && (

@@ -384,7 +384,7 @@ export function TransactionDialog({
 
     mutation.mutate({
       amount: isSpravkaMode ? 0 : data.amount,
-      source: isSpravkaMode ? "bank" : data.source,
+      source: isSpravkaMode ? "manual" : data.source,
       contract_number: data.contract_number,
       payment_year: data.payment_year,
       payment_months: paymentMonthsArray,
@@ -625,7 +625,9 @@ export function TransactionDialog({
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <Label>
-                {t("selectPaymentMonths")}{" "}
+                {isSpravkaMode
+                  ? t("spravkaMonthsLabel")
+                  : t("selectPaymentMonths")}{" "}
                 <span className="text-red-500">*</span>
               </Label>
             </div>

@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { GroupRead, SessionCreateRequest } from "@/types/api";
+import type {
+  GroupRead,
+  SessionCreateRequest,
+  SessionUpdateRequest,
+} from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -84,7 +88,7 @@ export function SessionDialog({
   });
 
   const updateSessionMutation = useMutation({
-    mutationFn: (data: { id: number; data: SessionCreateRequest }) =>
+    mutationFn: (data: { id: number; data: SessionUpdateRequest }) =>
       headCoachService.updateSession(data.id, data.data),
     onSuccess: () => {
       toast.success(t("sessionUpdatedSuccess"));
@@ -126,7 +130,7 @@ export function SessionDialog({
       return;
     }
 
-    const payload: any = {
+    const payload: SessionCreateRequest = {
       group_id: Number(formData.group_id),
       session_date: formData.session_date!,
       start_time: formData.start_time!,

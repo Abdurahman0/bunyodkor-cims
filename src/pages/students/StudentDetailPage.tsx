@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -88,13 +87,6 @@ const getStatusBadge = (status: string) => {
   );
 };
 
- 
-const formatSource = (source: any) => {
-  const cleanSource =
-    source?.toString().replace(/^.*\./, "").toLowerCase() || "";
-  return cleanSource.charAt(0).toUpperCase() + cleanSource.slice(1);
-};
-
 export default function StudentDetailPage() {
   const { t } = useLanguageStore();
   const navigate = useNavigate();
@@ -116,6 +108,18 @@ export default function StudentDetailPage() {
   );
   const [isReplaceDialogOpen, setIsReplaceDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const formatSource = (source: string | null | undefined) => {
+    const cleanSource =
+      source?.toString().replace(/^.*\./, "").toLowerCase() || "";
+    const sourceMap: Record<string, string> = {
+      bank: t("bank"),
+      payme: t("payme"),
+      click: t("click"),
+      manual: t("manual"),
+    };
+    return sourceMap[cleanSource] || cleanSource;
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-full-info", studentId],
@@ -982,46 +986,68 @@ export default function StudentDetailPage() {
                 <TableHead>{t("source")}</TableHead>
                 <TableHead>{t("status")}</TableHead>
                 <TableHead>{t("comment")}</TableHead>
+                <TableHead>{t("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {transactions && transactions.length > 0 ? (
-                transactions.map((t: TransactionRead, index: number) => {
-                  const paidDate = new Date(t.paid_at!);
+                transactions.map((transaction: TransactionRead, index: number) => {
+                  const paidDate = new Date(transaction.paid_at!);
                   return (
-                    <TableRow key={t.id}>
+                    <TableRow key={transaction.id}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         #{index + 1}
                       </TableCell>
                       <TableCell>{format(paidDate, "dd.MM.yyyy")}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-mono">
-                          {t.payment_year}-
-                          {t.payment_months && t.payment_months.length > 0
-                            ? t.payment_months
+                          {transaction.payment_year}-
+                          {transaction.payment_months &&
+                          transaction.payment_months.length > 0
+                            ? transaction.payment_months
                                 .map((m) => String(m).padStart(2, "0"))
                                 .join(",")
                             : format(paidDate, "MM")}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        {new Intl.NumberFormat("en-US").format(t.amount)} UZS
+                        {new Intl.NumberFormat("en-US").format(
+                          transaction.amount,
+                        )}{" "}
+                        UZS
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">
-                          {formatSource(t.source)}
+                          {formatSource(transaction.source)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{getStatusBadge(t.status!)}</TableCell>
+                      <TableCell>{getStatusBadge(transaction.status!)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {t.comment || "-"}
+                        {transaction.comment || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {transaction.settlement_document_url ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              openPdfUrl(transaction.settlement_document_url!)
+                            }
+                            className="gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            {t("view")}
+                          </Button>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
+                  <TableCell colSpan={8} className="text-center h-24">
                     {t("noPayments")}
                   </TableCell>
                 </TableRow>

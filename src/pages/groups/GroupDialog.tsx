@@ -40,6 +40,47 @@ type GroupFormData = {
   coach_id: number | string;
 };
 
+const normalizeScheduleDays = (raw: string) => {
+  if (!raw) return raw;
+
+  const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const aliases: Record<string, string> = {
+    mon: "Mon",
+    monday: "Mon",
+    tue: "Tue",
+    tues: "Tue",
+    tuesday: "Tue",
+    wed: "Wed",
+    wen: "Wed",
+    wednesday: "Wed",
+    thu: "Thu",
+    thur: "Thu",
+    thurs: "Thu",
+    thursday: "Thu",
+    fri: "Fri",
+    friday: "Fri",
+    sat: "Sat",
+    saturday: "Sat",
+    sun: "Sun",
+    sunday: "Sun",
+  };
+
+  const normalized = raw
+    .split(/[^a-zA-Z]+/)
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean)
+    .map((token) => aliases[token])
+    .filter(Boolean);
+
+  if (normalized.length === 0) {
+    return raw.trim();
+  }
+
+  const unique = Array.from(new Set(normalized));
+  unique.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+  return unique.join("-");
+};
+
 export function GroupDialog({
   open,
   onOpenChange,
@@ -69,7 +110,7 @@ export function GroupDialog({
           identifier: group.identifier,
           birth_year: group.birth_year,
           description: group.description,
-          schedule_days: group.schedule_days,
+          schedule_days: normalizeScheduleDays(group.schedule_days),
           schedule_time: group.schedule_time,
           capacity: group.capacity,
           coach_id: group.coach_id,
@@ -125,7 +166,7 @@ export function GroupDialog({
       identifier: data.identifier,
       birth_year: Number(data.birth_year),
       description: data.description,
-      schedule_days: data.schedule_days,
+      schedule_days: normalizeScheduleDays(data.schedule_days),
       schedule_time: data.schedule_time,
       capacity: Number(data.capacity),
       coach_id: Number(data.coach_id),

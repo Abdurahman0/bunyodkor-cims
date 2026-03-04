@@ -592,6 +592,7 @@ export interface SessionCreateRequest {
   start_time: string;
   end_time: string;
   station: string;
+  description?: string;
   group_id: number;
 }
 
@@ -601,6 +602,7 @@ export interface SessionUpdateRequest {
   start_time?: string;
   end_time?: string;
   station?: string;
+  description?: string;
   group_id?: number;
 }
 

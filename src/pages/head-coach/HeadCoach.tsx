@@ -153,6 +153,55 @@ export default function HeadCoach() {
     return groups.filter((g) => g.id.toString() === filterGroupId);
   }, [groups, filterGroupId]);
 
+  type GroupWithOptionalStudentsCount = (typeof groups)[number] & {
+    students_count?: number;
+  };
+
+  const getGroupStudentCount = (group: GroupWithOptionalStudentsCount) =>
+    group?.active_students_count ??
+    group?.current_student_count ??
+    group?.students_count ??
+    0;
+
+  const normalizeScheduleDays = (raw?: string) => {
+    if (!raw) return "-";
+
+    const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const aliases: Record<string, string> = {
+      mon: "Mon",
+      monday: "Mon",
+      tue: "Tue",
+      tues: "Tue",
+      tuesday: "Tue",
+      wed: "Wed",
+      wen: "Wed",
+      wednesday: "Wed",
+      thu: "Thu",
+      thur: "Thu",
+      thurs: "Thu",
+      thursday: "Thu",
+      fri: "Fri",
+      friday: "Fri",
+      sat: "Sat",
+      saturday: "Sat",
+      sun: "Sun",
+      sunday: "Sun",
+    };
+
+    const normalized = raw
+      .split(/[^a-zA-Z]+/)
+      .map((token) => token.trim().toLowerCase())
+      .filter(Boolean)
+      .map((token) => aliases[token])
+      .filter(Boolean);
+
+    if (normalized.length === 0) return raw;
+
+    const unique = Array.from(new Set(normalized));
+    unique.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+    return unique.join("-");
+  };
+
   const getCoachName = (coachId: number | undefined) => {
     if (!coachId || !coachesData) return "N/A";
     const coach = coachesData.find((c) => c.id === coachId);
@@ -160,10 +209,20 @@ export default function HeadCoach() {
   };
 
   // --- Handlers ---
-  const handleSessionClick = (session: SessionRead) => {
-    console.log("Sessiya ma'lumotlari:", session);
-    setSelectedSession(session);
-    setDetailsDialogOpen(true);
+  const handleSessionClick = async (session: SessionRead) => {
+    try {
+      const response = await headCoachService.getSessionDetails(session.id);
+      setSelectedSession(response.data || session);
+    } catch (error: unknown) {
+      const err = error as {
+        response?: { data?: { detail?: string } };
+      };
+      const errorDetail = err.response?.data?.detail || t("anErrorOccurred");
+      setSelectedSession(session);
+      toast.error(errorDetail);
+    } finally {
+      setDetailsDialogOpen(true);
+    }
   };
 
   const handleTimeSlotClick = (date: string, time: string) => {
@@ -417,7 +476,7 @@ export default function HeadCoach() {
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-lg">{group.name}</CardTitle>
                     <Badge variant="secondary">
-                      {group.active_students_count}/{group.capacity}
+                      {getGroupStudentCount(group)}/{group.capacity}
                     </Badge>
                   </div>
                   <CardDescription className="flex items-center gap-1">
@@ -429,7 +488,9 @@ export default function HeadCoach() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{t("scheduleLabel")}</span>
-                      <span className="font-medium">{group.schedule_days}</span>
+                      <span className="font-medium">
+                        {normalizeScheduleDays(group.schedule_days)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{t("timeLabel")}</span>
@@ -442,7 +503,9 @@ export default function HeadCoach() {
                         )} transition-all duration-500`}
                         style={{
                           width: `${
-                            (group.active_students_count / group.capacity) * 100
+                            group.capacity > 0
+                              ? (getGroupStudentCount(group) / group.capacity) * 100
+                              : 0
                           }%`,
                         }}
                       />

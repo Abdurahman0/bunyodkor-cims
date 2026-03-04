@@ -360,7 +360,13 @@ export default function Finance() {
 
   const formatSource = (source: TransactionSource) => {
     const clean = source?.toString().replace(/^.*\./, "").toLowerCase() || "";
-    return clean.charAt(0).toUpperCase() + clean.slice(1);
+    const sourceMap: Record<string, string> = {
+      bank: t("bank"),
+      payme: t("payme"),
+      click: t("click"),
+      manual: t("manual"),
+    };
+    return sourceMap[clean] || (clean.charAt(0).toUpperCase() + clean.slice(1));
   };
 
   const formatCurrency = (amount: number) =>
@@ -521,6 +527,7 @@ export default function Finance() {
                   <option value="payme">Payme</option>
                   <option value="click">Click</option>
                   <option value="bank">{t("bank")}</option>
+                  <option value="manual">{t("manual")}</option>
                 </Select>
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={clearFilters}>
