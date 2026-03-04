@@ -49,6 +49,11 @@ export default function SessionDetailsDialog({
   const { t } = useLanguageStore();
 
   if (!session) return null;
+  const sessionNotes =
+    session.description ||
+    (session as any).notes ||
+    (session as any).comment ||
+    "";
 
   const duration = () => {
     const [startHour, startMin] = session.start_time.split(":").map(Number);
@@ -129,7 +134,7 @@ export default function SessionDetailsDialog({
               </>
             )}
 
-            {session.description && (
+            {sessionNotes.trim() && (
               <>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
@@ -137,7 +142,7 @@ export default function SessionDetailsDialog({
                     <span className="font-medium">{t("description") || "Description"}</span>
                   </div>
                   <p className="text-sm pl-6 text-foreground whitespace-pre-wrap leading-relaxed">
-                    {session.description}
+                    {sessionNotes}
                   </p>
                 </div>
                 <Separator />

@@ -50,6 +50,11 @@ const getInitialSessionFormData = (initialData?: Partial<SessionCreateRequest>) 
   return {
     ...defaults,
     ...initialData,
+    description:
+      (initialData as any).description ||
+      (initialData as any).notes ||
+      (initialData as any).comment ||
+      defaults.description,
     station:
       (initialData as any).station ||
       (initialData as any).location ||
@@ -139,6 +144,10 @@ export function SessionDialog({
       description: formData.description || "",
       station: formData.station || "Stadion",
     };
+
+    // Backward/alternative API field compatibility for notes/comment.
+    (payload as any).notes = formData.description || "";
+    (payload as any).comment = formData.description || "";
 
     if (editId) {
       updateSessionMutation.mutate({ id: editId, data: payload });
