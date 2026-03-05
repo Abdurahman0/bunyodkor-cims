@@ -95,6 +95,30 @@ const normalizeScheduleDays = (raw?: string) => {
   return unique.join("-");
 };
 
+const normalizeSessionForUi = (session: Partial<SessionRead> | null | undefined) => {
+  if (!session) return null;
+
+  const normalizedDescription =
+    session.description ??
+    (session as SessionRead & { notes?: string | null; comment?: string | null }).notes ??
+    (session as SessionRead & { notes?: string | null; comment?: string | null }).comment ??
+    "";
+
+  const normalizedStation =
+    session.station ??
+    (session as SessionRead & { location?: string | null }).location ??
+    "";
+
+  return {
+    ...session,
+    description: normalizedDescription,
+    station: normalizedStation,
+    location:
+      (session as SessionRead & { location?: string | null }).location ??
+      normalizedStation,
+  } as SessionRead;
+};
+
 export default function HeadCoach() {
   const queryClient = useQueryClient();
 
@@ -150,7 +174,10 @@ export default function HeadCoach() {
             filterGroupId === "all" ? undefined : Number(filterGroupId),
         },
       ),
-    select: (data) => data.data,
+    select: (data) =>
+      (data.data || [])
+        .map((session) => normalizeSessionForUi(session))
+        .filter(Boolean) as SessionRead[],
   });
 
   const { data: coachesData = [], isLoading: isCoachesLoading } = useQuery({
@@ -288,13 +315,25 @@ export default function HeadCoach() {
   const handleSessionClick = async (session: SessionRead) => {
     try {
       const response = await headCoachService.getSessionDetails(session.id);
-      setSelectedSession(response.data || session);
+
+      // Some environments return ApiResponse<Session>, others return Session directly.
+      const rawSession =
+        (response as { data?: Partial<SessionRead> }).data &&
+        typeof (response as { data?: Partial<SessionRead> }).data === "object"
+          ? (response as { data?: Partial<SessionRead> }).data
+          : (response as Partial<SessionRead>);
+
+      const normalizedSession = normalizeSessionForUi(rawSession);
+      setSelectedSession({
+        ...session,
+        ...(normalizedSession || {}),
+      });
     } catch (error: unknown) {
       const err = error as {
         response?: { data?: { detail?: string } };
       };
       const errorDetail = err.response?.data?.detail || t("anErrorOccurred");
-      setSelectedSession(session);
+      setSelectedSession(normalizeSessionForUi(session));
       toast.error(errorDetail);
     } finally {
       setDetailsDialogOpen(true);

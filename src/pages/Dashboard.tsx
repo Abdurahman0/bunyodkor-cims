@@ -1,4 +1,3 @@
-/* eslint-disable no-prototype-builtins */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +32,22 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
+const WEEKLY_REVENUE_STORAGE_KEY = "dashboard-weekly-revenue-history-v1";
+
+type RevenuePoint = {
+  date: string;
+  value: number;
+};
+
+const isRevenuePoint = (value: unknown): value is RevenuePoint => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as { date?: unknown; value?: unknown };
+  return typeof candidate.date === "string" && typeof candidate.value === "number";
+};
+
 export default function Dashboard() {
   const { user } = useAuthStore();
   const { t, language } = useLanguageStore();
@@ -45,6 +60,31 @@ export default function Dashboard() {
   const parseLocalDateKey = useCallback((dateKey: string) => {
     const [year, month, day] = dateKey.split("-").map(Number);
     return new Date(year, month - 1, day);
+  }, []);
+
+  const rollingWeekDates = useMemo(() => {
+    const today = parseLocalDateKey(dayKey);
+    today.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (6 - i));
+      return format(d, "yyyy-MM-dd");
+    });
+  }, [dayKey, parseLocalDateKey]);
+
+  const getStoredRevenueHistory = useCallback((): RevenuePoint[] => {
+    try {
+      const raw = window.localStorage.getItem(WEEKLY_REVENUE_STORAGE_KEY);
+      if (!raw) return [];
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed.filter(isRevenuePoint);
+    } catch {
+      return [];
+    }
   }, []);
 
   useEffect(() => {
@@ -201,19 +241,8 @@ export default function Dashboard() {
   const { data: weeklyRevenueTrendData } = useQuery({
     queryKey: ["dashboard-finance-rolling-week", dayKey],
     queryFn: async () => {
-      // Rolling 7 days: [today-6 ... today], based on local date key
-      const today = parseLocalDateKey(dayKey);
-      today.setHours(0, 0, 0, 0);
-
-      const dates = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() - (6 - i));
-        return d;
-      });
-
       const dailyReports = await Promise.all(
-        dates.map(async (d) => {
-          const date = format(d, "yyyy-MM-dd");
+        rollingWeekDates.map(async (date) => {
           try {
             const res = await reportService.getFinanceReport({
               from_date: date,
@@ -235,6 +264,59 @@ export default function Dashboard() {
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  const safeTodayRevenue = useMemo(() => {
+    const todayRevenue = Number(summary?.today_revenue || 0);
+    return Number.isFinite(todayRevenue) ? todayRevenue : 0;
+  }, [summary?.today_revenue]);
+
+  const weeklyRevenueByDate = useMemo(() => {
+    const map = new Map<string, number>();
+    (weeklyRevenueTrendData || []).forEach((item) => {
+      const rawValue = Number(item.value);
+      map.set(item.date, Number.isFinite(rawValue) ? rawValue : 0);
+    });
+    return map;
+  }, [weeklyRevenueTrendData]);
+
+  const revenueHistory = useMemo(() => {
+    const storedRevenueHistory = getStoredRevenueHistory();
+    const storedMap = new Map(
+      storedRevenueHistory.map((item) => [
+        item.date,
+        Number.isFinite(item.value) ? item.value : 0,
+      ]),
+    );
+
+    return rollingWeekDates.map((date) => {
+      if (date === dayKey) {
+        return { date, value: safeTodayRevenue };
+      }
+
+      if (storedMap.has(date)) {
+        return { date, value: storedMap.get(date) ?? 0 };
+      }
+
+      return { date, value: weeklyRevenueByDate.get(date) ?? 0 };
+    });
+  }, [
+    dayKey,
+    getStoredRevenueHistory,
+    rollingWeekDates,
+    safeTodayRevenue,
+    weeklyRevenueByDate,
+  ]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        WEEKLY_REVENUE_STORAGE_KEY,
+        JSON.stringify(revenueHistory),
+      );
+    } catch {
+      // Ignore storage errors to avoid breaking dashboard rendering.
+    }
+  }, [revenueHistory]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -363,25 +445,24 @@ export default function Dashboard() {
       value: item.transaction_count,
     })) || [];
 
-  // Process weekly revenue trend and keep today's point in sync with summary card
+  // Keep a 7-day rolling snapshot and only update today's value in real-time.
   const revenueData = useMemo(() => {
-    const todayStr = dayKey;
-    const todayRevenue = Number(summary?.today_revenue || 0);
-    const safeTodayRevenue = Number.isFinite(todayRevenue) ? todayRevenue : 0;
-
-    return (weeklyRevenueTrendData || []).map((item) => {
+    return revenueHistory.map((item) => {
       const dateObj = parseLocalDateKey(item.date);
-      const baseValue = Number.isFinite(item.value) ? item.value : 0;
-      const syncedValue = item.date === todayStr ? safeTodayRevenue : baseValue;
+      const value = Number.isFinite(item.value) ? item.value : 0;
 
       return {
         ...item,
-        value: syncedValue,
+        value,
         label: formatChartDate(dateObj, "short"),
         tooltipLabel: formatChartDate(dateObj, "long"),
       };
     });
-  }, [weeklyRevenueTrendData, dayKey, formatChartDate, parseLocalDateKey, summary?.today_revenue]);
+  }, [
+    formatChartDate,
+    parseLocalDateKey,
+    revenueHistory,
+  ]);
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({
