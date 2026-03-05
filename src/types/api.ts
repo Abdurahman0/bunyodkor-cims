@@ -710,6 +710,9 @@ export interface DebtorItem {
   contract_number: string;
   debt_amount: number;
   group_name: string;
+  primary_phone?: string;
+  father_phone?: string;
+  mother_phone?: string;
 }
 
 export interface PayerItem {

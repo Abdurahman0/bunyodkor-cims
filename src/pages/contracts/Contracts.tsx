@@ -352,6 +352,17 @@ export default function Contracts() {
     setExpandedTerminatedContractId(null);
   };
 
+  const handleOpenStudentDetail = (studentId?: number) => {
+    if (!studentId) return;
+
+    void queryClient.prefetchQuery({
+      queryKey: ["student-full-info", studentId],
+      queryFn: () => studentService.getStudentFullInfo(studentId),
+    });
+
+    navigate(`/students/${studentId}`);
+  };
+
   const handleExportTerminatedUnpaid = async () => {
     const promise = (async () => {
       const blob = await contractService.exportTerminatedUnpaidReport({
@@ -792,7 +803,20 @@ export default function Contracts() {
                                   </span>
                                 </div>
                               </TableCell>
-                              <TableCell>{fullStudentName || "-"}</TableCell>
+                              <TableCell>
+                                <div
+                                  className="flex items-center gap-2 cursor-pointer group select-none"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenStudentDetail(item.student_id);
+                                  }}
+                                >
+                                  <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                  <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
+                                    {fullStudentName || "-"}
+                                  </span>
+                                </div>
+                              </TableCell>
                               <TableCell>{item.student_group_name || "-"}</TableCell>
                               <TableCell>
                                 {item.terminated_at
@@ -998,8 +1022,16 @@ export default function Contracts() {
                       <TableRow key={item.contract_id}>
                         <TableCell>{item.contract_number}</TableCell>
                         <TableCell>
-                          {`${item.student_first_name || ""} ${item.student_last_name || ""}`.trim() ||
-                            "-"}
+                          <div
+                            className="flex items-center gap-2 cursor-pointer group select-none"
+                            onClick={() => handleOpenStudentDetail(item.student_id)}
+                          >
+                            <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
+                              {`${item.student_first_name || ""} ${item.student_last_name || ""}`.trim() ||
+                                "-"}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           {item.contract_group_name ||

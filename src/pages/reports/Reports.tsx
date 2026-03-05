@@ -374,6 +374,11 @@ export default function Reports() {
     return formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
   };
 
+  const formatPhone = (phone?: string | null) => {
+    const value = phone?.trim();
+    return value ? value : "-";
+  };
+
   const formatSource = (source: string) => {
     const cleanSource =
       source?.toString().replace(/^.*\./, "").toLowerCase() || "";
@@ -1014,6 +1019,9 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>{t("studentId") || "Student ID"}</TableHead>
                   <TableHead>{t("student")}</TableHead>
+                  <TableHead>{t("guardian") || "Guardian"}</TableHead>
+                  <TableHead>{t("fatherPhone") || "Father's Phone"}</TableHead>
+                  <TableHead>{t("motherPhone") || "Mother's Phone"}</TableHead>
                   <TableHead>{t("group")}</TableHead>
                   <TableHead>{t("contractNumber")}</TableHead>
                   <TableHead className="text-right [&>div]:justify-end">
@@ -1024,7 +1032,7 @@ export default function Reports() {
               <TableBody>
                 {debtorsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-36 text-center">
+                    <TableCell colSpan={8} className="h-36 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="text-sm font-medium">
@@ -1041,6 +1049,15 @@ export default function Reports() {
                       </TableCell>
                       <TableCell className="font-medium">
                         {debtor.student_name}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {formatPhone(debtor.primary_phone)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {formatPhone(debtor.father_phone)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {formatPhone(debtor.mother_phone)}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
