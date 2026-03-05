@@ -1411,7 +1411,7 @@ export default function StudentDetailPage() {
         />
 
         <p className="text-xs text-muted-foreground">
-          {t("replaceContractPdfDescription") /* xohlasang boshqa help text qo'y */}
+          {t("terminateContractDescription")}
         </p>
       </div>
 
