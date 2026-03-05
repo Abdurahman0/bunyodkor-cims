@@ -75,6 +75,30 @@ import { useLanguageStore } from "@/store/languageStore";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart, StatsCard } from "@/components/ui/charts";
 
+const normalizeSessionForUi = (
+  session:
+    | (Partial<SessionRead> & {
+        notes?: string | null;
+        comment?: string | null;
+        location?: string | null;
+      })
+    | null
+    | undefined,
+) => {
+  if (!session) return null;
+
+  const normalizedDescription =
+    session.description ?? session.notes ?? session.comment ?? "";
+  const normalizedStation = session.station ?? session.location ?? "";
+
+  return {
+    ...session,
+    description: normalizedDescription,
+    station: normalizedStation,
+    location: session.location ?? normalizedStation,
+  } as SessionRead;
+};
+
 export default function CoachPanel() {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
@@ -126,8 +150,13 @@ export default function CoachPanel() {
     queryFn: () => coachService.getCoachSessions({ date: selectedDate }),
     select: (res) => {
       if (!res) return [];
-      if (Array.isArray((res as any).data)) return (res as any).data;
-      return (res as any).data?.data || (res as any).data || [];
+      const rawSessions = Array.isArray((res as any).data)
+        ? (res as any).data
+        : (res as any).data?.data || (res as any).data || [];
+      if (!Array.isArray(rawSessions)) return [];
+      return rawSessions
+        .map((session) => normalizeSessionForUi(session))
+        .filter(Boolean) as SessionRead[];
     },
   });
 
@@ -136,8 +165,13 @@ export default function CoachPanel() {
     queryFn: () => coachService.getCoachSessions({}),
     select: (res) => {
       if (!res) return [];
-      if (Array.isArray((res as any).data)) return (res as any).data;
-      return (res as any).data?.data || (res as any).data || [];
+      const rawSessions = Array.isArray((res as any).data)
+        ? (res as any).data
+        : (res as any).data?.data || (res as any).data || [];
+      if (!Array.isArray(rawSessions)) return [];
+      return rawSessions
+        .map((session) => normalizeSessionForUi(session))
+        .filter(Boolean) as SessionRead[];
     },
   });
 
@@ -241,6 +275,31 @@ export default function CoachPanel() {
         ? addDays(new Date(selectedDate), days)
         : subDays(new Date(selectedDate), Math.abs(days));
     setSelectedDate(format(newDate, "yyyy-MM-dd"));
+  };
+
+  const handleSessionSelect = async (session: SessionRead) => {
+    const normalizedSession = normalizeSessionForUi(session) || session;
+    setSelectedSession(normalizedSession);
+
+    try {
+      const response = await coachService.getSessionDetails(session.id);
+
+      const rawSession =
+        (response as { data?: Partial<SessionRead> }).data &&
+        typeof (response as { data?: Partial<SessionRead> }).data === "object"
+          ? (response as { data?: Partial<SessionRead> }).data
+          : (response as Partial<SessionRead>);
+
+      const normalizedDetails = normalizeSessionForUi(rawSession);
+      if (normalizedDetails) {
+        setSelectedSession((prev) => {
+          if (!prev || prev.id !== session.id) return prev;
+          return { ...prev, ...normalizedDetails };
+        });
+      }
+    } catch {
+      // Keep list payload as fallback if details endpoint fails.
+    }
   };
 
   const handleMarkAttendance = (
@@ -458,7 +517,7 @@ export default function CoachPanel() {
                         return (
                           <button
                             key={session.id}
-                            onClick={() => setSelectedSession(session)}
+                            onClick={() => void handleSessionSelect(session)}
                             className={`w-full text-left p-4 rounded-lg border transition-all ${
                               selectedSession?.id === session.id
                                 ? "bg-primary/5 border-primary shadow-sm"
