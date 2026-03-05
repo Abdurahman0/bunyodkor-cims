@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type FC } from "react";
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,15 +17,18 @@ import {
   TableEmpty,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { reportService, groupService } from "@/services/api.service";
+import { reportService, groupService, studentService } from "@/services/api.service";
 import { useLanguageStore } from "@/store/languageStore";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { exportReport, downloadFile } from "@/lib/export-utils";
 import toast from "react-hot-toast";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 const PayersReport: FC = () => {
   const { t } = useLanguageStore();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
@@ -98,6 +101,17 @@ const PayersReport: FC = () => {
 
   const formatCurrency = (amount: number) =>
     formatCurrencyUtil(amount, "UZS", "uz-UZ", false);
+
+  const handleOpenStudentDetail = (studentId?: number) => {
+    if (!studentId) return;
+
+    void queryClient.prefetchQuery({
+      queryKey: ["student-full-info", studentId],
+      queryFn: () => studentService.getStudentFullInfo(studentId),
+    });
+
+    navigate(`/students/${studentId}`);
+  };
 
   const handleExport = async () => {
     const promise = (async () => {
@@ -271,8 +285,14 @@ const PayersReport: FC = () => {
             {payersData?.data && payersData.data.length > 0 ? (
               payersData.data.map((p: any) => (
                 <TableRow key={`${p.student_id}-${p.contract_number}`}>
-                  <TableCell className="font-medium">
-                    {p.student_name}
+                  <TableCell>
+                    <button
+                      type="button"
+                      className="font-medium text-left hover:underline hover:text-primary transition-colors"
+                      onClick={() => handleOpenStudentDetail(p.student_id)}
+                    >
+                      {p.student_name}
+                    </button>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">

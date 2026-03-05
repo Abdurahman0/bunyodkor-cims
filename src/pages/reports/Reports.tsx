@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,9 +43,12 @@ import { useLanguageStore } from "@/store/languageStore";
 import {
   formatCurrency as formatCurrencyUtil,
 } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export default function Reports() {
   const { t } = useLanguageStore();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
@@ -377,6 +380,17 @@ export default function Reports() {
   const formatPhone = (phone?: string | null) => {
     const value = phone?.trim();
     return value ? value : "-";
+  };
+
+  const handleOpenStudentDetail = (studentId?: number) => {
+    if (!studentId) return;
+
+    void queryClient.prefetchQuery({
+      queryKey: ["student-full-info", studentId],
+      queryFn: () => studentService.getStudentFullInfo(studentId),
+    });
+
+    navigate(`/students/${studentId}`);
   };
 
   const formatSource = (source: string) => {
@@ -1019,9 +1033,7 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>{t("studentId") || "Student ID"}</TableHead>
                   <TableHead>{t("student")}</TableHead>
-                  <TableHead>{t("guardian") || "Guardian"}</TableHead>
-                  <TableHead>{t("fatherPhone") || "Father's Phone"}</TableHead>
-                  <TableHead>{t("motherPhone") || "Mother's Phone"}</TableHead>
+                  <TableHead>Ota/Ona</TableHead>
                   <TableHead>{t("group")}</TableHead>
                   <TableHead>{t("contractNumber")}</TableHead>
                   <TableHead className="text-right [&>div]:justify-end">
@@ -1032,7 +1044,7 @@ export default function Reports() {
               <TableBody>
                 {debtorsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-36 text-center">
+                    <TableCell colSpan={6} className="h-36 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="text-sm font-medium">
@@ -1047,17 +1059,18 @@ export default function Reports() {
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         #{debtor.student_id}
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {debtor.student_name}
+                      <TableCell>
+                        <button
+                          type="button"
+                          className="font-medium text-left hover:underline hover:text-primary transition-colors"
+                          onClick={() => handleOpenStudentDetail(debtor.student_id)}
+                        >
+                          {debtor.student_name}
+                        </button>
                       </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {formatPhone(debtor.primary_phone)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {formatPhone(debtor.father_phone)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {formatPhone(debtor.mother_phone)}
+                      <TableCell className="font-mono text-xs leading-5">
+                        <div>{formatPhone(debtor.father_phone)}</div>
+                        <div>{formatPhone(debtor.mother_phone)}</div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
