@@ -1033,7 +1033,7 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>{t("studentId") || "Student ID"}</TableHead>
                   <TableHead>{t("student")}</TableHead>
-                  <TableHead>Ota/Ona</TableHead>
+                  <TableHead>Vasiy/Ota/Ona</TableHead>
                   <TableHead>{t("group")}</TableHead>
                   <TableHead>{t("contractNumber")}</TableHead>
                   <TableHead className="text-right [&>div]:justify-end">
@@ -1068,9 +1068,19 @@ export default function Reports() {
                           {debtor.student_name}
                         </button>
                       </TableCell>
-                      <TableCell className="font-mono text-xs leading-5">
-                        <div>{formatPhone(debtor.father_phone)}</div>
-                        <div>{formatPhone(debtor.mother_phone)}</div>
+                      <TableCell className="font-mono text-xs leading-5 space-y-1">
+                        <div>
+                          <span className="text-muted-foreground mr-1">Vasiy:</span>
+                          <span>{formatPhone(debtor.primary_phone)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground mr-1">Ota:</span>
+                          <span>{formatPhone(debtor.father_phone)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground mr-1">Ona:</span>
+                          <span>{formatPhone(debtor.mother_phone)}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="font-normal">
