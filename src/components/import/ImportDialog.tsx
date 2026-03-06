@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { X, Upload, FileSpreadsheet, AlertCircle, Loader2 } from 'lucide-react'
+import type { AxiosError } from 'axios'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -84,8 +85,10 @@ export const ImportDialog = ({
       toast.success(t('importCompleted'))
       onSuccess?.()
       handleClose()
-    } catch (error: any) {
-      const message = error.response?.data?.detail || 'Failed to import file'
+    } catch (error: unknown) {
+      const message =
+        (error as AxiosError<{ detail?: string }>).response?.data?.detail ||
+        'Failed to import file'
       toast.error(message)
     } finally {
       setUploading(false)
@@ -112,7 +115,10 @@ export const ImportDialog = ({
       />
 
       {/* Dialog Container - Centered */}
-      <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 z-[9998] flex items-center justify-center p-4"
+        onClick={handleClose}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

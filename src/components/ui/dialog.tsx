@@ -10,6 +10,22 @@ interface DialogProps {
 }
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onOpenChange?.(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscapeKey);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [open, onOpenChange]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -24,7 +40,10 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
           />
 
           {/* Dialog */}
-          <div className="fixed inset-0 z-[9996] flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 z-[9996] flex items-center justify-center p-4"
+            onClick={() => onOpenChange?.(false)}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

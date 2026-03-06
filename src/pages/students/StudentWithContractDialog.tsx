@@ -242,7 +242,7 @@ export function StudentWithContractDialog({
       }
     };
     fetchContractNumber();
-  }, [selectedGroupId, setValue, groupsData]);
+  }, [selectedGroupId, setValue, groupsData, birthYear, t]);
 
   // --- YANGILANGAN TUGMALAR LOGIKASI ---
 
@@ -1184,8 +1184,14 @@ export function StudentWithContractDialog({
 
         {/* Success Overlay - TUGMALAR TUZATILDI */}
         {isSuccess && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={handleClose}
+          >
+            <div
+              className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-center mb-6">
                 <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                   <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />
