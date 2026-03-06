@@ -1072,17 +1072,23 @@ export default function Reports() {
                       <TableCell className="font-mono text-xs leading-5">
                         <div>
                           <span className="text-muted-foreground mr-1">Vasiy:</span>
-                          <span>{formatPhone(debtor.primary_phone)}</span>
+                          <span className="text-sm font-medium">
+                            {formatPhone(debtor.primary_phone)}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-xs leading-5 space-y-1">
                         <div>
                           <span className="text-muted-foreground mr-1">Ota:</span>
-                          <span>{formatPhone(debtor.father_phone)}</span>
+                          <span className="text-sm font-medium">
+                            {formatPhone(debtor.father_phone)}
+                          </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground mr-1">Ona:</span>
-                          <span>{formatPhone(debtor.mother_phone)}</span>
+                          <span className="text-sm font-medium">
+                            {formatPhone(debtor.mother_phone)}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
