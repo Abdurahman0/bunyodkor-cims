@@ -23,7 +23,7 @@ import {
   groupService,
   studentService,
 } from "@/services/api.service";
-import type { DebtorItem, GroupRead } from "@/types/api";
+import type { DebtorItem, GroupAttendanceReport, GroupRead } from "@/types/api";
 
 import PayersReport from "./PayersReport";
 import {
@@ -41,9 +41,29 @@ import toast from "react-hot-toast";
 import { downloadFile, exportReport } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
 import {
+  cn,
   formatCurrency as formatCurrencyUtil,
 } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+
+const ATTENDANCE_CHART_LIMIT = 12;
+
+const normalizePercentage = (value?: number | null) => {
+  const safeValue =
+    typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return Math.round(safeValue * 10) / 10;
+};
+
+const formatPercentage = (value?: number | null) => {
+  const rounded = normalizePercentage(value);
+  return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(1);
+};
+
+const getAttendanceChartColor = (value: number) => {
+  if (value >= 80) return "hsl(142, 71%, 45%)";
+  if (value >= 60) return "hsl(47, 96%, 53%)";
+  return "hsl(349, 89%, 60%)";
+};
 
 export default function Reports() {
   const { t } = useLanguageStore();
@@ -59,6 +79,9 @@ export default function Reports() {
     from: `${currentYear}-01-01`,
     to: `${currentYear}-12-31`,
   });
+  const [attendanceChartMode, setAttendanceChartMode] = useState<
+    "lowest" | "highest" | "all"
+  >("lowest");
   const [debtorsPage, setDebtorsPage] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [minDebtAmount, setMinDebtAmount] = useState<number | "">("");
@@ -418,11 +441,60 @@ export default function Reports() {
       value: item.transaction_count,
     })) || [];
 
-  const attendanceChartData =
-    attendanceReport?.data?.map((group: any) => ({
-      label: group.group_name,
-      value: group.attendance_percentage,
-    })) || [];
+  const attendanceGroups = useMemo<GroupAttendanceReport[]>(() => {
+    const data = attendanceReport?.data || [];
+
+    return [...data].sort(
+      (a, b) =>
+        a.attendance_percentage - b.attendance_percentage ||
+        b.total_students - a.total_students,
+    );
+  }, [attendanceReport]);
+
+  const attendanceAverage = useMemo(() => {
+    if (attendanceGroups.length === 0) return 0;
+
+    return (
+      attendanceGroups.reduce(
+        (sum, group) => sum + group.attendance_percentage,
+        0,
+      ) / attendanceGroups.length
+    );
+  }, [attendanceGroups]);
+
+  const lowAttendanceGroupsCount = useMemo(
+    () => attendanceGroups.filter((group) => group.attendance_percentage < 60).length,
+    [attendanceGroups],
+  );
+
+  const highAttendanceGroupsCount = useMemo(
+    () => attendanceGroups.filter((group) => group.attendance_percentage >= 80).length,
+    [attendanceGroups],
+  );
+
+  const attendanceChartGroups = useMemo(() => {
+    if (attendanceChartMode === "all") {
+      return attendanceGroups;
+    }
+
+    const source =
+      attendanceChartMode === "highest"
+        ? [...attendanceGroups].reverse()
+        : attendanceGroups;
+
+    return source.slice(0, ATTENDANCE_CHART_LIMIT);
+  }, [attendanceChartMode, attendanceGroups]);
+
+  const attendanceChartData = useMemo(
+    () =>
+      attendanceChartGroups.map((group) => ({
+        label: group.group_name,
+        tooltipLabel: group.group_name,
+        value: normalizePercentage(group.attendance_percentage),
+        color: getAttendanceChartColor(group.attendance_percentage),
+      })),
+    [attendanceChartGroups],
+  );
 
   const handleDebtorsExport = async () => {
     const promise = (async () => {
@@ -744,15 +816,85 @@ export default function Reports() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <StatsCard
+              title={t("averageAttendance")}
+              value={
+                attendanceLoading ? t("calculating") : `${formatPercentage(attendanceAverage)}%`
+              }
+              icon={<TrendingUp className="w-6 h-6" />}
+            />
+            <StatsCard
+              title={t("lowAttendanceGroups")}
+              value={attendanceLoading ? "-" : lowAttendanceGroupsCount}
+              icon={<AlertTriangle className="w-6 h-6" />}
+            />
+            <StatsCard
+              title={t("highAttendanceGroups")}
+              value={attendanceLoading ? "-" : highAttendanceGroupsCount}
+              icon={<CheckCircle className="w-6 h-6" />}
+            />
+          </div>
+
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                {t("groupAttendanceRates")}
-              </CardTitle>
+            <CardHeader className="gap-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-lg">
+                    {t("groupAttendanceRates")}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {t("allGroups")}: {attendanceGroups.length}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={attendanceChartMode === "lowest" ? "default" : "outline"}
+                    onClick={() => setAttendanceChartMode("lowest")}
+                  >
+                    {t("weakestGroups")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={attendanceChartMode === "highest" ? "default" : "outline"}
+                    onClick={() => setAttendanceChartMode("highest")}
+                  >
+                    {t("strongestGroups")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={attendanceChartMode === "all" ? "default" : "outline"}
+                    onClick={() => setAttendanceChartMode("all")}
+                  >
+                    {t("allGroups")}
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              {attendanceChartData.length > 0 ? (
-                <BarChart data={attendanceChartData} height={300} showValues />
+              {attendanceLoading ? (
+                <div className="h-72 flex items-center justify-center text-muted-foreground">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : attendanceChartData.length > 0 ? (
+                <div
+                  className={cn(
+                    "rounded-xl border border-border/60 bg-muted/20 p-4",
+                    attendanceChartMode === "all" && "max-h-[540px] overflow-y-auto pr-2",
+                  )}
+                >
+                  <BarChart
+                    data={attendanceChartData}
+                    horizontal
+                    showLegend={false}
+                    showValues
+                    valueFormatter={(value) => `${formatPercentage(value)}%`}
+                  />
+                </div>
               ) : (
                 <div className="h-64 flex items-center justify-center text-muted-foreground">
                   {t("noAttendanceData")}
@@ -782,32 +924,34 @@ export default function Reports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {attendanceReport?.data?.map((group: any) => (
-                  <TableRow key={group.group_id}>
-                    <TableCell className="font-medium">
-                      {group.group_name}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {group.total_sessions}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {group.total_students}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge
-                        className={
-                          group.attendance_percentage >= 80
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : group.attendance_percentage >= 60
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }
-                      >
-                        {group.attendance_percentage}%
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                )) || (
+                {attendanceGroups.length > 0 ? (
+                  attendanceGroups.map((group) => (
+                    <TableRow key={group.group_id}>
+                      <TableCell className="font-medium">
+                        {group.group_name}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {group.total_sessions}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {group.total_students}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          className={
+                            group.attendance_percentage >= 80
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : group.attendance_percentage >= 60
+                                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          }
+                        >
+                          {formatPercentage(group.attendance_percentage)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
                   <TableEmpty
                     title={t("noAttendanceData")}
                     description={t("attendanceDataWillAppear")}

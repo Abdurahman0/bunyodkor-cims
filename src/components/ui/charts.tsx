@@ -17,6 +17,7 @@ interface BaseChartProps {
   showValues?: boolean
   animate?: boolean
   className?: string
+  valueFormatter?: (value: number) => string
 }
 
 // Color palette for charts
@@ -46,6 +47,7 @@ export const BarChart = ({
   showLegend = true,
   animate = true,
   className,
+  valueFormatter,
 }: BarChartProps) => {
   const maxValue = Math.max(...data.map((d) => d.value), 0)
   const safeMaxValue = maxValue > 0 ? maxValue : 1
@@ -53,16 +55,25 @@ export const BarChart = ({
     ...d,
     color: d.color || chartColors[i % chartColors.length],
   }))
+  const formatValue = (value: number) =>
+    valueFormatter ? valueFormatter(value) : value.toLocaleString()
 
   if (horizontal) {
     return (
       <div className={cn('space-y-3', className)}>
         {coloredData.map((item, index) => (
           <div key={item.label} className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-foreground font-medium">{item.label}</span>
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span
+                className="min-w-0 truncate text-foreground font-medium"
+                title={item.tooltipLabel || item.label}
+              >
+                {item.label}
+              </span>
               {showValues && (
-                <span className="text-muted-foreground">{item.value.toLocaleString()}</span>
+                <span className="shrink-0 text-muted-foreground">
+                  {formatValue(item.value)}
+                </span>
               )}
             </div>
             <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -87,10 +98,11 @@ export const BarChart = ({
           <div
             key={item.label}
             className="flex-1 flex flex-col items-center justify-end gap-1"
+            title={item.tooltipLabel || item.label}
           >
             {showValues && (
               <span className="text-xs text-muted-foreground font-medium">
-                {item.value.toLocaleString()}
+                {formatValue(item.value)}
               </span>
             )}
             <motion.div
@@ -109,6 +121,7 @@ export const BarChart = ({
             <div
               key={item.label}
               className="flex-1 text-center text-xs text-muted-foreground truncate"
+              title={item.tooltipLabel || item.label}
             >
               {item.label}
             </div>
