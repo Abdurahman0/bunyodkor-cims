@@ -1033,7 +1033,8 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>{t("studentId") || "Student ID"}</TableHead>
                   <TableHead>{t("student")}</TableHead>
-                  <TableHead>Vasiy/Ota/Ona</TableHead>
+                  <TableHead>{t("guardian") || "Guardian"}</TableHead>
+                  <TableHead>Ota/Ona</TableHead>
                   <TableHead>{t("group")}</TableHead>
                   <TableHead>{t("contractNumber")}</TableHead>
                   <TableHead className="text-right [&>div]:justify-end">
@@ -1044,7 +1045,7 @@ export default function Reports() {
               <TableBody>
                 {debtorsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-36 text-center">
+                    <TableCell colSpan={7} className="h-36 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="text-sm font-medium">
@@ -1068,11 +1069,13 @@ export default function Reports() {
                           {debtor.student_name}
                         </button>
                       </TableCell>
-                      <TableCell className="font-mono text-xs leading-5 space-y-1">
+                      <TableCell className="font-mono text-xs leading-5">
                         <div>
                           <span className="text-muted-foreground mr-1">Vasiy:</span>
                           <span>{formatPhone(debtor.primary_phone)}</span>
                         </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs leading-5 space-y-1">
                         <div>
                           <span className="text-muted-foreground mr-1">Ota:</span>
                           <span>{formatPhone(debtor.father_phone)}</span>
