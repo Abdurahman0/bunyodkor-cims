@@ -389,6 +389,7 @@ export default function Reports() {
   const debtorsLoading = hasUnpaidListFilter
     ? (hasAdvancedUnpaidListFilter ? isDebtorsFilteredLoading : isDebtorsBaseLoading)
     : isDebtorsBaseLoading;
+  const debtorsRowOffset = (debtorsPage - 1) * debtorsPageSize;
   const totalDebtAmount = hasAdvancedUnpaidListFilter
     ? debtorsFilteredData?.total_debt || 0
     : totalDebtData?.total_debt || 0;
@@ -1175,7 +1176,7 @@ export default function Reports() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("studentId") || "Student ID"}</TableHead>
+                  <TableHead>№</TableHead>
                   <TableHead>{t("student")}</TableHead>
                   <TableHead>{t("guardian") || "Guardian"}</TableHead>
                   <TableHead>Ota/Ona</TableHead>
@@ -1199,10 +1200,10 @@ export default function Reports() {
                     </TableCell>
                   </TableRow>
                 ) : effectiveDebtorsData?.data && effectiveDebtorsData.data.length > 0 ? (
-                  effectiveDebtorsData.data.map((debtor: DebtorItem) => (
+                  effectiveDebtorsData.data.map((debtor: DebtorItem, index: number) => (
                     <TableRow key={`${debtor.student_id}-${debtor.contract_number}`}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{debtor.student_id}
+                        {debtorsRowOffset + index + 1}
                       </TableCell>
                       <TableCell>
                         <button
