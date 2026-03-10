@@ -238,7 +238,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: weeklyRevenueTrendData } = useQuery({
+  const { data: weeklyRevenueTrendData, isFetched: isWeeklyRevenueFetched } = useQuery({
     queryKey: ["dashboard-finance-rolling-week", dayKey],
     queryFn: async () => {
       const dailyReports = await Promise.all(
@@ -293,11 +293,21 @@ export default function Dashboard() {
         return { date, value: safeTodayRevenue };
       }
 
+      const apiValue = weeklyRevenueByDate.get(date) ?? 0;
+
       if (storedMap.has(date)) {
-        return { date, value: storedMap.get(date) ?? 0 };
+        const storedValue = storedMap.get(date) ?? 0;
+
+        // Recover from the initial placeholder zeroes that were previously
+        // written before the weekly query finished loading.
+        if (storedValue === 0 && apiValue > 0) {
+          return { date, value: apiValue };
+        }
+
+        return { date, value: storedValue };
       }
 
-      return { date, value: weeklyRevenueByDate.get(date) ?? 0 };
+      return { date, value: apiValue };
     });
   }, [
     dayKey,
@@ -308,6 +318,10 @@ export default function Dashboard() {
   ]);
 
   useEffect(() => {
+    if (!isWeeklyRevenueFetched || !weeklyRevenueTrendData?.length) {
+      return;
+    }
+
     try {
       window.localStorage.setItem(
         WEEKLY_REVENUE_STORAGE_KEY,
@@ -316,7 +330,7 @@ export default function Dashboard() {
     } catch {
       // Ignore storage errors to avoid breaking dashboard rendering.
     }
-  }, [revenueHistory]);
+  }, [isWeeklyRevenueFetched, revenueHistory, weeklyRevenueTrendData]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

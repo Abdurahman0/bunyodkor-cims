@@ -230,7 +230,7 @@ export default function Contracts() {
   };
 
   const deleteTerminatedStudentMutation = useMutation({
-    mutationFn: (studentId: number) => studentService.deleteStudent(studentId),
+    mutationFn: (studentId: number) => studentService.hardDeleteStudent(studentId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["contracts-terminated-students"],
@@ -240,7 +240,9 @@ export default function Contracts() {
       });
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["students-count"] });
-      toast.success(t("studentDeleted"));
+      toast.success(
+        t("studentPermanentlyDeleted") || "Talaba butunlay o'chirildi",
+      );
     },
     onError: (error: any) => {
       const detail = error?.response?.data?.detail;

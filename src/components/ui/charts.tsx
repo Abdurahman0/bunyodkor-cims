@@ -274,10 +274,14 @@ export const LineChart = ({
     )
   }
 
-  const padding = 40
+  const horizontalPadding = 40
+  const topPadding = 24
+  const labelHeight = showLegend ? 34 : 0
+  const bottomPadding = 12
   const width = 400
-  const chartWidth = width - padding * 2
-  const chartHeight = height - padding * 2
+  const chartWidth = width - horizontalPadding * 2
+  const chartHeight = height - topPadding - bottomPadding - labelHeight
+  const baselineY = topPadding + chartHeight
 
   const maxValue = Math.max(...data.map((d) => d.value), 0)
   const minValue = startFromZero
@@ -286,8 +290,8 @@ export const LineChart = ({
   const valueRange = maxValue - minValue || 1
 
   const points = data.map((d, i) => ({
-    x: padding + ((data.length === 1 ? 0 : i / (data.length - 1)) * chartWidth),
-    y: padding + chartHeight - ((d.value - minValue) / valueRange) * chartHeight,
+    x: horizontalPadding + ((data.length === 1 ? 0 : i / (data.length - 1)) * chartWidth),
+    y: topPadding + chartHeight - ((d.value - minValue) / valueRange) * chartHeight,
     ...d,
   }))
 
@@ -305,7 +309,7 @@ export const LineChart = ({
 
   const areaD =
     pathD +
-    ` L ${points[points.length - 1].x} ${padding + chartHeight} L ${padding} ${padding + chartHeight} Z`
+    ` L ${points[points.length - 1].x} ${baselineY} L ${horizontalPadding} ${baselineY} Z`
 
   return (
     <div className={cn('w-full', className)}>
@@ -316,10 +320,10 @@ export const LineChart = ({
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
               <line
                 key={ratio}
-                x1={padding}
-                y1={padding + chartHeight * ratio}
-                x2={width - padding}
-                y2={padding + chartHeight * ratio}
+                x1={horizontalPadding}
+                y1={topPadding + chartHeight * ratio}
+                x2={width - horizontalPadding}
+                y2={topPadding + chartHeight * ratio}
                 stroke="currentColor"
                 strokeWidth={1}
                 strokeDasharray="4 4"
@@ -336,7 +340,7 @@ export const LineChart = ({
             fill="url(#gradient)"
             initial={animate ? { opacity: 0 } : undefined}
             animate={{ opacity: 0.2 }}
-            transition={{ duration: 1 }}
+            transition={{ duration: 0.8, delay: 0.35 }}
           />
         )}
         
@@ -358,7 +362,7 @@ export const LineChart = ({
           strokeLinejoin="round"
           initial={animate ? { pathLength: 0 } : undefined}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 1.5, ease: 'easeInOut' }}
+          transition={{ duration: 2.2, ease: 'easeInOut' }}
         />
         
         {/* Dots */}
@@ -378,21 +382,27 @@ export const LineChart = ({
               onClick={() => setSelectedPointIndex(i)}
               initial={animate ? { scale: 0 } : undefined}
               animate={{ scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.5 + i * 0.1 }}
+              transition={{ duration: 0.3, delay: 1.1 + i * 0.12 }}
             />
           ))}
+
+        {/* X-axis labels */}
+        {showLegend && (
+          <g className="text-muted-foreground" fill="currentColor">
+            {points.map((point) => (
+              <text
+                key={point.label}
+                x={point.x}
+                y={height - 10}
+                textAnchor="middle"
+                fontSize="12"
+              >
+                {point.label}
+              </text>
+            ))}
+          </g>
+        )}
       </svg>
-      
-      {/* X-axis labels */}
-      {showLegend && (
-        <div className="flex justify-between px-10 -mt-2">
-          {data.map((item) => (
-            <span key={item.label} className="text-xs text-muted-foreground">
-              {item.label}
-            </span>
-          ))}
-        </div>
-      )}
 
       {selectedPointIndex !== null && data[selectedPointIndex] && (
         <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
