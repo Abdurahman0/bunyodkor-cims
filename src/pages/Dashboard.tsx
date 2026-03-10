@@ -32,22 +32,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
-const WEEKLY_REVENUE_STORAGE_KEY = "dashboard-weekly-revenue-history-v1";
-
-type RevenuePoint = {
-  date: string;
-  value: number;
-};
-
-const isRevenuePoint = (value: unknown): value is RevenuePoint => {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as { date?: unknown; value?: unknown };
-  return typeof candidate.date === "string" && typeof candidate.value === "number";
-};
-
 export default function Dashboard() {
   const { user } = useAuthStore();
   const { t, language } = useLanguageStore();
@@ -62,7 +46,7 @@ export default function Dashboard() {
     return new Date(year, month - 1, day);
   }, []);
 
-  const rollingWeekDates = useMemo(() => {
+  const rollingChartDates = useMemo(() => {
     const today = parseLocalDateKey(dayKey);
     today.setHours(0, 0, 0, 0);
 
@@ -72,20 +56,6 @@ export default function Dashboard() {
       return format(d, "yyyy-MM-dd");
     });
   }, [dayKey, parseLocalDateKey]);
-
-  const getStoredRevenueHistory = useCallback((): RevenuePoint[] => {
-    try {
-      const raw = window.localStorage.getItem(WEEKLY_REVENUE_STORAGE_KEY);
-      if (!raw) return [];
-
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-
-      return parsed.filter(isRevenuePoint);
-    } catch {
-      return [];
-    }
-  }, []);
 
   useEffect(() => {
     const now = new Date();
@@ -101,7 +71,7 @@ export default function Dashboard() {
 
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-finance"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-finance-rolling-week"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-finance-weekly"] });
       queryClient.invalidateQueries({ queryKey: ["recent-attendances"] });
     }, ms + 250);
 
@@ -238,11 +208,11 @@ export default function Dashboard() {
     },
   });
 
-  const { data: weeklyRevenueTrendData, isFetched: isWeeklyRevenueFetched } = useQuery({
-    queryKey: ["dashboard-finance-rolling-week", dayKey],
+  const { data: weeklyRevenueTrendData } = useQuery({
+    queryKey: ["dashboard-finance-weekly", dayKey],
     queryFn: async () => {
       const dailyReports = await Promise.all(
-        rollingWeekDates.map(async (date) => {
+        rollingChartDates.map(async (date) => {
           try {
             const res = await reportService.getFinanceReport({
               from_date: date,
@@ -278,59 +248,6 @@ export default function Dashboard() {
     });
     return map;
   }, [weeklyRevenueTrendData]);
-
-  const revenueHistory = useMemo(() => {
-    const storedRevenueHistory = getStoredRevenueHistory();
-    const storedMap = new Map(
-      storedRevenueHistory.map((item) => [
-        item.date,
-        Number.isFinite(item.value) ? item.value : 0,
-      ]),
-    );
-
-    return rollingWeekDates.map((date) => {
-      if (date === dayKey) {
-        return { date, value: safeTodayRevenue };
-      }
-
-      const apiValue = weeklyRevenueByDate.get(date) ?? 0;
-
-      if (storedMap.has(date)) {
-        const storedValue = storedMap.get(date) ?? 0;
-
-        // Recover from the initial placeholder zeroes that were previously
-        // written before the weekly query finished loading.
-        if (storedValue === 0 && apiValue > 0) {
-          return { date, value: apiValue };
-        }
-
-        return { date, value: storedValue };
-      }
-
-      return { date, value: apiValue };
-    });
-  }, [
-    dayKey,
-    getStoredRevenueHistory,
-    rollingWeekDates,
-    safeTodayRevenue,
-    weeklyRevenueByDate,
-  ]);
-
-  useEffect(() => {
-    if (!isWeeklyRevenueFetched || !weeklyRevenueTrendData?.length) {
-      return;
-    }
-
-    try {
-      window.localStorage.setItem(
-        WEEKLY_REVENUE_STORAGE_KEY,
-        JSON.stringify(revenueHistory),
-      );
-    } catch {
-      // Ignore storage errors to avoid breaking dashboard rendering.
-    }
-  }, [isWeeklyRevenueFetched, revenueHistory, weeklyRevenueTrendData]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -459,23 +376,28 @@ export default function Dashboard() {
       value: item.transaction_count,
     })) || [];
 
-  // Keep a 7-day rolling snapshot and only update today's value in real-time.
+  // Show the last 7 days and sync today's point with the summary card.
   const revenueData = useMemo(() => {
-    return revenueHistory.map((item) => {
-      const dateObj = parseLocalDateKey(item.date);
-      const value = Number.isFinite(item.value) ? item.value : 0;
+    return rollingChartDates.map((date) => {
+      const dateObj = parseLocalDateKey(date);
+      const apiValue = weeklyRevenueByDate.get(date) ?? 0;
+      const value =
+        date === dayKey ? safeTodayRevenue : Number.isFinite(apiValue) ? apiValue : 0;
 
       return {
-        ...item,
+        date,
         value,
         label: formatChartDate(dateObj, "short"),
         tooltipLabel: formatChartDate(dateObj, "long"),
       };
     });
   }, [
+    dayKey,
     formatChartDate,
     parseLocalDateKey,
-    revenueHistory,
+    rollingChartDates,
+    safeTodayRevenue,
+    weeklyRevenueByDate,
   ]);
 
   // Attendance data - using group attendance reports for aggregate data
@@ -567,7 +489,7 @@ export default function Dashboard() {
                   {t("revenueOverview")}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {t("weeklyRevenueTrends")} - {t("weeklyRangeMondayToSunday")}
+                  {t("weeklyRevenueTrends")} - {t("last7Days")}
                 </p>
               </div>
               <TrendingUp className="w-5 h-5 text-green-500" />
