@@ -71,7 +71,6 @@ export default function Dashboard() {
 
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-finance"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-finance-weekly"] });
       queryClient.invalidateQueries({ queryKey: ["recent-attendances"] });
     }, ms + 250);
 
@@ -208,46 +207,14 @@ export default function Dashboard() {
     },
   });
 
-  const { data: weeklyRevenueTrendData } = useQuery({
-    queryKey: ["dashboard-finance-weekly", dayKey],
-    queryFn: async () => {
-      const dailyReports = await Promise.all(
-        rollingChartDates.map(async (date) => {
-          try {
-            const res = await reportService.getFinanceReport({
-              from_date: date,
-              to_date: date,
-            });
-
-            return {
-              date,
-              value: Number(res.data?.total_revenue || 0),
-            };
-          } catch {
-            return { date, value: 0 };
-          }
-        }),
-      );
-
-      return dailyReports;
-    },
-    staleTime: 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const safeTodayRevenue = useMemo(() => {
-    const todayRevenue = Number(summary?.today_revenue || 0);
-    return Number.isFinite(todayRevenue) ? todayRevenue : 0;
-  }, [summary?.today_revenue]);
-
   const weeklyRevenueByDate = useMemo(() => {
     const map = new Map<string, number>();
-    (weeklyRevenueTrendData || []).forEach((item) => {
-      const rawValue = Number(item.value);
+    (summary?.last_7_days?.trend || []).forEach((item) => {
+      const rawValue = Number(item.inflow);
       map.set(item.date, Number.isFinite(rawValue) ? rawValue : 0);
     });
     return map;
-  }, [weeklyRevenueTrendData]);
+  }, [summary?.last_7_days?.trend]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -381,8 +348,7 @@ export default function Dashboard() {
     return rollingChartDates.map((date) => {
       const dateObj = parseLocalDateKey(date);
       const apiValue = weeklyRevenueByDate.get(date) ?? 0;
-      const value =
-        date === dayKey ? safeTodayRevenue : Number.isFinite(apiValue) ? apiValue : 0;
+      const value = Number.isFinite(apiValue) ? apiValue : 0;
 
       return {
         date,
@@ -396,7 +362,6 @@ export default function Dashboard() {
     formatChartDate,
     parseLocalDateKey,
     rollingChartDates,
-    safeTodayRevenue,
     weeklyRevenueByDate,
   ]);
 

@@ -671,6 +671,36 @@ export interface DashboardSummary {
   active_students: number;
   total_debtors: number;
   today_sessions: number;
+  last_7_days: DashboardSummaryPeriod;
+  last_30_days: DashboardSummaryPeriod;
+  last_90_days: DashboardSummaryPeriod;
+}
+
+export interface DashboardSummarySourceBreakdown {
+  source: string;
+  amount: number;
+  transaction_count: number;
+}
+
+export interface DashboardSummaryTrendItem {
+  date: string;
+  inflow: number;
+  outflow: number;
+  net_amount: number;
+  payme: number;
+  click: number;
+  other: number;
+}
+
+export interface DashboardSummaryPeriod {
+  from_date: string;
+  to_date: string;
+  total_inflow: number;
+  total_outflow: number;
+  net_amount: number;
+  successful_transactions: number;
+  source_breakdown: DashboardSummarySourceBreakdown[];
+  trend: DashboardSummaryTrendItem[];
 }
 
 export interface FinanceReportBreakdown {
