@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select } from "@/components/ui/select";
 // import {
 //   Dialog,
@@ -47,6 +48,7 @@ import type { StudentRead } from "@/types/api";
 import { StudentDialog } from "./StudentDialog";
 import { StudentWithContractDialog } from "./StudentWithContractDialog";
 import { exportStudents } from "@/lib/export-utils";
+import { formatNameParts } from "@/lib/name-utils";
 import { format } from "date-fns";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
@@ -102,6 +104,24 @@ export default function Students() {
   // Flatten grouped data into single array
   const allGroups: GroupOption[] =
     groupsData?.flatMap((yearGroup) => yearGroup.groups as GroupOption[]) || [];
+  const exportGroupOptions = [
+    {
+      value: "",
+      label: isLoadingGroups ? t("loading") : t("allGroups"),
+    },
+    ...(!isLoadingGroups && allGroups.length > 0
+      ? allGroups.map((group) => ({
+          value: String(group.id),
+          label: group.name,
+        }))
+      : []),
+  ];
+  const exportStatusOptions = [
+    { value: "", label: t("allStatuses") },
+    { value: "active", label: t("active") },
+    { value: "archived", label: t("archived") },
+    { value: "deleted", label: t("deleted") },
+  ];
 
   // Fetch groups on component mount if not already loaded
   useEffect(() => {
@@ -448,39 +468,33 @@ export default function Students() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="export_group_id" className="text-sm">
-                    {t("group")}
-                  </label>
-                  <Select
-                    id="export_group_id"
-                    value={exportGroupId}
-                    onChange={(e) => setExportGroupId(e.target.value)}
-                    disabled={isLoadingGroups}
-                  >
-                    <option value="">{t("allGroups")}</option>
-                    {!isLoadingGroups && allGroups.length > 0
-                      ? allGroups.map((group) => (
-                          <option key={`export-group-${group.id}`} value={group.id}>
-                            {group.name}
-                          </option>
-                        ))
-                      : null}
-                  </Select>
-                </div>
-                <div className="space-y-1">
                   <label htmlFor="export_status" className="text-sm">
                     {t("status")}
                   </label>
-                  <Select
+                  <SearchableSelect
                     id="export_status"
                     value={exportStatus}
-                    onChange={(e) => setExportStatus(e.target.value)}
-                  >
-                    <option value="">{t("allStatuses")}</option>
-                    <option value="active">{t("active")}</option>
-                    <option value="archived">{t("archived")}</option>
-                    <option value="deleted">{t("deleted")}</option>
-                  </Select>
+                    onValueChange={setExportStatus}
+                    options={exportStatusOptions}
+                    placeholder={t("allStatuses")}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="export_group_id" className="text-sm">
+                    {t("group")}
+                  </label>
+                  <SearchableSelect
+                    id="export_group_id"
+                    value={exportGroupId}
+                    onValueChange={setExportGroupId}
+                    options={exportGroupOptions}
+                    placeholder={t("allGroups")}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
+                    disabled={isLoadingGroups}
+                  />
                 </div>
               </div>
               <Button
@@ -654,7 +668,7 @@ export default function Students() {
                             to={`/students/${student.id}`}
                             className="font-medium text-foreground truncate hover:underline"
                           >
-                            {student.first_name} {student.last_name}
+                            {formatNameParts(student.last_name, student.first_name)}
                           </Link>
                           <p className="text-sm text-muted-foreground md:hidden truncate">
                             {student.phone}

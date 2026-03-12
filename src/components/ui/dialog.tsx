@@ -6,10 +6,16 @@ import { cn } from "@/lib/utils";
 interface DialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  closeOnOverlayClick?: boolean;
   children: React.ReactNode;
 }
 
-export function Dialog({ open, onOpenChange, children }: DialogProps) {
+export function Dialog({
+  open,
+  onOpenChange,
+  closeOnOverlayClick = true,
+  children,
+}: DialogProps) {
   React.useEffect(() => {
     if (!open) return;
 
@@ -36,13 +42,21 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-[9995]"
-            onClick={() => onOpenChange?.(false)}
+            onClick={() => {
+              if (closeOnOverlayClick) {
+                onOpenChange?.(false);
+              }
+            }}
           />
 
           {/* Dialog */}
           <div
             className="fixed inset-0 z-[9996] flex items-center justify-center p-4"
-            onClick={() => onOpenChange?.(false)}
+            onClick={() => {
+              if (closeOnOverlayClick) {
+                onOpenChange?.(false);
+              }
+            }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}

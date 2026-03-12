@@ -21,6 +21,7 @@ import { reportService, groupService, studentService } from "@/services/api.serv
 import { useLanguageStore } from "@/store/languageStore";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { exportReport, downloadFile } from "@/lib/export-utils";
+import { formatFullName } from "@/lib/name-utils";
 import toast from "react-hot-toast";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -291,7 +292,7 @@ const PayersReport: FC = () => {
                       className="font-medium text-left hover:underline hover:text-primary transition-colors"
                       onClick={() => handleOpenStudentDetail(p.student_id)}
                     >
-                      {p.student_name}
+                      {formatFullName(p.student_name) || p.student_name}
                     </button>
                   </TableCell>
                   <TableCell>

@@ -42,6 +42,7 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatFullName, formatNameParts } from "@/lib/name-utils";
 import type {
   StudentFullInfo,
   TransactionRead,
@@ -687,7 +688,7 @@ export default function StudentDetailPage() {
             </div>
             <div>
               <CardTitle className="text-2xl">
-                {student.first_name} {student.last_name}
+                {formatNameParts(student.last_name, student.first_name)}
               </CardTitle>
               <p className="text-muted-foreground">{student.phone}</p>
             </div>
@@ -804,7 +805,7 @@ export default function StudentDetailPage() {
               <div className="flex justify-between items-center py-2.5 border-b border-border/50">
                 <span className="text-sm text-muted-foreground">{t("coach")}</span>
                 <span className="text-sm font-medium text-right">
-                  {coach?.full_name || t("notAssigned")}
+                  {formatFullName(coach?.full_name) || t("notAssigned")}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2.5 border-b border-border/50">
@@ -847,7 +848,7 @@ export default function StudentDetailPage() {
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold text-base leading-none">
-                              {parent.first_name} {parent.last_name}
+                              {formatNameParts(parent.last_name, parent.first_name)}
                             </h4>
                             <Badge variant="secondary" className="px-2 py-0 text-xs font-medium rounded-md bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
                               {parent.relationship_type}
@@ -916,7 +917,10 @@ export default function StudentDetailPage() {
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold text-base leading-none">
-                              {guardian.first_name} {guardian.last_name}
+                              {formatNameParts(
+                                guardian.last_name,
+                                guardian.first_name,
+                              )}
                             </h4>
                             <Badge variant="outline" className="px-2 py-0 text-xs font-medium rounded-md border-amber-200 text-amber-600 dark:border-amber-800 dark:text-amber-400">
                               {guardian.relationship_type}
@@ -1260,7 +1264,7 @@ export default function StudentDetailPage() {
               <p>
                 {t("permanentDeleteStudent")}
                 <span className="font-bold text-foreground">
-                  {` ${student.first_name} ${student.last_name}`}
+                  {` ${formatNameParts(student.last_name, student.first_name)}`}
                 </span>
                 ?
               </p>

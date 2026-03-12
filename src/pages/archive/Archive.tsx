@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatFullName } from "@/lib/name-utils";
 import { BackupSection } from "@/pages/settings/Backup";
 
 export default function Archive() {
@@ -308,7 +309,7 @@ export default function Archive() {
                             (t("reasonNotProvided" as any) || "Reason not provided")}
                         </TableCell>
                         <TableCell>
-                          {contract.terminated_by?.full_name ||
+                          {formatFullName(contract.terminated_by?.full_name) ||
                             `ID: ${contract.terminated_by_user_id}`}
                         </TableCell>
                       </TableRow>

@@ -11,6 +11,7 @@ import {
 import type { UserRead, UserStatus } from "@/types/api";
 import { Badge } from "@/components/ui/badge";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatFullName } from "@/lib/name-utils";
 import {
   User,
   Mail,
@@ -118,7 +119,7 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
 
             <div className="space-y-1">
               <CardTitle className="text-2xl font-bold tracking-tight">
-                {user.full_name}
+                {formatFullName(user.full_name)}
               </CardTitle>
               <CardDescription className="flex items-center gap-2">
                 <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-medium">
@@ -152,7 +153,7 @@ export const UserDetailsCard: FC<UserDetailsCardProps> = ({
             <InfoItem
               icon={User}
               label={t("fullName")}
-              value={user.full_name}
+              value={formatFullName(user.full_name)}
             />
             <InfoItem icon={Mail} label={t("email")} value={user.email} />
             <InfoItem icon={Phone} label={t("phone")} value={user.phone} />

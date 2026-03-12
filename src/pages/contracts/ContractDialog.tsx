@@ -24,6 +24,7 @@ import type {
   StudentRead,
 } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatNameParts } from "@/lib/name-utils";
 import { User, Calendar, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -463,11 +464,11 @@ export function ContractDialog({
                   })}
                 >
                   <option value="">{t("selectStudent")}</option>
-                  {studentsData?.data?.map((student: StudentRead) => (
-                    <option key={student.id} value={student.id}>
-                      {student.first_name} {student.last_name}
-                    </option>
-                  ))}
+                    {studentsData?.data?.map((student: StudentRead) => (
+                      <option key={student.id} value={student.id}>
+                        {formatNameParts(student.last_name, student.first_name)}
+                      </option>
+                    ))}
                 </Select>
                 {errors.student_id && (
                   <p className="text-sm text-red-500">
@@ -487,7 +488,10 @@ export function ContractDialog({
                     className="text-base hover:underline"
                     target="_blank"
                   >
-                    {selectedStudent.first_name} {selectedStudent.last_name}
+                    {formatNameParts(
+                      selectedStudent.last_name,
+                      selectedStudent.first_name,
+                    )}
                   </Link>
                 </div>
               </div>
@@ -510,7 +514,10 @@ export function ContractDialog({
                       className="text-blue-900 dark:text-blue-100 hover:underline"
                       target="_blank"
                     >
-                      {selectedStudent.first_name} {selectedStudent.last_name}
+                      {formatNameParts(
+                        selectedStudent.last_name,
+                        selectedStudent.first_name,
+                      )}
                     </Link>
                   </div>
                   <div className="flex items-start gap-2">

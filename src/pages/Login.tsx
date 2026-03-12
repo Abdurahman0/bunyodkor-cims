@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { authService } from "@/services/api.service";
 import { useAuthStore } from "@/store/authStore";
+import { formatFullName } from "@/lib/name-utils";
 import {
   Card,
   CardContent,
@@ -55,7 +56,7 @@ export default function Login() {
     },
     onSuccess: (data) => {
       setAuth(data.token, data.refreshToken, data.user, data.permissions);
-      toast.success(`${t("welcomeBack")}, ${data.user.full_name}!`, {
+      toast.success(`${t("welcomeBack")}, ${formatFullName(data.user.full_name) || data.user.full_name}!`, {
         icon: "👋",
         duration: 3000,
       });

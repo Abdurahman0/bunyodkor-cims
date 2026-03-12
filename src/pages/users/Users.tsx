@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
+import { formatFullName } from "@/lib/name-utils";
 import {
   Table,
   TableHeader,
@@ -270,7 +271,11 @@ const Users = () => {
       return;
     }
 
-    if (confirm(`${t("areYouSureDeleteUser")} ${user.full_name}?`)) {
+    if (
+      confirm(
+        `${t("areYouSureDeleteUser")} ${formatFullName(user.full_name)}?`,
+      )
+    ) {
       deleteMutation.mutate(user.id);
     }
   };
@@ -534,7 +539,7 @@ const Users = () => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-foreground truncate">
-                              {user.full_name}
+                              {formatFullName(user.full_name)}
                             </p>
                             {user.is_super_admin && (
                               <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0 text-xs gap-1">

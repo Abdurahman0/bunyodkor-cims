@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { waitingListService, groupService } from "@/services/api.service";
+import { formatNameParts } from "@/lib/name-utils";
 import {
   Dialog,
   DialogContent,
@@ -118,7 +119,7 @@ export default function WaitingList() {
           "Are you sure you want to remove {{student}} from the waiting list?")
           .replace(
             "{{student}}",
-            `${entry.student_first_name} ${entry.student_last_name}`,
+            formatNameParts(entry.student_last_name, entry.student_first_name),
           )
       )
     ) {
@@ -257,7 +258,10 @@ export default function WaitingList() {
                               }}
                               className="text-left text-blue-600 dark:text-blue-400 hover:underline"
                             >
-                              {entry.student_first_name} {entry.student_last_name}
+                              {formatNameParts(
+                                entry.student_last_name,
+                                entry.student_first_name,
+                              )}
                             </button>
                           </h3>
                           <div className="text-sm text-muted-foreground">
@@ -435,7 +439,10 @@ export default function WaitingList() {
                 </div>
                 <div className="space-y-1.5">
                   <h3 className="text-xl font-bold leading-none text-foreground">
-                    {viewEntry.student_first_name} {viewEntry.student_last_name}
+                    {formatNameParts(
+                      viewEntry.student_last_name,
+                      viewEntry.student_first_name,
+                    )}
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <Badge variant="outline" className="gap-1 bg-background">

@@ -74,6 +74,7 @@ import { toast } from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart, StatsCard } from "@/components/ui/charts";
+import { formatPersonName } from "@/lib/name-utils";
 
 const normalizeSessionForUi = (
   session:
@@ -354,9 +355,6 @@ export default function CoachPanel() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
-
   const getStatusBadge = (status: "present" | "absent" | "late") => {
     switch (status) {
       case "present":
@@ -389,22 +387,68 @@ export default function CoachPanel() {
     return new Map(groupsData.map((g: { id: any }) => [g.id, g]));
   }, [groupsData]);
 
+  const getStudentId = (item: any) =>
+    Number(item?.student_id ?? item?.id ?? item?.student?.id ?? 0);
+
   const getStudentDisplayName = (item: any) => {
     if (!item) return t("unknownStudent") || "Unknown Student";
-    const first =
-      item.first_name ||
-      item.firstName ||
-      item.student?.first_name ||
-      item.student?.firstName;
-    const last =
-      item.last_name ||
-      item.lastName ||
-      item.student?.last_name ||
-      item.student?.lastName;
-    if (first || last) return `${first || ""} ${last || ""}`.trim();
-    if (item.student_id || item.id) return `#${item.student_id || item.id}`;
+    const displayName =
+      formatPersonName(item) ||
+      formatPersonName(item.student) ||
+      item.student_name ||
+      item.name ||
+      item.student?.name ||
+      "";
+
+    if (displayName) {
+      return displayName;
+    }
+
+    const studentId = getStudentId(item);
+    if (studentId) return `#${studentId}`;
     return t("unknownStudent") || "Unknown Student";
   };
+
+  const getSessionGroupName = (session: SessionRead | null | undefined) => {
+    if (!session) return t("unknownGroup") || "Unknown Group";
+
+    return (
+      session.group_name ||
+      session.group?.name ||
+      groupMap.get(Number(session.group_id))?.name ||
+      t("unknownGroup") ||
+      "Unknown Group"
+    );
+  };
+
+  const renderAttendanceActions = (studentId: number) => (
+    <div className="inline-flex rounded-md shadow-sm" role="group">
+      <Button
+        size="sm"
+        variant={attendanceStatus[studentId] === "present" ? "default" : "outline"}
+        className="rounded-r-none"
+        onClick={() => handleMarkAttendance(studentId, "present")}
+      >
+        <CheckCircle className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant={attendanceStatus[studentId] === "late" ? "secondary" : "outline"}
+        className="rounded-none"
+        onClick={() => handleMarkAttendance(studentId, "late")}
+      >
+        <Clock className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant={attendanceStatus[studentId] === "absent" ? "destructive" : "outline"}
+        className="rounded-l-none"
+        onClick={() => handleMarkAttendance(studentId, "absent")}
+      >
+        <XCircle className="w-4 h-4" />
+      </Button>
+    </div>
+  );
 
   const groupStatsChartData = useMemo(() => {
     if (!groupStats) return [];
@@ -443,20 +487,20 @@ export default function CoachPanel() {
       </motion.div>
 
       <Tabs defaultValue="attendance" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="attendance">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-4">
+          <TabsTrigger value="attendance" className="w-full">
             <Calendar className="w-4 h-4 mr-2" />
             {t("attendance") || "Attendance"}
           </TabsTrigger>
-          <TabsTrigger value="groups">
+          <TabsTrigger value="groups" className="w-full">
             <GraduationCap className="w-4 h-4 mr-2" />
             {t("myGroups") || "My Groups"}
           </TabsTrigger>
-          <TabsTrigger value="history">
+          <TabsTrigger value="history" className="w-full">
             <History className="w-4 h-4 mr-2" />
             {t("history") || "History"}
           </TabsTrigger>
-          <TabsTrigger value="stats">
+          <TabsTrigger value="stats" className="w-full">
             <BarChart2 className="w-4 h-4 mr-2" />
             {t("statistics") || "Statistics"}
           </TabsTrigger>
@@ -464,30 +508,34 @@ export default function CoachPanel() {
 
         <TabsContent value="attendance" className="space-y-6">
           <Card>
-            <CardContent className="p-4 flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleDateChange(-1)}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-muted-foreground" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-2 rounded-lg border bg-background text-foreground"
-                />
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleDateChange(-1)}
+                  className="shrink-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <div className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border bg-background px-3 py-2">
+                  <Calendar className="w-5 h-5 shrink-0 text-muted-foreground" />
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-center text-foreground outline-none"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleDateChange(1)}
+                  className="shrink-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleDateChange(1)}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
             </CardContent>
           </Card>
 
@@ -510,10 +558,6 @@ export default function CoachPanel() {
                   <div className="space-y-3">
                     {sessionsData.map(
                       (session: SetStateAction<SessionRead | null> | any) => {
-                        const group = groupsData?.find(
-                          (g: { id: any }) =>
-                            Number(g.id) === Number(session.group_id),
-                        );
                         return (
                           <button
                             key={session.id}
@@ -527,18 +571,18 @@ export default function CoachPanel() {
                             <div className="flex flex-col gap-1.5">
                               <div className="flex items-start justify-between">
                                 <p className="font-bold text-slate-900 dark:text-slate-100">
-                                  {group?.name || t("unknownGroup")}
+                                  {getSessionGroupName(session)}
                                 </p>
                               </div>
                               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {session.topic}
+                                {session.topic || "-"}
                               </p>
                               {session.description && (
                                 <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 italic">
                                   {session.description}
                                 </p>
                               )}
-                              <div className="flex items-center gap-3 mt-2 text-xs font-mono font-medium">
+                              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-mono font-medium">
                                 <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300">
                                   <Clock className="w-3.5 h-3.5 text-blue-500" />
                                   {session.start_time} - {session.end_time}
@@ -571,27 +615,22 @@ export default function CoachPanel() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <Card>
                     <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
                           <CardTitle className="flex items-center gap-2">
                             <List className="w-5 h-5" />
                             {t("attendanceList") || "Attendance List"}
                           </CardTitle>
-                          <CardDescription className="space-y-3 mt-3">
-                            <div className="flex flex-wrap items-center gap-2 text-base font-medium text-slate-800 dark:text-slate-200">
-                              <span>{selectedSession.topic}</span>
-                              <span className="text-slate-400">•</span>
-                              <span>
-                                {
-                                  groupsData?.find(
-                                    (g: { id: number }) =>
-                                      g.id === selectedSession.group_id,
-                                  )?.name
-                                }
+                          <CardDescription className="mt-3 space-y-3">
+                            <div className="flex flex-col gap-2 text-base font-medium text-slate-800 dark:text-slate-200 [&>span:nth-child(2)]:hidden sm:flex-row sm:flex-wrap sm:items-center sm:[&>span:nth-child(2)]:inline">
+                              <span className="break-words">
+                                {selectedSession.topic || "-"}
                               </span>
+                              <span className="text-slate-400">•</span>
+                              <span>{getSessionGroupName(selectedSession)}</span>
                             </div>
 
-                            <div className="flex items-center gap-4 text-sm font-medium">
+                            <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
                               <span className="flex items-center gap-1.5 font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md">
                                 <Clock className="w-4 h-4" />
                                 {selectedSession.start_time} -{" "}
@@ -618,142 +657,104 @@ export default function CoachPanel() {
                           variant="outline"
                           size="sm"
                           onClick={() => setUploadDialogOpen(true)}
+                          className="w-full sm:w-auto"
                         >
                           <Upload className="w-4 h-4 mr-2" />
                           {t("uploadKonspekt") || "Upload Konspekt"}
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="border rounded-lg overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t("student")}</TableHead>
-                              <TableHead>{t("debtStatus")}</TableHead>
-                              <TableHead className="text-right">
-                                {t("markAttendance")}
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {studentsLoading ? (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={3}
-                                  className="h-24 text-center"
+                    <CardContent className="space-y-4">
+                      {studentsLoading ? (
+                        <div className="flex h-24 items-center justify-center rounded-lg border">
+                          <Loader2 className="animate-spin text-primary" />
+                        </div>
+                      ) : studentsData && studentsData.length > 0 ? (
+                        <>
+                          <div className="space-y-3 md:hidden">
+                            {studentsData.map((student: any) => {
+                              const studentId = getStudentId(student);
+
+                              return (
+                                <div
+                                  key={studentId}
+                                  className="rounded-xl border bg-card p-4 shadow-sm"
                                 >
-                                  <Loader2 className="mx-auto animate-spin text-primary" />
-                                </TableCell>
-                              </TableRow>
-                            ) : studentsData && studentsData.length > 0 ? (
-                              studentsData.map((student: any) => (
-                                <TableRow
-                                  key={student.student_id || student.id}
-                                >
-                                  <TableCell className="font-medium">
-                                    {getStudentDisplayName(student)}
-                                  </TableCell>
-                                  <TableCell>
-                                    {student.has_debt ? (
+                                  <div className="flex flex-col gap-3">
+                                    <div className="space-y-2">
+                                      <p className="font-semibold text-foreground">
+                                        {getStudentDisplayName(student)}
+                                      </p>
                                       <Badge
-                                        variant="destructive"
-                                        className="gap-1.5"
+                                        variant={student.has_debt ? "destructive" : "secondary"}
+                                        className="w-fit gap-1.5"
                                       >
-                                        <AlertTriangle className="h-3 w-3" />
-                                        {formatCurrency(student.debt_amount)}
+                                        {student.has_debt && (
+                                          <AlertTriangle className="h-3 w-3" />
+                                        )}
+                                        {student.has_debt ? t("hasDebt") : t("noDebt")}
                                       </Badge>
-                                    ) : (
-                                      <Badge variant="secondary">
-                                        {t("noDebt")}
-                                      </Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div
-                                      className="inline-flex rounded-md shadow-sm"
-                                      role="group"
-                                    >
-                                      <Button
-                                        size="sm"
-                                        variant={
-                                          attendanceStatus[
-                                            student.student_id
-                                          ] === "present"
-                                            ? "default"
-                                            : "outline"
-                                        }
-                                        className="rounded-r-none"
-                                        onClick={() =>
-                                          handleMarkAttendance(
-                                            student.student_id,
-                                            "present",
-                                          )
-                                        }
-                                      >
-                                        <CheckCircle className="w-4 h-4" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant={
-                                          attendanceStatus[
-                                            student.student_id
-                                          ] === "late"
-                                            ? "secondary"
-                                            : "outline"
-                                        }
-                                        className="rounded-none"
-                                        onClick={() =>
-                                          handleMarkAttendance(
-                                            student.student_id,
-                                            "late",
-                                          )
-                                        }
-                                      >
-                                        <Clock className="w-4 h-4" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant={
-                                          attendanceStatus[
-                                            student.student_id
-                                          ] === "absent"
-                                            ? "destructive"
-                                            : "outline"
-                                        }
-                                        className="rounded-l-none"
-                                        onClick={() =>
-                                          handleMarkAttendance(
-                                            student.student_id,
-                                            "absent",
-                                          )
-                                        }
-                                      >
-                                        <XCircle className="w-4 h-4" />
-                                      </Button>
                                     </div>
-                                  </TableCell>
+                                    <div>{renderAttendanceActions(studentId)}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="hidden overflow-hidden rounded-lg border md:block">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>{t("student")}</TableHead>
+                                  <TableHead>{t("debtStatus")}</TableHead>
+                                  <TableHead className="text-right">
+                                    {t("markAttendance")}
+                                  </TableHead>
                                 </TableRow>
-                              ))
-                            ) : (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={3}
-                                  className="h-24 text-center"
-                                >
-                                  {t("noStudentsInSession") ||
-                                    "No students in this session."}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
+                              </TableHeader>
+                              <TableBody>
+                                {studentsData.map((student: any) => {
+                                  const studentId = getStudentId(student);
+
+                                  return (
+                                    <TableRow key={studentId}>
+                                      <TableCell className="font-medium">
+                                        {getStudentDisplayName(student)}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge
+                                          variant={student.has_debt ? "destructive" : "secondary"}
+                                          className="gap-1.5"
+                                        >
+                                          {student.has_debt && (
+                                            <AlertTriangle className="h-3 w-3" />
+                                          )}
+                                          {student.has_debt ? t("hasDebt") : t("noDebt")}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {renderAttendanceActions(studentId)}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex h-24 items-center justify-center rounded-lg border text-center text-sm text-muted-foreground">
+                          {t("noStudentsInSession") ||
+                            "No students in this session."}
+                        </div>
+                      )}
                     </CardContent>
                     <CardFooter className="flex justify-end">
                       <Button
                         onClick={handleSubmitAttendance}
                         disabled={bulkAttendanceMutation.isPending}
+                        className="w-full sm:w-auto"
                       >
                         {bulkAttendanceMutation.isPending && (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -940,7 +941,7 @@ export default function CoachPanel() {
                           </TableCell>
                           <TableCell>
                             {student
-                              ? `${student.first_name} ${student.last_name}`
+                              ? getStudentDisplayName(student)
                               : t("unknownStudent")}
                           </TableCell>
                           <TableCell>
@@ -1070,9 +1071,7 @@ export default function CoachPanel() {
                   {selectedSession.topic || t("attendanceList")}
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400">
-                  {groupsData?.find(
-                    (g: { id: number }) => g.id === selectedSession.group_id,
-                  )?.name || t("unknownGroup")}
+                  {getSessionGroupName(selectedSession)}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1">

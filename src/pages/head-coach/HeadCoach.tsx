@@ -55,6 +55,7 @@ import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
 import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog"; // Assuming this is correct
 import { SessionDialog } from "@/pages/coach/SessionDialog"; // Corrected import
 import { useLanguageStore } from "@/store/languageStore";
+import { formatFullName } from "@/lib/name-utils";
 
 const normalizeScheduleDays = (raw?: string) => {
   if (!raw) return "-";
@@ -308,7 +309,7 @@ export default function HeadCoach() {
   const getCoachName = (coachId: number | undefined) => {
     if (!coachId || !coachesData) return "N/A";
     const coach = coachesData.find((c) => c.id === coachId);
-    return coach ? coach.full_name : "N/A";
+    return coach ? formatFullName(coach.full_name) : "N/A";
   };
 
   // --- Handlers ---

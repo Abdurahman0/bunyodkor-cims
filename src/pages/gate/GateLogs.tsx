@@ -30,6 +30,7 @@ import {
 import { format } from 'date-fns'
 import { useLanguageStore } from '@/store/languageStore'
 import { useDebounce } from '@/hooks/useDebounce'
+import { formatNameParts } from '@/lib/name-utils'
 
 export default function GateLogs() {
   const { t } = useLanguageStore()
@@ -61,7 +62,9 @@ export default function GateLogs() {
 
   const getStudentName = (studentId: number) => {
     const student = studentsData?.data?.find((s: StudentRead) => s.id === studentId);
-    return student ? `${student.first_name} ${student.last_name}` : `ID: ${studentId}`;
+    return student
+      ? formatNameParts(student.last_name, student.first_name)
+      : `ID: ${studentId}`;
   }
 
   const clearFilters = () => {

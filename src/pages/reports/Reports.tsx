@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Table,
   TableHeader,
@@ -39,6 +40,7 @@ import {
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
 import { downloadFile, exportReport } from "@/lib/export-utils";
+import { formatFullName } from "@/lib/name-utils";
 import { useLanguageStore } from "@/store/languageStore";
 import {
   cn,
@@ -156,6 +158,44 @@ export default function Reports() {
     if (!groupsData?.data) return [];
     return groupsData.data;
   }, [groupsData]);
+  const debtorsGroupOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: groupsLoading ? t("loading") : t("allGroups"),
+      },
+      ...groupsList.map((group) => ({
+        value: String(group.id),
+        label: group.name,
+      })),
+    ],
+    [groupsList, groupsLoading, t],
+  );
+  const debtorsYearOptions = useMemo(
+    () => [
+      { value: "", label: t("allYears") || "All years" },
+      ...[
+        currentYear - 2,
+        currentYear - 1,
+        currentYear,
+        currentYear + 1,
+      ].map((year) => ({
+        value: String(year),
+        label: String(year),
+      })),
+    ],
+    [currentYear, t],
+  );
+  const debtorsMonthOptions = useMemo(
+    () => [
+      { value: "", label: t("allMonths") || "All months" },
+      ...monthOptions.map((month) => ({
+        value: String(month.value),
+        label: month.label,
+      })),
+    ],
+    [monthOptions, t],
+  );
 
   const hasUnpaidListFilter = Boolean(
     unpaidYear !== "" ||
@@ -978,84 +1018,61 @@ export default function Reports() {
                   <label className="text-sm font-medium text-foreground mb-1 block">
                     {t("group")}
                   </label>
-                  <select
-                    value={selectedGroupId || ""}
-                    onChange={(e) => {
-                      setSelectedGroupId(
-                        e.target.value ? Number(e.target.value) : null,
-                      );
+                  <SearchableSelect
+                    value={selectedGroupId ? String(selectedGroupId) : ""}
+                    onValueChange={(value) => {
+                      setSelectedGroupId(value ? Number(value) : null);
                       setDebtorsPage(1);
                     }}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    options={debtorsGroupOptions}
+                    placeholder={t("allGroups")}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
+                    className="w-full"
+                    triggerClassName="h-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     disabled={groupsLoading}
-                  >
-                    <option value="">{t("allGroups")}</option>
-                    {groupsLoading ? (
-                      <option value="" disabled>
-                        {t("loading")}
-                      </option>
-                    ) : groupsList && groupsList.length > 0 ? (
-                      groupsList.map((group: GroupRead) => (
-                        <option key={group.id} value={String(group.id)}>
-                          {group.name}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>
-                        {t("noGroupsAvailable")}
-                      </option>
-                    )}
-                  </select>
+                  />
                 </div>
 
                 <div className="w-56">
                   <label className="text-sm font-medium text-foreground mb-1 block">
                     {t("paymentYear") || "Year"}
                   </label>
-                  <select
-                    value={unpaidYear}
-                    onChange={(e) => {
-                      setUnpaidYear(e.target.value ? Number(e.target.value) : "");
+                  <SearchableSelect
+                    value={unpaidYear === "" ? "" : String(unpaidYear)}
+                    onValueChange={(value) => {
+                      setUnpaidYear(value ? Number(value) : "");
                       setDebtorsPage(1);
                     }}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">{t("allYears") || "All years"}</option>
-                    {[
-                      currentYear - 2,
-                      currentYear - 1,
-                      currentYear,
-                      currentYear + 1,
-                    ].map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
+                    options={debtorsYearOptions}
+                    placeholder={t("allYears") || "All years"}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
+                    className="w-full"
+                    triggerClassName="h-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
                 </div>
 
                 <div className="w-56">
                   <label className="text-sm font-medium text-foreground mb-1 block">
                     {t("month") || "Month"}
                   </label>
-                  <select
-                    value={unpaidMonth}
-                    onChange={(e) => {
-                      setUnpaidMonth(e.target.value ? Number(e.target.value) : "");
-                      if (e.target.value) {
+                  <SearchableSelect
+                    value={unpaidMonth === "" ? "" : String(unpaidMonth)}
+                    onValueChange={(value) => {
+                      setUnpaidMonth(value ? Number(value) : "");
+                      if (value) {
                         setUnpaidMonths("");
                       }
                       setDebtorsPage(1);
                     }}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">{t("allMonths") || "All months"}</option>
-                    {monthOptions.map((month) => (
-                      <option key={month.value} value={month.value}>
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={debtorsMonthOptions}
+                    placeholder={t("allMonths") || "All months"}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
+                    className="w-full"
+                    triggerClassName="h-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
                 </div>
 
                 <div className="w-56">
@@ -1173,12 +1190,11 @@ export default function Reports() {
             <CardHeader>
               <CardTitle className="text-lg">{t("debtorsList")}</CardTitle>
             </CardHeader>
-            <Table>
+            <Table className="[&_thead_th:first-child]:hidden [&_tbody_td:first-child]:hidden">
               <TableHeader>
                 <TableRow>
                   <TableHead>№</TableHead>
                   <TableHead>{t("student")}</TableHead>
-                  <TableHead>{t("guardian") || "Guardian"}</TableHead>
                   <TableHead>Ota/Ona</TableHead>
                   <TableHead>{t("group")}</TableHead>
                   <TableHead>{t("contractNumber")}</TableHead>
@@ -1190,11 +1206,11 @@ export default function Reports() {
               <TableBody>
                 {debtorsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-36 text-center">
+                    <TableCell colSpan={6} className="h-36 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="text-sm font-medium">
-                          Qarzdorlar hisoblanmoqda...
+                          To'lamaganlar hisoblanmoqda...
                         </p>
                       </div>
                     </TableCell>
@@ -1211,16 +1227,8 @@ export default function Reports() {
                           className="font-medium text-left hover:underline hover:text-primary transition-colors"
                           onClick={() => handleOpenStudentDetail(debtor.student_id)}
                         >
-                          {debtor.student_name}
+                          {formatFullName(debtor.student_name) || debtor.student_name}
                         </button>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs leading-5">
-                        <div>
-                          <span className="text-muted-foreground mr-1">Vasiy:</span>
-                          <span className="text-sm font-medium">
-                            {formatPhone(debtor.primary_phone)}
-                          </span>
-                        </div>
                       </TableCell>
                       <TableCell className="font-mono text-xs leading-5 space-y-1">
                         <div>

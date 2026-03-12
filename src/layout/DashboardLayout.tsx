@@ -4,6 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatFullName } from "@/lib/name-utils";
 import {
   Users,
   CreditCard,
@@ -385,7 +386,7 @@ const DashboardLayout = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  {user?.full_name}
+                  {formatFullName(user?.full_name)}
                 </p>
                 <p className="text-xs text-slate-400 truncate">{user?.email}</p>
               </div>
@@ -518,7 +519,7 @@ const DashboardLayout = () => {
                 // onClick olib tashlandi, chunki endi Hover ishlatiladi
               >
                 <span className="hidden md:block text-sm font-medium max-w-[120px] truncate">
-                  {user?.full_name}
+                  {formatFullName(user?.full_name)}
                 </span>
                 <ChevronDown
                   className={`w-4 h-4 text-muted-foreground transition-transform ${
@@ -545,7 +546,7 @@ const DashboardLayout = () => {
                         </div>
                         <div className="overflow-hidden">
                           <p className="font-medium text-foreground truncate">
-                            {user?.full_name}
+                            {formatFullName(user?.full_name)}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
                             {user?.email}

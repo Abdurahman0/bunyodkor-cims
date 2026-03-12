@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatsCard } from "@/components/ui/charts";
+import { formatFullName } from "@/lib/name-utils";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -610,7 +611,8 @@ export default function Finance() {
                               : "text-muted-foreground cursor-not-allowed"
                           }`}
                         >
-                          {transaction.student_full_name}
+                          {formatFullName(transaction.student_full_name) ||
+                            transaction.student_full_name}
                         </button>
                       ) : (
                         <span className="text-sm text-muted-foreground">

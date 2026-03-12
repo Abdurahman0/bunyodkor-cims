@@ -8,6 +8,7 @@ const DEFAULT_FROM = format(
 );
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { formatFullName, formatNameParts } from "@/lib/name-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -187,8 +188,8 @@ export default function Attendance() {
       last_name?: string;
     };
     const full =
-      (s.full_name && String(s.full_name)) ||
-      `${s.first_name || ""} ${s.last_name || ""}`;
+      formatFullName(s.full_name) ||
+      formatNameParts(s.last_name, s.first_name);
     return String(full).trim();
   };
 

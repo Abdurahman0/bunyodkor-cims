@@ -59,6 +59,7 @@ import { GroupDialog } from "./GroupDialog";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 import { apiClient } from "@/lib/api-client";
 import { downloadFile } from "@/lib/export-utils";
+import { formatFullName, formatNameParts } from "@/lib/name-utils";
 
 // Component to display individual group card with capacity
 function GroupCard({
@@ -421,7 +422,7 @@ export default function Groups() {
 
   const getCoachName = (coachId: number) => {
     const coach = coachesData?.data?.find((c) => c.id === coachId);
-    return coach ? coach.full_name : `ID: ${coachId}`;
+    return coach ? formatFullName(coach.full_name) : `ID: ${coachId}`;
   };
 
   const getStudentName = (studentId: number | null | undefined) => {
@@ -430,7 +431,7 @@ export default function Groups() {
       (s: StudentRead) => s.id === studentId,
     );
     return student
-      ? `${student.first_name} ${student.last_name}`
+      ? formatNameParts(student.last_name, student.first_name)
       : t("noStudentName");
   };
 
@@ -765,7 +766,10 @@ export default function Groups() {
                                 {student.last_name?.[0]}
                               </div>
                               <div>
-                                {student.first_name} {student.last_name}
+                                {formatNameParts(
+                                  student.last_name,
+                                  student.first_name,
+                                )}
                               </div>
                             </div>
                           </TableCell>

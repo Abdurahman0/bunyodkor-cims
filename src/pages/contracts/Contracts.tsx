@@ -28,6 +28,7 @@ import { useGroupsStore } from "@/store/groupsStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { downloadFile } from "@/lib/export-utils";
+import { formatFullName, formatNameParts } from "@/lib/name-utils";
 import { ContractDialog } from "./ContractDialog";
 import type {
   ContractWithStudentNameRead,
@@ -712,7 +713,8 @@ export default function Contracts() {
                               >
                                 <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                 <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
-                                  {contract.student_full_name ||
+                                  {formatFullName(contract.student_full_name) ||
+                                    contract.student_full_name ||
                                     t("unknown") ||
                                     "Noma'lum"}
                                 </span>
@@ -781,7 +783,10 @@ export default function Contracts() {
                       (currentData.data as TerminatedStudentItem[]).map((item) => {
                         const isExpanded =
                           expandedTerminatedContractId === item.contract_id;
-                        const fullStudentName = `${item.student_first_name || ""} ${item.student_last_name || ""}`.trim();
+                        const fullStudentName = formatNameParts(
+                          item.student_last_name,
+                          item.student_first_name,
+                        );
 
                         return (
                           <Fragment key={item.contract_id}>
@@ -842,7 +847,10 @@ export default function Contracts() {
                                     e.stopPropagation();
                                     if (!item.student_id) return;
 
-                                    const fullName = `${item.student_first_name || ""} ${item.student_last_name || ""}`.trim();
+                                    const fullName = formatNameParts(
+                                      item.student_last_name,
+                                      item.student_first_name,
+                                    );
                                     const confirmDelete = window.confirm(
                                       `${t("confirmDeleteStudent")} ${fullName || `ID: ${item.student_id}`}?`,
                                     );
@@ -909,7 +917,9 @@ export default function Contracts() {
                                           {t("terminatedBy") || "Terminated by"}
                                         </p>
                                         <p className="font-medium">
-                                          {item.terminated_by_full_name ||
+                                          {formatFullName(
+                                              item.terminated_by_full_name,
+                                            ) ||
                                             (item.terminated_by_user_id
                                               ? `ID: ${item.terminated_by_user_id}`
                                               : "-")}
@@ -1030,8 +1040,10 @@ export default function Contracts() {
                           >
                             <User className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             <span className="font-medium text-foreground group-hover:text-primary group-hover:underline transition-colors">
-                              {`${item.student_first_name || ""} ${item.student_last_name || ""}`.trim() ||
-                                "-"}
+                              {formatNameParts(
+                                item.student_last_name,
+                                item.student_first_name,
+                              ) || "-"}
                             </span>
                           </div>
                         </TableCell>

@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { publicService } from "@/services/api.service";
 import type { ContractInfoPublic } from "@/types/api";
 import { format } from "date-fns";
+import { formatNameParts } from "@/lib/name-utils";
 
 export default function PublicContractCheck() {
   const [contractNumber, setContractNumber] = useState("");
@@ -126,7 +127,10 @@ export default function PublicContractCheck() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-xl">
-                        {result.student_first_name} {result.student_last_name}
+                        {formatNameParts(
+                          result.student_last_name,
+                          result.student_first_name,
+                        )}
                       </CardTitle>
                       <CardDescription>
                         Shartnoma: {result.contract_number}

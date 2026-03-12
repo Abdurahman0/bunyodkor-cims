@@ -168,7 +168,11 @@ export function StudentDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      closeOnOverlayClick={!!student}
+    >
       <DialogContent className="max-w-md" onClose={() => onOpenChange(false)}>
         <DialogHeader>
           <DialogTitle>

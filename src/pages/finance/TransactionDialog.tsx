@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { ContractRead, StudentRead } from "@/types/api";
+import { formatNameParts } from "@/lib/name-utils";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -155,7 +156,7 @@ export function TransactionDialog({
   const getStudentNameString = (contract: ContractRead) => {
     const student = getStudentInfo(contract);
     return student
-      ? `${student.first_name} ${student.last_name}`
+      ? formatNameParts(student.last_name, student.first_name)
       : t("noStudentAttached");
   };
 
@@ -565,7 +566,10 @@ export function TransactionDialog({
                       {t("studentName")}:
                     </span>
                     <span className="font-medium text-foreground">
-                      {currentStudent.first_name} {currentStudent.last_name}
+                      {formatNameParts(
+                        currentStudent.last_name,
+                        currentStudent.first_name,
+                      )}
                     </span>
                   </div>
 

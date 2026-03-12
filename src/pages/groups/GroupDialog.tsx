@@ -20,6 +20,7 @@ import type {
   GroupUpdateRequest,
 } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatFullName } from "@/lib/name-utils";
 
 interface GroupDialogProps {
   open: boolean;
@@ -363,7 +364,7 @@ export function GroupDialog({
               <option value="">{t("selectCoach")}</option>
               {coachesData?.data?.map((coach: any) => (
                 <option key={coach.id} value={coach.id}>
-                  {coach.full_name}
+                  {formatFullName(coach.full_name)}
                 </option>
               ))}
             </Select>

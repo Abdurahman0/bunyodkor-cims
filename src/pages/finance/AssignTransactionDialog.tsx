@@ -20,6 +20,7 @@ import { useLanguageStore } from '@/store/languageStore';
 import { AxiosError } from 'axios';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatNameParts } from '@/lib/name-utils';
 
 interface AssignTransactionDialogProps {
   open: boolean;
@@ -137,7 +138,7 @@ export function AssignTransactionDialog({
                 <option value="">{isLoadingStudents ? t('loadingStudents') : t('selectStudent')}</option>
                 {studentsData?.data?.map((student: StudentRead) => (
                   <option key={student.id} value={student.id}>
-                    {student.first_name} {student.last_name}
+                    {formatNameParts(student.last_name, student.first_name)}
                   </option>
                 ))}
               </Select>

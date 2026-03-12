@@ -29,6 +29,7 @@ import { useAuthStore } from "@/store/authStore";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib/api-client";
 import { downloadFile } from "@/lib/export-utils";
+import { formatNameParts } from "@/lib/name-utils";
 
 interface GroupDetailsDialogProps {
   open: boolean;
@@ -230,7 +231,10 @@ export const GroupDetailsDialog: FC<GroupDetailsDialogProps> = ({
                             </Avatar>
                             <div className="flex flex-col">
                               <span className="font-medium text-sm text-foreground">
-                                {student.first_name} {student.last_name}
+                                {formatNameParts(
+                                  student.last_name,
+                                  student.first_name,
+                                )}
                               </span>
                               {/* ID yoki username bo'lsa shu yerga mayda qilib yozish mumkin */}
                               <span className="text-[11px] text-muted-foreground uppercase tracking-wider">

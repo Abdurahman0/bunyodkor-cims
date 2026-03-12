@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatFullName, formatNameParts } from "@/lib/name-utils";
 import {
   reportService,
   transactionService,
@@ -317,13 +318,14 @@ export default function Dashboard() {
       last_name?: string;
     };
     const full =
-      (s.full_name && String(s.full_name)) ||
-      `${s.first_name || ""} ${s.last_name || ""}`;
+      formatFullName(s.full_name) ||
+      formatNameParts(s.last_name, s.first_name);
     return String(full).trim();
   };
 
   const getCoachName = (id: number) =>
-    coachesData?.data?.find((c) => c.id === id)?.full_name || `ID: ${id}`;
+    formatFullName(coachesData?.data?.find((c) => c.id === id)?.full_name) ||
+    `ID: ${id}`;
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "present":
