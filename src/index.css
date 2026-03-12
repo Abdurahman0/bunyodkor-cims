@@ -73,11 +73,18 @@
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
-  /* Fix for native date/time input icons in dark mode */
+  /* Keep native date/time controls readable across themes */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    color-scheme: light;
+  }
+
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator,
   input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-    filter: invert(0); /* Default to no invert for light mode */
+    cursor: pointer;
+    opacity: 0.9;
   }
 
   .dark input[type="date"],
@@ -89,7 +96,7 @@
   .dark input[type="date"]::-webkit-calendar-picker-indicator,
   .dark input[type="time"]::-webkit-calendar-picker-indicator,
   .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-    filter: invert(1); /* Invert for dark mode */
+    opacity: 0.95;
   }
 
   /* Custom scrollbar */
