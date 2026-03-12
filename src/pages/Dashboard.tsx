@@ -32,7 +32,7 @@ import type {
   AttendanceRead,
   DashboardSummaryPeriod,
 } from "@/types/api";
-import { endOfWeek, format, startOfWeek, subDays } from "date-fns";
+import { format, subDays } from "date-fns";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
@@ -42,9 +42,7 @@ export default function Dashboard() {
   const { t, language } = useLanguageStore();
 
   const queryClient = useQueryClient();
-  const [revenueView, setRevenueView] = useState<
-    "last7" | "weekly" | "last30"
-  >("last7");
+  const [revenueView, setRevenueView] = useState<"last7" | "last30">("last7");
 
   // "Rolling day" key so all date-based widgets refresh automatically at 00:00
   const [dayKey, setDayKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
@@ -410,55 +408,9 @@ export default function Dashboard() {
     }));
   }, [buildDailyRevenueData, summary?.last_30_days]);
 
-  const weeklyRevenueData = useMemo(() => {
-    const period = summary?.last_30_days;
-    if (!period?.from_date || !period?.to_date) return [];
-
-    const dailyRevenue = buildDailyRevenueData(period, "dayMonth");
-    if (dailyRevenue.length === 0) return [];
-
-    const rangeStart = parseLocalDateKey(period.from_date);
-    const rangeEnd = parseLocalDateKey(period.to_date);
-    rangeStart.setHours(0, 0, 0, 0);
-    rangeEnd.setHours(0, 0, 0, 0);
-
-    const buckets = new Map<
-      string,
-      { start: Date; end: Date; total: number }
-    >();
-
-    dailyRevenue.forEach((point) => {
-      const pointDate = parseLocalDateKey(point.date);
-      const weekStart = startOfWeek(pointDate, { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(pointDate, { weekStartsOn: 1 });
-      const start = weekStart < rangeStart ? new Date(rangeStart) : weekStart;
-      const end = weekEnd > rangeEnd ? new Date(rangeEnd) : weekEnd;
-      const bucketKey = format(start, "yyyy-MM-dd");
-      const bucket = buckets.get(bucketKey) ?? { start, end, total: 0 };
-
-      bucket.total += point.value;
-      buckets.set(bucketKey, bucket);
-    });
-
-    return Array.from(buckets.values())
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .map((bucket) => ({
-        date: format(bucket.start, "yyyy-MM-dd"),
-        value: bucket.total,
-        label: formatShortDayMonth(bucket.start),
-        tooltipLabel: `${formatShortDayMonth(bucket.start)} - ${formatShortDayMonth(bucket.end)}`,
-      }));
-  }, [
-    buildDailyRevenueData,
-    formatShortDayMonth,
-    parseLocalDateKey,
-    summary?.last_30_days,
-  ]);
-
   const revenueChartOptions = useMemo(
     () => [
       { key: "last7" as const, label: t("last7Days") },
-      { key: "weekly" as const, label: t("weeklyView") },
       { key: "last30" as const, label: t("last30Days") },
     ],
     [t],
@@ -470,10 +422,6 @@ export default function Dashboard() {
         data: last7RevenueData,
         subtitle: `${t("dailyRevenueTrends")} - ${t("last7Days")}`,
       },
-      weekly: {
-        data: weeklyRevenueData,
-        subtitle: `${t("revenueGroupedByWeek")} - ${t("last30Days")}`,
-      },
       last30: {
         data: last30RevenueData,
         subtitle: `${t("dailyRevenueTrends")} - ${t("last30Days")}`,
@@ -484,7 +432,6 @@ export default function Dashboard() {
       last7RevenueData,
       revenueView,
       t,
-      weeklyRevenueData,
     ],
   );
 
