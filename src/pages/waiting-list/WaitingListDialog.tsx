@@ -253,6 +253,25 @@ export function WaitingListDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="student_last_name">
+                  {t("lastName") || "Last Name"}{" "}
+                  <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="student_last_name"
+                  {...register("student_last_name", {
+                    required: t("lastNameRequired") || "Last name is required",
+                  })}
+                  placeholder={t("enterLastName") || "Enter last name"}
+                />
+                {errors.student_last_name && (
+                  <p className="text-sm text-red-500">
+                    {errors.student_last_name.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="student_first_name">
                   {t("firstName") || "First Name"}{" "}
                   <span className="text-red-500">*</span>
@@ -268,25 +287,6 @@ export function WaitingListDialog({
                 {errors.student_first_name && (
                   <p className="text-sm text-red-500">
                     {errors.student_first_name.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="student_last_name">
-                  {t("lastName") || "Last Name"}{" "}
-                  <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="student_last_name"
-                  {...register("student_last_name", {
-                    required: t("lastNameRequired") || "Last name is required",
-                  })}
-                  placeholder={t("enterLastName") || "Enter last name"}
-                />
-                {errors.student_last_name && (
-                  <p className="text-sm text-red-500">
-                    {errors.student_last_name.message}
                   </p>
                 )}
               </div>

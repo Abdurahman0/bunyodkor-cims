@@ -468,20 +468,6 @@ export default function Students() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="export_status" className="text-sm">
-                    {t("status")}
-                  </label>
-                  <SearchableSelect
-                    id="export_status"
-                    value={exportStatus}
-                    onValueChange={setExportStatus}
-                    options={exportStatusOptions}
-                    placeholder={t("allStatuses")}
-                    searchPlaceholder={`${t("search")}...`}
-                    emptyText={t("noDataFound")}
-                  />
-                </div>
-                <div className="space-y-1">
                   <label htmlFor="export_group_id" className="text-sm">
                     {t("group")}
                   </label>
@@ -494,6 +480,20 @@ export default function Students() {
                     searchPlaceholder={`${t("search")}...`}
                     emptyText={t("noDataFound")}
                     disabled={isLoadingGroups}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="export_status" className="text-sm">
+                    {t("status")}
+                  </label>
+                  <SearchableSelect
+                    id="export_status"
+                    value={exportStatus}
+                    onValueChange={setExportStatus}
+                    options={exportStatusOptions}
+                    placeholder={t("allStatuses")}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
                   />
                 </div>
               </div>
