@@ -43,7 +43,7 @@ export default function Dashboard() {
 
   const queryClient = useQueryClient();
   const [revenueView, setRevenueView] = useState<
-    "last7" | "weekly" | "last30" | "monthly"
+    "last7" | "weekly" | "last30"
   >("last7");
 
   // "Rolling day" key so all date-based widgets refresh automatically at 00:00
@@ -178,23 +178,6 @@ export default function Dashboard() {
       new Intl.DateTimeFormat(chartLocale, {
         day: "numeric",
         month: "short",
-      }).format(date),
-    [chartLocale],
-  );
-
-  const formatMonthLabel = useCallback(
-    (date: Date) =>
-      new Intl.DateTimeFormat(chartLocale, {
-        month: "short",
-      }).format(date),
-    [chartLocale],
-  );
-
-  const formatMonthYearLabel = useCallback(
-    (date: Date) =>
-      new Intl.DateTimeFormat(chartLocale, {
-        month: "long",
-        year: "numeric",
       }).format(date),
     [chartLocale],
   );
@@ -472,47 +455,11 @@ export default function Dashboard() {
     summary?.last_30_days,
   ]);
 
-  const monthlyRevenueData = useMemo(() => {
-    const period = summary?.last_90_days;
-    if (!period?.from_date || !period?.to_date) return [];
-
-    const dailyRevenue = buildDailyRevenueData(period, "dayMonth");
-    if (dailyRevenue.length === 0) return [];
-
-    const buckets = new Map<string, { month: Date; total: number }>();
-
-    dailyRevenue.forEach((point) => {
-      const pointDate = parseLocalDateKey(point.date);
-      const month = new Date(pointDate.getFullYear(), pointDate.getMonth(), 1);
-      const bucketKey = format(month, "yyyy-MM-dd");
-      const bucket = buckets.get(bucketKey) ?? { month, total: 0 };
-
-      bucket.total += point.value;
-      buckets.set(bucketKey, bucket);
-    });
-
-    return Array.from(buckets.values())
-      .sort((a, b) => a.month.getTime() - b.month.getTime())
-      .map((bucket) => ({
-        date: format(bucket.month, "yyyy-MM-dd"),
-        value: bucket.total,
-        label: formatMonthLabel(bucket.month),
-        tooltipLabel: formatMonthYearLabel(bucket.month),
-      }));
-  }, [
-    buildDailyRevenueData,
-    formatMonthLabel,
-    formatMonthYearLabel,
-    parseLocalDateKey,
-    summary?.last_90_days,
-  ]);
-
   const revenueChartOptions = useMemo(
     () => [
       { key: "last7" as const, label: t("last7Days") },
       { key: "weekly" as const, label: t("weeklyView") },
       { key: "last30" as const, label: t("last30Days") },
-      { key: "monthly" as const, label: t("monthlyView") },
     ],
     [t],
   );
@@ -531,15 +478,10 @@ export default function Dashboard() {
         data: last30RevenueData,
         subtitle: `${t("dailyRevenueTrends")} - ${t("last30Days")}`,
       },
-      monthly: {
-        data: monthlyRevenueData,
-        subtitle: `${t("revenueGroupedByMonth")} - ${t("last90Days")}`,
-      },
     })[revenueView],
     [
       last30RevenueData,
       last7RevenueData,
-      monthlyRevenueData,
       revenueView,
       t,
       weeklyRevenueData,
