@@ -264,13 +264,50 @@ export const LineChart = ({
   animate = true,
   className,
 }: LineChartProps) => {
+  const containerRef = React.useRef<HTMLDivElement | null>(null)
   const [selectedPointIndex, setSelectedPointIndex] = React.useState<number | null>(
     null
   )
+  const [containerWidth, setContainerWidth] = React.useState(400)
+
+  React.useEffect(() => {
+    const container = containerRef.current
+
+    if (!container) {
+      return
+    }
+
+    const updateWidth = () => {
+      const nextWidth = container.clientWidth
+
+      if (nextWidth > 0) {
+        setContainerWidth(nextWidth)
+      }
+    }
+
+    updateWidth()
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateWidth)
+      return () => window.removeEventListener('resize', updateWidth)
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+
+      if (entry && entry.contentRect.width > 0) {
+        setContainerWidth(entry.contentRect.width)
+      }
+    })
+
+    observer.observe(container)
+
+    return () => observer.disconnect()
+  }, [])
 
   if (!data || data.length === 0) {
     return (
-      <div className={cn('w-full', className)} style={{ height }} />
+      <div ref={containerRef} className={cn('w-full', className)} style={{ height }} />
     )
   }
 
@@ -278,8 +315,8 @@ export const LineChart = ({
   const topPadding = 24
   const labelHeight = showLegend ? 34 : 0
   const bottomPadding = 12
-  const width = 400
-  const chartWidth = width - horizontalPadding * 2
+  const width = containerWidth
+  const chartWidth = Math.max(width - horizontalPadding * 2, 1)
   const chartHeight = height - topPadding - bottomPadding - labelHeight
   const baselineY = topPadding + chartHeight
 
@@ -312,7 +349,7 @@ export const LineChart = ({
     ` L ${points[points.length - 1].x} ${baselineY} L ${horizontalPadding} ${baselineY} Z`
 
   return (
-    <div className={cn('w-full', className)}>
+    <div ref={containerRef} className={cn('w-full', className)}>
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
         {/* Grid lines */}
         {gridLines && (
