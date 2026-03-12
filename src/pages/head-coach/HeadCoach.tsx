@@ -541,7 +541,7 @@ export default function HeadCoach() {
 
         {/* TIMETABLE TAB */}
         <TabsContent value="timetable" className="space-y-4">
-          <div className="flex justify-between items-center bg-card border-border shadow-sm p-4 rounded-xl backdrop-blur-xl">
+          <div className="flex flex-col gap-3 bg-card border-border shadow-sm p-4 rounded-xl backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-xl font-semibold">{t("sessionsTimetable")}</h2>
 
             <SearchableSelect
@@ -551,7 +551,7 @@ export default function HeadCoach() {
               placeholder={t("allGroups")}
               searchPlaceholder={`${t("search")}...`}
               emptyText={t("noDataFound")}
-              className="w-[200px]"
+              className="w-full sm:w-[340px] lg:w-[420px]"
               triggerClassName="h-10"
             />
           </div>

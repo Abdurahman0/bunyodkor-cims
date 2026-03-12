@@ -554,7 +554,7 @@ export default function Contracts() {
                   placeholder={t("allGroups")}
                   searchPlaceholder={`${t("search")}...`}
                   emptyText={t("noDataFound")}
-                  className="w-48"
+                  className="w-full sm:w-96 lg:w-[26rem]"
                   triggerClassName="h-9"
                   disabled={isLoadingGroups}
                 />

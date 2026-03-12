@@ -116,6 +116,18 @@ export default function Students() {
         }))
       : []),
   ];
+  const studentGroupFilterOptions = [
+    {
+      value: "",
+      label: isLoadingGroups ? t("loading") : t("allGroups"),
+    },
+    ...(!isLoadingGroups && allGroups.length > 0
+      ? allGroups.map((group) => ({
+          value: String(group.id),
+          label: group.name,
+        }))
+      : []),
+  ];
   const exportStatusOptions = [
     { value: "", label: t("allStatuses") },
     { value: "active", label: t("active") },
@@ -543,32 +555,20 @@ export default function Students() {
                   <option value="archived">{t("archived")}</option>
                   <option value="deleted">{t("deleted")}</option>
                 </Select>
-                <Select
+                <SearchableSelect
                   value={groupFilter}
-                  onChange={(e) => {
-                    console.log(
-                      "[STUDENTS] Group filter changed:",
-                      e.target.value,
-                    );
-                    setGroupFilter(e.target.value);
+                  onValueChange={(value) => {
+                    console.log("[STUDENTS] Group filter changed:", value);
+                    setGroupFilter(value);
                   }}
-                  className="w-full sm:w-40"
+                  options={studentGroupFilterOptions}
+                  placeholder={t("allGroups")}
+                  searchPlaceholder={`${t("search")}...`}
+                  emptyText={t("noDataFound")}
+                  className="w-full sm:w-56"
+                  triggerClassName="h-9"
                   disabled={isLoadingGroups}
-                >
-                  <option value="">
-                    {isLoadingGroups ? t("loading") : t("allGroups")}
-                  </option>
-                  {!isLoadingGroups && allGroups.length > 0
-                    ? allGroups.map((group) => (
-                        <option
-                          key={`group-${group.id}`}
-                          value={String(group.id)}
-                        >
-                          {group.name}
-                        </option>
-                      ))
-                    : null}
-                </Select>
+                />
                 <Input
                   type="number"
                   placeholder={t("archiveYear")}
