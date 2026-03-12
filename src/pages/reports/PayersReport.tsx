@@ -213,7 +213,7 @@ const PayersReport: FC = () => {
               </select>
             </div>
 
-            <div className="w-64">
+            <div className="w-full sm:w-[22rem] lg:w-[26rem]">
               <label className="text-sm font-medium text-foreground mb-1 block">
                 {t("group")}
               </label>

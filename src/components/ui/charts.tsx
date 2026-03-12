@@ -426,9 +426,9 @@ export const LineChart = ({
         {/* X-axis labels */}
         {showLegend && (
           <g className="text-muted-foreground" fill="currentColor">
-            {points.map((point) => (
+            {points.map((point, index) => (
               <text
-                key={point.label}
+                key={`${point.x}-${point.label}-${index}`}
                 x={point.x}
                 y={height - 10}
                 textAnchor="middle"

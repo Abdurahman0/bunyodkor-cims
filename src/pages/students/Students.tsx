@@ -398,7 +398,7 @@ export default function Students() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="flex flex-col xl:flex-row gap-3 xl:items-end">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(18rem,1.4fr)_minmax(0,1fr)] flex-1">
                 <div className="space-y-1">
                   <label htmlFor="export_from_date" className="text-sm">
                     {t("fromDate")}
@@ -565,7 +565,7 @@ export default function Students() {
                   placeholder={t("allGroups")}
                   searchPlaceholder={`${t("search")}...`}
                   emptyText={t("noDataFound")}
-                  className="w-full sm:w-56"
+                  className="w-full sm:w-72 lg:w-80 xl:w-[22rem]"
                   triggerClassName="h-9"
                   disabled={isLoadingGroups}
                 />

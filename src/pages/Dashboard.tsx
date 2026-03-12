@@ -8,7 +8,6 @@ import {
   Users,
   GraduationCap,
   CreditCard,
-  TrendingUp,
   Calendar,
   AlertTriangle,
   CheckCircle,
@@ -27,8 +26,13 @@ import {
   userService,
   attendanceService,
 } from "@/services/api.service";
-import type { TransactionRead, GroupRead, AttendanceRead } from "@/types/api";
-import { format, subDays } from "date-fns";
+import type {
+  TransactionRead,
+  GroupRead,
+  AttendanceRead,
+  DashboardSummaryPeriod,
+} from "@/types/api";
+import { endOfWeek, format, startOfWeek, subDays } from "date-fns";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
@@ -38,6 +42,9 @@ export default function Dashboard() {
   const { t, language } = useLanguageStore();
 
   const queryClient = useQueryClient();
+  const [revenueView, setRevenueView] = useState<
+    "last7" | "weekly" | "last30" | "monthly"
+  >("last7");
 
   // "Rolling day" key so all date-based widgets refresh automatically at 00:00
   const [dayKey, setDayKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
@@ -46,17 +53,6 @@ export default function Dashboard() {
     const [year, month, day] = dateKey.split("-").map(Number);
     return new Date(year, month - 1, day);
   }, []);
-
-  const rollingChartDates = useMemo(() => {
-    const today = parseLocalDateKey(dayKey);
-    today.setHours(0, 0, 0, 0);
-
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - (6 - i));
-      return format(d, "yyyy-MM-dd");
-    });
-  }, [dayKey, parseLocalDateKey]);
 
   useEffect(() => {
     const now = new Date();
@@ -171,6 +167,38 @@ export default function Dashboard() {
     return `${day} ${dict.weekdaysLong[weekdayIndex]}, ${dict.months[monthIndex]}`;
   }, [language]);
 
+  const chartLocale = useMemo(
+    () =>
+      language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ",
+    [language],
+  );
+
+  const formatShortDayMonth = useCallback(
+    (date: Date) =>
+      new Intl.DateTimeFormat(chartLocale, {
+        day: "numeric",
+        month: "short",
+      }).format(date),
+    [chartLocale],
+  );
+
+  const formatMonthLabel = useCallback(
+    (date: Date) =>
+      new Intl.DateTimeFormat(chartLocale, {
+        month: "short",
+      }).format(date),
+    [chartLocale],
+  );
+
+  const formatMonthYearLabel = useCallback(
+    (date: Date) =>
+      new Intl.DateTimeFormat(chartLocale, {
+        month: "long",
+        year: "numeric",
+      }).format(date),
+    [chartLocale],
+  );
+
   const { data: summaryData } = useQuery({
     queryKey: ["dashboard-summary", dayKey],
     queryFn: () => reportService.getDashboardSummary(),
@@ -207,15 +235,6 @@ export default function Dashboard() {
       });
     },
   });
-
-  const weeklyRevenueByDate = useMemo(() => {
-    const map = new Map<string, number>();
-    (summary?.last_7_days?.trend || []).forEach((item) => {
-      const rawValue = Number(item.inflow);
-      map.set(item.date, Number.isFinite(rawValue) ? rawValue : 0);
-    });
-    return map;
-  }, [summary?.last_7_days?.trend]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -345,27 +364,187 @@ export default function Dashboard() {
       value: item.transaction_count,
     })) || [];
 
-  // Show the last 7 days and sync today's point with the summary card.
-  const revenueData = useMemo(() => {
-    return rollingChartDates.map((date) => {
-      const dateObj = parseLocalDateKey(date);
-      const apiValue = weeklyRevenueByDate.get(date) ?? 0;
-      const value = Number.isFinite(apiValue) ? apiValue : 0;
+  const buildDailyRevenueData = useCallback(
+    (
+      period: DashboardSummaryPeriod | undefined,
+      labelMode: "weekday" | "dayMonth",
+    ) => {
+      if (!period?.from_date || !period?.to_date) return [];
 
-      return {
-        date,
-        value,
-        label: formatChartDate(dateObj, "short"),
-        tooltipLabel: formatChartDate(dateObj, "long"),
-      };
+      const inflowByDate = new Map<string, number>();
+      (period.trend || []).forEach((item) => {
+        const amount = Number(item.inflow);
+        inflowByDate.set(item.date, Number.isFinite(amount) ? amount : 0);
+      });
+
+      const fromDate = parseLocalDateKey(period.from_date);
+      const toDate = parseLocalDateKey(period.to_date);
+      fromDate.setHours(0, 0, 0, 0);
+      toDate.setHours(0, 0, 0, 0);
+
+      const points = [];
+
+      for (
+        let cursor = new Date(fromDate);
+        cursor <= toDate;
+        cursor.setDate(cursor.getDate() + 1)
+      ) {
+        const pointDate = new Date(cursor);
+        const dateKey = format(pointDate, "yyyy-MM-dd");
+
+        points.push({
+          date: dateKey,
+          value: inflowByDate.get(dateKey) ?? 0,
+          label:
+            labelMode === "weekday"
+              ? formatChartDate(pointDate, "short")
+              : formatShortDayMonth(pointDate),
+          tooltipLabel: formatChartDate(pointDate, "long"),
+        });
+      }
+
+      return points;
+    },
+    [formatChartDate, formatShortDayMonth, parseLocalDateKey],
+  );
+
+  const last7RevenueData = useMemo(
+    () => buildDailyRevenueData(summary?.last_7_days, "weekday"),
+    [buildDailyRevenueData, summary?.last_7_days],
+  );
+
+  const last30RevenueData = useMemo(() => {
+    const points = buildDailyRevenueData(summary?.last_30_days, "dayMonth");
+
+    if (points.length <= 14) {
+      return points;
+    }
+
+    return points.map((point, index) => ({
+      ...point,
+      label:
+        index % 5 === 0 || index === points.length - 1 ? point.label : "",
+    }));
+  }, [buildDailyRevenueData, summary?.last_30_days]);
+
+  const weeklyRevenueData = useMemo(() => {
+    const period = summary?.last_30_days;
+    if (!period?.from_date || !period?.to_date) return [];
+
+    const dailyRevenue = buildDailyRevenueData(period, "dayMonth");
+    if (dailyRevenue.length === 0) return [];
+
+    const rangeStart = parseLocalDateKey(period.from_date);
+    const rangeEnd = parseLocalDateKey(period.to_date);
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setHours(0, 0, 0, 0);
+
+    const buckets = new Map<
+      string,
+      { start: Date; end: Date; total: number }
+    >();
+
+    dailyRevenue.forEach((point) => {
+      const pointDate = parseLocalDateKey(point.date);
+      const weekStart = startOfWeek(pointDate, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(pointDate, { weekStartsOn: 1 });
+      const start = weekStart < rangeStart ? new Date(rangeStart) : weekStart;
+      const end = weekEnd > rangeEnd ? new Date(rangeEnd) : weekEnd;
+      const bucketKey = format(start, "yyyy-MM-dd");
+      const bucket = buckets.get(bucketKey) ?? { start, end, total: 0 };
+
+      bucket.total += point.value;
+      buckets.set(bucketKey, bucket);
     });
+
+    return Array.from(buckets.values())
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .map((bucket) => ({
+        date: format(bucket.start, "yyyy-MM-dd"),
+        value: bucket.total,
+        label: formatShortDayMonth(bucket.start),
+        tooltipLabel: `${formatShortDayMonth(bucket.start)} - ${formatShortDayMonth(bucket.end)}`,
+      }));
   }, [
-    dayKey,
-    formatChartDate,
+    buildDailyRevenueData,
+    formatShortDayMonth,
     parseLocalDateKey,
-    rollingChartDates,
-    weeklyRevenueByDate,
+    summary?.last_30_days,
   ]);
+
+  const monthlyRevenueData = useMemo(() => {
+    const period = summary?.last_90_days;
+    if (!period?.from_date || !period?.to_date) return [];
+
+    const dailyRevenue = buildDailyRevenueData(period, "dayMonth");
+    if (dailyRevenue.length === 0) return [];
+
+    const buckets = new Map<string, { month: Date; total: number }>();
+
+    dailyRevenue.forEach((point) => {
+      const pointDate = parseLocalDateKey(point.date);
+      const month = new Date(pointDate.getFullYear(), pointDate.getMonth(), 1);
+      const bucketKey = format(month, "yyyy-MM-dd");
+      const bucket = buckets.get(bucketKey) ?? { month, total: 0 };
+
+      bucket.total += point.value;
+      buckets.set(bucketKey, bucket);
+    });
+
+    return Array.from(buckets.values())
+      .sort((a, b) => a.month.getTime() - b.month.getTime())
+      .map((bucket) => ({
+        date: format(bucket.month, "yyyy-MM-dd"),
+        value: bucket.total,
+        label: formatMonthLabel(bucket.month),
+        tooltipLabel: formatMonthYearLabel(bucket.month),
+      }));
+  }, [
+    buildDailyRevenueData,
+    formatMonthLabel,
+    formatMonthYearLabel,
+    parseLocalDateKey,
+    summary?.last_90_days,
+  ]);
+
+  const revenueChartOptions = useMemo(
+    () => [
+      { key: "last7" as const, label: t("last7Days") },
+      { key: "weekly" as const, label: t("weeklyView") },
+      { key: "last30" as const, label: t("last30Days") },
+      { key: "monthly" as const, label: t("monthlyView") },
+    ],
+    [t],
+  );
+
+  const activeRevenueChart = useMemo(
+    () => ({
+      last7: {
+        data: last7RevenueData,
+        subtitle: `${t("dailyRevenueTrends")} - ${t("last7Days")}`,
+      },
+      weekly: {
+        data: weeklyRevenueData,
+        subtitle: `${t("revenueGroupedByWeek")} - ${t("last30Days")}`,
+      },
+      last30: {
+        data: last30RevenueData,
+        subtitle: `${t("dailyRevenueTrends")} - ${t("last30Days")}`,
+      },
+      monthly: {
+        data: monthlyRevenueData,
+        subtitle: `${t("revenueGroupedByMonth")} - ${t("last90Days")}`,
+      },
+    })[revenueView],
+    [
+      last30RevenueData,
+      last7RevenueData,
+      monthlyRevenueData,
+      revenueView,
+      t,
+      weeklyRevenueData,
+    ],
+  );
 
   // Attendance data - using group attendance reports for aggregate data
   useQuery({
@@ -450,20 +629,33 @@ export default function Dashboard() {
       >
         <motion.div variants={itemVariants}>
           <Card className="h-full">
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <CardHeader className="flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="text-lg font-semibold">
                   {t("revenueOverview")}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {t("weeklyRevenueTrends")} - {t("last7Days")}
+                  {activeRevenueChart.subtitle}
                 </p>
               </div>
-              <TrendingUp className="w-5 h-5 text-green-500" />
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                {revenueChartOptions.map((option) => (
+                  <Button
+                    key={option.key}
+                    type="button"
+                    size="sm"
+                    variant={revenueView === option.key ? "default" : "outline"}
+                    className="h-8"
+                    onClick={() => setRevenueView(option.key)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
             </CardHeader>
             <CardContent className="pb-6">
               <LineChart
-                data={revenueData}
+                data={activeRevenueChart.data}
                 height={250}
                 curved={false}
                 startFromZero

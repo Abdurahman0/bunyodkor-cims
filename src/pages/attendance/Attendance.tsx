@@ -21,6 +21,7 @@ import {
   TableEmpty,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   CheckCircle,
   XCircle,
@@ -138,6 +139,17 @@ export default function Attendance() {
     });
     return map;
   }, [sessionsData]);
+
+  const groupFilterOptions = useMemo(
+    () => [
+      { value: "all", label: t("allGroups") || "All groups" },
+      ...(groupsFilterData || []).map((group) => ({
+        value: String(group.id),
+        label: group.name,
+      })),
+    ],
+    [groupsFilterData, t],
+  );
 
   const truncateTopic = (topic: string) => {
     const words = topic.trim().split(/\s+/).filter(Boolean);
@@ -352,7 +364,7 @@ export default function Attendance() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(20rem,1.35fr)]">
               <div>
                 <label className="text-sm text-muted-foreground mb-2 block">
                   {t("fromDate") || "From Date"}
@@ -397,21 +409,18 @@ export default function Attendance() {
                 <label className="text-sm text-muted-foreground mb-2 block">
                   {t("group") || "Group"}
                 </label>
-                <select
+                <SearchableSelect
                   value={selectedGroupId}
-                  onChange={(e) => {
-                    setSelectedGroupId(e.target.value);
+                  onValueChange={(value) => {
+                    setSelectedGroupId(value);
                     setPage(1);
                   }}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
-                >
-                  <option value="all">{t("allGroups") || "All groups"}</option>
-                  {(groupsFilterData || []).map((group) => (
-                    <option key={group.id} value={String(group.id)}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
+                  options={groupFilterOptions}
+                  placeholder={t("allGroups") || "All groups"}
+                  searchPlaceholder={`${t("search")}...`}
+                  emptyText={t("noDataFound")}
+                  triggerClassName="h-10"
+                />
               </div>
             </div>
           </CardContent>

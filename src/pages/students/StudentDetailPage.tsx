@@ -1365,143 +1365,136 @@ export default function StudentDetailPage() {
 
       {/* Terminate Contract Dialog */}
       <Dialog open={isTerminateDialogOpen} onOpenChange={setIsTerminateDialogOpen}>
-  <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden">
-    <div className="px-6 py-5 border-b border-border/60">
-      <DialogHeader className="space-y-2">
-        <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-500">
-          <AlertTriangle className="w-5 h-5" />
-          {t("cancelContractAction")}
-        </DialogTitle>
-        <DialogDescription className="text-sm">
-          {activeContract?.contract_number ? (
-            <span className="inline-flex items-center gap-2">
-              <Badge variant="secondary" className="font-mono">
-                {activeContract.contract_number}
-              </Badge>
-              <span className="text-muted-foreground">
-                {t("contractNumber")}
-              </span>
-            </span>
-          ) : (
-            t("noContracts")
-          )}
-        </DialogDescription>
-      </DialogHeader>
-    </div>
-    <div className="px-6 py-5 space-y-4">
-      <div className="space-y-2">
-        <label
-          htmlFor="termination_reason"
-          className="text-sm font-medium flex items-center justify-between"
-        >
-          <span className="inline-flex items-center gap-2">
-            <FileText className="w-4 h-4 text-muted-foreground" />
-            {t("terminationReason")}
-          </span>
-          <span className="text-xs text-red-500">*</span>
-        </label>
-
-        <input
-          id="termination_reason"
-          value={terminationReason}
-          onChange={(e) => setTerminationReason(e.target.value)}
-          placeholder={t("reason")}
-          className="
-            w-full h-11 rounded-xl border border-border bg-background px-4
-            text-foreground shadow-sm outline-none
-            focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/40
-            transition
-          "
-        />
-
-        <p className="text-xs text-muted-foreground">
-          {t("terminateContractDescription")}
-        </p>
-      </div>
-
-      {/* Datetime */}
-      <div className="space-y-2">
-        <label
-          htmlFor="terminated_at"
-          className="text-sm font-medium flex items-center justify-between"
-        >
-          <span className="inline-flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            {t("terminatedAt")}
-          </span>
-          <span className="text-xs text-red-500">*</span>
-        </label>
-
-        <div className="relative">
-          <input
-            id="terminated_at"
-            type="datetime-local"
-            value={terminatedAt}
-            onChange={(e) => setTerminatedAt(e.target.value)}
-            className="
-              w-full h-11 rounded-xl border border-border bg-background px-4 pr-11
-              text-foreground shadow-sm outline-none
-              focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/40
-              transition
-            "
-          />
-          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-            <Clock className="w-4 h-4 text-muted-foreground" />
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-[520px] p-0 overflow-hidden">
+          <div className="border-b border-border/60 px-4 py-4 sm:px-6 sm:py-5">
+            <DialogHeader className="space-y-2 p-0">
+              <DialogTitle className="flex items-start gap-2 text-base text-red-600 dark:text-red-500 sm:text-lg">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <span>{t("cancelContractAction")}</span>
+              </DialogTitle>
+              <DialogDescription className="text-sm">
+                {activeContract?.contract_number ? (
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="font-mono">
+                      {activeContract.contract_number}
+                    </Badge>
+                    <span className="text-muted-foreground">
+                      {t("contractNumber")}
+                    </span>
+                  </span>
+                ) : (
+                  t("noContracts")
+                )}
+              </DialogDescription>
+            </DialogHeader>
           </div>
-        </div>
-      </div>
-    </div>
 
-    {/* FOOTER */}
-    <div className="px-6 py-5 border-t border-border/60 bg-muted/20">
-      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-        <Button
-          variant="outline"
-          className="sm:w-auto"
-          onClick={() => setIsTerminateDialogOpen(false)}
-          disabled={terminateContractMutation.isPending}
-        >
-          {t("cancel")}
-        </Button>
+          <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
+            <div className="space-y-2">
+              <label
+                htmlFor="termination_reason"
+                className="flex items-center justify-between text-sm font-medium"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  {t("terminationReason")}
+                </span>
+                <span className="text-xs text-red-500">*</span>
+              </label>
 
-        <Button
-          variant="destructive"
-          className="sm:w-auto"
-          disabled={terminateContractMutation.isPending || !activeContract}
-          onClick={() => {
-            if (!activeContract) return;
+              <input
+                id="termination_reason"
+                value={terminationReason}
+                onChange={(e) => setTerminationReason(e.target.value)}
+                placeholder={t("reason")}
+                className="
+                  h-11 w-full rounded-xl border border-border bg-background px-4
+                  text-base text-foreground shadow-sm outline-none transition sm:text-sm
+                  focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/40
+                "
+              />
 
-            if (!terminationReason.trim()) {
-              toast.error(t("reason"));
-              return;
-            }
-            if (!terminatedAt) {
-              toast.error(t("terminatedAt"));
-              return;
-            }
+              <p className="text-xs text-muted-foreground">
+                {t("terminateContractDescription")}
+              </p>
+            </div>
 
-            terminateContractMutation.mutate({
-              contractId: activeContract.id,
-              termination_reason: terminationReason.trim(),
-              terminated_at: terminatedAt,
-            });
-          }}
-        >
-          {terminateContractMutation.isPending ? (
-            <span className="inline-flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              {t("saving")}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-2">
-              <Trash2 className="w-4 h-4" />
-              {t("cancelContractAction")}
-            </span>
-          )}
-        </Button>
-      </div>
-    </div>
-  </DialogContent>
+            <div className="space-y-2">
+              <label
+                htmlFor="terminated_at"
+                className="flex items-center justify-between text-sm font-medium"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  {t("terminatedAt")}
+                </span>
+                <span className="text-xs text-red-500">*</span>
+              </label>
+
+              <input
+                id="terminated_at"
+                type="datetime-local"
+                value={terminatedAt}
+                onChange={(e) => setTerminatedAt(e.target.value)}
+                className="
+                  h-11 w-full rounded-xl border border-border bg-background px-4
+                  text-base text-foreground shadow-sm outline-none transition
+                  [color-scheme:light] dark:[color-scheme:dark] sm:text-sm
+                  focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/40
+                "
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-border/60 bg-muted/20 px-4 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => setIsTerminateDialogOpen(false)}
+                disabled={terminateContractMutation.isPending}
+              >
+                {t("cancel")}
+              </Button>
+
+              <Button
+                variant="destructive"
+                className="w-full sm:w-auto"
+                disabled={terminateContractMutation.isPending || !activeContract}
+                onClick={() => {
+                  if (!activeContract) return;
+
+                  if (!terminationReason.trim()) {
+                    toast.error(t("reason"));
+                    return;
+                  }
+                  if (!terminatedAt) {
+                    toast.error(t("terminatedAt"));
+                    return;
+                  }
+
+                  terminateContractMutation.mutate({
+                    contractId: activeContract.id,
+                    termination_reason: terminationReason.trim(),
+                    terminated_at: terminatedAt,
+                  });
+                }}
+              >
+                {terminateContractMutation.isPending ? (
+                  <span className="inline-flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    {t("saving")}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    {t("cancelContractAction")}
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
       </Dialog>
 
       {/* Edit Contract Dialog */}

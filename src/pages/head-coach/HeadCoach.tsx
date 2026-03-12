@@ -551,7 +551,7 @@ export default function HeadCoach() {
               placeholder={t("allGroups")}
               searchPlaceholder={`${t("search")}...`}
               emptyText={t("noDataFound")}
-              className="w-full sm:w-[340px] lg:w-[420px]"
+              className="w-full sm:w-[420px] lg:w-[520px]"
               triggerClassName="h-10"
             />
           </div>
