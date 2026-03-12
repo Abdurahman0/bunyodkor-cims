@@ -369,69 +369,11 @@ export default function Students() {
         </div>
       </motion.div>
 
-      {/* Stats Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        {[
-          {
-            label: t("totalStudents"),
-            value: stats.total,
-            icon: UsersIcon,
-            color: "blue",
-          },
-          {
-            label: t("active"),
-            value: stats.active,
-            icon: UsersIcon,
-            color: "green",
-          },
-          {
-            label: t("archived"),
-            value: stats.archived,
-            icon: UsersIcon,
-            color: "purple",
-          },
-          {
-            label: t("deleted"),
-            value: stats.deleted,
-            icon: UsersIcon,
-            color: "rose",
-          },
-        ].map((stat) => (
-          <Card
-            key={stat.label}
-            className="border-border/50 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {stat.value}
-                  </p>
-                </div>
-                <div
-                  className={`p-2 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/30`}
-                >
-                  <stat.icon
-                    className={`w-5 h-5 text-${stat.color}-600 dark:text-${stat.color}-400`}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </motion.div>
-
       {/* Comprehensive Export Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.1 }}
       >
         <Card className="border-border/50 shadow-sm">
           <CardHeader className="pb-3">
@@ -512,6 +454,64 @@ export default function Students() {
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* Stats Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        {[
+          {
+            label: t("totalStudents"),
+            value: stats.total,
+            icon: UsersIcon,
+            color: "blue",
+          },
+          {
+            label: t("active"),
+            value: stats.active,
+            icon: UsersIcon,
+            color: "green",
+          },
+          {
+            label: t("archived"),
+            value: stats.archived,
+            icon: UsersIcon,
+            color: "purple",
+          },
+          {
+            label: t("deleted"),
+            value: stats.deleted,
+            icon: UsersIcon,
+            color: "rose",
+          },
+        ].map((stat) => (
+          <Card
+            key={stat.label}
+            className="border-border/50 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1">
+                    {stat.value}
+                  </p>
+                </div>
+                <div
+                  className={`p-2 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/30`}
+                >
+                  <stat.icon
+                    className={`w-5 h-5 text-${stat.color}-600 dark:text-${stat.color}-400`}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </motion.div>
 
       {/* Filters */}

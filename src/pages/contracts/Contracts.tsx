@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Table,
   TableBody,
@@ -100,6 +101,29 @@ export default function Contracts() {
   }, [searchParams]);
 
   const debouncedSearch = useDebounce(search, 500);
+  const contractGroupOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: isLoadingGroups ? t("loading") : t("allGroups"),
+      },
+      ...(allGroupsData && Array.isArray(allGroupsData)
+        ? allGroupsData.flatMap((yearGroup: any) => {
+            if (!yearGroup?.groups || !Array.isArray(yearGroup.groups)) {
+              return [];
+            }
+
+            return yearGroup.groups
+              .filter((group: any) => group && group.id && group.name)
+              .map((group: any) => ({
+                value: String(group.id),
+                label: group.name,
+              }));
+          })
+        : []),
+    ],
+    [allGroupsData, isLoadingGroups, t],
+  );
 
   const contractsQuery = useQuery({
     queryKey: [
@@ -520,38 +544,20 @@ export default function Contracts() {
                   })}
                 </Select>
 
-                <Select
+                <SearchableSelect
                   value={groupFilter?.toString() || ""}
-                  onChange={(e) => {
-                    setGroupFilter(
-                      e.target.value ? parseInt(e.target.value, 10) : undefined,
-                    );
+                  onValueChange={(value) => {
+                    setGroupFilter(value ? parseInt(value, 10) : undefined);
                     setPage(1);
                   }}
+                  options={contractGroupOptions}
+                  placeholder={t("allGroups")}
+                  searchPlaceholder={`${t("search")}...`}
+                  emptyText={t("noDataFound")}
                   className="w-48"
-                >
-                  <option value="">{t("allGroups")}</option>
-                  {allGroupsData && Array.isArray(allGroupsData)
-                    ? allGroupsData.map((yearGroup: any) => {
-                        if (
-                          !yearGroup?.groups ||
-                          !Array.isArray(yearGroup.groups)
-                        ) {
-                          return null;
-                        }
-                        return yearGroup.groups
-                          .filter((group: any) => group && group.id && group.name)
-                          .map((group: any) => (
-                            <option
-                              key={`group-${group.id}`}
-                              value={String(group.id)}
-                            >
-                              {group.name}
-                            </option>
-                          ));
-                      })
-                    : null}
-                </Select>
+                  triggerClassName="h-9"
+                  disabled={isLoadingGroups}
+                />
 
                 {view !== "contracts" && (
                   <>

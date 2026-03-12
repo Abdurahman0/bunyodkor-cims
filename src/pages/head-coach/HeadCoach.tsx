@@ -29,6 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 // Icons
 import {
@@ -295,6 +296,19 @@ export default function HeadCoach() {
     }
     return groups.filter((g) => g.id.toString() === filterGroupId);
   }, [groups, filterGroupId]);
+  const timetableGroupOptions = useMemo(
+    () => [
+      {
+        value: "all",
+        label: t("allGroups"),
+      },
+      ...groups.map((group) => ({
+        value: group.id.toString(),
+        label: group.name,
+      })),
+    ],
+    [groups, t],
+  );
 
   type GroupWithOptionalStudentsCount = (typeof groups)[number] & {
     students_count?: number;
@@ -530,18 +544,16 @@ export default function HeadCoach() {
           <div className="flex justify-between items-center bg-card border-border shadow-sm p-4 rounded-xl backdrop-blur-xl">
             <h2 className="text-xl font-semibold">{t("sessionsTimetable")}</h2>
 
-            <Select
+            <SearchableSelect
               value={filterGroupId}
-              onChange={(e) => setFilterGroupId(e.target.value)}
+              onValueChange={setFilterGroupId}
+              options={timetableGroupOptions}
+              placeholder={t("allGroups")}
+              searchPlaceholder={`${t("search")}...`}
+              emptyText={t("noDataFound")}
               className="w-[200px]"
-            >
-              <option value="all">{t("allGroups")}</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id.toString()}>
-                  {g.name}
-                </option>
-              ))}
-            </Select>
+              triggerClassName="h-10"
+            />
           </div>
 
           {isSessionsLoading || isGroupsLoading || isCoachesLoading ? (

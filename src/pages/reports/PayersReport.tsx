@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Table,
   TableHeader,
@@ -74,6 +75,19 @@ const PayersReport: FC = () => {
     if (!groupsData?.data) return [];
     return groupsData.data;
   }, [groupsData]);
+  const payerGroupOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: groupsLoading ? t("loading") : t("allGroups"),
+      },
+      ...groupsList.map((group: any) => ({
+        value: String(group.id),
+        label: group.name,
+      })),
+    ],
+    [groupsList, groupsLoading, t],
+  );
 
   const { data: payersData, isLoading } = useQuery({
     queryKey: [
@@ -203,32 +217,20 @@ const PayersReport: FC = () => {
               <label className="text-sm font-medium text-foreground mb-1 block">
                 {t("group")}
               </label>
-              <select
+              <SearchableSelect
                 value={groupId ? String(groupId) : ""}
-                onChange={(e) => {
-                  setGroupId(e.target.value ? Number(e.target.value) : null);
+                onValueChange={(value) => {
+                  setGroupId(value ? Number(value) : null);
                   setPage(1);
                 }}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                options={payerGroupOptions}
+                placeholder={t("allGroups")}
+                searchPlaceholder={`${t("search")}...`}
+                emptyText={t("noDataFound")}
+                className="w-full"
+                triggerClassName="h-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 disabled={groupsLoading}
-              >
-                <option value="">{t("allGroups")}</option>
-                {groupsLoading ? (
-                  <option value="" disabled>
-                    {t("loading")}
-                  </option>
-                ) : groupsList && groupsList.length > 0 ? (
-                  groupsList.map((g: any) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    {t("noGroupsAvailable")}
-                  </option>
-                )}
-              </select>{" "}
+              />
             </div>
 
             <div>
