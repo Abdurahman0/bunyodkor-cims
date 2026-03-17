@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { useEffect, type JSX } from "react";
 import { useThemeStore } from "@/store/themeStore";
 import { useAuthStore } from "@/store/authStore";
+import { getFirstAccessibleRoute, hasPermission, hasRole } from "@/lib/auth-routing";
 
 // Layout
 import DashboardLayout from "./layout/DashboardLayout";
@@ -54,66 +55,23 @@ function ThemeInitializer() {
   return null;
 }
 
-// Barcha route va ularning ruxsatlari ro'yxati
-const routesConfig = [
-  { path: "/", permission: "dashboard:view" },
-  { path: "/students", permission: "students:view" },
-  { path: "/groups", permission: "groups:view" },
-  { path: "/contracts", permission: "contracts:view" },
-  { path: "/finance", permission: "finance:transactions:view" },
-  { path: "/coach", permission: "attendance:coach:mark" },
-  { path: "/attendance", permission: "attendance:view" },
-  { path: "/gate", permission: "gate:logs:view" },
-  { path: "/waiting-list", permission: "students:view" },
-  { path: "/reports", permission: "reports:dashboard:view" },
-  { path: "/users", permission: "users:manage" },
-  { path: "/roles", permission: "roles:view" },
-  { path: "/settings", permission: "settings:system:view" },
-  { path: "/archive", permission: "settings:system:view" },
-  { path: "/head-coach", permission: "session:create" },
-];
-
-// Foydalanuvchi uchun birinchi ruxsat etilgan sahifani topish
- 
-const getFirstAccessibleRoute = (user: any, permissions: string[]) => {
-  if (!user) return "/login";
-  if (user.is_super_admin) return "/"; // Super admin dashboardga kira oladi
-
-  // Head Coach uchun maxsus tekshiruv
-  const isHeadCoach =
-    user?.role === "head-coach" ||
-    permissions.includes("session:create") ||
-    !!user?.roles?.some((r: any) => {
-      const name = (r.name || r || "")
-        .toString()
-        .toLowerCase()
-        .replace(/[\s_-]/g, "");
-      return name === "headcoach";
-    });
-  if (isHeadCoach) return "/head-coach";
-
-  // Foydalanuvchi ruxsati bor birinchi routeni topamiz
-  const route = routesConfig.find((r) => {
-    if (!r.permission) return true;
-    if (permissions.includes("*")) return true;
-    if (permissions.includes(r.permission)) return true;
-
-    // Wildcard check (masalan finance:*)
-    const parts = r.permission.split(":");
-    for (let i = 1; i < parts.length; i++) {
-      const wildcard = parts.slice(0, i).join(":") + ":*";
-      if (permissions.includes(wildcard)) return true;
-    }
-    return false;
-  });
-
-  return route ? route.path : "/login"; // Hech qaysiga ruxsat bo'lmasa login
-};
-
 interface ProtectedRouteProps {
   children: JSX.Element;
   permission?: string;
   allowedRoles?: string[];
+}
+
+function HomeRoute() {
+  const { user, permissions } = useAuthStore();
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  const homeRoute = getFirstAccessibleRoute(user, permissions);
+  if (homeRoute === "/") {
+    return <Dashboard />;
+  }
+
+  return <Navigate to={homeRoute} replace />;
 }
 
 function ProtectedRoute({
@@ -129,40 +87,15 @@ function ProtectedRoute({
 
   // Rol bo'yicha tekshirish (Permission bo'lmasa ham ruxsat berish uchun)
   if (allowedRoles && allowedRoles.length > 0) {
-    const hasRole = allowedRoles.some((role) => {
+    const hasAllowedRole = allowedRoles.some((role) => {
       if (user.role === role) return true;
-      const normalizedRole = role.toLowerCase().replace(/[\s_-]/g, "");
-      if (user.role && user.role.toLowerCase().replace(/[\s_-]/g, "") === normalizedRole) return true;
-      
-      if (user.roles && Array.isArray(user.roles)) {
-        return user.roles.some((r: any) => {
-          const name = (r.name || r || "")
-            .toString()
-            .toLowerCase()
-            .replace(/[\s_-]/g, "");
-          return name === normalizedRole;
-        });
-      }
-      return false;
+      return hasRole(user, role);
     });
-    if (hasRole) return children;
+    if (hasAllowedRole) return children;
   }
 
   // Ruxsat tekshirish
-  const hasPermission = () => {
-    if (!permission) return true; // Permission talab qilinmagan bo'lsa (lekin biz hamma joyga qo'ydik)
-    if (permissions.includes("*")) return true;
-    if (permissions.includes(permission)) return true;
-
-    const parts = permission.split(":");
-    for (let i = 1; i < parts.length; i++) {
-      const wildcard = parts.slice(0, i).join(":") + ":*";
-      if (permissions.includes(wildcard)) return true;
-    }
-    return false;
-  };
-
-  if (hasPermission()) {
+  if (hasPermission(permissions, permission)) {
     return children;
   }
 
@@ -207,11 +140,7 @@ function App() {
           <Route path="/" element={<DashboardLayout />}>
             <Route
               index
-              element={
-                <ProtectedRoute permission="dashboard:view">
-                  <Dashboard />
-                </ProtectedRoute>
-              }
+              element={<HomeRoute />}
             />
 
             <Route

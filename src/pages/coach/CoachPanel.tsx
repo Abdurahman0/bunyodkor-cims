@@ -75,6 +75,7 @@ import { useLanguageStore } from "@/store/languageStore";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart, StatsCard } from "@/components/ui/charts";
 import { formatPersonName } from "@/lib/name-utils";
+import { formatCurrency } from "@/lib/format-utils";
 
 const normalizeSessionForUi = (
   session:
@@ -409,6 +410,17 @@ export default function CoachPanel() {
     return t("unknownStudent") || "Unknown Student";
   };
 
+  const getStudentDebtAmount = (item: any) => {
+    const debtAmount =
+      item?.current_debt ??
+      item?.debt_amount ??
+      item?.student?.current_debt ??
+      item?.student?.debt_amount ??
+      0;
+
+    return Number(debtAmount) || 0;
+  };
+
   const getSessionGroupName = (session: SessionRead | null | undefined) => {
     if (!session) return t("unknownGroup") || "Unknown Group";
 
@@ -674,6 +686,7 @@ export default function CoachPanel() {
                           <div className="space-y-3 md:hidden">
                             {studentsData.map((student: any) => {
                               const studentId = getStudentId(student);
+                              const debtAmount = getStudentDebtAmount(student);
 
                               return (
                                 <div
@@ -685,15 +698,16 @@ export default function CoachPanel() {
                                       <p className="font-semibold text-foreground">
                                         {getStudentDisplayName(student)}
                                       </p>
-                                      <Badge
-                                        variant={student.has_debt ? "destructive" : "secondary"}
-                                        className="w-fit gap-1.5"
-                                      >
-                                        {student.has_debt && (
-                                          <AlertTriangle className="h-3 w-3" />
-                                        )}
-                                        {student.has_debt ? t("hasDebt") : t("noDebt")}
-                                      </Badge>
+                                      {debtAmount > 0 ? (
+                                        <div className="flex items-center gap-1.5 text-sm font-medium text-red-600">
+                                          <AlertTriangle className="h-3.5 w-3.5" />
+                                          <span>{formatCurrency(debtAmount)}</span>
+                                        </div>
+                                      ) : (
+                                        <Badge variant="secondary" className="w-fit">
+                                          {t("noDebt")}
+                                        </Badge>
+                                      )}
                                     </div>
                                     <div>{renderAttendanceActions(studentId)}</div>
                                   </div>
@@ -707,7 +721,7 @@ export default function CoachPanel() {
                               <TableHeader>
                                 <TableRow>
                                   <TableHead>{t("student")}</TableHead>
-                                  <TableHead>{t("debtStatus")}</TableHead>
+                                  <TableHead>{t("debtAmount")}</TableHead>
                                   <TableHead className="text-right">
                                     {t("markAttendance")}
                                   </TableHead>
@@ -716,6 +730,7 @@ export default function CoachPanel() {
                               <TableBody>
                                 {studentsData.map((student: any) => {
                                   const studentId = getStudentId(student);
+                                  const debtAmount = getStudentDebtAmount(student);
 
                                   return (
                                     <TableRow key={studentId}>
@@ -723,15 +738,15 @@ export default function CoachPanel() {
                                         {getStudentDisplayName(student)}
                                       </TableCell>
                                       <TableCell>
-                                        <Badge
-                                          variant={student.has_debt ? "destructive" : "secondary"}
-                                          className="gap-1.5"
-                                        >
-                                          {student.has_debt && (
-                                            <AlertTriangle className="h-3 w-3" />
-                                          )}
-                                          {student.has_debt ? t("hasDebt") : t("noDebt")}
-                                        </Badge>
+                                        {debtAmount > 0 ? (
+                                          <span className="font-medium text-red-600">
+                                            {formatCurrency(debtAmount)}
+                                          </span>
+                                        ) : (
+                                          <Badge variant="secondary">
+                                            {t("noDebt")}
+                                          </Badge>
+                                        )}
                                       </TableCell>
                                       <TableCell className="text-right">
                                         {renderAttendanceActions(studentId)}

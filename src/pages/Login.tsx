@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { authService } from "@/services/api.service";
 import { useAuthStore } from "@/store/authStore";
+import { getFirstAccessibleRoute } from "@/lib/auth-routing";
 import { formatFullName } from "@/lib/name-utils";
 import {
   Card,
@@ -60,7 +61,9 @@ export default function Login() {
         icon: "👋",
         duration: 3000,
       });
-      navigate("/");
+      navigate(getFirstAccessibleRoute(data.user, data.permissions), {
+        replace: true,
+      });
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
