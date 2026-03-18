@@ -982,8 +982,8 @@ export default function CoachPanel() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>{t("firstName")}</TableHead>
                               <TableHead>{t("lastName")}</TableHead>
+                              <TableHead>{t("firstName")}</TableHead>
                               <TableHead>{t("contractNumber")}</TableHead>
                               <TableHead>{t("debtAmount")}</TableHead>
                               <TableHead>{t("birthYear")}</TableHead>
@@ -1003,10 +1003,10 @@ export default function CoachPanel() {
                               groupStudentRows.map((student) => (
                                 <TableRow key={student.id}>
                                   <TableCell className="font-medium">
-                                    {student.firstName}
+                                    {student.lastName}
                                   </TableCell>
                                   <TableCell className="font-medium">
-                                    {student.lastName}
+                                    {student.firstName}
                                   </TableCell>
                                   <TableCell>{student.contractNumber}</TableCell>
                                   <TableCell>
