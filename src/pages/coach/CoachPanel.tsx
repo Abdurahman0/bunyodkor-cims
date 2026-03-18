@@ -568,14 +568,20 @@ export default function CoachPanel() {
     return "-";
   };
 
-  const groupStudentRows = (groupStudentsData || []).map((student: any) => ({
-    id: getStudentId(student) || student.id,
-    firstName: student?.first_name ?? student?.student?.first_name ?? "-",
-    lastName: student?.last_name ?? student?.student?.last_name ?? "-",
-    contractNumber: getStudentContractNumber(student),
-    debtAmount: getStudentDebtAmount(student),
-    birthYear: getStudentBirthYear(student),
-  }));
+  const groupStudentRows = (groupStudentsData || [])
+    .map((student: any) => ({
+      id: getStudentId(student) || student.id,
+      firstName: student?.first_name ?? student?.student?.first_name ?? "-",
+      lastName: student?.last_name ?? student?.student?.last_name ?? "-",
+      contractNumber: getStudentContractNumber(student),
+      debtAmount: getStudentDebtAmount(student),
+      birthYear: getStudentBirthYear(student),
+    }))
+    .sort((a, b) => {
+      const aNum = String(a.contractNumber ?? "");
+      const bNum = String(b.contractNumber ?? "");
+      return aNum.localeCompare(bNum, undefined, { numeric: true });
+    });
 
   const isGroupStudentsTableLoading =
     groupStudentsLoading || groupContractsLoading || groupDebtorsLoading;
@@ -986,18 +992,17 @@ export default function CoachPanel() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>{t("lastName")}</TableHead>
-                              <TableHead>{t("firstName")}</TableHead>
+                              <TableHead>{t("fullName")}</TableHead>
+                              <TableHead>{t("birthYear")}</TableHead>
                               <TableHead>{t("contractNumber")}</TableHead>
                               <TableHead>{t("debtAmount")}</TableHead>
-                              <TableHead>{t("birthYear")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {isGroupStudentsTableLoading ? (
                               <TableRow>
                                 <TableCell
-                                  colSpan={5}
+                                  colSpan={4}
                                   className="h-24 text-center"
                                 >
                                   <Loader2 className="mx-auto animate-spin text-primary" />
@@ -1007,11 +1012,9 @@ export default function CoachPanel() {
                               groupStudentRows.map((student) => (
                                 <TableRow key={student.id}>
                                   <TableCell className="font-medium">
-                                    {student.lastName}
+                                    {student.lastName} {student.firstName}
                                   </TableCell>
-                                  <TableCell className="font-medium">
-                                    {student.firstName}
-                                  </TableCell>
+                                  <TableCell>{student.birthYear}</TableCell>
                                   <TableCell>{student.contractNumber}</TableCell>
                                   <TableCell>
                                     {student.debtAmount > 0 ? (
@@ -1024,13 +1027,12 @@ export default function CoachPanel() {
                                       </Badge>
                                     )}
                                   </TableCell>
-                                  <TableCell>{student.birthYear}</TableCell>
                                 </TableRow>
                               ))
                             ) : (
                               <TableRow>
                                 <TableCell
-                                  colSpan={5}
+                                  colSpan={4}
                                   className="h-24 text-center"
                                 >
                                   {t("noStudentsInGroup")}
