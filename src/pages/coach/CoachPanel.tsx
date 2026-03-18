@@ -44,6 +44,7 @@ import { Select } from "@/components/ui/select";
 import {
   coachService,
   groupService,
+  reportService,
   studentService,
 } from "@/services/api.service";
 import type {
@@ -57,7 +58,6 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertTriangle,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -199,6 +199,76 @@ export default function CoachPanel() {
       enabled: !!selectedGroup,
     },
   );
+
+  const { data: groupContractsData, isLoading: groupContractsLoading } =
+    useQuery({
+      queryKey: ["group-contracts", selectedGroup?.id],
+      queryFn: async () => {
+        if (!selectedGroup) return [];
+
+        const firstPage = await groupService.getGroupContracts(
+          selectedGroup.id,
+          {
+            status: "active",
+            page: 1,
+            page_size: 100,
+          },
+        );
+
+        const totalPages = firstPage.meta?.total_pages || 1;
+        const restPages =
+          totalPages > 1
+            ? await Promise.all(
+                Array.from({ length: totalPages - 1 }, (_, idx) =>
+                  groupService.getGroupContracts(selectedGroup.id, {
+                    status: "active",
+                    page: idx + 2,
+                    page_size: 100,
+                  }),
+                ),
+              )
+            : [];
+
+        return [
+          ...(firstPage.data || []),
+          ...restPages.flatMap((page) => page.data || []),
+        ];
+      },
+      enabled: !!selectedGroup,
+    });
+
+  const { data: groupDebtorsData, isLoading: groupDebtorsLoading } = useQuery({
+    queryKey: ["group-debtors", selectedGroup?.id],
+    queryFn: async () => {
+      if (!selectedGroup) return [];
+
+      const firstPage = await reportService.getDebtorsReport({
+        group_id: selectedGroup.id,
+        page: 1,
+        page_size: 100,
+      });
+
+      const totalPages = firstPage.meta?.total_pages || 1;
+      const restPages =
+        totalPages > 1
+          ? await Promise.all(
+              Array.from({ length: totalPages - 1 }, (_, idx) =>
+                reportService.getDebtorsReport({
+                  group_id: selectedGroup.id,
+                  page: idx + 2,
+                  page_size: 100,
+                }),
+              ),
+            )
+          : [];
+
+      return [
+        ...(firstPage.data || []),
+        ...restPages.flatMap((page) => page.data || []),
+      ];
+    },
+    enabled: !!selectedGroup,
+  });
 
   const { data: myAttendancesData, isLoading: myAttendancesLoading } = useQuery(
     {
@@ -388,6 +458,42 @@ export default function CoachPanel() {
     return new Map(groupsData.map((g: { id: any }) => [g.id, g]));
   }, [groupsData]);
 
+  const contractsByStudentId = useMemo(() => {
+    const contractMap = new Map<number, string>();
+
+    if (!groupContractsData) {
+      return contractMap;
+    }
+
+    groupContractsData.forEach((contract) => {
+      if (!contractMap.has(contract.student_id)) {
+        contractMap.set(contract.student_id, contract.contract_number);
+      }
+    });
+
+    return contractMap;
+  }, [groupContractsData]);
+
+  const debtorsByStudentId = useMemo(() => {
+    const debtorMap = new Map<
+      number,
+      { debtAmount: number; contractNumber: string }
+    >();
+
+    if (!groupDebtorsData) {
+      return debtorMap;
+    }
+
+    groupDebtorsData.forEach((debtor) => {
+      debtorMap.set(debtor.student_id, {
+        debtAmount: Number(debtor.debt_amount) || 0,
+        contractNumber: debtor.contract_number,
+      });
+    });
+
+    return debtorMap;
+  }, [groupDebtorsData]);
+
   const getStudentId = (item: any) =>
     Number(item?.student_id ?? item?.id ?? item?.student?.id ?? 0);
 
@@ -411,15 +517,68 @@ export default function CoachPanel() {
   };
 
   const getStudentDebtAmount = (item: any) => {
+    const studentId = getStudentId(item);
     const debtAmount =
       item?.current_debt ??
       item?.debt_amount ??
       item?.student?.current_debt ??
       item?.student?.debt_amount ??
+      debtorsByStudentId.get(studentId)?.debtAmount ??
       0;
 
     return Number(debtAmount) || 0;
   };
+
+  const getStudentContractNumber = (item: any) => {
+    const studentId = getStudentId(item);
+
+    return (
+      item?.contract_number ??
+      item?.student?.contract_number ??
+      debtorsByStudentId.get(studentId)?.contractNumber ??
+      contractsByStudentId.get(studentId) ??
+      "-"
+    );
+  };
+
+  const getStudentBirthYear = (item: any) => {
+    const rawBirthValue =
+      item?.birth_year ??
+      item?.student?.birth_year ??
+      item?.date_of_birth ??
+      item?.student?.date_of_birth;
+
+    if (typeof rawBirthValue === "number") {
+      return String(rawBirthValue);
+    }
+
+    if (typeof rawBirthValue === "string") {
+      const trimmedBirthValue = rawBirthValue.trim();
+
+      if (/^\d{4}$/.test(trimmedBirthValue)) {
+        return trimmedBirthValue;
+      }
+
+      const birthDate = new Date(trimmedBirthValue);
+      if (!Number.isNaN(birthDate.getTime())) {
+        return format(birthDate, "yyyy");
+      }
+    }
+
+    return "-";
+  };
+
+  const groupStudentRows = (groupStudentsData || []).map((student: any) => ({
+    id: getStudentId(student) || student.id,
+    firstName: student?.first_name ?? student?.student?.first_name ?? "-",
+    lastName: student?.last_name ?? student?.student?.last_name ?? "-",
+    contractNumber: getStudentContractNumber(student),
+    debtAmount: getStudentDebtAmount(student),
+    birthYear: getStudentBirthYear(student),
+  }));
+
+  const isGroupStudentsTableLoading =
+    groupStudentsLoading || groupContractsLoading || groupDebtorsLoading;
 
   const getSessionGroupName = (session: SessionRead | null | undefined) => {
     if (!session) return t("unknownGroup") || "Unknown Group";
@@ -686,7 +845,6 @@ export default function CoachPanel() {
                           <div className="space-y-3 md:hidden">
                             {studentsData.map((student: any) => {
                               const studentId = getStudentId(student);
-                              const debtAmount = getStudentDebtAmount(student);
 
                               return (
                                 <div
@@ -694,21 +852,9 @@ export default function CoachPanel() {
                                   className="rounded-xl border bg-card p-4 shadow-sm"
                                 >
                                   <div className="flex flex-col gap-3">
-                                    <div className="space-y-2">
-                                      <p className="font-semibold text-foreground">
-                                        {getStudentDisplayName(student)}
-                                      </p>
-                                      {debtAmount > 0 ? (
-                                        <div className="flex items-center gap-1.5 text-sm font-medium text-red-600">
-                                          <AlertTriangle className="h-3.5 w-3.5" />
-                                          <span>{formatCurrency(debtAmount)}</span>
-                                        </div>
-                                      ) : (
-                                        <Badge variant="secondary" className="w-fit">
-                                          {t("noDebt")}
-                                        </Badge>
-                                      )}
-                                    </div>
+                                    <p className="font-semibold text-foreground">
+                                      {getStudentDisplayName(student)}
+                                    </p>
                                     <div>{renderAttendanceActions(studentId)}</div>
                                   </div>
                                 </div>
@@ -721,7 +867,6 @@ export default function CoachPanel() {
                               <TableHeader>
                                 <TableRow>
                                   <TableHead>{t("student")}</TableHead>
-                                  <TableHead>{t("debtAmount")}</TableHead>
                                   <TableHead className="text-right">
                                     {t("markAttendance")}
                                   </TableHead>
@@ -730,23 +875,11 @@ export default function CoachPanel() {
                               <TableBody>
                                 {studentsData.map((student: any) => {
                                   const studentId = getStudentId(student);
-                                  const debtAmount = getStudentDebtAmount(student);
 
                                   return (
                                     <TableRow key={studentId}>
                                       <TableCell className="font-medium">
                                         {getStudentDisplayName(student)}
-                                      </TableCell>
-                                      <TableCell>
-                                        {debtAmount > 0 ? (
-                                          <span className="font-medium text-red-600">
-                                            {formatCurrency(debtAmount)}
-                                          </span>
-                                        ) : (
-                                          <Badge variant="secondary">
-                                            {t("noDebt")}
-                                          </Badge>
-                                        )}
                                       </TableCell>
                                       <TableCell className="text-right">
                                         {renderAttendanceActions(studentId)}
@@ -845,55 +978,64 @@ export default function CoachPanel() {
                       <CardDescription>{t("studentsInGroup")}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{t("studentName")}</TableHead>
-                            <TableHead>{t("dateOfBirth")}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {groupStudentsLoading ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
                             <TableRow>
-                              <TableCell
-                                colSpan={2}
-                                className="h-24 text-center"
-                              >
-                                <Loader2 className="mx-auto animate-spin text-primary" />
-                              </TableCell>
+                              <TableHead>{t("firstName")}</TableHead>
+                              <TableHead>{t("lastName")}</TableHead>
+                              <TableHead>{t("contractNumber")}</TableHead>
+                              <TableHead>{t("debtAmount")}</TableHead>
+                              <TableHead>{t("birthYear")}</TableHead>
                             </TableRow>
-                          ) : groupStudentsData &&
-                            groupStudentsData.length > 0 ? (
-                            groupStudentsData.map(
-                              (student: {
-                                id: Key | null | undefined;
-                                date_of_birth: string | number | Date;
-                              }) => (
+                          </TableHeader>
+                          <TableBody>
+                            {isGroupStudentsTableLoading ? (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={5}
+                                  className="h-24 text-center"
+                                >
+                                  <Loader2 className="mx-auto animate-spin text-primary" />
+                                </TableCell>
+                              </TableRow>
+                            ) : groupStudentRows.length > 0 ? (
+                              groupStudentRows.map((student) => (
                                 <TableRow key={student.id}>
                                   <TableCell className="font-medium">
-                                    {getStudentDisplayName(student)}
+                                    {student.firstName}
                                   </TableCell>
+                                  <TableCell className="font-medium">
+                                    {student.lastName}
+                                  </TableCell>
+                                  <TableCell>{student.contractNumber}</TableCell>
                                   <TableCell>
-                                    {format(
-                                      new Date(student.date_of_birth),
-                                      "dd.MM.yyyy",
+                                    {student.debtAmount > 0 ? (
+                                      <span className="font-medium text-red-600">
+                                        {formatCurrency(student.debtAmount)}
+                                      </span>
+                                    ) : (
+                                      <Badge variant="secondary">
+                                        {t("noDebt")}
+                                      </Badge>
                                     )}
                                   </TableCell>
+                                  <TableCell>{student.birthYear}</TableCell>
                                 </TableRow>
-                              ),
-                            )
-                          ) : (
-                            <TableRow>
-                              <TableCell
-                                colSpan={2}
-                                className="h-24 text-center"
-                              >
-                                {t("noStudentsInGroup")}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={5}
+                                  className="h-24 text-center"
+                                >
+                                  {t("noStudentsInGroup")}
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
