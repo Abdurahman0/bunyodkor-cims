@@ -862,12 +862,14 @@ export default function CoachPanel() {
                             })}
                           </div>
 
-                          <div className="hidden overflow-hidden rounded-lg border md:block">
+                          <div className="hidden md:block">
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead>{t("student")}</TableHead>
-                                  <TableHead className="text-right">
+                                  <TableHead className="pl-6">
+                                    {t("student")}
+                                  </TableHead>
+                                  <TableHead className="w-[1%] whitespace-nowrap pr-6 [&>div]:justify-end">
                                     {t("markAttendance")}
                                   </TableHead>
                                 </TableRow>
@@ -878,11 +880,13 @@ export default function CoachPanel() {
 
                                   return (
                                     <TableRow key={studentId}>
-                                      <TableCell className="font-medium">
+                                      <TableCell className="w-full pl-6 font-medium">
                                         {getStudentDisplayName(student)}
                                       </TableCell>
-                                      <TableCell className="text-right">
-                                        {renderAttendanceActions(studentId)}
+                                      <TableCell className="pr-6">
+                                        <div className="flex justify-end">
+                                          {renderAttendanceActions(studentId)}
+                                        </div>
                                       </TableCell>
                                     </TableRow>
                                   );
