@@ -641,7 +641,11 @@ export function StudentWithContractDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      closeOnOverlayClick={false}
+    >
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto border-2 border-primary/20 pb-10 pl-10">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
