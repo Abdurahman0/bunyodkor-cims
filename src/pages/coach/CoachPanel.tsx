@@ -133,6 +133,29 @@ const getOverdueMonthDate = (
 const capitalizeLabel = (value: string) =>
   value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
 
+const parseOverdueMonthLabel = (rawLabel: string) => {
+  const normalized = rawLabel.trim();
+  if (!normalized) return null;
+
+  const dashedMatch = normalized.match(/^(\d{4})-(\d{1,2})$/);
+  if (dashedMatch) {
+    return {
+      year: Number(dashedMatch[1]),
+      month: Number(dashedMatch[2]),
+    };
+  }
+
+  const spacedMatch = normalized.match(/^(\d{4})\s*M?(\d{1,2})$/i);
+  if (spacedMatch) {
+    return {
+      year: Number(spacedMatch[1]),
+      month: Number(spacedMatch[2]),
+    };
+  }
+
+  return null;
+};
+
 const formatOverdueMonths = (
   overdueMonths: DebtorItem["overdue_months"] | undefined,
   locale: string,
@@ -154,19 +177,19 @@ const formatOverdueMonths = (
     }
 
     const rawLabel = overdueMonth.label?.trim() || "";
-    const parsedLabel = rawLabel.match(/^(\d{4})-(\d{1,2})$/);
+    const parsedLabel = parseOverdueMonthLabel(rawLabel);
     if (parsedLabel) {
       const monthFromLabel = getOverdueMonthDate(
-        Number(parsedLabel[1]),
-        Number(parsedLabel[2]),
+        parsedLabel.year,
+        parsedLabel.month,
       );
 
       if (monthFromLabel) {
         return {
-          key: `${parsedLabel[1]}-${parsedLabel[2].padStart(2, "0")}`,
+          key: `${parsedLabel.year}-${String(parsedLabel.month).padStart(2, "0")}`,
           date: monthFromLabel,
           amount: Number(overdueMonth.amount) || 0,
-          sortValue: Number(parsedLabel[1]) * 100 + Number(parsedLabel[2]),
+          sortValue: parsedLabel.year * 100 + parsedLabel.month,
           fallbackLabel: rawLabel,
         };
       }
@@ -181,15 +204,8 @@ const formatOverdueMonths = (
     };
   });
 
-  const knownYears = new Set(
-    parsedMonths
-      .map((item) => item.date?.getUTCFullYear())
-      .filter((year): year is number => Number.isFinite(year)),
-  );
-
   const formatter = new Intl.DateTimeFormat(locale, {
     month: "long",
-    ...(knownYears.size > 1 ? { year: "numeric" } : {}),
   });
 
   const monthMap = new Map<string, FormattedOverdueMonth>();
@@ -1196,7 +1212,7 @@ export default function CoachPanel() {
                               <TableHead className="w-[160px] whitespace-nowrap">
                                 {t("contractNumber")}
                               </TableHead>
-                              <TableHead className="w-[260px] text-center">
+                              <TableHead className="w-[260px] whitespace-nowrap">
                                 {t("indebtedness")}
                               </TableHead>
                             </TableRow>
@@ -1223,9 +1239,9 @@ export default function CoachPanel() {
                                   <TableCell className="align-top whitespace-nowrap">
                                     {student.contractNumber}
                                   </TableCell>
-                                  <TableCell className="align-middle text-center">
+                                  <TableCell className="align-middle">
                                     {student.debtAmount > 0 ? (
-                                      <div className="mx-auto flex max-w-[260px] flex-col items-center justify-center gap-1 py-2 text-center">
+                                      <div className="flex max-w-[260px] flex-col gap-1 py-2">
                                         {student.overdueMonths.length > 0 ? (
                                           <div className="text-sm font-medium leading-snug text-foreground">
                                             {student.overdueMonths
@@ -1238,7 +1254,7 @@ export default function CoachPanel() {
                                         </div>
                                       </div>
                                     ) : (
-                                      <div className="mx-auto flex max-w-[260px] flex-col items-center justify-center gap-1 py-2 text-center">
+                                      <div className="flex max-w-[260px] flex-col gap-1 py-2">
                                         <div className="text-sm font-medium text-foreground">
                                           {t("noDebt")}
                                         </div>
