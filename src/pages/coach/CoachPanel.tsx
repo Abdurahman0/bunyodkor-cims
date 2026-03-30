@@ -153,6 +153,17 @@ const parseOverdueMonthLabel = (rawLabel: string) => {
     };
   }
 
+  const monthOnlyMatch = normalized.match(/^M(\d{1,2})$/i);
+  if (monthOnlyMatch) {
+    const m = Number(monthOnlyMatch[1]);
+    if (m >= 1 && m <= 12) {
+      return {
+        year: new Date().getFullYear(),
+        month: m,
+      };
+    }
+  }
+
   return null;
 };
 
@@ -204,15 +215,25 @@ const formatOverdueMonths = (
     };
   });
 
+  const uzMonths = [
+    "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+    "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr",
+  ];
+
   const formatter = new Intl.DateTimeFormat(locale, {
     month: "long",
   });
+
+  const formatMonth = (date: Date) => {
+    if (locale.startsWith("uz")) return uzMonths[date.getMonth()];
+    return formatter.format(date);
+  };
 
   const monthMap = new Map<string, FormattedOverdueMonth>();
 
   parsedMonths.forEach((item) => {
     const label = item.date
-      ? capitalizeLabel(formatter.format(item.date))
+      ? capitalizeLabel(formatMonth(item.date))
       : capitalizeLabel(item.fallbackLabel);
 
     if (!label) return;

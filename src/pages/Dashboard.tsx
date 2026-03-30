@@ -172,12 +172,20 @@ export default function Dashboard() {
   );
 
   const formatShortDayMonth = useCallback(
-    (date: Date) =>
-      new Intl.DateTimeFormat(chartLocale, {
+    (date: Date) => {
+      if (language === "uz") {
+        const months = [
+          "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+          "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr",
+        ];
+        return `${date.getDate()} ${months[date.getMonth()]}`;
+      }
+      return new Intl.DateTimeFormat(chartLocale, {
         day: "numeric",
         month: "short",
-      }).format(date),
-    [chartLocale],
+      }).format(date);
+    },
+    [chartLocale, language],
   );
 
   const { data: summaryData } = useQuery({
