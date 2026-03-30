@@ -1233,18 +1233,12 @@ export default function CoachPanel() {
                                               .join(", ")}
                                           </div>
                                         ) : null}
-                                        <div className="text-xs font-semibold text-muted-foreground">
-                                          {t("indebtedness")}
-                                        </div>
                                         <div className="whitespace-nowrap text-sm font-semibold text-red-600">
                                           {formatNumber(student.debtAmount, debtLocale)}
                                         </div>
                                       </div>
                                     ) : (
                                       <div className="mx-auto flex max-w-[260px] flex-col items-center justify-center gap-1 py-2 text-center">
-                                        <div className="text-xs font-semibold text-muted-foreground">
-                                          {t("indebtedness")}
-                                        </div>
                                         <div className="text-sm font-medium text-foreground">
                                           {t("noDebt")}
                                         </div>
