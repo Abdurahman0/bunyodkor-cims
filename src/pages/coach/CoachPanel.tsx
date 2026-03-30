@@ -76,7 +76,7 @@ import { useLanguageStore } from "@/store/languageStore";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart, StatsCard } from "@/components/ui/charts";
 import { formatPersonName } from "@/lib/name-utils";
-import { formatCurrency } from "@/lib/format-utils";
+import { formatCurrency, formatNumber } from "@/lib/format-utils";
 
 const normalizeSessionForUi = (
   session:
@@ -1225,43 +1225,29 @@ export default function CoachPanel() {
                                   </TableCell>
                                   <TableCell className="align-middle text-center">
                                     {student.debtAmount > 0 ? (
-                                      <div className="mx-auto flex max-w-[260px] flex-col items-center gap-2 py-1 text-center">
-                                        <div className="whitespace-nowrap text-sm font-semibold text-red-600">
-                                          {formatCurrency(
-                                            student.debtAmount,
-                                            "UZS",
-                                            debtLocale,
-                                          )}
-                                        </div>
+                                      <div className="mx-auto flex max-w-[260px] flex-col items-center justify-center gap-1 py-2 text-center">
                                         {student.overdueMonths.length > 0 ? (
-                                          <div className="flex flex-wrap justify-center gap-2">
-                                            {student.overdueMonths.map(
-                                              (overdueMonth) => (
-                                                <div
-                                                  key={`${student.id}-${overdueMonth.key}`}
-                                                  className="min-w-[88px] rounded-md border border-red-200 bg-red-50 px-2 py-1.5 dark:border-red-900 dark:bg-red-950/30"
-                                                >
-                                                  <div className="text-xs font-medium leading-tight text-red-700 dark:text-red-200">
-                                                    {overdueMonth.label}
-                                                  </div>
-                                                  <div className="mt-1 text-[11px] leading-tight text-red-600/90 dark:text-red-300/90">
-                                                    {formatCurrency(
-                                                      overdueMonth.amount,
-                                                      "UZS",
-                                                      debtLocale,
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              ),
-                                            )}
+                                          <div className="text-sm font-medium leading-snug text-foreground">
+                                            {student.overdueMonths
+                                              .map((overdueMonth) => overdueMonth.label)
+                                              .join(", ")}
                                           </div>
                                         ) : null}
+                                        <div className="text-xs font-semibold text-muted-foreground">
+                                          {t("indebtedness")}
+                                        </div>
+                                        <div className="whitespace-nowrap text-sm font-semibold text-red-600">
+                                          {formatNumber(student.debtAmount, debtLocale)}
+                                        </div>
                                       </div>
                                     ) : (
-                                      <div className="flex justify-center">
-                                        <Badge variant="secondary">
+                                      <div className="mx-auto flex max-w-[260px] flex-col items-center justify-center gap-1 py-2 text-center">
+                                        <div className="text-xs font-semibold text-muted-foreground">
+                                          {t("indebtedness")}
+                                        </div>
+                                        <div className="text-sm font-medium text-foreground">
                                           {t("noDebt")}
-                                        </Badge>
+                                        </div>
                                       </div>
                                     )}
                                   </TableCell>
