@@ -743,6 +743,13 @@ export interface DebtorItem {
   primary_phone?: string;
   father_phone?: string;
   mother_phone?: string;
+  overdue_months?: Array<{
+    year?: number;
+    month?: number;
+    amount?: number;
+    label?: string;
+  }>;
+  overdue_months_count?: number;
 }
 
 export interface PayerItem {

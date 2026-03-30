@@ -51,6 +51,7 @@ import type {
   GroupRead,
   SessionRead,
   AttendanceCreateRequest,
+  DebtorItem,
 } from "@/types/api";
 import {
   Calendar,
@@ -101,8 +102,67 @@ const normalizeSessionForUi = (
   } as SessionRead;
 };
 
+const getDebtMonthLocale = (language: string) =>
+  language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
+
+const getOverdueMonthDate = (
+  year?: number | null,
+  month?: number | null,
+) => {
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !year ||
+    !month ||
+    month < 1 ||
+    month > 12
+  ) {
+    return null;
+  }
+
+  return new Date(Date.UTC(year, month - 1, 1));
+};
+
+const formatOverdueMonthLabels = (
+  overdueMonths: DebtorItem["overdue_months"] | undefined,
+  formatter: Intl.DateTimeFormat,
+) =>
+  Array.from(
+    new Set(
+      (overdueMonths || [])
+        .map((overdueMonth) => {
+          const monthFromFields = getOverdueMonthDate(
+            overdueMonth.year,
+            overdueMonth.month,
+          );
+
+          if (monthFromFields) {
+            return formatter.format(monthFromFields);
+          }
+
+          const rawLabel = overdueMonth.label?.trim();
+          if (!rawLabel) return "";
+
+          const parsedLabel = rawLabel.match(/^(\d{4})-(\d{1,2})$/);
+          if (parsedLabel) {
+            const monthFromLabel = getOverdueMonthDate(
+              Number(parsedLabel[1]),
+              Number(parsedLabel[2]),
+            );
+
+            if (monthFromLabel) {
+              return formatter.format(monthFromLabel);
+            }
+          }
+
+          return rawLabel;
+        })
+        .filter(Boolean),
+    ),
+  );
+
 export default function CoachPanel() {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd"),
@@ -474,10 +534,23 @@ export default function CoachPanel() {
     return contractMap;
   }, [groupContractsData]);
 
+  const debtMonthFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(getDebtMonthLocale(language), {
+        month: "short",
+        year: "numeric",
+      }),
+    [language],
+  );
+
   const debtorsByStudentId = useMemo(() => {
     const debtorMap = new Map<
       number,
-      { debtAmount: number; contractNumber: string }
+      {
+        debtAmount: number;
+        contractNumber: string;
+        overdueMonths: string[];
+      }
     >();
 
     if (!groupDebtorsData) {
@@ -485,14 +558,23 @@ export default function CoachPanel() {
     }
 
     groupDebtorsData.forEach((debtor) => {
+      const existingDebtor = debtorMap.get(debtor.student_id);
+
       debtorMap.set(debtor.student_id, {
-        debtAmount: Number(debtor.debt_amount) || 0,
-        contractNumber: debtor.contract_number,
+        debtAmount:
+          (existingDebtor?.debtAmount || 0) + (Number(debtor.debt_amount) || 0),
+        contractNumber: existingDebtor?.contractNumber || debtor.contract_number,
+        overdueMonths: Array.from(
+          new Set([
+            ...(existingDebtor?.overdueMonths || []),
+            ...formatOverdueMonthLabels(debtor.overdue_months, debtMonthFormatter),
+          ]),
+        ),
       });
     });
 
     return debtorMap;
-  }, [groupDebtorsData]);
+  }, [debtMonthFormatter, groupDebtorsData]);
 
   const getStudentId = (item: any) =>
     Number(item?.student_id ?? item?.id ?? item?.student?.id ?? 0);
@@ -518,15 +600,30 @@ export default function CoachPanel() {
 
   const getStudentDebtAmount = (item: any) => {
     const studentId = getStudentId(item);
+    const debtorInfo = debtorsByStudentId.get(studentId);
     const debtAmount =
+      debtorInfo?.debtAmount ??
       item?.current_debt ??
       item?.debt_amount ??
       item?.student?.current_debt ??
       item?.student?.debt_amount ??
-      debtorsByStudentId.get(studentId)?.debtAmount ??
       0;
 
     return Number(debtAmount) || 0;
+  };
+
+  const getStudentOverdueMonths = (item: any) => {
+    const studentId = getStudentId(item);
+    const directOverdueMonths = formatOverdueMonthLabels(
+      item?.overdue_months ?? item?.student?.overdue_months,
+      debtMonthFormatter,
+    );
+
+    if (directOverdueMonths.length > 0) {
+      return directOverdueMonths;
+    }
+
+    return debtorsByStudentId.get(studentId)?.overdueMonths ?? [];
   };
 
   const getStudentContractNumber = (item: any) => {
@@ -575,6 +672,7 @@ export default function CoachPanel() {
       lastName: student?.last_name ?? student?.student?.last_name ?? "-",
       contractNumber: getStudentContractNumber(student),
       debtAmount: getStudentDebtAmount(student),
+      overdueMonths: getStudentOverdueMonths(student),
       birthYear: getStudentBirthYear(student),
     }))
     .sort((a, b) => {
@@ -989,13 +1087,21 @@ export default function CoachPanel() {
                     </CardHeader>
                     <CardContent>
                       <div className="overflow-x-auto">
-                        <Table>
+                        <Table className="min-w-[760px]">
                           <TableHeader>
                             <TableRow>
-                              <TableHead>{t("fullName")}</TableHead>
-                              <TableHead>{t("birthYear")}</TableHead>
-                              <TableHead>{t("contractNumber")}</TableHead>
-                              <TableHead>{t("debtAmount")}</TableHead>
+                              <TableHead className="min-w-[220px]">
+                                {t("fullName")}
+                              </TableHead>
+                              <TableHead className="w-[120px] whitespace-nowrap">
+                                {t("birthYear")}
+                              </TableHead>
+                              <TableHead className="w-[160px] whitespace-nowrap">
+                                {t("contractNumber")}
+                              </TableHead>
+                              <TableHead className="min-w-[280px]">
+                                {t("indebtedness")}
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -1011,16 +1117,37 @@ export default function CoachPanel() {
                             ) : groupStudentRows.length > 0 ? (
                               groupStudentRows.map((student) => (
                                 <TableRow key={student.id}>
-                                  <TableCell className="font-medium">
+                                  <TableCell className="font-medium align-top">
                                     {student.lastName} {student.firstName}
                                   </TableCell>
-                                  <TableCell>{student.birthYear}</TableCell>
-                                  <TableCell>{student.contractNumber}</TableCell>
-                                  <TableCell>
+                                  <TableCell className="align-top whitespace-nowrap">
+                                    {student.birthYear}
+                                  </TableCell>
+                                  <TableCell className="align-top whitespace-nowrap">
+                                    {student.contractNumber}
+                                  </TableCell>
+                                  <TableCell className="align-top">
                                     {student.debtAmount > 0 ? (
-                                      <span className="font-medium text-red-600">
-                                        {formatCurrency(student.debtAmount)}
-                                      </span>
+                                      <div className="space-y-2">
+                                        <div className="whitespace-nowrap font-medium text-red-600">
+                                          {formatCurrency(student.debtAmount)}
+                                        </div>
+                                        {student.overdueMonths.length > 0 ? (
+                                          <div className="flex flex-wrap gap-1.5">
+                                            {student.overdueMonths.map(
+                                              (overdueMonth) => (
+                                                <Badge
+                                                  key={`${student.id}-${overdueMonth}`}
+                                                  variant="outline"
+                                                  className="border-red-200 bg-red-50 text-xs font-normal text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
+                                                >
+                                                  {overdueMonth}
+                                                </Badge>
+                                              ),
+                                            )}
+                                          </div>
+                                        ) : null}
+                                      </div>
                                     ) : (
                                       <Badge variant="secondary">
                                         {t("noDebt")}
