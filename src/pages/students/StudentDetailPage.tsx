@@ -41,6 +41,7 @@ import {
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
+import { downloadFile } from "@/lib/export-utils";
 import { useLanguageStore } from "@/store/languageStore";
 import { formatFullName, formatNameParts } from "@/lib/name-utils";
 import type {
@@ -378,49 +379,22 @@ export default function StudentDetailPage() {
   };
 
   const handleDownloadPdf = async (contract: ContractRead) => {
-    // Same logic but for download
+    const toastId = toast.loading(
+      t("loadingContractFile") || "Shartnoma yuklanmoqda...",
+    );
     try {
-      let pdfUrl: string | null = null;
+      const blob = await contractService.viewContractPdf(contract.id);
+      toast.dismiss(toastId);
 
-      if (contract.final_pdf_url) {
-        pdfUrl = contract.final_pdf_url;
-      } else {
-        const year = new Date(contract.start_date).getFullYear();
-        const response = await contractService.getContractPdfUrl(
-          year,
-          contract.contract_number,
-        );
-
-        if (typeof response === "string") {
-          pdfUrl = response;
-        } else if (
-          typeof response === "object" &&
-          response !== null &&
-          "pdf_url" in response
-        ) {
-          pdfUrl = (response as any).pdf_url;
-        }
-      }
-
-      if (!pdfUrl) {
+      if (!blob || blob.size === 0) {
         toast.error(t("pdfNotFound") || "PDF topilmadi");
         return;
       }
 
-      // Download the PDF
-      const resp = await fetch(pdfUrl);
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${contract.contract_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
+      downloadFile(blob, `${contract.contract_number}.pdf`);
       toast.success(t("downloadedSuccessfully"));
     } catch (error) {
+      toast.dismiss(toastId);
       console.error("Error downloading PDF:", error);
       toast.error(t("errorDownloadingFile"));
     }
