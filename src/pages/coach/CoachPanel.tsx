@@ -431,6 +431,76 @@ export default function CoachPanel() {
     },
   );
 
+  const historyStudentIds = useMemo(() => {
+    if (!Array.isArray(myAttendancesData)) return [];
+
+    return Array.from(
+      new Set(
+        myAttendancesData
+          .map((attendance: any) => Number(attendance?.student_id))
+          .filter((studentId: number) => Number.isFinite(studentId) && studentId > 0),
+      ),
+    );
+  }, [myAttendancesData]);
+
+  const historySessionIds = useMemo(() => {
+    if (!Array.isArray(myAttendancesData)) return [];
+
+    return Array.from(
+      new Set(
+        myAttendancesData
+          .map((attendance: any) => Number(attendance?.session_id))
+          .filter((sessionId: number) => Number.isFinite(sessionId) && sessionId > 0),
+      ),
+    );
+  }, [myAttendancesData]);
+
+  const { data: historyStudents, isLoading: historyStudentsLoading } = useQuery({
+    queryKey: ["history-students", historyStudentIds],
+    queryFn: async () => {
+      if (historyStudentIds.length === 0) return [];
+
+      const responses = await Promise.allSettled(
+        historyStudentIds.map((studentId) => studentService.getStudent(studentId)),
+      );
+
+      return responses
+        .filter(
+          (
+            response,
+          ): response is PromiseFulfilledResult<{ data?: any } | any> =>
+            response.status === "fulfilled",
+        )
+        .map((response) => response.value?.data ?? response.value)
+        .filter(Boolean);
+    },
+    enabled: historyStudentIds.length > 0,
+  });
+
+  const { data: historySessions, isLoading: historySessionsLoading } = useQuery({
+    queryKey: ["history-sessions", historySessionIds],
+    queryFn: async () => {
+      if (historySessionIds.length === 0) return [];
+
+      const responses = await Promise.allSettled(
+        historySessionIds.map((sessionId) => coachService.getSessionDetails(sessionId)),
+      );
+
+      return responses
+        .filter(
+          (
+            response,
+          ): response is PromiseFulfilledResult<{ data?: any } | any> =>
+            response.status === "fulfilled",
+        )
+        .map((response) =>
+          normalizeSessionForUi(response.value?.data ?? response.value),
+        )
+        .filter(Boolean) as SessionRead[];
+    },
+    enabled: historySessionIds.length > 0,
+  });
+
   const { data: groupStats, isLoading: groupStatsLoading } = useQuery({
     queryKey: ["group-stats", selectedGroupForStats],
     queryFn: () => {
@@ -597,18 +667,24 @@ export default function CoachPanel() {
   };
 
   const studentMap = useMemo(() => {
-    if (!allStudents) return new Map<number, any>();
+    const mergedStudents = [...(allStudents || []), ...(historyStudents || [])];
+
+    if (mergedStudents.length === 0) return new Map<number, any>();
+
     return new Map(
-      allStudents.map((student: { id: any }) => [Number(student.id), student]),
+      mergedStudents.map((student: { id: any }) => [Number(student.id), student]),
     );
-  }, [allStudents]);
+  }, [allStudents, historyStudents]);
 
   const sessionMap = useMemo(() => {
-    if (!allSessions) return new Map<number, any>();
+    const mergedSessions = [...(allSessions || []), ...(historySessions || [])];
+
+    if (mergedSessions.length === 0) return new Map<number, any>();
+
     return new Map(
-      allSessions.map((session: { id: any }) => [Number(session.id), session]),
+      mergedSessions.map((session: { id: any }) => [Number(session.id), session]),
     );
-  }, [allSessions]);
+  }, [allSessions, historySessions]);
 
   const groupMap = useMemo(() => {
     if (!groupsData) return new Map<number, any>();
@@ -1353,7 +1429,9 @@ export default function CoachPanel() {
                 <TableBody>
                   {myAttendancesLoading ||
                   allStudentsLoading ||
-                  allSessionsLoading ? (
+                  allSessionsLoading ||
+                  historyStudentsLoading ||
+                  historySessionsLoading ? (
                     <TableRow>
                       <TableCell colSpan={4} className="h-24 text-center">
                         <Loader2 className="mx-auto animate-spin text-primary" />
