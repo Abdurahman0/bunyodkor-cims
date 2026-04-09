@@ -75,7 +75,7 @@ import { toast } from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart, StatsCard } from "@/components/ui/charts";
-import { formatPersonName } from "@/lib/name-utils";
+import { formatNameParts, formatPersonName } from "@/lib/name-utils";
 import { formatCurrency, formatNumber } from "@/lib/format-utils";
 
 const normalizeSessionForUi = (
@@ -673,15 +673,23 @@ export default function CoachPanel() {
   const getStudentId = (item: any) =>
     Number(item?.student_id ?? item?.id ?? item?.student?.id ?? 0);
 
-  const getStudentDisplayName = (item: any) => {
-    if (!item) return t("unknownStudent") || "Unknown Student";
-    const displayName =
+  const getStudentNameValue = (item: any) => {
+    if (!item) return "";
+
+    return (
       formatPersonName(item) ||
       formatPersonName(item.student) ||
+      formatNameParts(item?.student_last_name, item?.student_first_name) ||
+      item.student_full_name ||
       item.student_name ||
       item.name ||
       item.student?.name ||
-      "";
+      ""
+    );
+  };
+
+  const getStudentDisplayName = (item: any) => {
+    const displayName = getStudentNameValue(item);
 
     if (displayName) {
       return displayName;
@@ -796,9 +804,18 @@ export default function CoachPanel() {
       studentMap.get(Number(attendance?.student_id ?? attendance?.student?.id));
 
     const directName =
-      getStudentDisplayName(student) || getStudentDisplayName(attendance);
+      getStudentNameValue(student) || getStudentNameValue(attendance);
 
-    return directName || t("unknownStudent") || "Unknown Student";
+    if (directName) {
+      return directName;
+    }
+
+    const studentId = getStudentId(student ?? attendance);
+    if (studentId) {
+      return `#${studentId}`;
+    }
+
+    return t("unknownStudent") || "Unknown Student";
   };
 
   const getAttendanceGroupName = (attendance: any) => {
