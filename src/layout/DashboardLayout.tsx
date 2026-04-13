@@ -441,6 +441,21 @@ const DashboardLayout = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <a
+              href="https://bunyodkora.cognilabs.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-600 hover:text-white shadow-sm"
+              >
+                <GraduationCap className="w-4 h-4" />
+                <span className="hidden sm:inline">{t("goToGroupA")}</span>
+              </Button>
+            </a>
+
             <div className="relative">
               <Button
                 variant="ghost"

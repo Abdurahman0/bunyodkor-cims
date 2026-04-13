@@ -1022,6 +1022,7 @@
     testData: "Test data:",
     copyright: "В© 2026 Bunyodkor. All rights reserved.",
     poweredBy: "Powered by",
+    goToGroupA: "Go to Group A",
   },
 
   uz: {
@@ -2067,6 +2068,7 @@
     testData: "Test ma'lumotlari:",
     copyright: "В© 2026 Bunyodkor. Barcha huquqlar himoyalangan.",
     poweredBy: "Ishlab chiquvchi",
+    goToGroupA: "A guruhga o'tish",
   },
 
   ru: {
@@ -3069,6 +3071,7 @@
     testData: "Тестовые данные:",
     copyright: "© 2026 Bunyodkor. Все права защищены.",
     poweredBy: "Разработано",
-  },
+    goToGroupA: "Перейти в группу А",
+  },
 };
 
