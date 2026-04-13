@@ -103,6 +103,19 @@ export default function Login() {
         }}
       />
 
+      <motion.a
+        href="https://bunyodkora.cognilabs.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="absolute right-4 top-4 z-20 inline-flex h-10 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white/90 px-4 text-sm font-medium text-blue-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-900/60 dark:bg-slate-950/90 dark:text-blue-300 dark:hover:bg-blue-950/60 sm:right-6 sm:top-6"
+      >
+        <GraduationCap className="w-4 h-4" />
+        {t("goToGroupA")}
+      </motion.a>
+
       {/* Login Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -251,22 +264,6 @@ export default function Login() {
                     </div>
                   )}
                 </Button>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <a
-                  href="https://bunyodkora.cognilabs.org/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-blue-200 bg-white text-sm font-medium text-blue-700 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-900/60 dark:bg-slate-950 dark:text-blue-300 dark:hover:bg-blue-950/40"
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  {t("goToGroupA")}
-                </a>
               </motion.div>
             </form>
           </CardContent>
