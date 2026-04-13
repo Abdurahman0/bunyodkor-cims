@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { LogIn, Mail, Lock, GraduationCap, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
  
@@ -252,6 +251,22 @@ export default function Login() {
                     </div>
                   )}
                 </Button>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <a
+                  href="https://bunyodkora.cognilabs.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-blue-200 bg-white text-sm font-medium text-blue-700 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-900/60 dark:bg-slate-950 dark:text-blue-300 dark:hover:bg-blue-950/40"
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  {t("goToGroupA")}
+                </a>
               </motion.div>
             </form>
           </CardContent>
