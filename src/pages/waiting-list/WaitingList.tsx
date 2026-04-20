@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
 import { waitingListService, groupService } from "@/services/api.service";
 import { formatNameParts } from "@/lib/name-utils";
 import {
@@ -35,9 +36,12 @@ import type { WaitingListRead, GroupRead } from "@/types/api";
 import { WaitingListDialog } from "./WaitingListDialog";
 import { format } from "date-fns";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function WaitingList() {
   const { t } = useLanguageStore();
   const [page, setPage] = useState(1);
+  const [birthYearFilter, setBirthYearFilter] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<WaitingListRead | null>(
     null
@@ -46,22 +50,51 @@ export default function WaitingList() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["waiting-list", page],
-    queryFn: () =>
-      waitingListService.getWaitingList({
-        page,
-        page_size: 10,
-      }),
+  const { data: waitingListEntries = [], isLoading } = useQuery({
+    queryKey: ["waiting-list", "all"],
+    queryFn: async () => {
+      const firstPage = await waitingListService.getWaitingList({
+        page: 1,
+        page_size: 100,
+      });
+
+      let allEntries = firstPage.data ? [...firstPage.data] : [];
+      const totalPages = firstPage.meta?.total_pages || 1;
+
+      for (let currentPage = 2; currentPage <= totalPages; currentPage += 1) {
+        const response = await waitingListService.getWaitingList({
+          page: currentPage,
+          page_size: 100,
+        });
+
+        if (response.data?.length) {
+          allEntries = [...allEntries, ...response.data];
+        }
+      }
+
+      return allEntries;
+    },
   });
 
   // Sort waiting list by priority (ascending - lower numbers = higher priority)
-  const sortedData = data?.data
-    ? {
-        ...data,
-        data: [...data.data].sort((a, b) => a.priority - b.priority),
-      }
-    : data;
+  const sortedEntries = [...waitingListEntries].sort(
+    (a, b) => a.priority - b.priority,
+  );
+  const birthYearOptions = Array.from(
+    new Set(sortedEntries.map((entry) => entry.birth_year)),
+  ).sort((a, b) => b - a);
+  const filteredEntries = birthYearFilter
+    ? sortedEntries.filter(
+        (entry) => String(entry.birth_year) === birthYearFilter,
+      )
+    : sortedEntries;
+  const totalEntries = filteredEntries.length;
+  const totalPages = Math.max(1, Math.ceil(totalEntries / ITEMS_PER_PAGE));
+  const paginatedEntries = filteredEntries.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE,
+  );
+  const hasActiveFilters = Boolean(birthYearFilter);
 
   // Get all groups for display
   const { data: groupsData } = useQuery({
@@ -137,7 +170,16 @@ export default function WaitingList() {
         );
   };
 
-  const totalPages = sortedData?.meta?.total_pages || 1;
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const clearFilters = () => {
+    setBirthYearFilter("");
+    setPage(1);
+  };
 
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
@@ -211,27 +253,57 @@ export default function WaitingList() {
       </div>
 
       <Card className="border-border/50 shadow-sm">
-        <CardHeader className="border-b border-border/50">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              {t("waitingListEntries") || "Waiting List Entries"}
-            </CardTitle>
-            {sortedData?.meta && (
+        <CardHeader className="space-y-4 border-b border-border/50">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                {t("waitingListEntries") || "Waiting List Entries"}
+              </CardTitle>
               <Badge variant="secondary">
-                {t("total")}: {sortedData.meta.total}
+                {t("total")}: {totalEntries}
               </Badge>
-            )}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Select
+                value={birthYearFilter}
+                onChange={(e) => {
+                  setBirthYearFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full sm:w-44"
+              >
+                <option value="">{t("allYears") || "All Years"}</option>
+                {birthYearOptions.map((year) => (
+                  <option key={year} value={String(year)}>
+                    {year}
+                  </option>
+                ))}
+              </Select>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="icon" onClick={clearFilters}>
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>{t("activeFilters")}</span>
+              <Badge variant="secondary">
+                {t("birthYear") || "Birth Year"}: {birthYearFilter}
+              </Badge>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : sortedData?.data && sortedData.data.length > 0 ? (
+          ) : paginatedEntries.length > 0 ? (
             <div className="divide-y">
-              {sortedData.data.map((entry: WaitingListRead, index: number) => (
+              {paginatedEntries.map((entry: WaitingListRead, index: number) => (
                 <motion.div
                   key={entry.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -302,7 +374,10 @@ export default function WaitingList() {
                         </Badge>
                         <Badge variant="secondary" className="gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
-                          {format(new Date(entry.created_at), "MMM d, yyyy")}
+                          {(t("waitingListAddedAt") ||
+                            t("createdAt") ||
+                            "Added to waiting list") + ":"}{" "}
+                          {format(new Date(entry.created_at), "dd.MM.yyyy")}
                         </Badge>
                       </div>
 
@@ -346,9 +421,17 @@ export default function WaitingList() {
                 {t("noWaitingListEntries") || "No waiting list entries"}
               </h3>
               <p className="text-sm text-muted-foreground mt-1 text-center">
-                {t("noWaitingListEntriesDescription") ||
-                  "Add students to the waiting list when groups are full"}
+                {hasActiveFilters
+                  ? t("adjustFiltersMessage") ||
+                    "Try adjusting your filters to find what you're looking for."
+                  : t("noWaitingListEntriesDescription") ||
+                    "Add students to the waiting list when groups are full"}
               </p>
+              {hasActiveFilters && (
+                <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                  {t("clearFilters") || "Clear Filters"}
+                </Button>
+              )}
             </div>
           )}
 
@@ -468,10 +551,12 @@ export default function WaitingList() {
                 <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
                   <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
                     <Clock className="w-3.5 h-3.5" />
-                    {t("createdAt") || "Yaratilgan vaqti"}
+                    {t("waitingListAddedAt") ||
+                      t("createdAt") ||
+                      "Navbatga qo'yilgan sana"}
                   </span>
                   <p className="font-medium text-foreground">
-                    {format(new Date(viewEntry.created_at), "MMM d, yyyy HH:mm")}
+                    {format(new Date(viewEntry.created_at), "dd.MM.yyyy HH:mm")}
                   </p>
                 </div>
               </div>

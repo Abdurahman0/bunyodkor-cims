@@ -52,6 +52,7 @@ import type {
   SessionRead,
   AttendanceCreateRequest,
   DebtorItem,
+  ContractRead,
 } from "@/types/api";
 import {
   Calendar,
@@ -132,6 +133,39 @@ const getOverdueMonthDate = (
 
 const capitalizeLabel = (value: string) =>
   value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+
+const getStudentId = (item: any) =>
+  Number(item?.student_id ?? item?.id ?? item?.student?.id ?? 0);
+
+const fetchAllGroupContracts = async (
+  groupId: number,
+  status: ContractRead["status"],
+) => {
+  const firstPage = await groupService.getGroupContracts(groupId, {
+    status,
+    page: 1,
+    page_size: 100,
+  });
+
+  const totalPages = firstPage.meta?.total_pages || 1;
+  const restPages =
+    totalPages > 1
+      ? await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, idx) =>
+            groupService.getGroupContracts(groupId, {
+              status,
+              page: idx + 2,
+              page_size: 100,
+            }),
+          ),
+        )
+      : [];
+
+  return [
+    ...(firstPage.data || []),
+    ...restPages.flatMap((page) => page.data || []),
+  ];
+};
 
 const parseOverdueMonthLabel = (rawLabel: string) => {
   const normalized = rawLabel.trim();
@@ -341,6 +375,18 @@ export default function CoachPanel() {
     enabled: !!selectedSession,
   });
 
+  const {
+    data: sessionActiveContracts = [],
+    isLoading: sessionActiveContractsLoading,
+  } = useQuery({
+    queryKey: ["session-group-contracts", selectedSession?.group_id, "active"],
+    queryFn: () => {
+      if (!selectedSession?.group_id) return Promise.resolve([]);
+      return fetchAllGroupContracts(selectedSession.group_id, "active");
+    },
+    enabled: !!selectedSession?.group_id,
+  });
+
   const { data: groupStudentsData, isLoading: groupStudentsLoading } = useQuery(
     {
       queryKey: ["group-students", selectedGroup?.id],
@@ -356,37 +402,10 @@ export default function CoachPanel() {
   const { data: groupContractsData, isLoading: groupContractsLoading } =
     useQuery({
       queryKey: ["group-contracts", selectedGroup?.id],
-      queryFn: async () => {
-        if (!selectedGroup) return [];
-
-        const firstPage = await groupService.getGroupContracts(
-          selectedGroup.id,
-          {
-            status: "active",
-            page: 1,
-            page_size: 100,
-          },
-        );
-
-        const totalPages = firstPage.meta?.total_pages || 1;
-        const restPages =
-          totalPages > 1
-            ? await Promise.all(
-                Array.from({ length: totalPages - 1 }, (_, idx) =>
-                  groupService.getGroupContracts(selectedGroup.id, {
-                    status: "active",
-                    page: idx + 2,
-                    page_size: 100,
-                  }),
-                ),
-              )
-            : [];
-
-        return [
-          ...(firstPage.data || []),
-          ...restPages.flatMap((page) => page.data || []),
-        ];
-      },
+      queryFn: () =>
+        selectedGroup
+          ? fetchAllGroupContracts(selectedGroup.id, "active")
+          : Promise.resolve([]),
       enabled: !!selectedGroup,
     });
 
@@ -746,9 +765,6 @@ export default function CoachPanel() {
     return debtorMap;
   }, [debtLocale, groupDebtorsData]);
 
-  const getStudentId = (item: any) =>
-    Number(item?.student_id ?? item?.id ?? item?.student?.id ?? 0);
-
   const getStudentNameValue = (item: any) => {
     if (!item) return "";
 
@@ -843,7 +859,37 @@ export default function CoachPanel() {
     return "-";
   };
 
+  const sessionActiveStudentIds = useMemo(
+    () =>
+      new Set(
+        sessionActiveContracts
+          .map((contract) => Number(contract.student_id))
+          .filter((studentId) => Number.isFinite(studentId) && studentId > 0),
+      ),
+    [sessionActiveContracts],
+  );
+
+  const visibleSessionStudents = useMemo(() => {
+    if (!Array.isArray(studentsData)) return [];
+    if (!selectedSession?.group_id) return studentsData;
+
+    return studentsData.filter((student) =>
+      sessionActiveStudentIds.has(getStudentId(student)),
+    );
+  }, [selectedSession?.group_id, sessionActiveStudentIds, studentsData]);
+
+  const groupActiveStudentIds = useMemo(
+    () =>
+      new Set(
+        (groupContractsData || [])
+          .map((contract) => Number(contract.student_id))
+          .filter((studentId) => Number.isFinite(studentId) && studentId > 0),
+      ),
+    [groupContractsData],
+  );
+
   const groupStudentRows = (groupStudentsData || [])
+    .filter((student: any) => groupActiveStudentIds.has(getStudentId(student)))
     .map((student: any) => ({
       id: getStudentId(student) || student.id,
       firstName: student?.first_name ?? student?.student?.first_name ?? "-",
@@ -861,6 +907,8 @@ export default function CoachPanel() {
 
   const isGroupStudentsTableLoading =
     groupStudentsLoading || groupContractsLoading || groupDebtorsLoading;
+  const isSessionStudentsLoading =
+    studentsLoading || sessionActiveContractsLoading;
 
   const getSessionGroupName = (session: SessionRead | null | undefined) => {
     if (!session) return t("unknownGroup") || "Unknown Group";
@@ -1167,14 +1215,14 @@ export default function CoachPanel() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {studentsLoading ? (
+                      {isSessionStudentsLoading ? (
                         <div className="flex h-24 items-center justify-center rounded-lg border">
                           <Loader2 className="animate-spin text-primary" />
                         </div>
-                      ) : studentsData && studentsData.length > 0 ? (
+                      ) : visibleSessionStudents.length > 0 ? (
                         <>
                           <div className="space-y-3 md:hidden">
-                            {studentsData.map((student: any) => {
+                            {visibleSessionStudents.map((student: any) => {
                               const studentId = getStudentId(student);
 
                               return (
@@ -1206,7 +1254,7 @@ export default function CoachPanel() {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {studentsData.map((student: any) => {
+                                {visibleSessionStudents.map((student: any) => {
                                   const studentId = getStudentId(student);
 
                                   return (
