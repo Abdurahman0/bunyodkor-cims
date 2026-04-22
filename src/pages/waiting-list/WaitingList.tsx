@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { waitingListService, groupService } from "@/services/api.service";
+import { exportToExcel } from "@/lib/export-utils";
 import { formatNameParts } from "@/lib/name-utils";
 import {
   Dialog,
@@ -22,6 +23,7 @@ import {
   Users,
   Clock,
   Calendar,
+  Download,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -42,6 +44,7 @@ export default function WaitingList() {
   const { t } = useLanguageStore();
   const [page, setPage] = useState(1);
   const [birthYearFilter, setBirthYearFilter] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<WaitingListRead | null>(
     null
@@ -181,6 +184,56 @@ export default function WaitingList() {
     setPage(1);
   };
 
+  const handleExport = async () => {
+    if (filteredEntries.length === 0) {
+      toast.error(t("noDataToExport") || "No data to export");
+      return;
+    }
+
+    const toastId = toast.loading(t("exportingData") || "Exporting data...");
+    setIsExporting(true);
+
+    try {
+      const exportRows = filteredEntries.map((entry) => ({
+        [t("student") || "Student"]: formatNameParts(
+          entry.student_last_name,
+          entry.student_first_name,
+        ),
+        [t("birthYear") || "Birth Year"]: entry.birth_year,
+        [t("group") || "Group"]: getGroupName(entry.group_id),
+        [t("priority") || "Priority"]: entry.priority,
+        [t("priorityLevel") || "Priority Level"]: getPriorityLabel(
+          entry.priority,
+          entry.group_id,
+        ),
+        [t("father") || "Father"]: entry.father_name,
+        [t("fatherPhone") || "Father Phone"]: entry.father_phone,
+        [t("mother") || "Mother"]: entry.mother_name,
+        [t("motherPhone") || "Mother Phone"]: entry.mother_phone,
+        [t("notes") || "Notes"]: entry.notes || "",
+        [t("waitingListAddedAt") || t("createdAt") || "Added At"]: format(
+          new Date(entry.created_at),
+          "dd.MM.yyyy HH:mm",
+        ),
+      }));
+
+      exportToExcel(exportRows, "waiting-list", {
+        sheetName: t("waitingList") || "Waiting List",
+      });
+
+      toast.success(t("exportedSuccessfully") || "Exported successfully", {
+        id: toastId,
+      });
+    } catch (error: any) {
+      console.error("Waiting list export error:", error);
+      toast.error(error.message || t("errorExportingData") || "Export failed", {
+        id: toastId,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const getPaginationItems = () => {
     if (totalPages <= 1) return [];
     if (totalPages <= 7)
@@ -246,10 +299,25 @@ export default function WaitingList() {
               "Manage students waiting for group slots"}
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="gap-2">
-          <Plus className="w-4 h-4" />
-          {t("addToWaitingList") || "Add to Waiting List"}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isLoading || isExporting || filteredEntries.length === 0}
+            className="gap-2"
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            {t("export") || "Export"}
+          </Button>
+          <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Plus className="w-4 h-4" />
+            {t("addToWaitingList") || "Add to Waiting List"}
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border/50 shadow-sm">
