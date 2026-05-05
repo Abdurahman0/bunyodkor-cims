@@ -782,6 +782,12 @@
     reason: "Reason",
     byWhom: "By Whom",
     noTerminatedContracts: "No terminated contracts in {{year}}.",
+    reactivateContract: "Reactivate",
+    confirmReactivateContract:
+      "Reactivate contract {{contractNumber}}? The status will change from terminated to active.",
+    contractReactivatedSuccess:
+      "Contract {{contractNumber}} reactivated successfully",
+    errorReactivatingContract: "Error reactivating contract",
     confirmArchiveYear:
       "WARNING! All data for year {{year}} will be archived. Continue?",
     confirmUnarchiveYear: "Do you want to restore {{year}} data from archive?",
@@ -1822,6 +1828,12 @@
     reason: "Sabab",
     byWhom: "Kim Tomonidan",
     noTerminatedContracts: "{{year}} yilda bekor qilingan shartnomalar yo'q.",
+    reactivateContract: "Qayta aktivlashtirish",
+    confirmReactivateContract:
+      "{{contractNumber}} shartnomasi qayta aktivlashtirilsinmi? Holati 'bekor qilingan'dan 'aktiv'ga o'zgaradi.",
+    contractReactivatedSuccess:
+      "{{contractNumber}} shartnomasi muvaffaqiyatli qayta aktivlashtirildi",
+    errorReactivatingContract: "Shartnomani qayta aktivlashtirishda xatolik",
     confirmArchiveYear:
       "DIQQAT! {{year}} yil uchun barcha ma'lumotlar arxivlanadi. Davom etasizmi?",
     confirmUnarchiveYear:
@@ -2832,6 +2844,12 @@
     reason: "Причина",
     byWhom: "Кем",
     noTerminatedContracts: "Нет расторгнутых контрактов в {{year}} году.",
+    reactivateContract: "Восстановить",
+    confirmReactivateContract:
+      "Восстановить контракт {{contractNumber}}? Статус изменится с расторгнут на активный.",
+    contractReactivatedSuccess:
+      "Контракт {{contractNumber}} успешно восстановлен",
+    errorReactivatingContract: "Ошибка при восстановлении контракта",
     confirmArchiveYear:
       "ВНИМАНИЕ! Все данные за {{year}} год будут архивированы. Продолжить?",
     confirmUnarchiveYear:
@@ -3077,4 +3095,3 @@
     goToGroupA: "Перейти в группу А",
   },
 };
-

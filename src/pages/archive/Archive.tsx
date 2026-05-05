@@ -12,11 +12,13 @@ import {
   Calendar,
   Search,
   Database,
+  RefreshCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { archiveService } from "@/services/api.service";
+import { archiveService, contractService } from "@/services/api.service";
 import type { ContractRead } from "@/types/api";
+import { useAuthStore } from "@/store/authStore";
 import {
   Card,
   CardContent,
@@ -36,7 +38,6 @@ import {
   TableCell,
   TableEmpty,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useLanguageStore } from "@/store/languageStore";
 import { formatFullName } from "@/lib/name-utils";
 import { BackupSection } from "@/pages/settings/Backup";
@@ -44,10 +45,13 @@ import { BackupSection } from "@/pages/settings/Backup";
 export default function Archive() {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const canReactivate = !!user?.is_super_admin;
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
   const [activeTab, setActiveTab] = useState("stats");
+  const [reactivatingId, setReactivatingId] = useState<number | null>(null);
 
   // Arxiv statistikasi
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
@@ -83,6 +87,44 @@ export default function Archive() {
     },
     onError: () => toast.error(t("errorUnarchiving" as any) || "Error unarchiving data"),
   });
+
+  // Terminated shartnomani qayta aktivlashtirish (faqat super_admin)
+  const reactivateMutation = useMutation({
+    mutationFn: (contractId: number) =>
+      contractService.updateContract(contractId, { status: "active" }),
+    onMutate: (contractId: number) => {
+      setReactivatingId(contractId);
+    },
+    onSettled: () => setReactivatingId(null),
+    onError: () =>
+      toast.error(
+        t("errorReactivatingContract" as any) || "Error reactivating contract"
+      ),
+  });
+
+  const handleReactivate = (contract: ContractRead) => {
+    if (!canReactivate) return;
+    const num = contract.contract_number || String(contract.id);
+    const msg = (
+      t("confirmReactivateContract" as any) ||
+      "Reactivate contract {{contractNumber}}? The status will change from terminated to active."
+    ).replace("{{contractNumber}}", num);
+    if (!confirm(msg)) return;
+    reactivateMutation.mutate(contract.id, {
+      onSuccess: () => {
+        toast.success(
+          (t("contractReactivatedSuccess" as any) ||
+            "Contract {{contractNumber}} reactivated successfully").replace(
+            "{{contractNumber}}",
+            num
+          )
+        );
+        queryClient.invalidateQueries({ queryKey: ["terminated-contracts"] });
+        queryClient.invalidateQueries({ queryKey: ["archive-stats"] });
+        queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      },
+    });
+  };
 
   const handleArchive = () => {
     if (
@@ -283,6 +325,11 @@ export default function Archive() {
                     <TableHead>{t("terminatedDate" as any) || "Terminated Date"}</TableHead>
                     <TableHead>{t("reason" as any) || "Reason"}</TableHead>
                     <TableHead>{t("byWhom" as any) || "By Whom"}</TableHead>
+                    {canReactivate && (
+                      <TableHead className="text-right">
+                        {t("actions" as any) || "Actions"}
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -312,6 +359,24 @@ export default function Archive() {
                           {formatFullName(contract.terminated_by?.full_name) ||
                             `ID: ${contract.terminated_by_user_id}`}
                         </TableCell>
+                        {canReactivate && (
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2 border-green-600 text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
+                              onClick={() => handleReactivate(contract)}
+                              disabled={reactivatingId === contract.id}
+                            >
+                              {reactivatingId === contract.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-4 h-4" />
+                              )}
+                              {t("reactivateContract" as any) || "Reactivate"}
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))
                   ) : (
