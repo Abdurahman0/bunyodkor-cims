@@ -1242,7 +1242,7 @@ export const contractService = {
     );
     return response.data;
   },
-
+};
 
 // ============================================================================
 // TRANSACTION SERVICES

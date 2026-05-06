@@ -762,28 +762,7 @@ export default function StudentDetailPage() {
                 >
                   {t("cancelContractAction")}
                 </Button>
-import { CloneContractDialog } from "@/components/timetable/CloneContractDialog";
-...
-  const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false);
-  const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
-  const [terminatedContractId, setTerminatedContractId] = useState<number | null>(null);
-...
-                {contracts?.some(c => c.status === "terminated") && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => {
-                        const terminated = contracts.find(c => c.status === "terminated");
-                        if (terminated) {
-                            setTerminatedContractId(terminated.id);
-                            setIsCloneDialogOpen(true);
-                        }
-                    }}
-                  >
-                    {t("activate")}
-                  </Button>
-                )}
-...
+              </div>...
       {terminatedContractId && (
         <CloneContractDialog
           open={isCloneDialogOpen}
