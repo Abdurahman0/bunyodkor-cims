@@ -1219,19 +1219,6 @@ export const contractService = {
   },
 
   /**
-   * Terminated kontraktdan klonlash uchun mavjud raqamlarni ko'rsatadi.
-   * GET /contracts/clone-available/{terminated_contract_id}
-   */
-  getCloneAvailableInfo: async (
-    terminatedContractId: number,
-  ): Promise<ApiResponse<any>> => {
-    const response = await apiClient.get<ApiResponse<any>>(
-      `/contracts/clone-available/${terminatedContractId}`,
-    );
-    return response.data;
-  },
-
-  /**
    * Terminated kontraktdan yangi student + yangi kontrakt yaratadi.
    * POST /contracts/clone-from-terminated
    */
@@ -1994,6 +1981,19 @@ export const reportService = {
     const response = await apiClient.get<ApiResponse<any>>(
       "/reports/terminated-summary",
       { params },
+    );
+    return response.data;
+  },
+
+  /**
+   * Terminated kontraktdan klonlash uchun mavjud raqamlarni ko'rsatadi.
+   * GET /contracts/clone-available/{terminated_contract_id}
+   */
+  getCloneAvailableInfo: async (
+    terminatedContractId: number,
+  ): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/contracts/clone-available/${terminatedContractId}`,
     );
     return response.data;
   },
