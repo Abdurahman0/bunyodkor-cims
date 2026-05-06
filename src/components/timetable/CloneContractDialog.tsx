@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { contractService } from "@/services/api.service";
+import { reportService, contractService } from "@/services/api.service";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
 
   const { data: availableInfo, isLoading } = useQuery({
     queryKey: ["clone-available", terminatedContractId],
-    queryFn: () => contractService.getCloneAvailableInfo(terminatedContractId),
+    queryFn: () => reportService.getCloneAvailableInfo(terminatedContractId),
     enabled: open,
   });
 
@@ -40,11 +40,19 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
   });
 
   const handleClone = () => {
-    // This is a simplified handler. You might need to add inputs for group_id, contract_number, dates, etc.
-    // Based on the API, you need: terminated_contract_id, group_id, contract_number, start_date, end_date, monthly_fee
-    console.log("Clone data:", availableInfo);
-    // In a real scenario, you'd show a form to fill these fields.
-    // Assuming availableInfo.data has the info needed.
+    // In a real application, you might need to gather input fields here.
+    // Assuming for now it uses the info from availableInfo
+    if (availableInfo?.data) {
+        // Mock data submission structure - this should be adjusted based on requirements
+        cloneMutation.mutate({
+            terminated_contract_id: terminatedContractId,
+            group_id: availableInfo.data.group_id,
+            contract_number: availableInfo.data.suggested_contract_number,
+            start_date: new Date().toISOString().split('T')[0],
+            end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+            monthly_fee: availableInfo.data.monthly_fee
+        });
+    }
   };
 
   return (
@@ -58,7 +66,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
         ) : (
           <div className="space-y-4">
             <p>Ready to activate this contract?</p>
-            {/* Add form inputs here as needed */}
+            {/* Add inputs if needed */}
           </div>
         )}
         <DialogFooter>
