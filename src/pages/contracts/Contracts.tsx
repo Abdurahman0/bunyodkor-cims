@@ -495,6 +495,12 @@ export default function Contracts() {
         </div>
       </motion.div>
 
+      {view !== "contracts" && (
+        <pre className="text-xs p-2 bg-muted rounded">
+          {JSON.stringify(terminatedSummaryQuery.data, null, 2)}
+        </pre>
+      )}
+
       {view !== "contracts" && terminatedSummaryQuery.data?.data && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
