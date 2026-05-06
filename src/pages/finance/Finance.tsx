@@ -40,7 +40,7 @@ import {
   X,
 } from "lucide-react";
 import { format } from "date-fns";
-import { transactionService } from "@/services/api.service";
+import { transactionService, reportService } from "@/services/api.service";
 import type {
   TransactionSource,
   TransactionStatus,
@@ -425,8 +425,23 @@ export default function Finance() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => {
-              window.open("https://bunyodkor.api.cims.cognilabs.org/reports/payments-excel", "_blank");
+            onClick={async () => {
+              const toastId = toast.loading(t("exporting") || "Exporting...");
+              try {
+                const blob = await reportService.exportPaymentsExcel();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "payments.xlsx";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                toast.success(t("exportedSuccessfully") || "Exported successfully");
+              } catch (error) {
+                toast.error(t("errorExporting") || "Error exporting");
+              } finally {
+                toast.dismiss(toastId);
+              }
             }}
             className="gap-2"
           >
