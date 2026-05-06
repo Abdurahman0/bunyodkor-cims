@@ -424,6 +424,17 @@ export default function Finance() {
           </Button>
           <Button
             type="button"
+            variant="secondary"
+            onClick={() => {
+              window.open("https://bunyodkor.api.cims.cognilabs.org/reports/payments-excel", "_blank");
+            }}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Payment Export</span>
+          </Button>
+          <Button
+            type="button"
             onClick={() => setActiveDialog("manual")}
             className="gap-2"
           >

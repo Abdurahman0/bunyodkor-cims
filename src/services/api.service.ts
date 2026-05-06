@@ -1219,23 +1219,30 @@ export const contractService = {
   },
 
   /**
-   * Get all available contract numbers (ONLY GAPS - not unused numbers after max)
-   * GET /contracts/available-numbers/{group_id}
+   * Terminated kontraktdan klonlash uchun mavjud raqamlarni ko'rsatadi.
+   * GET /contracts/clone-available/{terminated_contract_id}
    */
-  getAllAvailableNumbers: async (
-    groupId: number,
-  ): Promise<
-    ApiResponse<{
-      available_numbers: number[];
-      total_available: number;
-    }>
-  > => {
-    const response = await apiClient.get(
-      `/contracts/available-numbers/${groupId}`,
+  getCloneAvailableInfo: async (
+    terminatedContractId: number,
+  ): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/contracts/clone-available/${terminatedContractId}`,
     );
     return response.data;
   },
-};
+
+  /**
+   * Terminated kontraktdan yangi student + yangi kontrakt yaratadi.
+   * POST /contracts/clone-from-terminated
+   */
+  cloneFromTerminated: async (data: any): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>(
+      "/contracts/clone-from-terminated",
+      data,
+    );
+    return response.data;
+  },
+
 
 // ============================================================================
 // TRANSACTION SERVICES
@@ -1961,24 +1968,36 @@ export const reportService = {
   },
 
   /**
-   * Export Payers Report
-   * GET /reports/payers/export
+   * Export Payments Excel
+   * GET /reports/payments-excel
    */
-  exportPayersReport: async (params?: {
-    payment_year?: number;
-    payment_month?: number;
+  exportPaymentsExcel: async (params?: {
+    archive_year?: number;
     group_id?: number;
-    min_paid_amount?: number;
-    from_date?: string;
-    to_date?: string;
+    birth_year?: number;
   }): Promise<Blob> => {
-    const response = await apiClient.get<Blob>("/reports/payers/export", {
+    const response = await apiClient.get<Blob>("/reports/payments-excel", {
       params,
       responseType: "blob",
     });
     return response.data;
   },
-};
+
+  /**
+   * Terminated kontraktlar statistikasi.
+   * GET /reports/terminated-summary
+   */
+  getTerminatedSummary: async (params?: {
+    archive_year?: number;
+    group_id?: number;
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      "/reports/terminated-summary",
+      { params },
+    );
+    return response.data;
+  },
+
 
 // ============================================================================
 // SETTINGS SERVICES

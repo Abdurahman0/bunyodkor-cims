@@ -17,7 +17,7 @@ import {
 import toast from "react-hot-toast";
 
 import { archiveService, contractService } from "@/services/api.service";
-import type { TerminatedStudentItem } from "@/types/api";
+import type { ContractRead } from "@/types/api";
 import { useAuthStore } from "@/store/authStore";
 import {
   Card,
@@ -59,19 +59,10 @@ export default function Archive() {
     queryFn: () => archiveService.getArchiveStats(selectedYear),
   });
 
-  // Bekor qilingan shartnomalar — terminated_at sanasi bo'yicha (yil filtri bilan)
-  // Eski /archive/terminated-contracts/{year} endpoint'i archive_year bo'yicha filtrlardi,
-  // bu esa terminated_at maydoni bilan mos kelmasdi. Shu sababli /contracts/terminated-students
-  // ishlatamiz va terminated_from / terminated_to bilan tanlangan yilga cheklaymiz.
+  // Bekor qilingan shartnomalar
   const { data: terminatedData, isLoading: isTerminatedLoading } = useQuery({
     queryKey: ["terminated-contracts", selectedYear],
-    queryFn: () =>
-      contractService.getTerminatedStudents({
-        terminated_from: `${selectedYear}-01-01`,
-        terminated_to: `${selectedYear}-12-31`,
-        page: 1,
-        page_size: 1000,
-      }),
+    queryFn: () => archiveService.getTerminatedContracts(selectedYear),
     enabled: activeTab === "terminated",
   });
 
@@ -111,15 +102,15 @@ export default function Archive() {
       ),
   });
 
-  const handleReactivate = (contract: TerminatedStudentItem) => {
+  const handleReactivate = (contract: ContractRead) => {
     if (!canReactivate) return;
-    const num = contract.contract_number || String(contract.contract_id);
+    const num = contract.contract_number || String(contract.id);
     const msg = (
       t("confirmReactivateContract" as any) ||
       "Reactivate contract {{contractNumber}}? The status will change from terminated to active."
     ).replace("{{contractNumber}}", num);
     if (!confirm(msg)) return;
-    reactivateMutation.mutate(contract.contract_id, {
+    reactivateMutation.mutate(contract.id, {
       onSuccess: () => {
         toast.success(
           (t("contractReactivatedSuccess" as any) ||
@@ -330,8 +321,7 @@ export default function Archive() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("contractNumber" as any) || "Contract №"}</TableHead>
-                    <TableHead>{t("student" as any) || "Student"}</TableHead>
-                    <TableHead>{t("group" as any) || "Group"}</TableHead>
+                    <TableHead>{t("studentId" as any) || "Student ID"}</TableHead>
                     <TableHead>{t("terminatedDate" as any) || "Terminated Date"}</TableHead>
                     <TableHead>{t("reason" as any) || "Reason"}</TableHead>
                     <TableHead>{t("byWhom" as any) || "By Whom"}</TableHead>
@@ -344,75 +334,51 @@ export default function Archive() {
                 </TableHeader>
                 <TableBody>
                   {terminatedData?.data && terminatedData.data.length > 0 ? (
-                    terminatedData.data.map((contract: TerminatedStudentItem) => {
-                      const studentName = [
-                        contract.student_first_name,
-                        contract.student_last_name,
-                      ]
-                        .filter(Boolean)
-                        .join(" ")
-                        .trim();
-                      return (
-                        <TableRow key={contract.contract_id}>
-                          <TableCell className="font-medium">
-                            {contract.contract_number}
+                    terminatedData.data.map((contract: ContractRead) => (
+                      <TableRow key={contract.id}>
+                        <TableCell className="font-medium">
+                          {contract.contract_number}
+                        </TableCell>
+                        <TableCell>{contract.student_id}</TableCell>
+                        <TableCell>
+                          {contract.terminated_at
+                            ? format(
+                                new Date(contract.terminated_at),
+                                "dd.MM.yyyy HH:mm"
+                              )
+                            : "-"}
+                        </TableCell>
+                        <TableCell
+                          className="max-w-[200px] truncate"
+                          title={contract.termination_reason || ""}
+                        >
+                          {contract.termination_reason ||
+                            (t("reasonNotProvided" as any) || "Reason not provided")}
+                        </TableCell>
+                        <TableCell>
+                          {formatFullName(contract.terminated_by?.full_name) ||
+                            `ID: ${contract.terminated_by_user_id}`}
+                        </TableCell>
+                        {canReactivate && (
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2 border-green-600 text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
+                              onClick={() => handleReactivate(contract)}
+                              disabled={reactivatingId === contract.id}
+                            >
+                              {reactivatingId === contract.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-4 h-4" />
+                              )}
+                              {t("reactivateContract" as any) || "Reactivate"}
+                            </Button>
                           </TableCell>
-                          <TableCell>
-                            {formatFullName(studentName) ||
-                              `ID: ${contract.student_id}`}
-                          </TableCell>
-                          <TableCell>
-                            {contract.student_group_name ||
-                              contract.student_group_identifier ||
-                              (contract.student_group_id
-                                ? `ID: ${contract.student_group_id}`
-                                : "-")}
-                          </TableCell>
-                          <TableCell>
-                            {contract.terminated_at
-                              ? format(
-                                  new Date(contract.terminated_at),
-                                  "dd.MM.yyyy HH:mm"
-                                )
-                              : "-"}
-                          </TableCell>
-                          <TableCell
-                            className="max-w-[200px] truncate"
-                            title={contract.termination_reason || ""}
-                          >
-                            {contract.termination_reason ||
-                              (t("reasonNotProvided" as any) ||
-                                "Reason not provided")}
-                          </TableCell>
-                          <TableCell>
-                            {formatFullName(contract.terminated_by_full_name) ||
-                              (contract.terminated_by_user_id
-                                ? `ID: ${contract.terminated_by_user_id}`
-                                : "-")}
-                          </TableCell>
-                          {canReactivate && (
-                            <TableCell className="text-right">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-2 border-green-600 text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
-                                onClick={() => handleReactivate(contract)}
-                                disabled={
-                                  reactivatingId === contract.contract_id
-                                }
-                              >
-                                {reactivatingId === contract.contract_id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="w-4 h-4" />
-                                )}
-                                {t("reactivateContract" as any) || "Reactivate"}
-                              </Button>
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      );
-                    })
+                        )}
+                      </TableRow>
+                    ))
                   ) : (
                     <TableEmpty
                       icon={

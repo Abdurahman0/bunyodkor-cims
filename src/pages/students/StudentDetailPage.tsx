@@ -750,7 +750,7 @@ export default function StudentDetailPage() {
               <p className="text-2xl font-bold">
                 {activeContract?.contract_number || "-"}
               </p>
-              <div className="mt-3">
+              <div className="mt-3 flex gap-2 justify-center">
                 <Button
                   variant="destructive"
                   size="sm"
@@ -762,6 +762,35 @@ export default function StudentDetailPage() {
                 >
                   {t("cancelContractAction")}
                 </Button>
+import { CloneContractDialog } from "@/components/timetable/CloneContractDialog";
+...
+  const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false);
+  const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
+  const [terminatedContractId, setTerminatedContractId] = useState<number | null>(null);
+...
+                {contracts?.some(c => c.status === "terminated") && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                        const terminated = contracts.find(c => c.status === "terminated");
+                        if (terminated) {
+                            setTerminatedContractId(terminated.id);
+                            setIsCloneDialogOpen(true);
+                        }
+                    }}
+                  >
+                    {t("activate")}
+                  </Button>
+                )}
+...
+      {terminatedContractId && (
+        <CloneContractDialog
+          open={isCloneDialogOpen}
+          onOpenChange={setIsCloneDialogOpen}
+          terminatedContractId={terminatedContractId}
+        />
+      )}
               </div>
             </div>
           </CardContent>
