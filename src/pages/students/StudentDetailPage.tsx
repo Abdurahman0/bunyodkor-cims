@@ -762,14 +762,6 @@ export default function StudentDetailPage() {
                 >
                   {t("cancelContractAction")}
                 </Button>
-              </div>...
-      {terminatedContractId && (
-        <CloneContractDialog
-          open={isCloneDialogOpen}
-          onOpenChange={setIsCloneDialogOpen}
-          terminatedContractId={terminatedContractId}
-        />
-      )}
               </div>
             </div>
           </CardContent>
