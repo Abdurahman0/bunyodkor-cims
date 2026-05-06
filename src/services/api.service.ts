@@ -1997,7 +1997,7 @@ export const reportService = {
     );
     return response.data;
   },
-
+};
 
 // ============================================================================
 // SETTINGS SERVICES
