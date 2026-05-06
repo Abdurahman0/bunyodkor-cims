@@ -181,6 +181,15 @@ export default function Contracts() {
     enabled: view === "contracts",
   });
 
+  const terminatedSummaryQuery = useQuery({
+    queryKey: ["contracts-terminated-summary", terminatedFrom, terminatedTo],
+    queryFn: () =>
+      reportService.getTerminatedSummary({
+        // params if needed based on the endpoint, but API docs didn't specify date range params for this one
+      }),
+    enabled: view === "terminated-students" || view === "terminated-unpaid",
+  });
+
   const terminatedStudentsQuery = useQuery({
     queryKey: [
       "contracts-terminated-students",
@@ -485,6 +494,48 @@ export default function Contracts() {
           )}
         </div>
       </motion.div>
+
+      {view !== "contracts" && terminatedSummaryQuery.data?.data && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm text-muted-foreground">{t("terminatedCount") || "Terminated"}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold">{terminatedSummaryQuery.data.data.terminated_count}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm text-muted-foreground">{t("totalDebt") || "Total Debt"}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold text-red-600">{formatCurrency(terminatedSummaryQuery.data.data.total_debt)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm text-muted-foreground">{t("withDebtCount") || "With Debt"}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold">{terminatedSummaryQuery.data.data.with_debt_count}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm text-muted-foreground">{t("noDebtCount") || "No Debt"}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-2xl font-bold text-green-600">{terminatedSummaryQuery.data.data.no_debt_count}</p>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ opacity: 0 }}
