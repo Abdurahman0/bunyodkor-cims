@@ -175,6 +175,8 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                 placeholder={t("selectGroup") || "Select group"}
                 searchPlaceholder={`${t("search") || "Search"}...`}
                 emptyText={t("noDataFound") || "No data found"}
+                triggerClassName="h-10"
+                contentClassName="z-[10020]"
                 disabled={isLoadingGroups}
               />
             </div>
