@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Select } from "@/components/ui/select";
 import { useLanguageStore } from "@/store/languageStore";
 import toast from "react-hot-toast";
 
@@ -81,16 +81,6 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
     onError: () => toast.error(t("failedToCloneContract")),
   });
 
-  const groupOptions = useMemo(
-    () =>
-      groupsData?.data?.map((group: any) => ({
-        value: String(group.id),
-        label: group.name,
-        keywords: [group.name, String(group.id)],
-      })) || [],
-    [groupsData?.data],
-  );
-
   const validate = () => {
     if (!formData.group_id || Number(formData.group_id) <= 0) {
       toast.error(t("selectGroup") || "Please select a group");
@@ -144,21 +134,25 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
           <div className="space-y-4 py-2">
             <div className="space-y-1">
               <Label htmlFor="group_id">{t("group")}</Label>
-              <SearchableSelect
+              <Select
                 id="group_id"
+                name="group_id"
                 value={formData.group_id ? String(formData.group_id) : ""}
-                onValueChange={(value) =>
+                onChange={(e) =>
                   setFormData((current) => ({
                     ...current,
-                    group_id: value ? Number(value) : 0,
+                    group_id: e.target.value ? Number(e.target.value) : 0,
                   }))
                 }
-                options={groupOptions}
-                placeholder={t("selectGroup") || "Select group"}
-                searchPlaceholder={`${t("search") || "Search"}...`}
-                emptyText={t("noDataFound") || "No data found"}
                 disabled={isLoadingGroups}
-              />
+              >
+                <option value="">{t("selectGroup") || "Select group"}</option>
+                {groupsData?.data?.map((group: any) => (
+                  <option key={group.id} value={String(group.id)}>
+                    {group.name}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <div className="space-y-1">

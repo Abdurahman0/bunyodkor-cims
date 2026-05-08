@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Select } from "@/components/ui/select";
 import { useLanguageStore } from "@/store/languageStore";
 import toast from "react-hot-toast";
 
@@ -85,16 +85,6 @@ export default function ActivateContractModal({
     },
   });
 
-  const groupOptions = useMemo(
-    () =>
-      groupsData?.data?.map((group: any) => ({
-        value: String(group.id),
-        label: group.name,
-        keywords: [group.name, String(group.id)],
-      })) || [],
-    [groupsData?.data],
-  );
-
   const validate = () => {
     if (!form.group_id || Number(form.group_id) <= 0) {
       toast.error(t("selectGroup") || "Please select a group");
@@ -148,21 +138,25 @@ export default function ActivateContractModal({
           <div className="space-y-4 py-2">
             <div className="space-y-1">
               <Label htmlFor="group_id">{t("group")}</Label>
-              <SearchableSelect
+              <Select
                 id="group_id"
+                name="group_id"
                 value={form.group_id ? String(form.group_id) : ""}
-                onValueChange={(value) =>
+                onChange={(e) =>
                   setForm((c) => ({
                     ...c,
-                    group_id: value ? Number(value) : 0,
+                    group_id: e.target.value ? Number(e.target.value) : 0,
                   }))
                 }
-                options={groupOptions}
-                placeholder={t("selectGroup") || "Select group"}
-                searchPlaceholder={`${t("search") || "Search"}...`}
-                emptyText={t("noDataFound") || "No data found"}
                 disabled={isLoadingGroups}
-              />
+              >
+                <option value="">{t("selectGroup") || "Select group"}</option>
+                {groupsData?.data?.map((group: any) => (
+                  <option key={group.id} value={String(group.id)}>
+                    {group.name}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <div className="space-y-1">
