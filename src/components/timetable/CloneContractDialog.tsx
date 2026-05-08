@@ -87,7 +87,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg m-4">
         <DialogHeader>
           <DialogTitle>{t("activate")}</DialogTitle>
         </DialogHeader>
@@ -99,6 +99,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
               <Label htmlFor="terminated_contract_id">terminated_contract_id</Label>
               <Input
                 id="terminated_contract_id"
+                name="terminated_contract_id"
                 type="number"
                 value={formData.terminated_contract_id}
                 readOnly
@@ -109,6 +110,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
               <Label htmlFor="group_id">group_id</Label>
               <Input
                 id="group_id"
+                name="group_id"
                 type="number"
                 value={formData.group_id}
                 onChange={(e) =>
@@ -125,6 +127,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
               <Label htmlFor="contract_number">contract_number</Label>
               <Input
                 id="contract_number"
+                name="contract_number"
                 value={formData.contract_number}
                 onChange={(e) =>
                   setFormData((current) => ({
@@ -141,6 +144,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                 <Label htmlFor="start_date">start_date</Label>
                 <Input
                   id="start_date"
+                  name="start_date"
                   type="date"
                   value={formData.start_date}
                   onChange={(e) =>
@@ -156,6 +160,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                 <Label htmlFor="end_date">end_date</Label>
                 <Input
                   id="end_date"
+                  name="end_date"
                   type="date"
                   value={formData.end_date}
                   onChange={(e) =>
@@ -172,6 +177,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
               <Label htmlFor="monthly_fee">monthly_fee</Label>
               <Input
                 id="monthly_fee"
+                name="monthly_fee"
                 type="number"
                 min={1}
                 value={formData.monthly_fee}

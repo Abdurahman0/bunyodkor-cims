@@ -112,7 +112,7 @@ export default function ActivateContractModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg m-4">
         <DialogHeader>
           <DialogTitle>{t("activate") || "Activate"}</DialogTitle>
         </DialogHeader>
@@ -125,6 +125,7 @@ export default function ActivateContractModal({
               <Label htmlFor="contract_number">{t("contractNumber")}</Label>
               <Input
                 id="contract_number"
+                name="contract_number"
                 value={form.contract_number}
                 onChange={(e) => setForm((c) => ({ ...c, contract_number: e.target.value }))}
                 placeholder={t("contractNumber")}
@@ -136,6 +137,7 @@ export default function ActivateContractModal({
                 <Label htmlFor="start_date">{t("startDate")}</Label>
                 <Input
                   id="start_date"
+                  name="start_date"
                   type="date"
                   value={form.start_date}
                   onChange={(e) => setForm((c) => ({ ...c, start_date: e.target.value }))}
@@ -146,6 +148,7 @@ export default function ActivateContractModal({
                 <Label htmlFor="end_date">{t("endDate")}</Label>
                 <Input
                   id="end_date"
+                  name="end_date"
                   type="date"
                   value={form.end_date}
                   onChange={(e) => setForm((c) => ({ ...c, end_date: e.target.value }))}
@@ -157,6 +160,7 @@ export default function ActivateContractModal({
               <Label htmlFor="monthly_fee">{t("monthlyFee")}</Label>
               <Input
                 id="monthly_fee"
+                name="monthly_fee"
                 type="number"
                 min={1}
                 value={String(form.monthly_fee)}
