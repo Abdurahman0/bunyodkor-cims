@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { reportService, contractService } from "@/services/api.service";
+import { reportService, contractService, groupService } from "@/services/api.service";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useLanguageStore } from "@/store/languageStore";
 import toast from "react-hot-toast";
 
@@ -50,6 +51,12 @@ export default function ActivateContractModal({
     enabled: open && !!terminatedContractId,
   });
 
+  const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
+    queryKey: ["groups-list", "activate-contract-modal-office"],
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
+    enabled: open,
+  });
+
   useEffect(() => {
     if (!open) return;
     const available = availableInfo?.data as any;
@@ -78,7 +85,21 @@ export default function ActivateContractModal({
     },
   });
 
+  const groupOptions = useMemo(
+    () =>
+      groupsData?.data?.map((group: any) => ({
+        value: String(group.id),
+        label: group.name,
+        keywords: [group.name, String(group.id)],
+      })) || [],
+    [groupsData?.data],
+  );
+
   const validate = () => {
+    if (!form.group_id || Number(form.group_id) <= 0) {
+      toast.error(t("selectGroup") || "Please select a group");
+      return false;
+    }
     if (!form.contract_number || !form.contract_number.trim()) {
       toast.error(t("enterContractNumber") || "Contract number is required");
       return false;
@@ -89,6 +110,10 @@ export default function ActivateContractModal({
     }
     if (!form.end_date) {
       toast.error(t("endDateRequired") || "End date is required");
+      return false;
+    }
+    if (form.start_date > form.end_date) {
+      toast.error(t("dateRangeInvalid") || "From date cannot be later than To date");
       return false;
     }
     if (!form.monthly_fee || Number(form.monthly_fee) <= 0) {
@@ -112,16 +137,35 @@ export default function ActivateContractModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg m-4">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg m-4 p-4">
+        <DialogHeader className="p-0 pb-4">
           <DialogTitle>{t("activate") || "Activate"}</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
-          <p>{t("loading")}</p>
+          <p className="py-2">{t("loading")}</p>
         ) : (
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="group_id">{t("group")}</Label>
+              <SearchableSelect
+                id="group_id"
+                value={form.group_id ? String(form.group_id) : ""}
+                onValueChange={(value) =>
+                  setForm((c) => ({
+                    ...c,
+                    group_id: value ? Number(value) : 0,
+                  }))
+                }
+                options={groupOptions}
+                placeholder={t("selectGroup") || "Select group"}
+                searchPlaceholder={`${t("search") || "Search"}...`}
+                emptyText={t("noDataFound") || "No data found"}
+                disabled={isLoadingGroups}
+              />
+            </div>
+
+            <div className="space-y-1">
               <Label htmlFor="contract_number">{t("contractNumber")}</Label>
               <Input
                 id="contract_number"
@@ -133,7 +177,7 @@ export default function ActivateContractModal({
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="start_date">{t("startDate")}</Label>
                 <Input
                   id="start_date"
@@ -144,7 +188,7 @@ export default function ActivateContractModal({
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="end_date">{t("endDate")}</Label>
                 <Input
                   id="end_date"
@@ -156,8 +200,8 @@ export default function ActivateContractModal({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="monthly_fee">{t("monthlyFee")}</Label>
+            <div className="space-y-1">
+              <Label htmlFor="monthly_fee">{t("monthlyFee")} (UZS)</Label>
               <Input
                 id="monthly_fee"
                 name="monthly_fee"
@@ -165,12 +209,13 @@ export default function ActivateContractModal({
                 min={1}
                 value={String(form.monthly_fee)}
                 onChange={(e) => setForm((c) => ({ ...c, monthly_fee: Number(e.target.value) }))}
+                placeholder="800000"
               />
             </div>
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="p-0 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={cloneMutation.isLoading}>
             {t("cancel")}
           </Button>

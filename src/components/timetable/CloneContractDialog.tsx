@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { reportService, contractService } from "@/services/api.service";
+import { reportService, contractService, groupService } from "@/services/api.service";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useLanguageStore } from "@/store/languageStore";
 import toast from "react-hot-toast";
 
@@ -44,6 +45,12 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
   const { data: availableInfo, isLoading } = useQuery({
     queryKey: ["clone-available", terminatedContractId],
     queryFn: () => reportService.getCloneAvailableInfo(terminatedContractId),
+    enabled: open && !!terminatedContractId,
+  });
+
+  const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
+    queryKey: ["groups-list", "activate-contract-modal"],
+    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
     enabled: open,
   });
 
@@ -74,7 +81,47 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
     onError: () => toast.error(t("failedToCloneContract")),
   });
 
+  const groupOptions = useMemo(
+    () =>
+      groupsData?.data?.map((group: any) => ({
+        value: String(group.id),
+        label: group.name,
+        keywords: [group.name, String(group.id)],
+      })) || [],
+    [groupsData?.data],
+  );
+
+  const validate = () => {
+    if (!formData.group_id || Number(formData.group_id) <= 0) {
+      toast.error(t("selectGroup") || "Please select a group");
+      return false;
+    }
+    if (!formData.contract_number || !formData.contract_number.trim()) {
+      toast.error(t("enterContractNumber") || "Please enter contract number");
+      return false;
+    }
+    if (!formData.start_date) {
+      toast.error(t("startDateRequired") || "Start date is required");
+      return false;
+    }
+    if (!formData.end_date) {
+      toast.error(t("endDateRequired") || "End date is required");
+      return false;
+    }
+    if (formData.start_date > formData.end_date) {
+      toast.error(t("dateRangeInvalid") || "From date cannot be later than To date");
+      return false;
+    }
+    if (!formData.monthly_fee || Number(formData.monthly_fee) <= 0) {
+      toast.error(t("monthlyFeeRequired") || "Monthly fee must be greater than zero");
+      return false;
+    }
+    return true;
+  };
+
   const handleClone = () => {
+    if (!validate()) return;
+
     cloneMutation.mutate({
       terminated_contract_id: formData.terminated_contract_id,
       group_id: Number(formData.group_id),
@@ -87,44 +134,35 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg m-4">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg m-4 p-4">
+        <DialogHeader className="p-0 pb-4">
           <DialogTitle>{t("activate")}</DialogTitle>
         </DialogHeader>
         {isLoading ? (
-          <p>Loading...</p>
+          <p className="py-2">Loading...</p>
         ) : (
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="terminated_contract_id">terminated_contract_id</Label>
-              <Input
-                id="terminated_contract_id"
-                name="terminated_contract_id"
-                type="number"
-                value={formData.terminated_contract_id}
-                readOnly
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="group_id">group_id</Label>
-              <Input
+            <div className="space-y-1">
+              <Label htmlFor="group_id">{t("group")}</Label>
+              <SearchableSelect
                 id="group_id"
-                name="group_id"
-                type="number"
-                value={formData.group_id}
-                onChange={(e) =>
+                value={formData.group_id ? String(formData.group_id) : ""}
+                onValueChange={(value) =>
                   setFormData((current) => ({
                     ...current,
-                    group_id: Number(e.target.value),
+                    group_id: value ? Number(value) : 0,
                   }))
                 }
-                placeholder="0"
+                options={groupOptions}
+                placeholder={t("selectGroup") || "Select group"}
+                searchPlaceholder={`${t("search") || "Search"}...`}
+                emptyText={t("noDataFound") || "No data found"}
+                disabled={isLoadingGroups}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="contract_number">contract_number</Label>
+            <div className="space-y-1">
+              <Label htmlFor="contract_number">{t("contractNumber")}</Label>
               <Input
                 id="contract_number"
                 name="contract_number"
@@ -135,13 +173,13 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                     contract_number: e.target.value,
                   }))
                 }
-                placeholder="string"
+                placeholder={t("contractNumber")}
               />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="start_date">start_date</Label>
+              <div className="space-y-1">
+                <Label htmlFor="start_date">{t("startDate")}</Label>
                 <Input
                   id="start_date"
                   name="start_date"
@@ -156,8 +194,8 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="end_date">end_date</Label>
+              <div className="space-y-1">
+                <Label htmlFor="end_date">{t("endDate")}</Label>
                 <Input
                   id="end_date"
                   name="end_date"
@@ -173,8 +211,8 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="monthly_fee">monthly_fee</Label>
+            <div className="space-y-1">
+              <Label htmlFor="monthly_fee">{t("monthlyFee")} (UZS)</Label>
               <Input
                 id="monthly_fee"
                 name="monthly_fee"
@@ -187,13 +225,15 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                     monthly_fee: Number(e.target.value),
                   }))
                 }
-                placeholder="1"
+                placeholder="800000"
               />
             </div>
           </div>
         )}
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("cancel")}</Button>
+        <DialogFooter className="p-0 pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t("cancel")}
+          </Button>
           <Button onClick={handleClone} disabled={isLoading || cloneMutation.isPending}>
             {t("activate")}
           </Button>
