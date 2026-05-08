@@ -50,7 +50,25 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
 
   const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
     queryKey: ["groups-list", "activate-contract-modal"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
+    queryFn: async () => {
+      const firstPage = await groupService.getGroups({ page: 1, page_size: 100 });
+      const totalPages = firstPage.meta?.total_pages || 1;
+
+      if (totalPages <= 1) {
+        return firstPage.data || [];
+      }
+
+      const restPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, idx) =>
+          groupService.getGroups({ page: idx + 2, page_size: 100 }),
+        ),
+      );
+
+      return [
+        ...(firstPage.data || []),
+        ...restPages.flatMap((response) => response.data || []),
+      ];
+    },
     enabled: open,
   });
 
@@ -147,7 +165,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                 disabled={isLoadingGroups}
               >
                 <option value="">{t("selectGroup") || "Select group"}</option>
-                {groupsData?.data?.map((group: any) => (
+                {groupsData?.map((group: any) => (
                   <option key={group.id} value={String(group.id)}>
                     {group.name}
                   </option>
