@@ -57,6 +57,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CloneContractDialog } from "@/components/timetable/CloneContractDialog";
 
 const getStatusBadge = (status: string) => {
   const styles: { [key: string]: string } = {
@@ -121,6 +122,10 @@ export default function StudentDetailPage() {
   const [terminationReason, setTerminationReason] = useState("");
   const [terminatedAt, setTerminatedAt] = useState(
     format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+  );
+  const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
+  const [terminatedContractId, setTerminatedContractId] = useState<number | null>(
+    null,
   );
 
   const formatSource = (source: string | null | undefined) => {
@@ -1510,6 +1515,17 @@ export default function StudentDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CloneContractDialog
+        open={isCloneDialogOpen}
+        onOpenChange={(open) => {
+          setIsCloneDialogOpen(open);
+          if (!open) {
+            setTerminatedContractId(null);
+          }
+        }}
+        terminatedContractId={terminatedContractId ?? 0}
+      />
 
       {/* Edit Contract Dialog */}
       <Dialog
