@@ -36,6 +36,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Loader2,
+  XCircle,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
@@ -75,7 +76,7 @@ export default function Reports() {
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
   const [activeTab, setActiveTab] = useState<
-    "finance" | "attendance" | "debtors" | "payers"
+    "finance" | "attendance" | "debtors" | "payers" | "terminated"
   >("finance");
   const [dateRange, setDateRange] = useState({
     from: `${currentYear}-01-01`,
@@ -92,6 +93,8 @@ export default function Reports() {
   const [unpaidMonths, setUnpaidMonths] = useState("");
   const [unpaidFromDate, setUnpaidFromDate] = useState("");
   const [unpaidToDate, setUnpaidToDate] = useState("");
+  const [terminatedYear, setTerminatedYear] = useState<number | "">(currentYear);
+  const [terminatedGroupId, setTerminatedGroupId] = useState<number | null>(null);
   const debtorsPageSize = 20;
   const monthOptions = useMemo(
     () => [
@@ -148,7 +151,7 @@ export default function Reports() {
         data: [...firstData, ...restPages.flatMap((page) => page.data || [])],
       };
     },
-    enabled: activeTab === "debtors",
+    enabled: activeTab === "debtors" || activeTab === "terminated",
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -425,6 +428,18 @@ export default function Reports() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: terminatedSummaryData, isLoading: terminatedSummaryLoading } = useQuery({
+    queryKey: ["terminated-summary", terminatedYear, terminatedGroupId],
+    queryFn: () =>
+      reportService.getTerminatedSummary({
+        archive_year: terminatedYear === "" ? undefined : Number(terminatedYear),
+        group_id: terminatedGroupId || undefined,
+      }),
+    enabled: activeTab === "terminated",
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+
   const effectiveDebtorsData = hasAdvancedUnpaidListFilter ? debtorsFilteredData : debtorsData;
   const debtorsLoading = hasUnpaidListFilter
     ? (hasAdvancedUnpaidListFilter ? isDebtorsFilteredLoading : isDebtorsBaseLoading)
@@ -468,6 +483,7 @@ export default function Reports() {
     { id: "attendance", label: t("attendanceReport"), icon: Users },
     { id: "debtors", label: t("debtors"), icon: AlertTriangle },
     { id: "payers", label: t("payersReport"), icon: Users },
+    { id: "terminated", label: t("terminatedReport"), icon: XCircle },
   ];
 
   const paymentSourcesData =
@@ -617,7 +633,7 @@ export default function Reports() {
             {t("analyticsAndInsights")}
           </p>
         </div>
-        {activeTab !== "payers" && (
+        {activeTab !== "payers" && activeTab !== "terminated" && (
           <Button
             variant="outline"
             className="gap-2"
@@ -1278,6 +1294,214 @@ export default function Reports() {
                 onPageChange={setDebtorsPage}
               />
             )}
+          </Card>
+        </motion.div>
+      )}
+
+      {/* TERMINATED TAB */}
+      {activeTab === "terminated" && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="w-56">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("year")}
+                  </label>
+                  <SearchableSelect
+                    value={terminatedYear === "" ? "" : String(terminatedYear)}
+                    onValueChange={(value) =>
+                      setTerminatedYear(value ? Number(value) : "")
+                    }
+                    options={[
+                      { value: "", label: t("allYears") || "All years" },
+                      ...[
+                        currentYear - 2,
+                        currentYear - 1,
+                        currentYear,
+                        currentYear + 1,
+                      ].map((y) => ({ value: String(y), label: String(y) })),
+                    ]}
+                    placeholder={t("allYears") || "All years"}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
+                    className="w-full"
+                    triggerClassName="h-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
+                <div className="w-full sm:w-[22rem] lg:w-[26rem]">
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    {t("group")}
+                  </label>
+                  <SearchableSelect
+                    value={terminatedGroupId ? String(terminatedGroupId) : ""}
+                    onValueChange={(value) =>
+                      setTerminatedGroupId(value ? Number(value) : null)
+                    }
+                    options={[
+                      {
+                        value: "",
+                        label: groupsLoading ? t("loading") : t("allGroups"),
+                      },
+                      ...groupsList.map((group) => ({
+                        value: String(group.id),
+                        label: group.name,
+                      })),
+                    ]}
+                    placeholder={t("allGroups")}
+                    searchPlaceholder={`${t("search")}...`}
+                    emptyText={t("noDataFound")}
+                    className="w-full"
+                    triggerClassName="h-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    disabled={groupsLoading}
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTerminatedYear(currentYear);
+                    setTerminatedGroupId(null);
+                  }}
+                >
+                  {t("clearFilters")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatsCard
+              title={t("terminatedCount")}
+              value={
+                terminatedSummaryLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("calculating")}
+                  </span>
+                ) : (
+                  terminatedSummaryData?.data?.terminated_count ?? 0
+                )
+              }
+              icon={<XCircle className="w-6 h-6" />}
+            />
+            <StatsCard
+              title={t("totalExpected")}
+              value={
+                terminatedSummaryLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("calculating")}
+                  </span>
+                ) : (
+                  formatCurrency(terminatedSummaryData?.data?.total_expected ?? 0)
+                )
+              }
+              icon={<CreditCard className="w-6 h-6" />}
+            />
+            <StatsCard
+              title={t("totalPaid")}
+              value={
+                terminatedSummaryLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("calculating")}
+                  </span>
+                ) : (
+                  formatCurrency(terminatedSummaryData?.data?.total_paid ?? 0)
+                )
+              }
+              icon={<CheckCircle className="w-6 h-6" />}
+            />
+            <StatsCard
+              title={t("totalDebtAmount")}
+              value={
+                terminatedSummaryLoading ? (
+                  <span className="flex items-center gap-2 text-muted-foreground text-base font-medium">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("calculating")}
+                  </span>
+                ) : (
+                  formatCurrency(terminatedSummaryData?.data?.total_debt ?? 0)
+                )
+              }
+              icon={<AlertTriangle className="w-6 h-6" />}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatsCard
+              title={t("withDebtCount")}
+              value={
+                terminatedSummaryLoading ? "-" : (terminatedSummaryData?.data?.with_debt_count ?? 0)
+              }
+              icon={<AlertTriangle className="w-6 h-6" />}
+            />
+            <StatsCard
+              title={t("noDebtCount")}
+              value={
+                terminatedSummaryLoading ? "-" : (terminatedSummaryData?.data?.no_debt_count ?? 0)
+              }
+              icon={<CheckCircle className="w-6 h-6" />}
+            />
+            <StatsCard
+              title={t("avgDebtPerDebtor")}
+              value={
+                terminatedSummaryLoading ? "-" : formatCurrency(terminatedSummaryData?.data?.avg_debt_per_debtor ?? 0)
+              }
+              icon={<TrendingUp className="w-6 h-6" />}
+            />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{t("terminatedSummary")}</CardTitle>
+            </CardHeader>
+            <Table isLoading={terminatedSummaryLoading}>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("group")}</TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">{t("terminatedCount")}</TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">{t("totalExpected")}</TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">{t("totalPaid")}</TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">{t("totalDebtAmount")}</TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">{t("withDebtCount")}</TableHead>
+                  <TableHead className="text-right [&>div]:justify-end">{t("noDebtCount")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {terminatedSummaryData?.data?.by_group?.length > 0 ? (
+                  terminatedSummaryData.data.by_group.map((row: any) => (
+                    <TableRow key={row.group_id}>
+                      <TableCell className="font-medium">
+                        <div>{row.group_name}</div>
+                        {row.group_identifier && (
+                          <div className="text-xs text-muted-foreground">{row.group_identifier}</div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{row.terminated_count}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(row.total_expected)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(row.total_paid)}</TableCell>
+                      <TableCell className="text-right">
+                        <span className={row.total_debt > 0 ? "text-red-600 dark:text-red-400 font-medium" : ""}>
+                          {formatCurrency(row.total_debt)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">{row.with_debt_count}</TableCell>
+                      <TableCell className="text-right">{row.no_debt_count}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableEmpty
+                    title={t("noData")}
+                    description={t("noTerminatedContracts")?.replace("{{year}}", String(terminatedYear)) || ""}
+                  />
+                )}
+              </TableBody>
+            </Table>
           </Card>
         </motion.div>
       )}
