@@ -56,7 +56,7 @@ import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
 import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog"; // Assuming this is correct
 import { SessionDialog } from "@/pages/coach/SessionDialog"; // Corrected import
 import { useLanguageStore } from "@/store/languageStore";
-import { formatFullName } from "@/lib/name-utils";
+import { formatFullName, formatGroupSelectLabel } from "@/lib/name-utils";
 
 const normalizeScheduleDays = (raw?: string) => {
   if (!raw) return "-";
@@ -304,7 +304,15 @@ export default function HeadCoach() {
       },
       ...groups.map((group) => ({
         value: group.id.toString(),
-        label: group.name,
+        label: formatGroupSelectLabel(group),
+        keywords: [
+          group.name,
+          group.birth_year,
+          group.coach_first_name,
+          group.coach_last_name,
+        ]
+          .filter(Boolean)
+          .map(String),
       })),
     ],
     [groups, t],
@@ -590,7 +598,7 @@ export default function HeadCoach() {
               <option value="all">{t("allGroups")}</option>
               {groups.map((g) => (
                 <option key={g.id} value={g.id.toString()}>
-                  {g.name}
+                  {formatGroupSelectLabel(g)}
                 </option>
               ))}
             </Select>

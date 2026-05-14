@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea"; // Keep this import
 import { Select } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { formatGroupSelectLabel } from "@/lib/name-utils";
 
 interface SessionDialogProps {
   open: boolean;
@@ -193,7 +194,7 @@ export function SessionDialog({
               <option value="">{t("selectGroup")}</option>
               {groups.map((group) => (
                 <option key={group.id} value={group.id}>
-                  {group.name}
+                  {formatGroupSelectLabel(group)}
                 </option>
               ))}
             </Select>

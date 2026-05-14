@@ -21,6 +21,7 @@ import type {
 } from "@/types/api";
 import { format } from "date-fns";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatGroupSelectLabel } from "@/lib/name-utils";
 
 interface StudentDialogProps {
   open: boolean;
@@ -305,7 +306,7 @@ export function StudentDialog({
                         value={String(group.id)}
                         disabled={isFull}
                       >
-                        {group.name} ({studentCount}/{group.capacity})
+                        {formatGroupSelectLabel(group)} ({studentCount}/{group.capacity})
                         {isFull ? " - To'liq" : ""}
                       </option>
                     );

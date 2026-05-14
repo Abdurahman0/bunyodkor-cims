@@ -32,6 +32,7 @@ import {
 
 // openPdfUrl funksiyasini ishlatamiz
 import { openPdfUrl } from "@/lib/open-pdf";
+import { formatGroupSelectLabel } from "@/lib/name-utils";
 
 interface StudentWithContractDialogProps {
   open: boolean;
@@ -725,7 +726,7 @@ export function StudentWithContractDialog({
                     <option value="">{t("selectGroupPlaceholder")}</option>
                     {groupsData?.data?.map((group: GroupRead) => (
                       <option key={group.id} value={String(group.id)}>
-                        {group.name}
+                        {formatGroupSelectLabel(group)}
                       </option>
                     ))}
                   </select>

@@ -82,3 +82,26 @@ export const formatPersonName = (person: NameLike) => {
       person.student?.fullName,
   );
 };
+
+type GroupLike = {
+  name?: NullableString;
+  identifier?: NullableString;
+  birth_year?: number | string | null;
+  coach_first_name?: NullableString;
+  coach_last_name?: NullableString;
+  coach?: NameLike;
+} | null | undefined;
+
+export const formatGroupSelectLabel = (group: GroupLike) => {
+  if (!group) return "";
+
+  const groupName = normalizePart(group.name || group.identifier);
+  const birthYear = normalizePart(group.birth_year?.toString());
+  const coachName =
+    formatPersonName({
+      first_name: group.coach_first_name,
+      last_name: group.coach_last_name,
+    }) || formatPersonName(group.coach);
+
+  return [birthYear, groupName, coachName].filter(Boolean).join(" - ");
+};

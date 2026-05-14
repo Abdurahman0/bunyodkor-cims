@@ -23,6 +23,7 @@ import type {
 } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
 import { Loader2 } from "lucide-react";
+import { formatGroupSelectLabel } from "@/lib/name-utils";
 
 interface WaitingListDialogProps {
   open: boolean;
@@ -448,7 +449,7 @@ export function WaitingListDialog({
                 ) : (
                   groupsList.map((group: GroupRead) => (
                     <option key={group.id} value={String(group.id)}>
-                      {group.name}
+                      {formatGroupSelectLabel(group)}
                     </option>
                   ))
                 )}

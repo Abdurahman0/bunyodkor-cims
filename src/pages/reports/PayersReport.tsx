@@ -22,7 +22,7 @@ import { reportService, groupService, studentService } from "@/services/api.serv
 import { useLanguageStore } from "@/store/languageStore";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { exportReport, downloadFile } from "@/lib/export-utils";
-import { formatFullName } from "@/lib/name-utils";
+import { formatFullName, formatGroupSelectLabel } from "@/lib/name-utils";
 import toast from "react-hot-toast";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -83,7 +83,15 @@ const PayersReport: FC = () => {
       },
       ...groupsList.map((group: any) => ({
         value: String(group.id),
-        label: group.name,
+        label: formatGroupSelectLabel(group),
+        keywords: [
+          group.name,
+          group.birth_year,
+          group.coach_first_name,
+          group.coach_last_name,
+        ]
+          .filter(Boolean)
+          .map(String),
       })),
     ],
     [groupsList, groupsLoading, t],

@@ -76,7 +76,11 @@ import { toast } from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart, StatsCard } from "@/components/ui/charts";
-import { formatNameParts, formatPersonName } from "@/lib/name-utils";
+import {
+  formatGroupSelectLabel,
+  formatNameParts,
+  formatPersonName,
+} from "@/lib/name-utils";
 import { formatCurrency, formatNumber } from "@/lib/format-utils";
 
 const normalizeSessionForUi = (
@@ -1542,7 +1546,7 @@ export default function CoachPanel() {
                         key={group.id}
                         value={(group.id as any).toString()}
                       >
-                        {group.name}
+                        {formatGroupSelectLabel(group as any)}
                       </option>
                     ),
                   )}

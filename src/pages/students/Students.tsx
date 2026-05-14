@@ -48,7 +48,7 @@ import type { StudentRead } from "@/types/api";
 import { StudentDialog } from "./StudentDialog";
 import { StudentWithContractDialog } from "./StudentWithContractDialog";
 import { exportStudents } from "@/lib/export-utils";
-import { formatNameParts } from "@/lib/name-utils";
+import { formatGroupSelectLabel, formatNameParts } from "@/lib/name-utils";
 import { format } from "date-fns";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
@@ -112,7 +112,15 @@ export default function Students() {
     ...(!isLoadingGroups && allGroups.length > 0
       ? allGroups.map((group) => ({
           value: String(group.id),
-          label: group.name,
+          label: formatGroupSelectLabel(group),
+          keywords: [
+            group.name,
+            group.birth_year,
+            group.coach_first_name,
+            group.coach_last_name,
+          ]
+            .filter(Boolean)
+            .map(String),
         }))
       : []),
   ];
@@ -124,7 +132,15 @@ export default function Students() {
     ...(!isLoadingGroups && allGroups.length > 0
       ? allGroups.map((group) => ({
           value: String(group.id),
-          label: group.name,
+          label: formatGroupSelectLabel(group),
+          keywords: [
+            group.name,
+            group.birth_year,
+            group.coach_first_name,
+            group.coach_last_name,
+          ]
+            .filter(Boolean)
+            .map(String),
         }))
       : []),
   ];

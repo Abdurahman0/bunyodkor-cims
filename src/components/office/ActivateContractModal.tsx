@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useLanguageStore } from "@/store/languageStore";
+import { formatGroupSelectLabel } from "@/lib/name-utils";
+import type { GroupRead } from "@/types/api";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -105,10 +107,18 @@ export default function ActivateContractModal({
 
   const groupOptions = useMemo(
     () =>
-      groupsData?.map((group: any) => ({
+      groupsData?.map((group: GroupRead) => ({
         value: String(group.id),
-        label: group.name,
-        keywords: [group.name, String(group.id)],
+        label: formatGroupSelectLabel(group),
+        keywords: [
+          group.name,
+          group.birth_year,
+          group.coach_first_name,
+          group.coach_last_name,
+          String(group.id),
+        ]
+          .filter(Boolean)
+          .map(String),
       })) || [],
     [groupsData],
   );

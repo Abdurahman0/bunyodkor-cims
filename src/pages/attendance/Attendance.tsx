@@ -8,7 +8,11 @@ const DEFAULT_FROM = format(
 );
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { formatFullName, formatNameParts } from "@/lib/name-utils";
+import {
+  formatFullName,
+  formatGroupSelectLabel,
+  formatNameParts,
+} from "@/lib/name-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -145,7 +149,15 @@ export default function Attendance() {
       { value: "all", label: t("allGroups") || "All groups" },
       ...(groupsFilterData || []).map((group) => ({
         value: String(group.id),
-        label: group.name,
+        label: formatGroupSelectLabel(group),
+        keywords: [
+          group.name,
+          group.birth_year,
+          group.coach_first_name,
+          group.coach_last_name,
+        ]
+          .filter(Boolean)
+          .map(String),
       })),
     ],
     [groupsFilterData, t],

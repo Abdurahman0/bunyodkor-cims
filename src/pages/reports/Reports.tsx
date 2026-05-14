@@ -41,7 +41,7 @@ import {
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import toast from "react-hot-toast";
 import { downloadFile, exportReport } from "@/lib/export-utils";
-import { formatFullName } from "@/lib/name-utils";
+import { formatFullName, formatGroupSelectLabel } from "@/lib/name-utils";
 import { useLanguageStore } from "@/store/languageStore";
 import {
   cn,
@@ -169,7 +169,15 @@ export default function Reports() {
       },
       ...groupsList.map((group) => ({
         value: String(group.id),
-        label: group.name,
+        label: formatGroupSelectLabel(group),
+        keywords: [
+          group.name,
+          group.birth_year,
+          group.coach_first_name,
+          group.coach_last_name,
+        ]
+          .filter(Boolean)
+          .map(String),
       })),
     ],
     [groupsList, groupsLoading, t],
@@ -1349,7 +1357,15 @@ export default function Reports() {
                       },
                       ...groupsList.map((group) => ({
                         value: String(group.id),
-                        label: group.name,
+                        label: formatGroupSelectLabel(group),
+                        keywords: [
+                          group.name,
+                          group.birth_year,
+                          group.coach_first_name,
+                          group.coach_last_name,
+                        ]
+                          .filter(Boolean)
+                          .map(String),
                       })),
                     ]}
                     placeholder={t("allGroups")}
