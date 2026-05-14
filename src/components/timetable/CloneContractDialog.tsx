@@ -18,6 +18,18 @@ import { useLanguageStore } from "@/store/languageStore";
 import { formatGroupSelectLabel } from "@/lib/name-utils";
 import toast from "react-hot-toast";
 
+const formatDateInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getCurrentYearEndDate = () => {
+  const date = new Date();
+  return formatDateInputValue(new Date(date.getFullYear(), 11, 31));
+};
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,20 +39,16 @@ interface Props {
 export function CloneContractDialog({ open, onOpenChange, terminatedContractId }: Props) {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
-  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const nextYear = useMemo(() => {
-    const date = new Date();
-    date.setFullYear(date.getFullYear() + 1);
-    return date.toISOString().split("T")[0];
-  }, []);
+  const today = useMemo(() => formatDateInputValue(new Date()), []);
+  const currentYearEnd = useMemo(() => getCurrentYearEndDate(), []);
 
   const [formData, setFormData] = useState({
     terminated_contract_id: terminatedContractId,
     group_id: 0,
     contract_number: "",
     start_date: today,
-    end_date: nextYear,
-    monthly_fee: 1,
+    end_date: currentYearEnd,
+    monthly_fee: 800000,
   });
 
   const { data: availableInfo, isLoading } = useQuery({
@@ -73,6 +81,14 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
     enabled: open,
   });
 
+  const { data: suggestedContractNumber, isFetching: isSuggestionLoading } =
+    useQuery({
+      queryKey: ["next-available-contract-number", formData.group_id],
+      queryFn: () => contractService.getNextAvailableNumber(formData.group_id),
+      enabled: open && formData.group_id > 0,
+      select: (response) => response.data,
+    });
+
   useEffect(() => {
     if (!open) return;
 
@@ -84,10 +100,21 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
       group_id:
         available?.group_id ?? available?.contract_group_id ?? current.group_id,
       contract_number:
-        available?.suggested_contract_number ?? current.contract_number,
+        current.contract_number || available?.suggested_contract_number || "",
+      start_date: today,
+      end_date: currentYearEnd,
       monthly_fee: available?.monthly_fee ?? current.monthly_fee,
     }));
-  }, [availableInfo, open, terminatedContractId]);
+  }, [availableInfo, currentYearEnd, open, terminatedContractId, today]);
+
+  useEffect(() => {
+    if (!suggestedContractNumber?.contract_number) return;
+
+    setFormData((current) => ({
+      ...current,
+      contract_number: suggestedContractNumber.contract_number,
+    }));
+  }, [suggestedContractNumber]);
 
   const cloneMutation = useMutation({
     mutationFn: (data: any) => contractService.cloneFromTerminated(data),
@@ -203,6 +230,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
                   }))
                 }
                 placeholder={t("contractNumber")}
+                disabled={isSuggestionLoading}
               />
             </div>
 

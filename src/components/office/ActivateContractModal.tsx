@@ -17,10 +17,37 @@ import { formatGroupSelectLabel } from "@/lib/name-utils";
 import type { GroupRead } from "@/types/api";
 import toast from "react-hot-toast";
 
+const formatDateInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getCurrentYearEndDate = () => {
+  const date = new Date();
+  return formatDateInputValue(new Date(date.getFullYear(), 11, 31));
+};
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   terminatedContractId: number;
+}
+
+interface ActivateContractForm {
+  terminated_contract_id: number;
+  group_id: number;
+  contract_number: string;
+  start_date: string;
+  end_date: string;
+  monthly_fee: number;
+}
+
+interface CloneAvailableInfo {
+  group_id?: number;
+  suggested_contract_number?: string;
+  monthly_fee?: number;
 }
 
 export default function ActivateContractModal({
@@ -31,20 +58,16 @@ export default function ActivateContractModal({
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
 
-  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const nextYear = useMemo(() => {
-    const date = new Date();
-    date.setFullYear(date.getFullYear() + 1);
-    return date.toISOString().split("T")[0];
-  }, []);
+  const today = useMemo(() => formatDateInputValue(new Date()), []);
+  const currentYearEnd = useMemo(() => getCurrentYearEndDate(), []);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ActivateContractForm>({
     terminated_contract_id: terminatedContractId,
     group_id: 0,
     contract_number: "",
     start_date: today,
-    end_date: nextYear,
-    monthly_fee: 1,
+    end_date: currentYearEnd,
+    monthly_fee: 800000,
   });
 
   const { data: availableInfo, isLoading } = useQuery({
@@ -77,28 +100,54 @@ export default function ActivateContractModal({
     enabled: open,
   });
 
+  const { data: suggestedContractNumber, isFetching: isSuggestionLoading } =
+    useQuery({
+      queryKey: ["next-available-contract-number", form.group_id],
+      queryFn: () => contractService.getNextAvailableNumber(form.group_id),
+      enabled: open && form.group_id > 0,
+      select: (response) => response.data,
+    });
+
   useEffect(() => {
     if (!open) return;
-    const available = availableInfo?.data as any;
+    const available = availableInfo?.data as CloneAvailableInfo | undefined;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm((cur) => ({
       ...cur,
       terminated_contract_id: terminatedContractId,
       group_id: available?.group_id ?? cur.group_id,
-      contract_number: available?.suggested_contract_number ?? cur.contract_number,
+      contract_number:
+        cur.contract_number || available?.suggested_contract_number || "",
+      start_date: today,
+      end_date: currentYearEnd,
       monthly_fee: available?.monthly_fee ?? cur.monthly_fee,
     }));
-  }, [availableInfo, open, terminatedContractId]);
+  }, [availableInfo, currentYearEnd, open, terminatedContractId, today]);
+
+  useEffect(() => {
+    if (!suggestedContractNumber?.contract_number) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm((cur) => ({
+      ...cur,
+      contract_number: suggestedContractNumber.contract_number,
+    }));
+  }, [suggestedContractNumber]);
 
   const cloneMutation = useMutation({
-    mutationFn: (data: any) => contractService.cloneFromTerminated(data),
+    mutationFn: (data: ActivateContractForm) =>
+      contractService.cloneFromTerminated(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
       toast.success(t("contractClonedSuccess") || "Contract activated successfully");
       onOpenChange(false);
     },
-    onError: (err: any) => {
-      const detail = err?.response?.data?.detail;
+    onError: (err: unknown) => {
+      const detail =
+        err && typeof err === "object" && "response" in err
+          ? (err.response as { data?: { detail?: unknown } })?.data?.detail
+          : undefined;
       let msg = t("failedToCloneContract") || "Failed to activate contract";
       if (typeof detail === "string") msg = detail;
       toast.error(msg);
@@ -203,6 +252,7 @@ export default function ActivateContractModal({
                 value={form.contract_number}
                 onChange={(e) => setForm((c) => ({ ...c, contract_number: e.target.value }))}
                 placeholder={t("contractNumber")}
+                disabled={isSuggestionLoading}
               />
             </div>
 
