@@ -1177,6 +1177,7 @@ export const contractService = {
    */
   getNextAvailableNumber: async (
     groupId: number,
+    year?: number,
   ): Promise<
     ApiResponse<{
       next_available: number;
@@ -1185,11 +1186,10 @@ export const contractService = {
       is_full: boolean;
     }>
   > => {
-    // Tahrir: birthYear argument sifatida qolsa ham, URL faqat groupId ni oladi
-    // Chunki backend guruh ID orqali yilni o'zi aniqlaydi.
-    const response = await apiClient.get(
-      `/contracts/next-available/${groupId}`,
-    );
+    const url = year
+      ? `/contracts/next-available/${groupId}/${year}`
+      : `/contracts/next-available/${groupId}`;
+    const response = await apiClient.get(url);
     return response.data;
   },
 

@@ -100,10 +100,15 @@ export default function ActivateContractModal({
     enabled: open,
   });
 
+  const contractYear = useMemo(
+    () => (form.start_date ? new Date(form.start_date).getFullYear() : new Date().getFullYear()),
+    [form.start_date],
+  );
+
   const { data: suggestedContractNumber, isFetching: isSuggestionLoading } =
     useQuery({
-      queryKey: ["next-available-contract-number", form.group_id],
-      queryFn: () => contractService.getNextAvailableNumber(form.group_id),
+      queryKey: ["next-available-contract-number", form.group_id, contractYear],
+      queryFn: () => contractService.getNextAvailableNumber(form.group_id, contractYear),
       enabled: open && form.group_id > 0,
       select: (response) => response.data,
     });
@@ -232,6 +237,7 @@ export default function ActivateContractModal({
                   setForm((c) => ({
                     ...c,
                     group_id: value ? Number(value) : 0,
+                    contract_number: "",
                   }))
                 }
                 options={groupOptions}
