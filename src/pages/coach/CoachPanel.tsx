@@ -451,6 +451,9 @@ export default function CoachPanel() {
   const groupParentPhonesMap = useMemo(() => {
     const map: Record<number, string[]> = {};
 
+    console.log("[PHONES] groupDebtorsData sample:", (groupDebtorsData || []).slice(0, 2));
+    console.log("[PHONES] groupStudentsData sample:", (groupStudentsData || []).slice(0, 2));
+
     // First: populate from debtors report which carries explicit parent phone fields
     (groupDebtorsData || []).forEach((debtor: any) => {
       const sid = Number(debtor.student_id);
@@ -473,6 +476,7 @@ export default function CoachPanel() {
       if (phone) map[sid] = [phone];
     });
 
+    console.log("[PHONES] final map:", map);
     return map;
   }, [groupDebtorsData, groupStudentsData]);
 
