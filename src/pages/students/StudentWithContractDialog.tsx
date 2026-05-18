@@ -724,11 +724,17 @@ export function StudentWithContractDialog({
                     className="h-10 w-full rounded-md border border-input bg-background px-3"
                   >
                     <option value="">{t("selectGroupPlaceholder")}</option>
-                    {groupsData?.data?.map((group: GroupRead) => (
-                      <option key={group.id} value={String(group.id)}>
-                        {formatGroupSelectLabel(group)}
-                      </option>
-                    ))}
+                    {[...(groupsData?.data || [])]
+                      .sort((a: GroupRead, b: GroupRead) => {
+                        const ya = Number((a as any).birth_year) || 0;
+                        const yb = Number((b as any).birth_year) || 0;
+                        return yb - ya;
+                      })
+                      .map((group: GroupRead) => (
+                        <option key={group.id} value={String(group.id)}>
+                          {formatGroupSelectLabel(group)}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>

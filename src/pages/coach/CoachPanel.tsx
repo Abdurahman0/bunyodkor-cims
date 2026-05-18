@@ -44,7 +44,6 @@ import { Select } from "@/components/ui/select";
 import {
   coachService,
   groupService,
-  parentService,
   reportService,
   studentService,
 } from "@/services/api.service";
@@ -447,43 +446,35 @@ export default function CoachPanel() {
     enabled: !!selectedGroup,
   });
 
-  const { data: groupParentPhonesMap = {}, isLoading: groupParentPhonesLoading } = useQuery({
-    queryKey: ["group-parent-phones", selectedGroup?.id],
-    queryFn: async () => {
-      const students: any[] = groupStudentsData || [];
-      console.log("[PARENT PHONES] Starting fetch for group:", selectedGroup?.id, "students:", students.length, students.map((s: any) => s?.id ?? s?.student_id));
-      if (students.length === 0) {
-        console.log("[PARENT PHONES] No students found, skipping");
-        return {} as Record<number, string[]>;
-      }
-      const map: Record<number, string[]> = {};
-      await Promise.all(
-        students.map(async (s: any) => {
-          const studentId = Number(s?.id ?? s?.student_id ?? 0);
-          if (!studentId) {
-            console.log("[PARENT PHONES] Could not extract studentId from:", s);
-            return;
-          }
-          try {
-            const resp = await parentService.getParents({ student_id: studentId, page: 1, page_size: 20 });
-            console.log(`[PARENT PHONES] student ${studentId} response:`, resp);
-            const phones = (resp.data || [])
-              .map((p: any) => String(p.phone || "").trim())
-              .filter(Boolean);
-            console.log(`[PARENT PHONES] student ${studentId} phones:`, phones);
-            map[studentId] = phones;
-          } catch (err) {
-            console.error(`[PARENT PHONES] Error fetching parents for student ${studentId}:`, err);
-            map[studentId] = [];
-          }
-        }),
-      );
-      console.log("[PARENT PHONES] Final map:", map);
-      return map;
-    },
-    enabled: !!selectedGroup && !!groupStudentsData && (groupStudentsData as any[]).length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Build parent phone map from debtors report (primary_phone/father_phone/mother_phone)
+  // and fall back to student.phone (typically the parent contact in youth academies)
+  const groupParentPhonesMap = useMemo(() => {
+    const map: Record<number, string[]> = {};
+
+    // First: populate from debtors report which carries explicit parent phone fields
+    (groupDebtorsData || []).forEach((debtor: any) => {
+      const sid = Number(debtor.student_id);
+      if (!sid) return;
+      const phones = [
+        debtor.primary_phone,
+        debtor.father_phone,
+        debtor.mother_phone,
+      ]
+        .map((p: any) => String(p || "").trim())
+        .filter(Boolean);
+      if (phones.length > 0) map[sid] = phones;
+    });
+
+    // Second: for students not covered by debtors, use student.phone as fallback
+    (groupStudentsData || []).forEach((s: any) => {
+      const sid = Number(s?.id ?? s?.student_id ?? 0);
+      if (!sid || map[sid]) return;
+      const phone = String(s?.phone || "").trim();
+      if (phone) map[sid] = [phone];
+    });
+
+    return map;
+  }, [groupDebtorsData, groupStudentsData]);
 
   const { data: myAttendancesData, isLoading: myAttendancesLoading } = useQuery(
     {
@@ -953,7 +944,7 @@ export default function CoachPanel() {
     });
 
   const isGroupStudentsTableLoading =
-    groupStudentsLoading || groupContractsLoading || groupDebtorsLoading || groupParentPhonesLoading;
+    groupStudentsLoading || groupContractsLoading || groupDebtorsLoading;
   const isSessionStudentsLoading =
     studentsLoading || sessionActiveContractsLoading;
 
