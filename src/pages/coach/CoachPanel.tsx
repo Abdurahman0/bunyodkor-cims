@@ -446,37 +446,27 @@ export default function CoachPanel() {
     enabled: !!selectedGroup,
   });
 
-  // Build parent phone map from debtors report (primary_phone/father_phone/mother_phone)
-  // and fall back to student.phone (typically the parent contact in youth academies)
   const groupParentPhonesMap = useMemo(() => {
-    const map: Record<number, string[]> = {};
+    const map: Record<number, { father: string; mother: string }> = {};
 
-    console.log("[PHONES] groupDebtorsData sample:", (groupDebtorsData || []).slice(0, 2));
-    console.log("[PHONES] groupStudentsData sample:", (groupStudentsData || []).slice(0, 2));
-
-    // First: populate from debtors report which carries explicit parent phone fields
     (groupDebtorsData || []).forEach((debtor: any) => {
       const sid = Number(debtor.student_id);
       if (!sid) return;
-      const phones = [
-        debtor.primary_phone,
-        debtor.father_phone,
-        debtor.mother_phone,
-      ]
-        .map((p: any) => String(p || "").trim())
-        .filter(Boolean);
-      if (phones.length > 0) map[sid] = phones;
+      map[sid] = {
+        father: String(debtor.father_phone || debtor.primary_phone || "").trim(),
+        mother: String(debtor.mother_phone || "").trim(),
+      };
     });
 
-    // Second: for students not covered by debtors, use student.phone as fallback
     (groupStudentsData || []).forEach((s: any) => {
       const sid = Number(s?.id ?? s?.student_id ?? 0);
       if (!sid || map[sid]) return;
-      const phone = String(s?.phone || "").trim();
-      if (phone) map[sid] = [phone];
+      map[sid] = {
+        father: String(s?.phone || "").trim(),
+        mother: "",
+      };
     });
 
-    console.log("[PHONES] final map:", map);
     return map;
   }, [groupDebtorsData, groupStudentsData]);
 
@@ -938,7 +928,7 @@ export default function CoachPanel() {
         debtAmount: getStudentDebtAmount(student),
         overdueMonths: getStudentOverdueMonths(student),
         birthYear: getStudentBirthYear(student),
-        parentPhones: (groupParentPhonesMap as Record<number, string[]>)[sid] ?? [],
+        parentPhones: groupParentPhonesMap[sid] ?? { father: "", mother: "" },
       };
     })
     .sort((a: any, b: any) => {
@@ -1447,17 +1437,20 @@ export default function CoachPanel() {
                                     {student.contractNumber}
                                   </TableCell>
                                   <TableCell className="align-top">
-                                    {student.parentPhones.length > 0 ? (
-                                      <div className="flex flex-col gap-1 py-1">
-                                        {student.parentPhones.map((phone: string) => (
-                                          <span key={phone} className="text-sm font-medium whitespace-nowrap">
-                                            {phone}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <span className="text-sm text-muted-foreground">—</span>
-                                    )}
+                                    <div className="flex flex-col gap-0.5 py-1 text-sm">
+                                      <span className="whitespace-nowrap">
+                                        <span className="text-muted-foreground">Ota: </span>
+                                        <span className={student.parentPhones.father ? "font-medium" : "text-muted-foreground"}>
+                                          {student.parentPhones.father || "—"}
+                                        </span>
+                                      </span>
+                                      <span className="whitespace-nowrap">
+                                        <span className="text-muted-foreground">Ona: </span>
+                                        <span className={student.parentPhones.mother ? "font-medium" : "text-muted-foreground"}>
+                                          {student.parentPhones.mother || "—"}
+                                        </span>
+                                      </span>
+                                    </div>
                                   </TableCell>
                                   <TableCell className="align-middle">
                                     {student.debtAmount > 0 ? (
