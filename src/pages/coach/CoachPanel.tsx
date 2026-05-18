@@ -448,26 +448,37 @@ export default function CoachPanel() {
   });
 
   const { data: groupParentPhonesMap = {}, isLoading: groupParentPhonesLoading } = useQuery({
-    queryKey: ["group-parent-phones", selectedGroup?.id, groupStudentsData],
+    queryKey: ["group-parent-phones", selectedGroup?.id],
     queryFn: async () => {
       const students: any[] = groupStudentsData || [];
-      if (students.length === 0) return {} as Record<number, string[]>;
+      console.log("[PARENT PHONES] Starting fetch for group:", selectedGroup?.id, "students:", students.length, students.map((s: any) => s?.id ?? s?.student_id));
+      if (students.length === 0) {
+        console.log("[PARENT PHONES] No students found, skipping");
+        return {} as Record<number, string[]>;
+      }
       const map: Record<number, string[]> = {};
       await Promise.all(
         students.map(async (s: any) => {
           const studentId = Number(s?.id ?? s?.student_id ?? 0);
-          if (!studentId) return;
+          if (!studentId) {
+            console.log("[PARENT PHONES] Could not extract studentId from:", s);
+            return;
+          }
           try {
             const resp = await parentService.getParents({ student_id: studentId, page: 1, page_size: 20 });
+            console.log(`[PARENT PHONES] student ${studentId} response:`, resp);
             const phones = (resp.data || [])
               .map((p: any) => String(p.phone || "").trim())
               .filter(Boolean);
+            console.log(`[PARENT PHONES] student ${studentId} phones:`, phones);
             map[studentId] = phones;
-          } catch {
+          } catch (err) {
+            console.error(`[PARENT PHONES] Error fetching parents for student ${studentId}:`, err);
             map[studentId] = [];
           }
         }),
       );
+      console.log("[PARENT PHONES] Final map:", map);
       return map;
     },
     enabled: !!selectedGroup && !!groupStudentsData && (groupStudentsData as any[]).length > 0,
@@ -935,7 +946,7 @@ export default function CoachPanel() {
         parentPhones: (groupParentPhonesMap as Record<number, string[]>)[sid] ?? [],
       };
     })
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       const aNum = String(a.contractNumber ?? "");
       const bNum = String(b.contractNumber ?? "");
       return aNum.localeCompare(bNum, undefined, { numeric: true });
@@ -1429,7 +1440,7 @@ export default function CoachPanel() {
                                 </TableCell>
                               </TableRow>
                             ) : groupStudentRows.length > 0 ? (
-                              groupStudentRows.map((student) => (
+                              groupStudentRows.map((student: any) => (
                                 <TableRow key={student.id}>
                                   <TableCell className="font-medium align-top">
                                     {student.lastName} {student.firstName}
@@ -1443,7 +1454,7 @@ export default function CoachPanel() {
                                   <TableCell className="align-top">
                                     {student.parentPhones.length > 0 ? (
                                       <div className="flex flex-col gap-1 py-1">
-                                        {student.parentPhones.map((phone) => (
+                                        {student.parentPhones.map((phone: string) => (
                                           <span key={phone} className="text-sm font-medium whitespace-nowrap">
                                             {phone}
                                           </span>
@@ -1459,7 +1470,7 @@ export default function CoachPanel() {
                                         {student.overdueMonths.length > 0 ? (
                                           <div className="text-sm font-medium leading-snug text-foreground">
                                             {student.overdueMonths
-                                              .map((overdueMonth) => overdueMonth.label)
+                                              .map((overdueMonth: FormattedOverdueMonth) => overdueMonth.label)
                                               .join(", ")}
                                           </div>
                                         ) : null}
