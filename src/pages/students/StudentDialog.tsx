@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import toast from "react-hot-toast";
-import { studentService, groupService } from "@/services/api.service";
+import { studentService } from "@/services/api.service";
 import type {
   StudentRead,
   StudentCreateRequest as StudentCreate,
@@ -21,6 +21,7 @@ import type {
 } from "@/types/api";
 import { format } from "date-fns";
 import { useLanguageStore } from "@/store/languageStore";
+import { useGroupsStore } from "@/store/groupsStore";
 import { formatGroupSelectLabel } from "@/lib/name-utils";
 
 interface StudentDialogProps {
@@ -49,11 +50,20 @@ export function StudentDialog({
     formState: { errors },
   } = useForm<StudentFormData>();
 
-  const { data: groupsData } = useQuery({
-    queryKey: ["groups-list"],
-    queryFn: () => groupService.getGroups({ page: 1, page_size: 2000 }),
-    enabled: open,
-  });
+  // Use grouped groups store so groups are ordered by year (same as Students page)
+  const { groupsData: groupedGroups, isLoading: isLoadingGroups, fetchGroups } =
+    useGroupsStore();
+
+  // Fetch grouped groups when dialog opens if not already loaded
+  useEffect(() => {
+    if (open && !groupedGroups && !isLoadingGroups) {
+      fetchGroups();
+    }
+  }, [open, groupedGroups, isLoadingGroups, fetchGroups]);
+
+  // Flatten grouped data into single array for selects
+  const groupsList =
+    groupedGroups?.flatMap((yg) => (yg.groups ? (yg.groups as GroupRead[]) : [])) || [];
 
   // Get student count for each group to check capacity
   const { data: allStudentsData } = useQuery({
@@ -130,7 +140,7 @@ export function StudentDialog({
 
   // Helper function to check if group is full
   const isGroupFull = (groupId: number): boolean => {
-    const group = groupsData?.data?.find((g) => g.id === groupId);
+    const group = groupsList.find((g) => g.id === groupId);
     if (!group) return false;
     const studentCount = getGroupStudentCount(groupId);
     return studentCount >= group.capacity;
@@ -273,23 +283,27 @@ export function StudentDialog({
                   <Input
                     id="group_id"
                     value={
-                      groupsData?.data?.find((g) => g.id === student.group_id)
+                      groupsList.find((g) => g.id === student.group_id)
                         ?.name || ""
                     }
                     disabled
                   />
 
                   {/*
-                  <Select id="group_id" {...register('group_id')}>
-                    <option value="">{t('selectGroup')}</option>
-                    {groupsData?.data?.map((group: GroupRead) => {
-                      const studentCount = getGroupStudentCount(group.id)
-                      const isFull = studentCount >= group.capacity
+                  <Select id="group_id" {...register("group_id")}>
+                    <option value="">{t("selectGroup")}</option>
+                    {groupsList.map((group: GroupRead) => {
+                      const studentCount = getGroupStudentCount(group.id);
+                      const isFull = studentCount >= group.capacity;
                       return (
-                        <option key={group.id} value={group.id} disabled={isFull && (!student || student.group_id !== group.id)}>
-                          {group.name} ({studentCount}/{group.capacity}){isFull ? ' - To'liq' : ''}
+                        <option
+                          key={group.id}
+                          value={group.id}
+                          disabled={isFull && (!student || student.group_id !== group.id)}
+                        >
+                          {group.name} ({studentCount}/{group.capacity}){isFull ? " - To'liq" : ""}
                         </option>
-                      )
+                      );
                     })}
                   </Select>
                   */}
@@ -297,7 +311,7 @@ export function StudentDialog({
               ) : (
                 <Select id="group_id" {...register("group_id")}>
                   <option value="">{t("selectGroup")}</option>
-                  {groupsData?.data?.map((group: GroupRead) => {
+                  {groupsList.map((group: GroupRead) => {
                     const studentCount = getGroupStudentCount(group.id);
                     const isFull = studentCount >= group.capacity;
                     return (
