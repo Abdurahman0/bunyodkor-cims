@@ -44,6 +44,7 @@ import { Select } from "@/components/ui/select";
 import {
   coachService,
   groupService,
+  parentService,
   reportService,
   studentService,
 } from "@/services/api.service";
@@ -444,6 +445,33 @@ export default function CoachPanel() {
       ];
     },
     enabled: !!selectedGroup,
+  });
+
+  const { data: groupParentPhonesMap = {}, isLoading: groupParentPhonesLoading } = useQuery({
+    queryKey: ["group-parent-phones", selectedGroup?.id, groupStudentsData],
+    queryFn: async () => {
+      const students: any[] = groupStudentsData || [];
+      if (students.length === 0) return {} as Record<number, string[]>;
+      const map: Record<number, string[]> = {};
+      await Promise.all(
+        students.map(async (s: any) => {
+          const studentId = Number(s?.id ?? s?.student_id ?? 0);
+          if (!studentId) return;
+          try {
+            const resp = await parentService.getParents({ student_id: studentId, page: 1, page_size: 20 });
+            const phones = (resp.data || [])
+              .map((p: any) => String(p.phone || "").trim())
+              .filter(Boolean);
+            map[studentId] = phones;
+          } catch {
+            map[studentId] = [];
+          }
+        }),
+      );
+      return map;
+    },
+    enabled: !!selectedGroup && !!groupStudentsData && (groupStudentsData as any[]).length > 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: myAttendancesData, isLoading: myAttendancesLoading } = useQuery(
@@ -894,15 +922,19 @@ export default function CoachPanel() {
 
   const groupStudentRows = (groupStudentsData || [])
     .filter((student: any) => groupActiveStudentIds.has(getStudentId(student)))
-    .map((student: any) => ({
-      id: getStudentId(student) || student.id,
-      firstName: student?.first_name ?? student?.student?.first_name ?? "-",
-      lastName: student?.last_name ?? student?.student?.last_name ?? "-",
-      contractNumber: getStudentContractNumber(student),
-      debtAmount: getStudentDebtAmount(student),
-      overdueMonths: getStudentOverdueMonths(student),
-      birthYear: getStudentBirthYear(student),
-    }))
+    .map((student: any) => {
+      const sid = getStudentId(student) || student.id;
+      return {
+        id: sid,
+        firstName: student?.first_name ?? student?.student?.first_name ?? "-",
+        lastName: student?.last_name ?? student?.student?.last_name ?? "-",
+        contractNumber: getStudentContractNumber(student),
+        debtAmount: getStudentDebtAmount(student),
+        overdueMonths: getStudentOverdueMonths(student),
+        birthYear: getStudentBirthYear(student),
+        parentPhones: (groupParentPhonesMap as Record<number, string[]>)[sid] ?? [],
+      };
+    })
     .sort((a, b) => {
       const aNum = String(a.contractNumber ?? "");
       const bNum = String(b.contractNumber ?? "");
@@ -910,7 +942,7 @@ export default function CoachPanel() {
     });
 
   const isGroupStudentsTableLoading =
-    groupStudentsLoading || groupContractsLoading || groupDebtorsLoading;
+    groupStudentsLoading || groupContractsLoading || groupDebtorsLoading || groupParentPhonesLoading;
   const isSessionStudentsLoading =
     studentsLoading || sessionActiveContractsLoading;
 
@@ -1366,7 +1398,7 @@ export default function CoachPanel() {
                     </CardHeader>
                     <CardContent>
                       <div className="overflow-x-auto">
-                        <Table className="min-w-[760px]">
+                        <Table className="min-w-[960px]">
                           <TableHeader>
                             <TableRow>
                               <TableHead className="min-w-[220px]">
@@ -1378,6 +1410,9 @@ export default function CoachPanel() {
                               <TableHead className="w-[160px] whitespace-nowrap">
                                 {t("contractNumber")}
                               </TableHead>
+                              <TableHead className="w-[200px] whitespace-nowrap">
+                                {t("parentPhone") || "Ota-ona telefon"}
+                              </TableHead>
                               <TableHead className="w-[260px] whitespace-nowrap">
                                 {t("indebtedness")}
                               </TableHead>
@@ -1387,7 +1422,7 @@ export default function CoachPanel() {
                             {isGroupStudentsTableLoading ? (
                               <TableRow>
                                 <TableCell
-                                  colSpan={4}
+                                  colSpan={5}
                                   className="h-24 text-center"
                                 >
                                   <Loader2 className="mx-auto animate-spin text-primary" />
@@ -1404,6 +1439,19 @@ export default function CoachPanel() {
                                   </TableCell>
                                   <TableCell className="align-top whitespace-nowrap">
                                     {student.contractNumber}
+                                  </TableCell>
+                                  <TableCell className="align-top">
+                                    {student.parentPhones.length > 0 ? (
+                                      <div className="flex flex-col gap-1 py-1">
+                                        {student.parentPhones.map((phone) => (
+                                          <span key={phone} className="text-sm font-medium whitespace-nowrap">
+                                            {phone}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm text-muted-foreground">—</span>
+                                    )}
                                   </TableCell>
                                   <TableCell className="align-middle">
                                     {student.debtAmount > 0 ? (
@@ -1432,7 +1480,7 @@ export default function CoachPanel() {
                             ) : (
                               <TableRow>
                                 <TableCell
-                                  colSpan={4}
+                                  colSpan={5}
                                   className="h-24 text-center"
                                 >
                                   {t("noStudentsInGroup")}

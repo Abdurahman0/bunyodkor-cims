@@ -5,6 +5,7 @@ import {
   groupService,
   headCoachService,
   userService,
+  parentService,
 } from "@/services/api.service";
 import { motion } from "framer-motion";
 
@@ -290,19 +291,30 @@ export default function HeadCoach() {
     return map;
   }, [groups]);
 
+  const sortedGroups = useMemo(
+    () =>
+      [...groups].sort((a, b) => {
+        const ya = Number(a.birth_year) || 0;
+        const yb = Number(b.birth_year) || 0;
+        return ya - yb;
+      }),
+    [groups],
+  );
+
   const filteredGroups = useMemo(() => {
     if (filterGroupId === "all") {
-      return groups;
+      return sortedGroups;
     }
-    return groups.filter((g) => g.id.toString() === filterGroupId);
-  }, [groups, filterGroupId]);
+    return sortedGroups.filter((g) => g.id.toString() === filterGroupId);
+  }, [sortedGroups, filterGroupId]);
+
   const timetableGroupOptions = useMemo(
     () => [
       {
         value: "all",
         label: t("allGroups"),
       },
-      ...groups.map((group) => ({
+      ...sortedGroups.map((group) => ({
         value: group.id.toString(),
         label: formatGroupSelectLabel(group),
         keywords: [
@@ -315,7 +327,7 @@ export default function HeadCoach() {
           .map(String),
       })),
     ],
-    [groups, t],
+    [sortedGroups, t],
   );
 
   type GroupWithOptionalStudentsCount = (typeof groups)[number] & {
@@ -333,6 +345,48 @@ export default function HeadCoach() {
     const coach = coachesData.find((c) => c.id === coachId);
     return coach ? formatFullName(coach.full_name) : "N/A";
   };
+
+  // Fetch students + parents for groups (used to display parent phones in group cards)
+  const { data: groupsParentsMap = {}, isLoading: isLoadingGroupsParents } = useQuery({
+    queryKey: ["headcoach-groups-parents"],
+    queryFn: async () => {
+      const map: Record<number, { parentPhones: string[] } > = {};
+      // Limit to currently filtered groups to reduce requests
+      const targetGroups = filteredGroups.length > 0 ? filteredGroups : groups;
+
+      await Promise.all(
+        targetGroups.map(async (g) => {
+          try {
+            const resp = await groupService.getGroupStudents(g.id);
+            const students = resp.data || [];
+            const phonesSet = new Set<string>();
+
+            await Promise.all(
+              students.map(async (s) => {
+                try {
+                  const parentsResp = await parentService.getParents({ student_id: s.id, page: 1, page_size: 50 });
+                  const parents = parentsResp.data || [];
+                  parents.forEach((p: any) => {
+                    if (p.phone) phonesSet.add(String(p.phone));
+                  });
+                } catch (e) {
+                  // ignore per-student parent fetch errors
+                }
+              }),
+            );
+
+            map[g.id] = { parentPhones: Array.from(phonesSet) };
+          } catch (e) {
+            map[g.id] = { parentPhones: [] };
+          }
+        }),
+      );
+
+      return map;
+    },
+    enabled: activeTab === "groups" && groups.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // --- Handlers ---
   const handleSessionClick = async (session: SessionRead) => {
@@ -596,7 +650,7 @@ export default function HeadCoach() {
               className="w-[200px]"
             >
               <option value="all">{t("allGroups")}</option>
-              {groups.map((g) => (
+              {sortedGroups.map((g) => (
                 <option key={g.id} value={g.id.toString()}>
                   {formatGroupSelectLabel(g)}
                 </option>
@@ -652,6 +706,20 @@ export default function HeadCoach() {
                         }}
                       />
                     </div>
+                  </div>
+                  {/* Parent phones row (show unique parent phones for group's students) */}
+                  <div className="text-sm text-muted-foreground mt-2">
+                    <span className="font-medium mr-2">{t("parentsPhones") || "Parents:"}</span>
+                    <span>
+                      {isLoadingGroupsParents ? (
+                        <span className="italic">{t("loading")}</span>
+                      ) : (
+                        (groupsParentsMap[group.id]?.parentPhones || []).slice(0, 6).join(", ") || t("noParentsFound")
+                      )}
+                      {groupsParentsMap[group.id] && groupsParentsMap[group.id].parentPhones && groupsParentsMap[group.id].parentPhones.length > 6 ? (
+                        <span className="text-xs text-muted-foreground">{` (+${groupsParentsMap[group.id].parentPhones.length - 6})`}</span>
+                      ) : null}
+                    </span>
                   </div>
                 </CardContent>
                 <CardFooter className="bg-muted/50 border-t pt-3">
