@@ -1167,6 +1167,7 @@ export const contractService = {
   > => {
     const response = await apiClient.get(
       `/contracts/available-numbers/${groupId}/${birthYear}`,
+      { suppressGlobalErrorToast: true } as object,
     );
     return response.data;
   },
