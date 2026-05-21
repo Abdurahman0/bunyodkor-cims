@@ -213,6 +213,8 @@ export function StudentWithContractDialog({
           const year =
             birthYear && birthYear.length === 4
               ? Number(birthYear)
+              : selectedGroup.birth_year
+              ? Number(selectedGroup.birth_year)
               : new Date().getFullYear();
           const response = await contractService.getNextAvailableNumber(
             Number(selectedGroupId),
@@ -231,8 +233,9 @@ export function StudentWithContractDialog({
           }
 
           const availableResponse =
-            await contractService.getAllAvailableNumbers(
+            await contractService.getAvailableContractNumbers(
               Number(selectedGroupId),
+              year,
             );
           if (availableResponse.data?.available_numbers) {
             setAvailableNumbers(availableResponse.data.available_numbers);
