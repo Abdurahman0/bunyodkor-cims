@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://reduces-test-commitments-choosing.trycloudflare.com",
+        target: "https://bunyodkor.api.cims.cognilabs.org",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ""),
