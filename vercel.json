@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/api/:path*",
+      "destination": "https://bunyodkor.api.cims.cognilabs.org/:path*"
     },
     {
-      "source": "/api/:path*",
-      "destination": "https://bunyodkor.api.cognilabs.org/:path*"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
