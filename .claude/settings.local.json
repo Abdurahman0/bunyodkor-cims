@@ -7,7 +7,9 @@
       "Bash(npm run dev:*)",
       "Bash(npm run build:types:*)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(Test-Path \"c:\\\\Users\\\\Mirzohid\\\\Downloads\\\\bunyodkor-cims\\\\vercel.json\")"
     ],
     "deny": [],
     "ask": []

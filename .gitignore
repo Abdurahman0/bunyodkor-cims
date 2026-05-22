@@ -33,6 +33,7 @@ build
 *.njsproj
 *.sln
 *.sw?
+*.settings.local.json
 
 # Environment variables
 .env
