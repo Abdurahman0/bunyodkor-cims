@@ -208,6 +208,16 @@ export default function Reports() {
     [monthOptions, t],
   );
 
+  const parsedSingleMonth = useMemo(() => {
+    if (unpaidMonths.trim() === "") return null;
+    const parts = unpaidMonths.trim().split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length !== 1) return null;
+    const n = Number(parts[0]);
+    return Number.isFinite(n) && n >= 1 && n <= 12 ? n : null;
+  }, [unpaidMonths]);
+
+  const effectiveMonth = unpaidMonth !== "" ? Number(unpaidMonth) : parsedSingleMonth ?? undefined;
+
   const hasUnpaidListFilter = Boolean(
     unpaidYear !== "" ||
       unpaidMonth !== "" ||
@@ -216,7 +226,9 @@ export default function Reports() {
       unpaidToDate,
   );
   const hasAdvancedUnpaidListFilter = Boolean(
-    unpaidMonths.trim() !== "" || unpaidFromDate || unpaidToDate,
+    (unpaidMonths.trim() !== "" && parsedSingleMonth === null) ||
+    unpaidFromDate ||
+    unpaidToDate,
   );
 
   const getUnpaidFilterParams = () => {
@@ -248,7 +260,7 @@ export default function Reports() {
     group_id: selectedGroupId || undefined,
     min_debt_amount: minDebtAmount === "" ? undefined : Number(minDebtAmount),
     year: unpaidYear === "" ? undefined : Number(unpaidYear),
-    month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
+    month: effectiveMonth,
   });
 
   const { data: debtorsData, isLoading: isDebtorsBaseLoading } = useQuery({
@@ -259,6 +271,7 @@ export default function Reports() {
       minDebtAmount,
       unpaidYear,
       unpaidMonth,
+      unpaidMonths,
     ],
     queryFn: () =>
       reportService.getDebtorsReport({
@@ -268,7 +281,7 @@ export default function Reports() {
         min_debt_amount:
           minDebtAmount === "" ? undefined : Number(minDebtAmount),
         year: unpaidYear === "" ? undefined : Number(unpaidYear),
-        month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
+        month: effectiveMonth,
       }),
     enabled: activeTab === "debtors" && !hasAdvancedUnpaidListFilter,
     placeholderData: (prev) => prev,
@@ -289,12 +302,15 @@ export default function Reports() {
       unpaidToDate,
     ],
     queryFn: async () => {
+      const debtorYear = unpaidYear === "" ? undefined : Number(unpaidYear);
+
       const debtorsFirstPage = await reportService.getDebtorsReport({
         page: 1,
         page_size: 100,
         group_id: selectedGroupId || undefined,
         min_debt_amount:
           minDebtAmount === "" ? undefined : Number(minDebtAmount),
+        year: debtorYear,
       });
 
       const debtorsPages = debtorsFirstPage.meta?.total_pages || 1;
@@ -308,6 +324,7 @@ export default function Reports() {
                   group_id: selectedGroupId || undefined,
                   min_debt_amount:
                     minDebtAmount === "" ? undefined : Number(minDebtAmount),
+                  year: debtorYear,
                 }),
               ),
             )
@@ -391,6 +408,7 @@ export default function Reports() {
       minDebtAmount,
       unpaidYear,
       unpaidMonth,
+      unpaidMonths,
     ],
     queryFn: async () => {
       const firstPage = await reportService.getDebtorsReport({
@@ -400,7 +418,7 @@ export default function Reports() {
         min_debt_amount:
           minDebtAmount === "" ? undefined : Number(minDebtAmount),
         year: unpaidYear === "" ? undefined : Number(unpaidYear),
-        month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
+        month: effectiveMonth,
       });
 
       const pages = firstPage.meta?.total_pages || 1;
@@ -415,7 +433,7 @@ export default function Reports() {
                   min_debt_amount:
                     minDebtAmount === "" ? undefined : Number(minDebtAmount),
                   year: unpaidYear === "" ? undefined : Number(unpaidYear),
-                  month: unpaidMonth === "" ? undefined : Number(unpaidMonth),
+                  month: effectiveMonth,
                 }),
               ),
             )

@@ -5,7 +5,9 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm run build:types:*)"
+      "Bash(npm run build:types:*)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "deny": [],
     "ask": []
