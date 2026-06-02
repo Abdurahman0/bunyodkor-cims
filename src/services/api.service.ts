@@ -1956,6 +1956,24 @@ export const reportService = {
   },
 
   /**
+   * Export grouped debtors Excel for management statistics
+   * GET /reports/debtors/grouped-excel
+   */
+  exportGroupedDebtorsExcel: async (params: {
+    year: number;
+    month: number;
+  }): Promise<Blob> => {
+    const response = await apiClient.get<Blob>(
+      "/reports/debtors/grouped-excel",
+      {
+        params,
+        responseType: "blob",
+      },
+    );
+    return response.data;
+  },
+
+  /**
    * Export Payments Excel
    * GET /reports/payments-excel
    */
