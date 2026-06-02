@@ -624,6 +624,32 @@ export default function Reports() {
     });
   };
 
+  const handleGroupedDebtorsExport = async () => {
+    const year = unpaidYear === "" ? undefined : Number(unpaidYear);
+    const month = unpaidMonth === "" ? effectiveMonth : Number(unpaidMonth);
+
+    if (!year || !month) {
+      toast.error(t("pleaseSelectYearAndMonth"));
+      return;
+    }
+
+    const promise = (async () => {
+      const blob = await reportService.exportGroupedDebtorsExcel({ year, month });
+      if (!blob || blob.size === 0) {
+        throw new Error("NO_DATA");
+      }
+      const date = format(new Date(), "yyyy-MM-dd");
+      downloadFile(blob, `grouped-debtors-statistics-${year}-${month}-${date}.xlsx`);
+    })();
+
+    toast.promise(promise, {
+      loading: t("exportingData"),
+      success: t("exportedSuccessfully"),
+      error: (error: Error) =>
+        error.message === "NO_DATA" ? t("noDataToExport") : t("errorExportingData"),
+    });
+  };
+
   const handleExport = async () => {
     try {
       let dataToExport: any[] | null = null;
@@ -685,14 +711,24 @@ export default function Reports() {
           </p>
         </div>
         {activeTab !== "payers" && activeTab !== "terminated" && (
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={activeTab === "debtors" ? handleDebtorsExport : handleExport}
-          >
-            <Download className="w-4 h-4" />
-            {t("exportReport")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={handleGroupedDebtorsExport}
+            >
+              <Download className="w-4 h-4" />
+              {t("managementStatisticsExport")}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={activeTab === "debtors" ? handleDebtorsExport : handleExport}
+            >
+              <Download className="w-4 h-4" />
+              {t("exportReport")}
+            </Button>
+          </div>
         )}
       </motion.div>
 
