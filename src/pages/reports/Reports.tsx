@@ -715,21 +715,19 @@ export default function Reports() {
             <Button
               variant="outline"
               className="gap-2"
+              onClick={handleGroupedDebtorsExport}
+            >
+              <Download className="w-4 h-4" />
+              {t("managementStatisticsExport")}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
               onClick={activeTab === "debtors" ? handleDebtorsExport : handleExport}
             >
               <Download className="w-4 h-4" />
               {t("exportReport")}
             </Button>
-            {activeTab === "debtors" && (
-              <Button
-                variant="outline"
-                className="gap-2"
-                onClick={handleGroupedDebtorsExport}
-              >
-                <Download className="w-4 h-4" />
-                {t("managementStatisticsExport")}
-              </Button>
-            )}
           </div>
         )}
       </motion.div>
