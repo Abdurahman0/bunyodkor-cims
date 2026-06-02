@@ -161,13 +161,27 @@ export default function Reports() {
     if (!groupsData?.data) return [];
     return groupsData.data;
   }, [groupsData]);
+  const sortedGroupsList: GroupRead[] = useMemo(
+    () =>
+      [...groupsList].sort((a, b) => {
+        const yearA = Number(a.birth_year ?? 0);
+        const yearB = Number(b.birth_year ?? 0);
+
+        if (yearA !== yearB) {
+          return yearA - yearB;
+        }
+
+        return formatGroupSelectLabel(a).localeCompare(formatGroupSelectLabel(b));
+      }),
+    [groupsList],
+  );
   const debtorsGroupOptions = useMemo(
     () => [
       {
         value: "",
         label: groupsLoading ? t("loading") : t("allGroups"),
       },
-      ...groupsList.map((group) => ({
+      ...sortedGroupsList.map((group) => ({
         value: String(group.id),
         label: formatGroupSelectLabel(group),
         keywords: [
@@ -180,7 +194,7 @@ export default function Reports() {
           .map(String),
       })),
     ],
-    [groupsList, groupsLoading, t],
+    [groupsLoading, sortedGroupsList, t],
   );
   const debtorsYearOptions = useMemo(
     () => [
@@ -1373,7 +1387,7 @@ export default function Reports() {
                         value: "",
                         label: groupsLoading ? t("loading") : t("allGroups"),
                       },
-                      ...groupsList.map((group) => ({
+                      ...sortedGroupsList.map((group) => ({
                         value: String(group.id),
                         label: formatGroupSelectLabel(group),
                         keywords: [
