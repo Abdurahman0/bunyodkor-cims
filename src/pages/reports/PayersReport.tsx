@@ -67,7 +67,18 @@ const PayersReport: FC = () => {
           hasMore = false;
         }
       }
-      return { data: allGroups };
+      return {
+        data: allGroups.sort((a, b) => {
+          const yearA = Number(a.birth_year ?? 0);
+          const yearB = Number(b.birth_year ?? 0);
+
+          if (yearA !== yearB) {
+            return yearA - yearB;
+          }
+
+          return formatGroupSelectLabel(a).localeCompare(formatGroupSelectLabel(b));
+        }),
+      };
     },
   });
 

@@ -147,8 +147,19 @@ export default function Reports() {
         ),
       );
 
+      const allGroups = [...firstData, ...restPages.flatMap((page) => page.data || [])];
+
       return {
-        data: [...firstData, ...restPages.flatMap((page) => page.data || [])],
+        data: allGroups.sort((a, b) => {
+          const yearA = Number(a.birth_year ?? 0);
+          const yearB = Number(b.birth_year ?? 0);
+
+          if (yearA !== yearB) {
+            return yearA - yearB;
+          }
+
+          return formatGroupSelectLabel(a).localeCompare(formatGroupSelectLabel(b));
+        }),
       };
     },
     enabled: activeTab === "debtors" || activeTab === "terminated",
