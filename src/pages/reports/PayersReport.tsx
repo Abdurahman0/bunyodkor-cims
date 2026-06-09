@@ -192,6 +192,36 @@ const PayersReport: FC = () => {
     });
   };
 
+  const handleGroupedDebtorsExport = async () => {
+    const year = paymentYear === "" ? undefined : Number(paymentYear);
+    const month = paymentMonth === "" ? undefined : Number(paymentMonth);
+
+    if (!year || !month) {
+      toast.error(t("pleaseSelectYearAndMonth"));
+      return;
+    }
+
+    const promise = (async () => {
+      const blob = await reportService.exportGroupedDebtorsExcel({ year, month });
+
+      if (!blob || blob.size === 0) {
+        throw new Error("NO_DATA");
+      }
+
+      const date = format(new Date(), "yyyy-MM-dd");
+      downloadFile(blob, `grouped-debtors-statistics-${year}-${month}-${date}.xlsx`);
+    })();
+
+    toast.promise(promise, {
+      loading: t("exportingData"),
+      success: t("exportedSuccessfully"),
+      error: (error: Error) =>
+        error.message === "NO_DATA"
+          ? t("noDataToExport")
+          : t("errorExportingData"),
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -298,6 +328,9 @@ const PayersReport: FC = () => {
             </div>
 
             <div className="ml-auto flex gap-2">
+              <Button onClick={handleGroupedDebtorsExport}>
+                {t("managementStatisticsExport")}
+              </Button>
               <Button onClick={handleExport}>{t("exportReport")}</Button>
             </div>
           </div>
