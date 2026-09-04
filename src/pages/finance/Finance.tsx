@@ -53,9 +53,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 import { UnassignedTransactions } from "./UnassignedTransactions";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Finance() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -448,23 +450,27 @@ export default function Finance() {
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Payment Export</span>
           </Button>
-          <Button
-            type="button"
-            onClick={() => setActiveDialog("manual")}
-            className="gap-2"
-          >
-            <Plus className="w-6 h-6" />
-            <span className="hidden sm:inline">{t("addTransaction")}</span>
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setActiveDialog("spravka")}
-            className="gap-2"
-          >
-            <Plus className="w-6 h-6" />
-            <span className="hidden sm:inline">{t("addSpravka")}</span>
-          </Button>
+          {!isReadOnly && (
+            <Button
+              type="button"
+              onClick={() => setActiveDialog("manual")}
+              className="gap-2"
+            >
+              <Plus className="w-6 h-6" />
+              <span className="hidden sm:inline">{t("addTransaction")}</span>
+            </Button>
+          )}
+          {!isReadOnly && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setActiveDialog("spravka")}
+              className="gap-2"
+            >
+              <Plus className="w-6 h-6" />
+              <span className="hidden sm:inline">{t("addSpravka")}</span>
+            </Button>
+          )}
         </div>
       </motion.div>
 
@@ -664,7 +670,7 @@ export default function Finance() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {transaction.status === "pending" && (
+                        {transaction.status === "pending" && !isReadOnly && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -675,15 +681,17 @@ export default function Finance() {
                             <Ban className="w-4 h-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(transaction.id)}
-                          disabled={deleteMutation.isPending}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteMutation.mutate(transaction.id)}
+                            disabled={deleteMutation.isPending}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -702,21 +710,25 @@ export default function Finance() {
                       </Button>
                     ) : (
                       <div className="flex items-center justify-center gap-2">
-                        <Button
-                          type="button"
-                          onClick={() => setActiveDialog("manual")}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          {t("addTransaction")}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => setActiveDialog("spravka")}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          {t("addSpravka")}
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            type="button"
+                            onClick={() => setActiveDialog("manual")}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            {t("addTransaction")}
+                          </Button>
+                        )}
+                        {!isReadOnly && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setActiveDialog("spravka")}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            {t("addSpravka")}
+                          </Button>
+                        )}
                       </div>
                     )
                   }

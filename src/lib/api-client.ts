@@ -176,6 +176,7 @@ apiClient.interceptors.response.use(
             new_refresh_token || refreshToken,
             useAuthStore.getState().user!,
             useAuthStore.getState().permissions,
+            useAuthStore.getState().isReadOnly,
           );
 
         // Update the failed request with new token

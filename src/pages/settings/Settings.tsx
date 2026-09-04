@@ -29,11 +29,13 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Settings() {
   const { t } = useLanguageStore();
   const { isDarkMode, toggleDarkMode } = useThemeStore();
   const queryClient = useQueryClient();
+  const { isReadOnly } = usePermissions();
   const [editedSettings, setEditedSettings] = useState<Record<string, string>>(
     {}
   );
@@ -44,6 +46,8 @@ export default function Settings() {
   const { data: settingsData } = useQuery({
     queryKey: ["system-settings"],
     queryFn: () => settingsService.getSystemSettings(),
+    // Read-only accounts (e.g. CEO) are blocked from GET /settings/system.
+    enabled: !isReadOnly,
   });
 
   useEffect(() => {

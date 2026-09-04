@@ -15,6 +15,7 @@ import {
 import { format, addWeeks, subWeeks, startOfWeek, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { SessionRead, GroupRead } from "@/types/api";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface WeeklyTimeTableProps {
   sessions: SessionRead[];
@@ -73,6 +74,7 @@ export default function WeeklyTimeTable({
   showCreateButton = true,
   className,
 }: WeeklyTimeTableProps) {
+  const { isReadOnly } = usePermissions();
   const [localWeekStart, setLocalWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 }), // Monday
   );
@@ -169,7 +171,7 @@ export default function WeeklyTimeTable({
             </div>
 
             <div className="flex items-center gap-2">
-              {onCopyWeekToNext && (
+              {onCopyWeekToNext && !isReadOnly && (
                 <Button
                   variant="secondary"
                   onClick={() => onCopyWeekToNext(weekStart)}
@@ -251,17 +253,26 @@ export default function WeeklyTimeTable({
                       <div
                         key={dayIndex}
                         className={cn(
-                          "p-2 border-r last:border-r-0 relative group cursor-pointer transition-colors",
-                          isToday ? "bg-primary/5" : "hover:bg-muted/50",
+                          "p-2 border-r last:border-r-0 relative transition-colors",
+                          !isReadOnly && "group cursor-pointer",
+                          isToday
+                            ? "bg-primary/5"
+                            : !isReadOnly && "hover:bg-muted/50",
                         )}
-                        onClick={() => {
-                          if (daySessions.length === 0) {
-                            handleTimeSlotClick(date, timeSlot);
-                          }
-                        }}
+                        onClick={
+                          isReadOnly
+                            ? undefined
+                            : () => {
+                                if (daySessions.length === 0) {
+                                  handleTimeSlotClick(date, timeSlot);
+                                }
+                              }
+                        }
                       >
                         {/* Empty slot - show plus icon on hover */}
-                        {daySessions.length === 0 && showCreateButton && (
+                        {daySessions.length === 0 &&
+                          showCreateButton &&
+                          !isReadOnly && (
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <div className="p-1 rounded-full bg-primary/10">
                               <Plus className="w-4 h-4 text-primary" />

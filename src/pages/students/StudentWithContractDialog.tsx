@@ -124,9 +124,9 @@ export function StudentWithContractDialog({
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [suggestedContractNumber, setSuggestedContractNumber] =
-    useState<string>("");
-  const [availableNumbers, setAvailableNumbers] = useState<number[]>([]);
+  // Numbers are a never-reused running serial: there is no gap list to pick
+  // from. We only track whether the selected group is at capacity.
+  const [isGroupFull, setIsGroupFull] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -210,32 +210,25 @@ export function StudentWithContractDialog({
           );
           if (!selectedGroup) return;
 
+          // The next serial is the only valid contract number — assign it and
+          // display it read-only. `is_full` is a headcount check, independent
+          // of numbering (a full group still returns a valid next number).
           const response = await contractService.getNextAvailableNumber(
             Number(selectedGroupId),
           );
 
-          if (response.data.contract_number) {
-            const contractNumber = response.data.contract_number;
-            setSuggestedContractNumber(contractNumber);
-            setValue("contract_number", contractNumber);
-            toast.success(`${t("suggestion")}: ${contractNumber}`, {
-              duration: 3000,
-            });
-          } else if (response.data.is_full) {
-            toast.error(t("groupIsFull"));
-          }
+          const contractNumber = response.data.contract_number || "";
+          setValue("contract_number", contractNumber);
+          setIsGroupFull(Boolean(response.data.is_full));
 
-          const availableResponse =
-            await contractService.getAvailableContractNumbers(
-              Number(selectedGroupId),
-              response.data.birth_year,
-            );
-          if (availableResponse.data?.available_numbers) {
-            setAvailableNumbers(availableResponse.data.available_numbers);
+          if (response.data.is_full) {
+            toast.error(t("groupIsFull"));
           }
         } catch (error) {
           console.error("Shartnoma raqami xatosi:", error);
         }
+      } else {
+        setIsGroupFull(false);
       }
     };
     fetchContractNumber();
@@ -430,6 +423,13 @@ export function StudentWithContractDialog({
         return;
       }
 
+      // A full group (active contracts == capacity) cannot take a new contract.
+      if (isGroupFull) {
+        toast.error(t("groupIsFull"));
+        setIsSubmitting(false);
+        return;
+      }
+
       await simulateProgress(0, 800);
 
       const startDateObj = new Date(data.contract_start_date);
@@ -617,7 +617,6 @@ export function StudentWithContractDialog({
 
           if (response.data.contract_number) {
             const newContractNumber = response.data.contract_number;
-            setSuggestedContractNumber(newContractNumber);
             setValue("contract_number", newContractNumber);
             toast.success(`${t("newNumberSuggested")}: ${newContractNumber}`);
             toast(
@@ -789,46 +788,26 @@ export function StudentWithContractDialog({
                 <Label className="text-green-700 font-semibold">
                   {t("contractNumber")} *
                 </Label>
+                {/* Contract number is a frozen, never-reused serial. It is
+                    assigned automatically from the group — there is no choice
+                    to make, so the field is read-only. */}
                 <Input
                   {...register("contract_number", { required: true })}
-                  className="border-green-300 focus:border-green-500"
+                  readOnly
+                  aria-readonly="true"
+                  tabIndex={-1}
+                  placeholder={
+                    selectedGroupId ? "" : t("selectGroup")
+                  }
+                  className="border-green-300 bg-muted/50 cursor-not-allowed font-mono focus:border-green-300 focus-visible:ring-0"
                 />
-                {suggestedContractNumber && (
-                  <p className="text-xs text-green-600 mt-1">
-                    {t("suggestion")}: {suggestedContractNumber}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("contractNumberFrozenHint")}
+                </p>
+                {isGroupFull && (
+                  <p className="text-xs font-medium text-red-600 dark:text-red-400 mt-1">
+                    {t("groupIsFull")}
                   </p>
-                )}
-                {availableNumbers.length > 0 && (
-                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200">
-                    <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">
-                      {t("availableNumbers")}:
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {availableNumbers.map((num) => {
-                        const selectedGroup = groupsData?.data?.find(
-                          (g: any) => g.id === Number(selectedGroupId),
-                        );
-                        const contractNumber = `${num}-${
-                          selectedGroup?.name || ""
-                        }`;
-                        return (
-                          <button
-                            key={num}
-                            type="button"
-                            onClick={() => {
-                              setValue("contract_number", contractNumber);
-                              toast.success(
-                                `${t("numberSelected")}: ${contractNumber}`,
-                              );
-                            }}
-                            className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 border border-blue-300"
-                          >
-                            {contractNumber}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
                 )}
               </div>
               <div className="space-y-1">
@@ -1106,7 +1085,11 @@ export function StudentWithContractDialog({
             >
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="w-40">
+            <Button
+              type="submit"
+              disabled={isSubmitting || isGroupFull}
+              className="w-40"
+            >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (

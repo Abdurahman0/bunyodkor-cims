@@ -81,7 +81,7 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
     enabled: open,
   });
 
-  const { data: suggestedContractNumber, isFetching: isSuggestionLoading } =
+  const { data: suggestedContractNumber } =
     useQuery({
       queryKey: ["next-available-contract-number", formData.group_id],
       queryFn: () => contractService.getNextAvailableNumber(formData.group_id),
@@ -219,19 +219,20 @@ export function CloneContractDialog({ open, onOpenChange, terminatedContractId }
 
             <div className="space-y-1">
               <Label htmlFor="contract_number">{t("contractNumber")}</Label>
+              {/* Frozen, never-reused serial assigned from the group — read-only. */}
               <Input
                 id="contract_number"
                 name="contract_number"
                 value={formData.contract_number}
-                onChange={(e) =>
-                  setFormData((current) => ({
-                    ...current,
-                    contract_number: e.target.value,
-                  }))
-                }
+                readOnly
+                aria-readonly="true"
+                tabIndex={-1}
                 placeholder={t("contractNumber")}
-                disabled={isSuggestionLoading}
+                className="bg-muted/50 cursor-not-allowed font-mono"
               />
+              <p className="text-xs text-muted-foreground">
+                {t("contractNumberFrozenHint")}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

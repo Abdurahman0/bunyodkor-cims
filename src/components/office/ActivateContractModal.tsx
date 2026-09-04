@@ -105,7 +105,7 @@ export default function ActivateContractModal({
     [form.start_date],
   );
 
-  const { data: suggestedContractNumber, isFetching: isSuggestionLoading } =
+  const { data: suggestedContractNumber } =
     useQuery({
       queryKey: ["next-available-contract-number", form.group_id, contractYear],
       queryFn: () => contractService.getNextAvailableNumber(form.group_id, contractYear),
@@ -252,14 +252,20 @@ export default function ActivateContractModal({
 
             <div className="space-y-1">
               <Label htmlFor="contract_number">{t("contractNumber")}</Label>
+              {/* Frozen, never-reused serial assigned from the group — read-only. */}
               <Input
                 id="contract_number"
                 name="contract_number"
                 value={form.contract_number}
-                onChange={(e) => setForm((c) => ({ ...c, contract_number: e.target.value }))}
+                readOnly
+                aria-readonly="true"
+                tabIndex={-1}
                 placeholder={t("contractNumber")}
-                disabled={isSuggestionLoading}
+                className="bg-muted/50 cursor-not-allowed font-mono"
               />
+              <p className="text-xs text-muted-foreground">
+                {t("contractNumberFrozenHint")}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

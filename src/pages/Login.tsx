@@ -52,10 +52,17 @@ export default function Login() {
         refreshToken,
         user: userRes.data.user,
         permissions: userRes.data.permissions,
+        isReadOnly: Boolean(userRes.data.is_read_only),
       };
     },
     onSuccess: (data) => {
-      setAuth(data.token, data.refreshToken, data.user, data.permissions);
+      setAuth(
+        data.token,
+        data.refreshToken,
+        data.user,
+        data.permissions,
+        data.isReadOnly,
+      );
       toast.success(`${t("welcomeBack")}, ${formatFullName(data.user.full_name) || data.user.full_name}!`, {
         icon: "👋",
         duration: 3000,

@@ -54,6 +54,13 @@ export interface RegisterRequest {
 export interface CurrentUserResponse {
   user: UserWithRoles;
   permissions: string[];
+  /**
+   * True when the account's role is flagged read-only (e.g. CEO). The backend
+   * refuses every non-GET request from such accounts. Branch UI write-controls
+   * on this flag, NOT on the permissions array (which intentionally still
+   * contains write permissions so the account can open every screen).
+   */
+  is_read_only?: boolean;
 }
 
 // ============================================================================
@@ -127,6 +134,12 @@ export interface RoleRead {
   id: number;
   name: string;
   description: string;
+  /**
+   * Read-only role marker. Returned by GET /roles and inside /auth/me. NOT
+   * accepted by RoleCreate/RoleUpdate — display it as a read-only indicator,
+   * never a form control.
+   */
+  is_read_only?: boolean;
   created_at: string;
 }
 

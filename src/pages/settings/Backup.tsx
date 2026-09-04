@@ -18,9 +18,11 @@ import {
 import toast from "react-hot-toast";
 import { backupService } from "@/services/api.service";
 import { useLanguageStore } from "@/store/languageStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function BackupSection() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const {
     data: backupStatus,
     isLoading,
@@ -78,18 +80,20 @@ export function BackupSection() {
             </div>
           </div>
 
-          <Button
-            onClick={() => backupMutation.mutate()}
-            disabled={backupMutation.isPending}
-            className="gap-2"
-          >
-            {backupMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            {t("manualBackup")}
-          </Button>
+          {!isReadOnly && (
+            <Button
+              onClick={() => backupMutation.mutate()}
+              disabled={backupMutation.isPending}
+              className="gap-2"
+            >
+              {backupMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              {t("manualBackup")}
+            </Button>
+          )}
         </div>
 
         <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-950/20 p-3 rounded border border-blue-100 dark:border-blue-900">

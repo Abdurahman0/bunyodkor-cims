@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import type { SessionRead, GroupRead } from "@/types/api";
 import { cn } from "@/lib/utils";
 import { useLanguageStore } from "@/store/languageStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SessionDetailsDialogProps {
   session: SessionRead | null;
@@ -47,6 +48,7 @@ export default function SessionDetailsDialog({
   showActions = false,
 }: SessionDetailsDialogProps) {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
 
   if (!session) return null;
   const sessionNotes =
@@ -189,7 +191,7 @@ export default function SessionDetailsDialog({
 
           {showActions && (onEdit || onDelete) && (
             <DialogFooter className="gap-3 px-6 pb-6 border-t pt-6">
-              {onDelete && (
+              {onDelete && !isReadOnly && (
                 <Button
                   variant="destructive"
                   onClick={() => {
@@ -202,7 +204,7 @@ export default function SessionDetailsDialog({
                   {t("deleteSession") || "Delete Session"}
                 </Button>
               )}
-              {onEdit && (
+              {onEdit && !isReadOnly && (
                 <Button
                   onClick={() => {
                     onEdit(session);

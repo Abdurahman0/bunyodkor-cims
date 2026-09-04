@@ -29,6 +29,7 @@ import {
   LogOut,
   Archive,
   Trophy,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 const DashboardLayout = () => {
-  const { token, user, permissions, logout } = useAuthStore();
+  const { token, user, permissions, logout, isReadOnly } = useAuthStore();
   const { isDarkMode, toggleDarkMode } = useThemeStore();
   const { isOpen, toggle, close } = useSidebarStore();
   const { language, setLanguage, t } = useLanguageStore();
@@ -203,6 +204,14 @@ const DashboardLayout = () => {
 
     // Check permissions first
     if (!hasPermission(item.permission)) {
+      return false;
+    }
+
+    // Read-only accounts (e.g. CEO) are blocked server-side from the system
+    // settings screen (GET /settings/system → 403). Hide its nav entry rather
+    // than letting the page 403. The backup screen (GET /backup/status) lives
+    // inside the Archive page and is hidden there.
+    if (isReadOnly && item.path === "/settings") {
       return false;
     }
 
@@ -399,6 +408,14 @@ const DashboardLayout = () => {
                 </span>
               </div>
             )}
+            {isReadOnly && (
+              <div className="mt-2 pt-2 border-t border-border/40 flex items-center gap-1.5 text-xs">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-amber-400 font-medium">
+                  {t("readOnly")}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Powered By */}
@@ -441,6 +458,15 @@ const DashboardLayout = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {isReadOnly && (
+              <span
+                title={t("readOnlyBadgeHint")}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-400"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("readOnly")}</span>
+              </span>
+            )}
             <a
               href="https://bunyodkora.cognilabs.org/"
               target="_blank"
@@ -570,13 +596,15 @@ const DashboardLayout = () => {
                       </div>
 
                       <div className="pt-2 border-t border-border">
-                        <Link
-                          to="/settings"
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md mb-2"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <UserCog className="w-4 h-4" /> {t("settings")}
-                        </Link>
+                        {!isReadOnly && (
+                          <Link
+                            to="/settings"
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md mb-2"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <UserCog className="w-4 h-4" /> {t("settings")}
+                          </Link>
+                        )}
 
                         {/* YANGILANGAN LOGOUT BUTTON */}
                         <button

@@ -41,6 +41,9 @@ import {
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ArrowRightLeft } from "lucide-react";
+import { TransferStudentDialog } from "@/components/students/TransferStudentDialog";
 import { useLanguageStore } from "@/store/languageStore";
 import { formatFullName, formatNameParts } from "@/lib/name-utils";
 import type {
@@ -97,6 +100,7 @@ export default function StudentDetailPage() {
   const { t } = useLanguageStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isReadOnly, canWrite } = usePermissions();
 
   const { id } = useParams<{ id: string }>();
   const studentId = parseInt(id || "0", 10);
@@ -124,6 +128,7 @@ export default function StudentDetailPage() {
     format(new Date(), "yyyy-MM-dd'T'HH:mm"),
   );
   const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [terminatedContractId, setTerminatedContractId] = useState<number | null>(
     null,
   );
@@ -755,8 +760,8 @@ export default function StudentDetailPage() {
               <p className="text-2xl font-bold">
                 {activeContract?.contract_number || "-"}
               </p>
-              <div className="mt-3 flex gap-2 justify-center">
-                {activeContract ? (
+              <div className="mt-3 flex flex-wrap gap-2 justify-center">
+                {!isReadOnly && activeContract && (
                   <Button
                     variant="destructive"
                     size="sm"
@@ -764,23 +769,36 @@ export default function StudentDetailPage() {
                   >
                     {t("cancelContractAction")}
                   </Button>
-                ) : contracts?.some((c) => c.status === "terminated") ? (
+                )}
+                {activeContract && canWrite("contracts:edit") && (
                   <Button
-                    variant="default"
+                    variant="outline"
                     size="sm"
-                    onClick={() => {
-                      const terminated = contracts.find(
-                        (c) => c.status === "terminated",
-                      );
-                      if (terminated) {
-                        setTerminatedContractId(terminated.id);
-                        setIsCloneDialogOpen(true);
-                      }
-                    }}
+                    onClick={() => setIsTransferDialogOpen(true)}
                   >
-                    {t("activate")}
+                    <ArrowRightLeft className="w-4 h-4 mr-2" />
+                    {t("transferToAnotherGroup")}
                   </Button>
-                ) : null}
+                )}
+                {!isReadOnly &&
+                  !activeContract &&
+                  contracts?.some((c) => c.status === "terminated") && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        const terminated = contracts.find(
+                          (c) => c.status === "terminated",
+                        );
+                        if (terminated) {
+                          setTerminatedContractId(terminated.id);
+                          setIsCloneDialogOpen(true);
+                        }
+                      }}
+                    >
+                      {t("activate")}
+                    </Button>
+                  )}
               </div>
             </div>
           </CardContent>
@@ -1032,14 +1050,16 @@ export default function StudentDetailPage() {
                         <div className="flex items-center gap-2">
                           {new Intl.NumberFormat("en-US").format(c.monthly_fee)}{" "}
                           UZS
-                          <Pencil
-                            className="w-4 h-4 text-muted-foreground cursor-pointer"
-                            onClick={() => {
-                              setContractToUpdate(c);
-                              setMonthlyFeeValue(c.monthly_fee ?? "");
-                              setIsEditFeeDialogOpen(true);
-                            }}
-                          />
+                          {!isReadOnly && (
+                            <Pencil
+                              className="w-4 h-4 text-muted-foreground cursor-pointer"
+                              onClick={() => {
+                                setContractToUpdate(c);
+                                setMonthlyFeeValue(c.monthly_fee ?? "");
+                                setIsEditFeeDialogOpen(true);
+                              }}
+                            />
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -1067,20 +1087,22 @@ export default function StudentDetailPage() {
                             <Eye className="w-4 h-4 mr-2" />
                             {t("viewContract")}
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedContractId(c.id);
-                              setIsReplaceDialogOpen(true);
-                            }}
-                            disabled={updatePdfMutation.isPending}
-                          >
-                            <RefreshCw
-                              className={`w-4 h-4 mr-2 ${updatePdfMutation.isPending ? "animate-spin" : ""}`}
-                            />
-                            {t("replaceContractPdf")}
-                          </Button>
+                          {!isReadOnly && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedContractId(c.id);
+                                setIsReplaceDialogOpen(true);
+                              }}
+                              disabled={updatePdfMutation.isPending}
+                            >
+                              <RefreshCw
+                                className={`w-4 h-4 mr-2 ${updatePdfMutation.isPending ? "animate-spin" : ""}`}
+                              />
+                              {t("replaceContractPdf")}
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
@@ -1177,18 +1199,20 @@ export default function StudentDetailPage() {
                           ) : (
                             <div className="h-8 min-w-[84px]" aria-hidden="true" />
                           )}
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="h-8 min-w-[84px] justify-center gap-1 whitespace-nowrap"
-                            onClick={() => {
-                              setTransactionToDelete(transaction);
-                              setIsDeleteTransactionDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            {t("delete")}
-                          </Button>
+                          {!isReadOnly && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="h-8 min-w-[84px] justify-center gap-1 whitespace-nowrap"
+                              onClick={() => {
+                                setTransactionToDelete(transaction);
+                                setIsDeleteTransactionDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              {t("delete")}
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1243,6 +1267,7 @@ export default function StudentDetailPage() {
       </Card>
 
       {/* Critical Actions Section */}
+      {!isReadOnly && (
       <Card className="border-red-500/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-red-600 dark:text-red-500">
@@ -1267,6 +1292,7 @@ export default function StudentDetailPage() {
           </Button>
         </CardContent>
       </Card>
+      )}
 
       {/* Hard Delete Confirmation Dialog */}
       <Dialog
@@ -1525,6 +1551,15 @@ export default function StudentDetailPage() {
           }
         }}
         terminatedContractId={terminatedContractId ?? 0}
+      />
+
+      <TransferStudentDialog
+        open={isTransferDialogOpen}
+        onOpenChange={setIsTransferDialogOpen}
+        studentId={studentId}
+        currentGroupId={student.group_id ?? group?.id ?? null}
+        currentGroupName={group?.name}
+        contractNumber={activeContract?.contract_number}
       />
 
       {/* Edit Contract Dialog */}

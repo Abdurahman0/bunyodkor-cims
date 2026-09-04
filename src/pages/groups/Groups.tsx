@@ -60,6 +60,7 @@ import { GroupDetailsDialog } from "./GroupDetailsDialog";
 import { apiClient } from "@/lib/api-client";
 import { downloadFile } from "@/lib/export-utils";
 import { formatFullName, formatNameParts } from "@/lib/name-utils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 // Component to display individual group card with capacity
 function GroupCard({
@@ -81,6 +82,7 @@ function GroupCard({
   onViewStudents: () => void;
   t: any;
 }) {
+  const { isReadOnly } = usePermissions();
   // Use student count from group data (no need for extra API calls)
   // The API already returns active_students_count with each group
   const studentCount = group.active_students_count || 0;
@@ -156,30 +158,34 @@ function GroupCard({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit();
-                }}
-                className="gap-2"
-              >
-                <Edit className="w-4 h-4" />
-                {t("edit")}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className="gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="w-4 h-4" />
-                {t("delete")}
-              </Button>
+              {!isReadOnly && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit();
+                  }}
+                  className="gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  {t("edit")}
+                </Button>
+              )}
+              {!isReadOnly && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  className="gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t("delete")}
+                </Button>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -216,6 +222,7 @@ function GroupCard({
 
 export default function Groups() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const { token } = useAuthStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -488,10 +495,12 @@ export default function Groups() {
           </h1>
           <p className="text-muted-foreground mt-1">{t("manageGroups")}</p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="gap-2">
-          <Plus className="w-4 h-4" />
-          {t("newGroup")}
-        </Button>
+        {!isReadOnly && (
+          <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Plus className="w-4 h-4" />
+            {t("newGroup")}
+          </Button>
+        )}
       </motion.div>
 
       {/* Group Statistics Cards */}
@@ -689,10 +698,12 @@ export default function Groups() {
             <p className="text-sm text-muted-foreground mb-4">
               {t("getStartedGroup")}
             </p>
-            <Button onClick={() => handleOpenDialog()}>
-              <Plus className="w-4 h-4 mr-2" />
-              {t("createGroup")}
-            </Button>
+            {!isReadOnly && (
+              <Button onClick={() => handleOpenDialog()}>
+                <Plus className="w-4 h-4 mr-2" />
+                {t("createGroup")}
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

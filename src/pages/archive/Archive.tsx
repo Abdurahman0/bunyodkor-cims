@@ -41,9 +41,11 @@ import {
 import { useLanguageStore } from "@/store/languageStore";
 import { formatFullName } from "@/lib/name-utils";
 import { BackupSection } from "@/pages/settings/Backup";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Archive() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const canReactivate = !!user?.is_super_admin;
@@ -212,13 +214,15 @@ export default function Archive() {
             <FileX className="w-4 h-4" />
             {t("terminatedContracts" as any) || "Terminated Contracts"}
           </TabsTrigger>
-          <TabsTrigger
-            value="backup"
-            className="gap-2 w-full sm:w-auto justify-start sm:justify-center px-4 py-3 sm:py-2 border-2 sm:border-0 border-border data-[state=active]:border-primary sm:data-[state=active]:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg sm:rounded-md shadow-sm sm:shadow-none"
-          >
-            <Database className="w-4 h-4" />
-            {t("backup" as any) || "Backup"}
-          </TabsTrigger>
+          {!isReadOnly && (
+            <TabsTrigger
+              value="backup"
+              className="gap-2 w-full sm:w-auto justify-start sm:justify-center px-4 py-3 sm:py-2 border-2 sm:border-0 border-border data-[state=active]:border-primary sm:data-[state=active]:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg sm:rounded-md shadow-sm sm:shadow-none"
+            >
+              <Database className="w-4 h-4" />
+              {t("backup" as any) || "Backup"}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="stats" className="space-y-4">
@@ -282,34 +286,38 @@ export default function Archive() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-              <Button
-                onClick={handleArchive}
-                disabled={archiveMutation.isPending || stats.active_count === 0}
-                className="gap-2 bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
-              >
-                {archiveMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ArchiveIcon className="w-4 h-4" />
-                )}
-                {t("archiveYearButton" as any) || "Archive Year"}
-              </Button>
+              {!isReadOnly && (
+                <Button
+                  onClick={handleArchive}
+                  disabled={archiveMutation.isPending || stats.active_count === 0}
+                  className="gap-2 bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
+                >
+                  {archiveMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ArchiveIcon className="w-4 h-4" />
+                  )}
+                  {t("archiveYearButton" as any) || "Archive Year"}
+                </Button>
+              )}
 
-              <Button
-                onClick={handleUnarchive}
-                variant="outline"
-                disabled={
-                  unarchiveMutation.isPending || stats.archived_count === 0
-                }
-                className="gap-2 border-orange-600 text-orange-600 hover:bg-orange-50 w-full sm:w-auto"
-              >
-                {unarchiveMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="w-4 h-4" />
-                )}
-                {t("unarchiveButton" as any) || "Unarchive"}
-              </Button>
+              {!isReadOnly && (
+                <Button
+                  onClick={handleUnarchive}
+                  variant="outline"
+                  disabled={
+                    unarchiveMutation.isPending || stats.archived_count === 0
+                  }
+                  className="gap-2 border-orange-600 text-orange-600 hover:bg-orange-50 w-full sm:w-auto"
+                >
+                  {unarchiveMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
+                  {t("unarchiveButton" as any) || "Unarchive"}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -428,9 +436,11 @@ export default function Archive() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="backup">
-          <BackupSection />
-        </TabsContent>
+        {!isReadOnly && (
+          <TabsContent value="backup">
+            <BackupSection />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

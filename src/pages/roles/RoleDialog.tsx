@@ -18,7 +18,7 @@ import type {
 } from "@/types/api";
 import type { RoleCreateRequest as RoleCreate, RoleUpdate } from "@/types/api";
 import toast from "react-hot-toast";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
 import { translations } from "@/i18n/translations";
 
@@ -115,6 +115,14 @@ const RoleDialog = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-0 space-y-4">
+          {role?.is_read_only && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-400">
+              <Lock className="h-4 w-4 shrink-0" />
+              <span>
+                {t("readOnly")} — {t("readOnlyBadgeHint")}
+              </span>
+            </div>
+          )}
           <div className="space-y-1">
             <Label htmlFor="name">
               {t("roleName")} <span className="text-red-500">*</span>

@@ -57,6 +57,7 @@ import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog"; 
 import { SessionDialog } from "@/pages/coach/SessionDialog"; // Corrected import
 import { useLanguageStore } from "@/store/languageStore";
 import { formatFullName, formatGroupSelectLabel } from "@/lib/name-utils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const normalizeScheduleDays = (raw?: string) => {
   if (!raw) return "-";
@@ -143,6 +144,7 @@ export default function HeadCoach() {
     null,
   );
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
 
   const weekFromDate = useMemo(
     () => format(currentWeekStart, "yyyy-MM-dd"),
@@ -446,13 +448,15 @@ export default function HeadCoach() {
             </div>
           </div>
           <div className="flex gap-3">
-            <Button
-              onClick={handleCreateNewSession}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {t("newSession")}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                onClick={handleCreateNewSession}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {t("newSession")}
+              </Button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -496,13 +500,15 @@ export default function HeadCoach() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button
-                  onClick={handleCreateNewSession}
-                  variant="outline"
-                  className="w-full justify-start hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-2" /> {t("addNewSession")}
-                </Button>
+                {!isReadOnly && (
+                  <Button
+                    onClick={handleCreateNewSession}
+                    variant="outline"
+                    className="w-full justify-start hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> {t("addNewSession")}
+                  </Button>
+                )}
                 <Button
                   onClick={() => setActiveTab("groups")}
                   variant="outline"

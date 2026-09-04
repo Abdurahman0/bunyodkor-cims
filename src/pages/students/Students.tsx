@@ -53,6 +53,7 @@ import { format } from "date-fns";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguageStore } from "@/store/languageStore";
 import { useGroupsStore } from "@/store/groupsStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type GroupOption = {
   id: number;
@@ -61,6 +62,7 @@ type GroupOption = {
 
 export default function Students() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
@@ -390,10 +392,12 @@ export default function Students() {
             <span className="hidden sm:inline">{t("export")}</span>
             <span className="sm:hidden">1</span>
           </Button> */}
-          <Button onClick={handleCreate} className="gap-2">
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("addStudent")}</span>
-          </Button>
+          {!isReadOnly && (
+            <Button onClick={handleCreate} className="gap-2">
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">{t("addStudent")}</span>
+            </Button>
+          )}
         </div>
       </motion.div>
 
@@ -726,17 +730,19 @@ export default function Students() {
                     <TableCell>{getStatusBadge(student.status)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(student);
-                          }}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(student);
+                            }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
                         {/* <Button
                           variant="ghost"
                           size="sm"
@@ -768,12 +774,12 @@ export default function Students() {
                       <Button variant="outline" onClick={clearFilters}>
                         {t("clearFilters")}
                       </Button>
-                    ) : (
+                    ) : !isReadOnly ? (
                       <Button onClick={handleCreate}>
                         <Plus className="w-4 h-4 mr-2" />
                         {t("addStudent")}
                       </Button>
-                    )
+                    ) : null
                   }
                 />
               )}

@@ -60,9 +60,11 @@ import { toast } from "sonner";
 import { useLanguageStore } from "@/store/languageStore";
 import WeeklyTimeTable from "@/components/timetable/WeeklyTimeTable";
 import SessionDetailsDialog from "@/components/timetable/SessionDetailsDialog";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Coach() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd"),
   );
@@ -523,7 +525,7 @@ export default function Coach() {
                         {format(new Date(selectedDate), "MMMM d, yyyy")}
                       </CardDescription>
                     </div>
-                    {selectedSession && (
+                    {selectedSession && !isReadOnly && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -671,71 +673,77 @@ export default function Coach() {
                               {displayStatus && getStatusIcon(displayStatus)}
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant={
-                                  displayStatus === "present"
-                                    ? "default"
-                                    : "outline"
-                                }
-                                onClick={() =>
-                                  handleMarkAttendance(
-                                    student.student_id,
-                                    "present",
-                                  )
-                                }
-                                className="flex-1 gap-1"
-                                disabled={
-                                  attendanceMutation.isPending ||
-                                  hasExistingAttendance
-                                }
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                                {t("present") || "Present"}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={
-                                  displayStatus === "absent"
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                                onClick={() =>
-                                  handleMarkAttendance(
-                                    student.student_id,
-                                    "absent",
-                                  )
-                                }
-                                className="flex-1 gap-1"
-                                disabled={
-                                  attendanceMutation.isPending ||
-                                  hasExistingAttendance
-                                }
-                              >
-                                <XCircle className="w-4 h-4" />
-                                {t("absent") || "Absent"}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={
-                                  displayStatus === "late"
-                                    ? "secondary"
-                                    : "outline"
-                                }
-                                onClick={() =>
-                                  handleMarkAttendance(
-                                    student.student_id,
-                                    "late",
-                                  )
-                                }
-                                className="gap-1"
-                                disabled={
-                                  attendanceMutation.isPending ||
-                                  hasExistingAttendance
-                                }
-                              >
-                                <Clock className="w-4 h-4" />
-                              </Button>
+                              {!isReadOnly && (
+                                <Button
+                                  size="sm"
+                                  variant={
+                                    displayStatus === "present"
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  onClick={() =>
+                                    handleMarkAttendance(
+                                      student.student_id,
+                                      "present",
+                                    )
+                                  }
+                                  className="flex-1 gap-1"
+                                  disabled={
+                                    attendanceMutation.isPending ||
+                                    hasExistingAttendance
+                                  }
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                  {t("present") || "Present"}
+                                </Button>
+                              )}
+                              {!isReadOnly && (
+                                <Button
+                                  size="sm"
+                                  variant={
+                                    displayStatus === "absent"
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                  onClick={() =>
+                                    handleMarkAttendance(
+                                      student.student_id,
+                                      "absent",
+                                    )
+                                  }
+                                  className="flex-1 gap-1"
+                                  disabled={
+                                    attendanceMutation.isPending ||
+                                    hasExistingAttendance
+                                  }
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                  {t("absent") || "Absent"}
+                                </Button>
+                              )}
+                              {!isReadOnly && (
+                                <Button
+                                  size="sm"
+                                  variant={
+                                    displayStatus === "late"
+                                      ? "secondary"
+                                      : "outline"
+                                  }
+                                  onClick={() =>
+                                    handleMarkAttendance(
+                                      student.student_id,
+                                      "late",
+                                    )
+                                  }
+                                  className="gap-1"
+                                  disabled={
+                                    attendanceMutation.isPending ||
+                                    hasExistingAttendance
+                                  }
+                                >
+                                  <Clock className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         );

@@ -28,6 +28,7 @@ import {
 import { useGroupsStore } from "@/store/groupsStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePermissions } from "@/hooks/usePermissions";
 import { downloadFile } from "@/lib/export-utils";
 import {
   formatFullName,
@@ -62,6 +63,7 @@ type ContractsView = "contracts" | "terminated-students" | "terminated-unpaid";
 
 export default function Contracts() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -833,14 +835,16 @@ export default function Contracts() {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleOpenDialog(contract)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
+                                {!isReadOnly && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleOpenDialog(contract)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -913,32 +917,34 @@ export default function Contracts() {
                               </TableCell>
                               <TableCell>{item.termination_reason || "-"}</TableCell>
                               <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                                  disabled={deleteTerminatedStudentMutation.isPending}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!item.student_id) return;
+                                {!isReadOnly && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                                    disabled={deleteTerminatedStudentMutation.isPending}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!item.student_id) return;
 
-                                    const fullName = formatNameParts(
-                                      item.student_last_name,
-                                      item.student_first_name,
-                                    );
-                                    const confirmDelete = window.confirm(
-                                      `${t("confirmDeleteStudent")} ${fullName || `ID: ${item.student_id}`}?`,
-                                    );
+                                      const fullName = formatNameParts(
+                                        item.student_last_name,
+                                        item.student_first_name,
+                                      );
+                                      const confirmDelete = window.confirm(
+                                        `${t("confirmDeleteStudent")} ${fullName || `ID: ${item.student_id}`}?`,
+                                      );
 
-                                    if (!confirmDelete) return;
-                                    deleteTerminatedStudentMutation.mutate(
-                                      item.student_id,
-                                    );
-                                  }}
-                                  title={t("deleteStudent")}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                      if (!confirmDelete) return;
+                                      deleteTerminatedStudentMutation.mutate(
+                                        item.student_id,
+                                      );
+                                    }}
+                                    title={t("deleteStudent")}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
                               </TableCell>
                             </TableRow>
 

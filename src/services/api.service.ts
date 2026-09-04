@@ -392,6 +392,40 @@ export const studentService = {
   },
 
   /**
+   * Transfer a student (and their active contract) to another group in place.
+   * Nothing is duplicated: payments, attendance, gate logs, parents and debt
+   * stay attached, and the contract number does NOT change.
+   * POST /students/{student_id}/transfer
+   *
+   * Errors surface `detail` to the caller (global toast is suppressed):
+   *  400 already in group / no active contract / target group not ACTIVE
+   *  404 student or target group not found
+   *  409 more than one active contract (anomaly) / target group full
+   *  403 read-only account
+   */
+  transferStudent: async (
+    studentId: number,
+    data: { target_group_id: number; reason?: string },
+  ): Promise<
+    ApiResponse<{
+      student_id: number;
+      contract_id: number;
+      from_group_id: number;
+      to_group_id: number;
+      contract_number: string;
+      birth_year: number;
+      message: string;
+    }>
+  > => {
+    const response = await apiClient.post(
+      `/students/${studentId}/transfer`,
+      data,
+      { suppressGlobalErrorToast: true } as object,
+    );
+    return response.data;
+  },
+
+  /**
    * Get student contracts
    * GET /students/{student_id}/contracts
    */
@@ -1147,6 +1181,10 @@ export const contractService = {
   },
 
   /**
+   * @deprecated Numbers are now a never-reused running serial; there are no
+   * reusable "gaps" to pick from. This endpoint is marked deprecated in OpenAPI
+   * and always returns empty gap fields. Use {@link getNextAvailableNumber}.
+   *
    * Get all available contract numbers for a group and birth year
    * GET /contracts/available-numbers/{group_id}/{birth_year}
    */
@@ -1173,18 +1211,30 @@ export const contractService = {
   },
 
   /**
-   * Get next available contract number
-   * GET /contracts/next-available/{group_id}/{birth_year}
+   * Get the next (and only valid) contract number for a group. Numbers are a
+   * never-reused running serial, so there is no longer a choice to make — the
+   * returned `contract_number` is the one to use. `is_full` is a plain headcount
+   * of ACTIVE contracts vs `group_capacity` and is UNRELATED to numbering: a
+   * full group still returns a valid `next_number`, so never infer fullness
+   * from the number.
+   * GET /contracts/next-available/{group_id}
    */
   getNextAvailableNumber: async (
     groupId: number,
     year?: number,
   ): Promise<
     ApiResponse<{
-      next_available: number;
+      /** New canonical field. `next_available` kept for backward-compat. */
+      next_number?: number;
+      next_available?: number;
       contract_number: string;
-      birth_year: number;
+      message?: string;
       is_full: boolean;
+      group_name?: string;
+      group_identifier?: string;
+      birth_year: number;
+      group_capacity?: number;
+      total_used?: number;
     }>
   > => {
     const url = year

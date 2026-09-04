@@ -39,9 +39,11 @@ import UserDialog from "./UserDialog";
 import { UserDetailsCard } from "./UserDetailsCard";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const Users = () => {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -340,16 +342,18 @@ const Users = () => {
           </div>
         </div>
 
-        <Button
-          onClick={() => {
-            setSelectedUser(null);
-            setIsDialogOpen(true);
-          }}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          {t("addUser")}
-        </Button>
+        {!isReadOnly && (
+          <Button
+            onClick={() => {
+              setSelectedUser(null);
+              setIsDialogOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            {t("addUser")}
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -590,31 +594,35 @@ const Users = () => {
 
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(user);
-                          }}
-                          className="h-8 w-8 p-0"
-                          title={t("editUser")}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(user);
-                          }}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          title={t("deleteUser")}
-                          disabled={user.is_super_admin}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(user);
+                            }}
+                            className="h-8 w-8 p-0"
+                            title={t("editUser")}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {!isReadOnly && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(user);
+                            }}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title={t("deleteUser")}
+                            disabled={user.is_super_admin}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -634,15 +642,17 @@ const Users = () => {
                         {t("clearFilters")}
                       </Button>
                     ) : (
-                      <Button
-                        onClick={() => {
-                          setSelectedUser(null);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t("addUser")}
-                      </Button>
+                      !isReadOnly && (
+                        <Button
+                          onClick={() => {
+                            setSelectedUser(null);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {t("addUser")}
+                        </Button>
+                      )
                     )
                   }
                 />

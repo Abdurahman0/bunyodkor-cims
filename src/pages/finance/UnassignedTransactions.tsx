@@ -20,9 +20,11 @@ import { transactionService } from "@/services/api.service";
 import type { TransactionRead } from "@/types/api";
 import { AssignTransactionDialog } from "./AssignTransactionDialog";
 import { useLanguageStore } from "@/store/languageStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function UnassignedTransactions() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -90,13 +92,15 @@ export function UnassignedTransactions() {
                       {transaction.external_id}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => handleOpenDialog(transaction)}
-                      >
-                        <LinkIcon className="w-4 h-4 mr-2" />
-                        {t("assign")}
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleOpenDialog(transaction)}
+                        >
+                          <LinkIcon className="w-4 h-4 mr-2" />
+                          {t("assign")}
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

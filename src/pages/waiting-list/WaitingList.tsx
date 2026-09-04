@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLanguageStore } from "@/store/languageStore";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { WaitingListRead, GroupRead } from "@/types/api";
 import { WaitingListDialog } from "./WaitingListDialog";
 import { format } from "date-fns";
@@ -42,6 +43,7 @@ const ITEMS_PER_PAGE = 10;
 
 export default function WaitingList() {
   const { t } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const [page, setPage] = useState(1);
   const [birthYearFilter, setBirthYearFilter] = useState("");
   const [isExporting, setIsExporting] = useState(false);
@@ -313,10 +315,12 @@ export default function WaitingList() {
             )}
             {t("export") || "Export"}
           </Button>
-          <Button onClick={() => handleOpenDialog()} className="gap-2">
-            <Plus className="w-4 h-4" />
-            {t("addToWaitingList") || "Add to Waiting List"}
-          </Button>
+          {!isReadOnly && (
+            <Button onClick={() => handleOpenDialog()} className="gap-2">
+              <Plus className="w-4 h-4" />
+              {t("addToWaitingList") || "Add to Waiting List"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -462,21 +466,25 @@ export default function WaitingList() {
 
                     {/* Actions */}
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenDialog(entry)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(entry)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(entry)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {!isReadOnly && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(entry)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </motion.div>

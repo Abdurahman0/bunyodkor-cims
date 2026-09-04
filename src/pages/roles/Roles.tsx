@@ -31,10 +31,12 @@ import toast from "react-hot-toast";
 import RoleDialog from "./RoleDialog";
 import { useLanguageStore } from "@/store/languageStore";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const Roles = () => {
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
+  const { isReadOnly } = usePermissions();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -140,16 +142,18 @@ const Roles = () => {
             </div>
           </div>
 
-          <Button
-            onClick={() => {
-              setSelectedRole(null);
-              setIsDialogOpen(true);
-            }}
-            className="gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            {t("addRole")}
-          </Button>
+          {!isReadOnly && (
+            <Button
+              onClick={() => {
+                setSelectedRole(null);
+                setIsDialogOpen(true);
+              }}
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              {t("addRole")}
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -248,9 +252,21 @@ const Roles = () => {
                   rolesList.map((role: RoleWithPermissions) => (
                     <TableRow key={role.id}>
                       <TableCell>
-                        <p className="font-medium text-foreground">
-                          {role.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">
+                            {role.name}
+                          </p>
+                          {role.is_read_only && (
+                            <Badge
+                              variant="secondary"
+                              className="gap-1 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-400"
+                              title={t("readOnlyBadgeHint")}
+                            >
+                              <Lock className="h-3 w-3" />
+                              {t("readOnly")}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {role.description}
                         </p>
@@ -262,24 +278,33 @@ const Roles = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(role)}
-                            className="h-8 w-8 p-0"
-                            title={t("editRole")}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(role)}
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            title={t("deleteRole")}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {!isReadOnly && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(role)}
+                                className="h-8 w-8 p-0"
+                                title={t("editRole")}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(role)}
+                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                title={t("deleteRole")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          {isReadOnly && (
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -290,15 +315,17 @@ const Roles = () => {
                     title={t("noRolesFound")}
                     description={t("getStartedByAddingRole")}
                     action={
-                      <Button
-                        onClick={() => {
-                          setSelectedRole(null);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t("addRole")}
-                      </Button>
+                      isReadOnly ? undefined : (
+                        <Button
+                          onClick={() => {
+                            setSelectedRole(null);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {t("addRole")}
+                        </Button>
+                      )
                     }
                   />
                 )}

@@ -82,6 +82,7 @@ import {
   formatPersonName,
 } from "@/lib/name-utils";
 import { formatCurrency, formatNumber } from "@/lib/format-utils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const normalizeSessionForUi = (
   session:
@@ -293,6 +294,7 @@ const formatOverdueMonths = (
 
 export default function CoachPanel() {
   const { t, language } = useLanguageStore();
+  const { isReadOnly } = usePermissions();
   const queryClient = useQueryClient();
   const debtLocale = useMemo(() => getDebtMonthLocale(language), [language]);
   const [selectedDate, setSelectedDate] = useState(
@@ -1235,15 +1237,17 @@ export default function CoachPanel() {
                             )}
                           </CardDescription>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setUploadDialogOpen(true)}
-                          className="w-full sm:w-auto"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          {t("uploadKonspekt") || "Upload Konspekt"}
-                        </Button>
+                        {!isReadOnly && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setUploadDialogOpen(true)}
+                            className="w-full sm:w-auto"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            {t("uploadKonspekt") || "Upload Konspekt"}
+                          </Button>
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -1314,16 +1318,18 @@ export default function CoachPanel() {
                       )}
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                      <Button
-                        onClick={handleSubmitAttendance}
-                        disabled={bulkAttendanceMutation.isPending}
-                        className="w-full sm:w-auto"
-                      >
-                        {bulkAttendanceMutation.isPending && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        )}
-                        {t("submitAttendance") || "Submit Attendance"}
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          onClick={handleSubmitAttendance}
+                          disabled={bulkAttendanceMutation.isPending}
+                          className="w-full sm:w-auto"
+                        >
+                          {bulkAttendanceMutation.isPending && (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          )}
+                          {t("submitAttendance") || "Submit Attendance"}
+                        </Button>
+                      )}
                     </CardFooter>
                   </Card>
                 </motion.div>
