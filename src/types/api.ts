@@ -866,3 +866,42 @@ export interface WaitingListUpdate {
   priority?: number;
   notes?: string;
 }
+
+// ============================================================================
+// Year Limit Types (per-birth-year enrolment limit)
+// ============================================================================
+
+/**
+ * A configured limit row. A birth year with no row is unlimited.
+ */
+export interface YearLimitRead {
+  id: number;
+  birth_year: number;
+  max_students: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface YearLimitCreateRequest {
+  birth_year: number;
+  max_students: number;
+}
+
+export interface YearLimitUpdateRequest {
+  max_students: number;
+}
+
+/**
+ * Limit + live usage for one birth year. Returned for ANY year, including years
+ * with no configured limit (`has_limit: false`, `max_students: null`).
+ * `current_count` is the number of active contracts of that birth year across
+ * every group in the current archive year.
+ */
+export interface YearLimitUsage {
+  birth_year: number;
+  max_students: number | null;
+  current_count: number;
+  remaining: number | null;
+  is_full: boolean;
+  has_limit: boolean;
+}

@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/students/Students";
 import Groups from "./pages/groups/Groups";
+import YearLimits from "./pages/year-limits/YearLimits";
 import Finance from "./pages/finance/Finance";
 import Users from "./pages/users/Users";
 import Roles from "./pages/roles/Roles";
@@ -166,6 +167,15 @@ function App() {
               element={
                 <ProtectedRoute permission="groups:view">
                   <Groups />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="year-limits"
+              element={
+                <ProtectedRoute permission="groups:view">
+                  <YearLimits />
                 </ProtectedRoute>
               }
             />

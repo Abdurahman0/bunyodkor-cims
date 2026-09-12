@@ -42,6 +42,7 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { openPdfResponse, openPdfUrl } from "@/lib/open-pdf";
 import { usePermissions } from "@/hooks/usePermissions";
+import { invalidateYearLimits } from "@/hooks/useYearLimit";
 import { ArrowRightLeft } from "lucide-react";
 import { TransferStudentDialog } from "@/components/students/TransferStudentDialog";
 import { useLanguageStore } from "@/store/languageStore";
@@ -285,6 +286,8 @@ export default function StudentDetailPage() {
         queryKey: ["student-full-info", studentId],
       });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      // One fewer active contract — a place opens up in that birth year.
+      invalidateYearLimits(queryClient);
       toast.success(t("contractUpdatedSuccess") || "Contract terminated");
       setIsTerminateDialogOpen(false);
       setTerminationReason("");

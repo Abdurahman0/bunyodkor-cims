@@ -83,6 +83,11 @@ import type {
   WaitingListRead,
   WaitingListCreate,
   WaitingListUpdate,
+  // Year Limits
+  YearLimitRead,
+  YearLimitUsage,
+  YearLimitCreateRequest,
+  YearLimitUpdateRequest,
   // Common
   ApiResponse,
   SessionUpdateRequest,
@@ -2372,6 +2377,97 @@ export const healthService = {
    */
   healthCheck: async (): Promise<unknown> => {
     const response = await apiClient.get("/health");
+    return response.data;
+  },
+};
+
+// ============================================================================
+// YEAR LIMIT SERVICES (per-birth-year enrolment limit)
+// ============================================================================
+//
+// Enrolment is capped per BIRTH YEAR, not per group: a year may have any number
+// of groups/coaches, but the sum of active contracts across all of them cannot
+// exceed the year's limit. A year with no limit row is unlimited. Group
+// `capacity` is display-only and no longer blocks anything.
+//
+// Read requires `groups:view`, write requires `groups:edit`.
+
+export const yearLimitService = {
+  /**
+   * List every configured year limit (no usage counters)
+   * GET /year-limits
+   */
+  getYearLimits: async (): Promise<ApiResponse<YearLimitRead[]>> => {
+    const response =
+      await apiClient.get<ApiResponse<YearLimitRead[]>>("/year-limits");
+    return response.data;
+  },
+
+  /**
+   * List every configured year limit together with its live usage
+   * GET /year-limits/usage
+   */
+  getYearLimitsUsage: async (): Promise<ApiResponse<YearLimitUsage[]>> => {
+    const response = await apiClient.get<ApiResponse<YearLimitUsage[]>>(
+      "/year-limits/usage",
+    );
+    return response.data;
+  },
+
+  /**
+   * Limit + usage for a single birth year.
+   * Safe to call unconditionally: a year with no limit returns
+   * `has_limit: false` / `max_students: null` instead of a 404.
+   * GET /year-limits/{birth_year}
+   */
+  getYearLimit: async (
+    birthYear: number,
+  ): Promise<ApiResponse<YearLimitUsage>> => {
+    const response = await apiClient.get<ApiResponse<YearLimitUsage>>(
+      `/year-limits/${birthYear}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Create a limit for a year that has none (409 if one already exists)
+   * POST /year-limits
+   */
+  createYearLimit: async (
+    data: YearLimitCreateRequest,
+  ): Promise<ApiResponse<YearLimitRead>> => {
+    const response = await apiClient.post<ApiResponse<YearLimitRead>>(
+      "/year-limits",
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Change an existing limit (404 if the year has none)
+   * PATCH /year-limits/{birth_year}
+   */
+  updateYearLimit: async (
+    birthYear: number,
+    data: YearLimitUpdateRequest,
+  ): Promise<ApiResponse<YearLimitRead>> => {
+    const response = await apiClient.patch<ApiResponse<YearLimitRead>>(
+      `/year-limits/${birthYear}`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Remove the limit — the year becomes unlimited again
+   * DELETE /year-limits/{birth_year}
+   */
+  deleteYearLimit: async (
+    birthYear: number,
+  ): Promise<ApiResponse<{ message: string }>> => {
+    const response = await apiClient.delete<ApiResponse<{ message: string }>>(
+      `/year-limits/${birthYear}`,
+    );
     return response.data;
   },
 };

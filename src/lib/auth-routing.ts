@@ -4,6 +4,7 @@ const routesConfig = [
   { path: "/", permission: "dashboard:view" },
   { path: "/students", permission: "students:view" },
   { path: "/groups", permission: "groups:view" },
+  { path: "/year-limits", permission: "groups:view" },
   { path: "/contracts", permission: "contracts:view" },
   { path: "/finance", permission: "finance:transactions:view" },
   { path: "/coach", permission: "attendance:coach:mark" },

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useLanguageStore } from "@/store/languageStore";
 import { formatGroupSelectLabel } from "@/lib/name-utils";
+import { invalidateYearLimits } from "@/hooks/useYearLimit";
 import type { GroupRead } from "@/types/api";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -147,6 +148,9 @@ export function TransferStudentDialog({
       });
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      // A transfer can move the contract into a different birth year, so both
+      // years' counters are stale now.
+      invalidateYearLimits(queryClient);
       toast.success(
         `${t("transferSuccess")}${toGroupName ? ` — ${toGroupName}` : ""}. ${t(
           "contractNumberUnchanged",

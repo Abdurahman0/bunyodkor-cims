@@ -26,6 +26,7 @@ import {
   groupService,
   userService,
   studentService,
+  yearLimitService,
 } from "@/services/api.service";
 import {
   Plus,
@@ -61,6 +62,7 @@ import { apiClient } from "@/lib/api-client";
 import { downloadFile } from "@/lib/export-utils";
 import { formatFullName, formatNameParts } from "@/lib/name-utils";
 import { usePermissions } from "@/hooks/usePermissions";
+import { yearLimitKeys } from "@/hooks/useYearLimit";
 
 // Component to display individual group card with capacity
 function GroupCard({
@@ -250,6 +252,22 @@ export default function Groups() {
     queryKey: ["groups-statistics"],
     queryFn: () => groupService.getGroupsStatistics(),
   });
+
+  // Enrolment is capped per birth year, so each year heading carries its own
+  // limit. One request covers every limited year; years missing from the map
+  // simply have no limit.
+  const { data: yearLimitsUsage } = useQuery({
+    queryKey: yearLimitKeys.usage(),
+    queryFn: () => yearLimitService.getYearLimitsUsage(),
+  });
+
+  const yearLimitByYear = React.useMemo(
+    () =>
+      new Map(
+        (yearLimitsUsage?.data || []).map((usage) => [usage.birth_year, usage]),
+      ),
+    [yearLimitsUsage],
+  );
 
   // Apply search filter to grouped data
   const getFilteredGroupedData = () => {
@@ -650,7 +668,11 @@ export default function Groups() {
         </div>
       ) : filteredGroupedData && filteredGroupedData.length > 0 ? (
         <div className="space-y-8">
-          {filteredGroupedData.map((yearData) => (
+          {filteredGroupedData.map((yearData) => {
+            const yearLimit = yearLimitByYear.get(yearData.birth_year);
+            const yearRemaining = Math.max(yearLimit?.remaining ?? 0, 0);
+
+            return (
             <motion.div
               key={yearData.birth_year}
               initial={{ opacity: 0, y: 20 }}
@@ -659,12 +681,30 @@ export default function Groups() {
             >
               <Card className="border-border/50 shadow-md">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold text-foreground flex items-center gap-3">
+                  <CardTitle className="text-xl font-bold text-foreground flex flex-wrap items-center gap-3">
                     <Calendar className="w-6 h-6" />
                     {yearData.birth_year} {t("birthYear") || "yil tug'ilganlar"}
-                    <Badge variant="secondary" className="ml-auto">
-                      {yearData.total_groups} {t("group")}
-                    </Badge>
+                    <div className="ml-auto flex items-center gap-2">
+                      {/* Year-wide enrolment limit. Absent = unlimited. */}
+                      {yearLimit &&
+                        (yearLimit.is_full ? (
+                          <Badge variant="destructive">
+                            {t("yearLimitFullBadge")
+                              .replace("{{used}}", String(yearLimit.current_count))
+                              .replace("{{max}}", String(yearLimit.max_students))}
+                          </Badge>
+                        ) : (
+                          <Badge variant="default">
+                            {t("yearLimitBadge")
+                              .replace("{{remaining}}", String(yearRemaining))
+                              .replace("{{used}}", String(yearLimit.current_count))
+                              .replace("{{max}}", String(yearLimit.max_students))}
+                          </Badge>
+                        ))}
+                      <Badge variant="secondary">
+                        {yearData.total_groups} {t("group")}
+                      </Badge>
+                    </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -686,7 +726,8 @@ export default function Groups() {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <Card className="border-border/50 shadow-sm">
