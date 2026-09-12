@@ -33,6 +33,8 @@ import {
 // openPdfUrl funksiyasini ishlatamiz
 import { openPdfUrl } from "@/lib/open-pdf";
 import { formatGroupSelectLabel } from "@/lib/name-utils";
+import { useYearLimit, invalidateYearLimits } from "@/hooks/useYearLimit";
+import { YearLimitNotice } from "@/components/year-limits/YearLimitNotice";
 
 interface StudentWithContractDialogProps {
   open: boolean;
@@ -125,7 +127,8 @@ export function StudentWithContractDialog({
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Numbers are a never-reused running serial: there is no gap list to pick
-  // from. We only track whether the selected group is at capacity.
+  // from. The group's own capacity is display-only and blocks nothing — the
+  // enrolment cap lives on the birth year (see `isYearFull` below).
   const [isGroupFull, setIsGroupFull] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -179,6 +182,16 @@ export function StudentWithContractDialog({
     enabled: open,
   });
 
+  // Enrolment is capped per BIRTH YEAR across every group, so the limit that
+  // decides whether this student can be enrolled hangs off the selected group's
+  // birth year, not off the group itself.
+  const selectedGroupBirthYear =
+    groupsData?.data?.find((g: GroupRead) => g.id === Number(selectedGroupId))
+      ?.birth_year ?? null;
+
+  const { data: yearUsage } = useYearLimit(selectedGroupBirthYear);
+  const isYearFull = Boolean(yearUsage?.is_full);
+
   // Effects...
   useEffect(() => {
     if (dateOfBirth) {
@@ -219,11 +232,9 @@ export function StudentWithContractDialog({
 
           const contractNumber = response.data.contract_number || "";
           setValue("contract_number", contractNumber);
+          // Informational only: a group over its display capacity still accepts
+          // enrolments. Only the birth-year limit can block one.
           setIsGroupFull(Boolean(response.data.is_full));
-
-          if (response.data.is_full) {
-            toast.error(t("groupIsFull"));
-          }
         } catch (error) {
           console.error("Shartnoma raqami xatosi:", error);
         }
@@ -423,9 +434,15 @@ export function StudentWithContractDialog({
         return;
       }
 
-      // A full group (active contracts == capacity) cannot take a new contract.
-      if (isGroupFull) {
-        toast.error(t("groupIsFull"));
+      // The birth year — not the group — caps enrolment. Stop here so a full
+      // year never reaches the upload step and leaves orphan files behind.
+      if (isYearFull) {
+        toast.error(
+          t("yearLimitReachedShort").replace(
+            "{{year}}",
+            String(selectedGroupBirthYear ?? ""),
+          ),
+        );
         setIsSubmitting(false);
         return;
       }
@@ -572,6 +589,8 @@ export function StudentWithContractDialog({
 
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      // One more active contract in this birth year — refresh the counters.
+      invalidateYearLimits(queryClient);
       if (onSuccess) onSuccess();
     } catch (error: any) {
       console.error("Xatolik:", error);
@@ -594,6 +613,13 @@ export function StudentWithContractDialog({
           typeof error.response.data.detail === "string"
             ? error.response.data.detail
             : JSON.stringify(error.response.data.detail);
+      }
+
+      // 409 from the birth-year limit (the year filled up between the banner
+      // loading and submit): re-read the counters so the banner and the submit
+      // button catch up with the server. The message itself is shown below.
+      if (error.response?.status === 409) {
+        invalidateYearLimits(queryClient);
       }
 
       const isDuplicateContract =
@@ -731,6 +757,9 @@ export function StudentWithContractDialog({
                         </option>
                       ))}
                   </select>
+                  {/* Places left in the group's birth year — this, not the
+                      group's capacity, is what can block the enrolment. */}
+                  <YearLimitNotice birthYear={selectedGroupBirthYear} />
                 </div>
               </div>
             </div>
@@ -805,8 +834,8 @@ export function StudentWithContractDialog({
                   {t("contractNumberFrozenHint")}
                 </p>
                 {isGroupFull && (
-                  <p className="text-xs font-medium text-red-600 dark:text-red-400 mt-1">
-                    {t("groupIsFull")}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("groupCapacityFullInfo")}
                   </p>
                 )}
               </div>
@@ -1076,27 +1105,37 @@ export function StudentWithContractDialog({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white dark:bg-slate-900 p-4 shadow-lg border-t-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              {t("cancel")}
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || isGroupFull}
-              className="w-40"
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <UserPlus className="w-4 h-4 mr-2" />
-              )}
-              {t("create")}
-            </Button>
+          <div className="flex flex-col gap-3 pt-4 border-t sticky bottom-0 bg-white dark:bg-slate-900 p-4 shadow-lg border-t-gray-200">
+            {isYearFull && (
+              <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                {t("yearLimitReachedShort").replace(
+                  "{{year}}",
+                  String(selectedGroupBirthYear ?? ""),
+                )}
+              </p>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                {t("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || isYearFull}
+                className="w-40"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <UserPlus className="w-4 h-4 mr-2" />
+                )}
+                {t("create")}
+              </Button>
+            </div>
           </div>
         </form>
 

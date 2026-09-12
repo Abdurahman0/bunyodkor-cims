@@ -30,6 +30,7 @@ import {
   Archive,
   Trophy,
   Lock,
+  CalendarRange,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -86,6 +87,12 @@ const DashboardLayout = () => {
       path: "/groups",
       label: t("groups"),
       icon: GraduationCap,
+      permission: "groups:view",
+    },
+    {
+      path: "/year-limits",
+      label: t("yearLimits"),
+      icon: CalendarRange,
       permission: "groups:view",
     },
     {

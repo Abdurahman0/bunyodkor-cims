@@ -15,6 +15,8 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useLanguageStore } from "@/store/languageStore";
 import { formatGroupSelectLabel } from "@/lib/name-utils";
 import type { GroupRead } from "@/types/api";
+import { useYearLimit, invalidateYearLimits } from "@/hooks/useYearLimit";
+import { YearLimitNotice } from "@/components/year-limits/YearLimitNotice";
 import toast from "react-hot-toast";
 
 const formatDateInputValue = (date: Date) => {
@@ -139,20 +141,38 @@ export default function ActivateContractModal({
     }));
   }, [suggestedContractNumber]);
 
+  // Cloning a terminated contract creates a NEW active contract, so it counts
+  // against the birth-year limit exactly like a fresh enrolment does.
+  const selectedGroupBirthYear =
+    groupsData?.find((group: GroupRead) => group.id === Number(form.group_id))
+      ?.birth_year ?? null;
+
+  const { data: yearUsage } = useYearLimit(selectedGroupBirthYear);
+  const isYearFull = Boolean(yearUsage?.is_full);
+
   const cloneMutation = useMutation({
     mutationFn: (data: ActivateContractForm) =>
       contractService.cloneFromTerminated(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       queryClient.invalidateQueries({ queryKey: ["student-full-info"] });
+      invalidateYearLimits(queryClient);
       toast.success(t("contractClonedSuccess") || "Contract activated successfully");
       onOpenChange(false);
     },
     onError: (err: unknown) => {
-      const detail =
+      const response =
         err && typeof err === "object" && "response" in err
-          ? (err.response as { data?: { detail?: unknown } })?.data?.detail
+          ? (err.response as {
+              status?: number;
+              data?: { detail?: unknown };
+            })
           : undefined;
+
+      // 409 = the birth year filled up since the banner loaded; re-read it.
+      if (response?.status === 409) invalidateYearLimits(queryClient);
+
+      const detail = response?.data?.detail;
       let msg = t("failedToCloneContract") || "Failed to activate contract";
       if (typeof detail === "string") msg = detail;
       toast.error(msg);
@@ -202,6 +222,15 @@ export default function ActivateContractModal({
       toast.error(t("monthlyFeeRequired") || "Monthly fee must be > 0");
       return false;
     }
+    if (isYearFull) {
+      toast.error(
+        t("yearLimitReachedShort").replace(
+          "{{year}}",
+          String(selectedGroupBirthYear ?? ""),
+        ),
+      );
+      return false;
+    }
     return true;
   };
 
@@ -248,6 +277,9 @@ export default function ActivateContractModal({
                 contentClassName="z-[10020]"
                 disabled={isLoadingGroups}
               />
+              {/* Places left in the group's birth year — a full year rejects
+                  the clone with a 409, so surface it before submitting. */}
+              <YearLimitNotice birthYear={selectedGroupBirthYear} />
             </div>
 
             <div className="space-y-1">
@@ -308,11 +340,14 @@ export default function ActivateContractModal({
         )}
 
         <DialogFooter className="p-0 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={cloneMutation.isLoading}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={cloneMutation.isPending}>
             {t("cancel")}
           </Button>
-          <Button onClick={handleSubmit} disabled={cloneMutation.isLoading || isLoading}>
-            {cloneMutation.isLoading ? t("loading") : t("activate")}
+          <Button
+            onClick={handleSubmit}
+            disabled={cloneMutation.isPending || isLoading || isYearFull}
+          >
+            {cloneMutation.isPending ? t("loading") : t("activate")}
           </Button>
         </DialogFooter>
       </DialogContent>

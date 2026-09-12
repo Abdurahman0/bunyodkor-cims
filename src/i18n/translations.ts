@@ -1062,6 +1062,46 @@
     startDateRequired: "Start date is required",
     endDateRequired: "End date is required",
     monthlyFeeRequired: "Monthly fee must be greater than zero",
+
+    // Per-birth-year enrolment limit
+    yearLimits: "Year Limits",
+    yearLimitsDescription:
+      "One enrolment limit per birth year, shared by every group of that year.",
+    newYearLimit: "New limit",
+    editYearLimit: "Edit limit",
+    maxStudents: "Limit (students)",
+    maxStudentsHint:
+      "Total active contracts allowed for this birth year across all groups. 0 closes the year.",
+    maxStudentsRequired: "Limit is required",
+    maxStudentsInvalid: "Limit cannot be negative",
+    birthYearInvalid: "Birth year must be between 1900 and 2100",
+    currentlyEnrolled: "Currently enrolled",
+    enterBirthYearToSeeUsage:
+      "Enter a birth year to see its current enrolment.",
+    checkingYearLimit: "Checking year limit...",
+    yearLimitBelowCurrent:
+      "This is below the {{count}} students already enrolled — the year will be full immediately.",
+    yearLimitCreated: "Year limit created",
+    yearLimitUpdated: "Year limit updated",
+    yearLimitDeleted: "Year limit removed — the year is unlimited again",
+    confirmDeleteYearLimit:
+      "Remove the limit for {{year}}? The year becomes unlimited.",
+    noYearLimits: "No year limits set",
+    noYearLimitsHint:
+      "Every birth year is currently unlimited. Add a limit to cap how many students a year can enrol.",
+    limitedYears: "Limited years",
+    totalYearCapacity: "Total limit",
+    fullYears: "Full years",
+    yearLimitUnlimited: "Unlimited",
+    yearLimitReached: "year is full",
+    yearLimitReachedHint: "Raise the limit or pick another year.",
+    yearLimitReachedShort:
+      "{{year}} is full — no new students can be enrolled.",
+    yearLimitSlotsLeft: "{{count}} places left",
+    yearLimitBadge: "{{remaining}} left ({{used}}/{{max}})",
+    yearLimitFullBadge: "Year full ({{used}}/{{max}})",
+    groupCapacityFullInfo:
+      "The group is at its listed capacity. This does not block enrolment — only the year limit does.",
   },
 
   uz: {
@@ -2147,6 +2187,46 @@
     copyright: "В© 2026 Bunyodkor. Barcha huquqlar himoyalangan.",
     poweredBy: "Ishlab chiquvchi",
     goToGroupA: "A guruhga o'tish",
+
+    // Yillik ro'yxatga olish limiti
+    yearLimits: "Yillik limitlar",
+    yearLimitsDescription:
+      "Har bir tug'ilgan yil uchun bitta umumiy limit — o'sha yildagi barcha guruhlarga taalluqli.",
+    newYearLimit: "Yangi limit",
+    editYearLimit: "Limitni o'zgartirish",
+    maxStudents: "Limit (o'quvchi)",
+    maxStudentsHint:
+      "Shu tug'ilgan yil bo'yicha barcha guruhlardagi faol shartnomalar uchun umumiy chegara. 0 — yil yopiladi.",
+    maxStudentsRequired: "Limit kiritilishi shart",
+    maxStudentsInvalid: "Limit manfiy bo'lishi mumkin emas",
+    birthYearInvalid: "Tug'ilgan yil 1900–2100 oralig'ida bo'lishi kerak",
+    currentlyEnrolled: "Hozir ro'yxatda",
+    enterBirthYearToSeeUsage:
+      "Joriy holatni ko'rish uchun tug'ilgan yilni kiriting.",
+    checkingYearLimit: "Yil limiti tekshirilmoqda...",
+    yearLimitBelowCurrent:
+      "Bu qiymat hozir ro'yxatdagi {{count}} ta o'quvchidan kam — yil darhol to'lgan bo'ladi.",
+    yearLimitCreated: "Yillik limit yaratildi",
+    yearLimitUpdated: "Yillik limit yangilandi",
+    yearLimitDeleted: "Limit o'chirildi — bu yil yana cheksiz",
+    confirmDeleteYearLimit:
+      "{{year}}-yil limiti o'chirilsinmi? Yil cheksiz bo'lib qoladi.",
+    noYearLimits: "Yillik limit qo'yilmagan",
+    noYearLimitsHint:
+      "Hozircha barcha yillar cheksiz. Yilga nechta o'quvchi olinishini cheklash uchun limit qo'shing.",
+    limitedYears: "Limitli yillar",
+    totalYearCapacity: "Umumiy limit",
+    fullYears: "To'lgan yillar",
+    yearLimitUnlimited: "Cheksiz",
+    yearLimitReached: "yil to'lgan",
+    yearLimitReachedHint: "Limitni oshiring yoki boshqa yilni tanlang.",
+    yearLimitReachedShort:
+      "{{year}}-yil to'lgan — yangi o'quvchi qo'shib bo'lmaydi.",
+    yearLimitSlotsLeft: "{{count}} ta joy qoldi",
+    yearLimitBadge: "{{remaining}} ta joy ({{used}}/{{max}})",
+    yearLimitFullBadge: "Yil to'lgan ({{used}}/{{max}})",
+    groupCapacityFullInfo:
+      "Guruh o'z sig'imiga yetgan. Bu qo'shishni bloklamaydi — faqat yillik limit bloklaydi.",
   },
 
   ru: {
@@ -3189,5 +3269,45 @@
     copyright: "© 2026 Bunyodkor. Все права защищены.",
     poweredBy: "Разработано",
     goToGroupA: "Перейти в группу А",
+
+    // Годовые лимиты набора
+    yearLimits: "Годовые лимиты",
+    yearLimitsDescription:
+      "Один лимит на год рождения — общий для всех групп этого года.",
+    newYearLimit: "Новый лимит",
+    editYearLimit: "Изменить лимит",
+    maxStudents: "Лимит (учеников)",
+    maxStudentsHint:
+      "Общее число активных контрактов для этого года рождения по всем группам. 0 — год закрыт.",
+    maxStudentsRequired: "Укажите лимит",
+    maxStudentsInvalid: "Лимит не может быть отрицательным",
+    birthYearInvalid: "Год рождения должен быть от 1900 до 2100",
+    currentlyEnrolled: "Сейчас зачислено",
+    enterBirthYearToSeeUsage:
+      "Введите год рождения, чтобы увидеть текущую заполненность.",
+    checkingYearLimit: "Проверка годового лимита...",
+    yearLimitBelowCurrent:
+      "Это меньше, чем уже зачислено ({{count}}) — год сразу станет заполненным.",
+    yearLimitCreated: "Годовой лимит создан",
+    yearLimitUpdated: "Годовой лимит обновлён",
+    yearLimitDeleted: "Лимит удалён — год снова без ограничений",
+    confirmDeleteYearLimit:
+      "Удалить лимит для {{year}}? Год станет без ограничений.",
+    noYearLimits: "Годовые лимиты не заданы",
+    noYearLimitsHint:
+      "Сейчас все годы без ограничений. Добавьте лимит, чтобы ограничить набор на год.",
+    limitedYears: "Годов с лимитом",
+    totalYearCapacity: "Суммарный лимит",
+    fullYears: "Заполненные годы",
+    yearLimitUnlimited: "Без лимита",
+    yearLimitReached: "год заполнен",
+    yearLimitReachedHint: "Увеличьте лимит или выберите другой год.",
+    yearLimitReachedShort:
+      "{{year}} год заполнен — новых учеников добавить нельзя.",
+    yearLimitSlotsLeft: "Осталось мест: {{count}}",
+    yearLimitBadge: "Осталось {{remaining}} ({{used}}/{{max}})",
+    yearLimitFullBadge: "Год заполнен ({{used}}/{{max}})",
+    groupCapacityFullInfo:
+      "Группа достигла своей вместимости. Это не блокирует зачисление — блокирует только годовой лимит.",
   },
 };
