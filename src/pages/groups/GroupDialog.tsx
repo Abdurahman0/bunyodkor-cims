@@ -13,7 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import toast from "react-hot-toast";
-import { groupService, userService } from "@/services/api.service";
+import {
+  groupService,
+  userService,
+  yearLimitService,
+} from "@/services/api.service";
+import { useYearLimit, invalidateYearLimits } from "@/hooks/useYearLimit";
 import type {
   GroupRead,
   GroupCreateRequest,
@@ -39,7 +44,13 @@ type GroupFormData = {
   schedule_time: string;
   capacity: number | string;
   coach_id: number | string;
+  /** Edit mode only: the enrolment limit for the group's birth year. */
+  year_limit?: number | string;
 };
+
+type SavePayload =
+  | { mode: "create"; data: GroupCreateRequest }
+  | { mode: "edit"; changes: GroupUpdateRequest; yearLimit: number | null };
 
 const normalizeScheduleDays = (raw: string) => {
   if (!raw) return raw;
@@ -158,16 +169,31 @@ export function GroupDialog({
     }
   }, [group, open, reset]);
 
+  // Edit mode also lets the admin set the limit for the group's birth year.
+  // The limit is not a group field — it caps every group of that year — so it
+  // is read and saved through /year-limits, next to the group itself.
+  const { data: yearUsage } = useYearLimit(isEdit ? group?.birth_year : null);
+
+  useEffect(() => {
+    if (!open || !isEdit) return;
+    setValue("year_limit", yearUsage?.max_students ?? "");
+  }, [open, isEdit, yearUsage, setValue]);
+
   const mutation = useMutation({
-    mutationFn: (data: GroupCreateRequest | GroupUpdateRequest) => {
-      if (group) {
-        return groupService.updateGroup(group.id, data);
-      } else {
-        return groupService.createGroup(data as GroupCreateRequest);
+    mutationFn: async (payload: SavePayload) => {
+      if (payload.mode === "create") {
+        return groupService.createGroup(payload.data);
+      }
+      if (Object.keys(payload.changes).length > 0) {
+        await groupService.updateGroup(group!.id, payload.changes);
+      }
+      if (payload.yearLimit !== null) {
+        await yearLimitService.setYearLimit(group!.birth_year, payload.yearLimit);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] });
+      invalidateYearLimits(queryClient);
       toast.success(
         group ? t("groupUpdatedSuccess") : t("groupCreatedSuccess")
       );
@@ -197,29 +223,33 @@ export function GroupDialog({
     if (group) {
       // PATCH /groups/{id} is a partial update, and it rejects `identifier` and
       // `birth_year` with a 400 because contract numbers are built from them.
-      // So send only the fields the user actually changed.
-      const scheduleDays = normalizeScheduleDays(data.schedule_days);
+      // So send only the fields the user actually changed. Schedule and
+      // capacity are not offered in edit mode, so they never appear here.
       const changed: GroupUpdateRequest = {};
 
       if (data.name !== group.name) changed.name = data.name;
       if ((data.description ?? "") !== (group.description ?? ""))
         changed.description = data.description;
-      if (scheduleDays !== normalizeScheduleDays(group.schedule_days ?? ""))
-        changed.schedule_days = scheduleDays;
-      if (data.schedule_time !== group.schedule_time)
-        changed.schedule_time = data.schedule_time;
-      if (Number(data.capacity) !== group.capacity)
-        changed.capacity = Number(data.capacity);
       if (Number(data.coach_id) !== group.coach_id)
         changed.coach_id = Number(data.coach_id);
 
-      if (Object.keys(changed).length === 0) {
+      // Empty = leave the year's limit alone (it is removed from the
+      // Year limits page, not from here).
+      const typedLimit =
+        data.year_limit === "" || data.year_limit == null
+          ? null
+          : Number(data.year_limit);
+      const currentLimit = yearUsage?.has_limit ? yearUsage.max_students : null;
+      const yearLimit =
+        typedLimit !== null && typedLimit !== currentLimit ? typedLimit : null;
+
+      if (Object.keys(changed).length === 0 && yearLimit === null) {
         toast(t("noChangesToSave"));
         onOpenChange(false);
         return;
       }
 
-      mutation.mutate(changed);
+      mutation.mutate({ mode: "edit", changes: changed, yearLimit });
       return;
     }
 
@@ -234,7 +264,7 @@ export function GroupDialog({
       coach_id: Number(data.coach_id),
     };
 
-    mutation.mutate(payload);
+    mutation.mutate({ mode: "create", data: payload });
   };
 
   return (
@@ -311,34 +341,73 @@ export function GroupDialog({
               )}
             </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="capacity">
-                {t("capacity")} <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="capacity"
-                type="number"
-                min={1}
-                max={50}
-                step={1}
-                placeholder="25"
-                {...register("capacity", {
-                  required: t("capacityRequired"),
-                  valueAsNumber: true,
-                  min: { value: 1, message: t("capacityRange") },
-                  max: { value: 50, message: t("capacityRange") },
-                })}
-              />
-              {errors.capacity ? (
-                <p className="text-sm text-red-500">
-                  {errors.capacity.message}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {t("capacityDisplayOnlyHint")}
-                </p>
-              )}
-            </div>
+            {isEdit ? (
+              // The year-wide enrolment limit takes capacity's slot: it is the
+              // number that actually governs enrolment for this group.
+              <div className="space-y-1">
+                <Label htmlFor="year_limit">
+                  {t("groupYearLimitLabel").replace(
+                    "{{year}}",
+                    String(group?.birth_year ?? ""),
+                  )}
+                </Label>
+                <Input
+                  id="year_limit"
+                  type="number"
+                  min={0}
+                  step={1}
+                  placeholder={t("yearLimitUnlimited")}
+                  {...register("year_limit", {
+                    min: { value: 0, message: t("maxStudentsInvalid") },
+                    validate: (value) =>
+                      value === "" ||
+                      value == null ||
+                      Number.isInteger(Number(value)) ||
+                      t("maxStudentsInvalid"),
+                  })}
+                />
+                {errors.year_limit ? (
+                  <p className="text-sm text-red-500">
+                    {errors.year_limit.message}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {yearUsage
+                      ? `${t("currentlyEnrolled")}: ${yearUsage.current_count}`
+                      : t("maxStudentsHint")}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Label htmlFor="capacity">
+                  {t("capacity")} <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="capacity"
+                  type="number"
+                  min={1}
+                  max={50}
+                  step={1}
+                  placeholder="25"
+                  {...register("capacity", {
+                    required: t("capacityRequired"),
+                    valueAsNumber: true,
+                    min: { value: 1, message: t("capacityRange") },
+                    max: { value: 50, message: t("capacityRange") },
+                  })}
+                />
+                {errors.capacity ? (
+                  <p className="text-sm text-red-500">
+                    {errors.capacity.message}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {t("capacityDisplayOnlyHint")}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -350,6 +419,8 @@ export function GroupDialog({
             />
           </div>
 
+          {/* Schedule is set once, at creation. */}
+          {!isEdit && (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="schedule_days">
@@ -406,6 +477,7 @@ export function GroupDialog({
               )}
             </div>
           </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="coach_id">
