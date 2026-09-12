@@ -2459,6 +2459,54 @@ export const yearLimitService = {
   },
 
   /**
+   * Set a year's limit whatever its current state — create it if the year has
+   * none, update it if it already has one.
+   *
+   * The two endpoints are not interchangeable: POST on a year that already has
+   * a limit answers 409, PATCH on a year that has none answers 404. So read the
+   * year first and pick the right one, and if the year gains a limit between
+   * that read and the write (another admin, a second tab), fall through to the
+   * update the caller meant rather than surfacing the 409.
+   *
+   * Errors reach the caller as `detail` (global toast suppressed) so the form
+   * can show them in place.
+   */
+  setYearLimit: async (
+    birthYear: number,
+    maxStudents: number,
+  ): Promise<ApiResponse<YearLimitRead>> => {
+    const patch = async () => {
+      const response = await apiClient.patch<ApiResponse<YearLimitRead>>(
+        `/year-limits/${birthYear}`,
+        { max_students: maxStudents },
+        { suppressGlobalErrorToast: true } as object,
+      );
+      return response.data;
+    };
+
+    const current = await apiClient.get<ApiResponse<YearLimitUsage>>(
+      `/year-limits/${birthYear}`,
+      { suppressGlobalErrorToast: true } as object,
+    );
+
+    if (current.data.data.has_limit) return patch();
+
+    try {
+      const response = await apiClient.post<ApiResponse<YearLimitRead>>(
+        "/year-limits",
+        { birth_year: birthYear, max_students: maxStudents },
+        { suppressGlobalErrorToast: true } as object,
+      );
+      return response.data;
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      if (status === 409) return patch();
+      throw error;
+    }
+  },
+
+  /**
    * Remove the limit — the year becomes unlimited again
    * DELETE /year-limits/{birth_year}
    */

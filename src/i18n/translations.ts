@@ -166,6 +166,10 @@
     selectCoach: "Select a coach",
     capacity: "Capacity",
     capacityRequired: "Capacity is required",
+    capacityRange: "Capacity must be between 1 and 50",
+    capacityDisplayOnlyHint:
+      "Shown for reference only — enrolment is capped by the birth-year limit, not by this.",
+    noChangesToSave: "Nothing changed",
     enrolled: "Enrolled",
     availableSlots: "available",
     full: "Full",
@@ -1003,6 +1007,10 @@
     mother: "Mother",
     other: "Other",
     allGroups: "All Groups",
+    deleteGroup: "Delete group",
+    exportStudents: "Export students",
+    confirmDeleteGroup:
+      "Delete the group \"{{name}}\"? Its contracts and students stay, but the group disappears from the lists.",
     groupDeletedSuccess: "Group deleted successfully",
     fatherInfoCopied: "Father information copied",
     motherInfoCopied: "Mother information copied",
@@ -1081,6 +1089,8 @@
     checkingYearLimit: "Checking year limit...",
     yearLimitBelowCurrent:
       "This is below the {{count}} students already enrolled — the year will be full immediately.",
+    yearLimitAlreadySet:
+      "{{year}} already has a limit of {{max}} — saving will update it.",
     yearLimitCreated: "Year limit created",
     yearLimitUpdated: "Year limit updated",
     yearLimitDeleted: "Year limit removed — the year is unlimited again",
@@ -1272,6 +1282,10 @@
     selectCoach: "O'qituvchi tanlang",
     capacity: "Sig'im",
     capacityRequired: "Sig'im talab qilinadi",
+    capacityRange: "Sig'im 1 dan 50 gacha bo'lishi kerak",
+    capacityDisplayOnlyHint:
+      "Faqat ma'lumot uchun — ro'yxatga olish yillik limit bilan cheklanadi, bu bilan emas.",
+    noChangesToSave: "Hech narsa o'zgarmadi",
     enrolled: "Ro'yxatga olingan",
     availableSlots: "bo'sh",
     full: "To'liq",
@@ -2136,6 +2150,10 @@
     mother: "Ona",
     other: "Boshqa",
     allGroups: "Barcha guruhlar",
+    deleteGroup: "Guruhni o'chirish",
+    exportStudents: "O'quvchilarni eksport qilish",
+    confirmDeleteGroup:
+      "\"{{name}}\" guruhi o'chirilsinmi? Shartnomalar va o'quvchilar saqlanadi, guruh esa ro'yxatlardan yo'qoladi.",
     groupDeletedSuccess: "Guruh muvaffaqiyatli o'chirildi",
     fatherInfoCopied: "Otaning ma'lumotlari ko'chirildi",
     motherInfoCopied: "Onaning ma'lumotlari ko'chirildi",
@@ -2206,6 +2224,8 @@
     checkingYearLimit: "Yil limiti tekshirilmoqda...",
     yearLimitBelowCurrent:
       "Bu qiymat hozir ro'yxatdagi {{count}} ta o'quvchidan kam — yil darhol to'lgan bo'ladi.",
+    yearLimitAlreadySet:
+      "{{year}}-yilda allaqachon {{max}} limiti bor — saqlansa o'sha yangilanadi.",
     yearLimitCreated: "Yillik limit yaratildi",
     yearLimitUpdated: "Yillik limit yangilandi",
     yearLimitDeleted: "Limit o'chirildi — bu yil yana cheksiz",
@@ -2391,6 +2411,10 @@
     selectCoach: "Выберите тренера",
     capacity: "Вместимость",
     capacityRequired: "Вместимость обязательна",
+    capacityRange: "Вместимость должна быть от 1 до 50",
+    capacityDisplayOnlyHint:
+      "Только для справки — набор ограничивается годовым лимитом, а не этим полем.",
+    noChangesToSave: "Ничего не изменилось",
     enrolled: "Записано",
     availableSlots: "доступно",
     full: "Заполнено",
@@ -3219,6 +3243,10 @@
     mother: "Мать",
     other: "Другой",
     allGroups: "Все группы",
+    deleteGroup: "Удалить группу",
+    exportStudents: "Экспорт учеников",
+    confirmDeleteGroup:
+      "Удалить группу \"{{name}}\"? Контракты и ученики останутся, но группа исчезнет из списков.",
     groupDeletedSuccess: "Группа успешно удалена",
     fatherInfoCopied: "Информация об отце скопирована",
     motherInfoCopied: "Информация о матери скопирована",
@@ -3288,6 +3316,8 @@
     checkingYearLimit: "Проверка годового лимита...",
     yearLimitBelowCurrent:
       "Это меньше, чем уже зачислено ({{count}}) — год сразу станет заполненным.",
+    yearLimitAlreadySet:
+      "Для {{year}} уже задан лимит {{max}} — сохранение обновит его.",
     yearLimitCreated: "Годовой лимит создан",
     yearLimitUpdated: "Годовой лимит обновлён",
     yearLimitDeleted: "Лимит удалён — год снова без ограничений",

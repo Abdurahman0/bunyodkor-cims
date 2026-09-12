@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import {
   groupService,
   userService,
   studentService,
@@ -23,6 +31,8 @@ import {
 import {
   Plus,
   Search,
+  Pencil,
+  Trash2,
   Users,
   Calendar,
   Clock,
@@ -47,6 +57,7 @@ import type {
   GroupsStatisticsResponse,
 } from "@/types/api";
 import { GroupDialog } from "./GroupDialog";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { apiClient } from "@/lib/api-client";
 import { downloadFile } from "@/lib/export-utils";
 import { formatFullName, formatNameParts } from "@/lib/name-utils";
@@ -55,15 +66,20 @@ import { yearLimitKeys } from "@/hooks/useYearLimit";
 
 // Group card: name, coach and schedule only. Headcount and capacity are no
 // longer shown here — enrolment is capped per birth year, and that figure lives
-// on the year heading. The whole card is one action: open the group's contracts.
+// on the year heading. Clicking the card opens the group's contracts; every
+// other action sits behind the "⋮" menu next to the name.
 function GroupCard({
   group,
   coachName,
+  actions,
   onViewContracts,
+  t,
 }: {
   group: GroupRead;
   coachName: string;
+  actions: ActionMenuItem[];
   onViewContracts: () => void;
+  t: (key: string) => string;
 }) {
   return (
     <motion.div
@@ -76,13 +92,13 @@ function GroupCard({
         onClick={onViewContracts}
       >
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
                 <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <div>
-                <CardTitle className="text-lg group-hover:text-primary transition-colors">
+              <div className="min-w-0">
+                <CardTitle className="text-lg group-hover:text-primary transition-colors truncate">
                   {group.name}
                 </CardTitle>
                 <div className="flex items-center gap-2 mt-1">
@@ -98,6 +114,12 @@ function GroupCard({
                 </div>
               </div>
             </div>
+            {/* Level with the group name, top right. */}
+            <ActionMenu
+              items={actions}
+              label={`${group.name} — ${t("actions")}`}
+              className="-mr-1 -mt-1"
+            />
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -124,11 +146,16 @@ function GroupCard({
 
 export default function Groups() {
   const { t } = useLanguageStore();
-  const { isReadOnly } = usePermissions();
+  const { isReadOnly, canWrite } = usePermissions();
   const { token } = useAuthStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // null = the dialog creates a new group; a group = it edits that one.
+  const [groupToEdit, setGroupToEdit] = useState<GroupRead | null>(null);
+  const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
+  const [selectedGroupForStudents, setSelectedGroupForStudents] =
+    useState<GroupRead | null>(null);
   const [isContractsDialogOpen, setIsContractsDialogOpen] = useState(false);
   const [selectedGroupForContracts, setSelectedGroupForContracts] =
     useState<GroupRead | null>(null);
@@ -190,6 +217,55 @@ export default function Groups() {
     queryFn: () => userService.getCoaches(),
   });
 
+  // Fetch students for selected group with fallback
+  const { data: groupStudentsData, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ["group-students", selectedGroupForStudents?.id],
+    queryFn: async () => {
+      if (!selectedGroupForStudents) return [];
+
+      console.log(
+        "[DEBUG] Fetching group students for group:",
+        selectedGroupForStudents,
+      );
+
+      // Try the primary endpoint first
+      const response = await groupService.getGroupStudents(
+        selectedGroupForStudents.id,
+      );
+      console.log("[DEBUG] Group students response:", response);
+      console.log("[DEBUG] Group students data:", response.data);
+      console.log("[DEBUG] Group students data length:", response.data?.length);
+
+      // If primary endpoint returns empty or null, use fallback
+      if (!response.data || response.data.length === 0) {
+        console.log(
+          "[DEBUG] Primary endpoint returned empty, trying fallback /students endpoint",
+        );
+
+        const fallbackResponse = await studentService.getStudents({
+          group_id: selectedGroupForStudents.id,
+          page: 1,
+          page_size: 100,
+        });
+
+        console.log("[DEBUG] Fallback students response:", fallbackResponse);
+        console.log("[DEBUG] Fallback students data:", fallbackResponse.data);
+
+        if (fallbackResponse.data && Array.isArray(fallbackResponse.data)) {
+          console.log(
+            "[DEBUG] Using fallback data with",
+            fallbackResponse.data.length,
+            "students",
+          );
+          return fallbackResponse.data;
+        }
+      }
+
+      return response.data || [];
+    },
+    enabled: !!selectedGroupForStudents,
+  });
+
   // Fetch contracts for selected group
   const { data: groupContractsData, isLoading: isLoadingContracts } = useQuery({
     queryKey: ["group-contracts", selectedGroupForContracts?.id],
@@ -241,13 +317,102 @@ export default function Groups() {
     enabled: !!selectedGroupForContracts,
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => groupService.deleteGroup(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups-grouped-by-year"] });
+      toast.success(t("groupDeletedSuccess"));
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      let errorMessage = "Failed to delete group";
+
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail[0].msg || detail[0].message || errorMessage;
+      } else if (typeof detail === "string") {
+        errorMessage = detail;
+      }
+
+      toast.error(errorMessage);
+    },
+  });
+
   const handleOpenDialog = () => {
+    setGroupToEdit(null);
     setIsDialogOpen(true);
   };
 
   const handleViewContracts = (group: GroupRead) => {
     setSelectedGroupForContracts(group);
     setIsContractsDialogOpen(true);
+  };
+
+  const handleViewStudents = (group: GroupRead) => {
+    setSelectedGroupForStudents(group);
+    setIsStudentsDialogOpen(true);
+  };
+
+  // Every dialog sits at the same stacking level, so swap rather than nest.
+  const handleEditGroup = (group: GroupRead | null) => {
+    if (!group) return;
+    setGroupToEdit(group);
+    setIsContractsDialogOpen(false);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (group: GroupRead) => {
+    const message =
+      t("confirmDeleteGroup") ||
+      `Are you sure you want to delete group "${group.name}"?`;
+
+    if (confirm(message.replace("{{name}}", group.name))) {
+      setIsContractsDialogOpen(false);
+      deleteMutation.mutate(group.id);
+    }
+  };
+
+  // Everything that can be done to a group, in one place: the card's "⋮" menu.
+  // Writes are gated on `groups:edit`; reads and the export stay open to anyone
+  // who can see the page.
+  const getGroupActions = (group: GroupRead): ActionMenuItem[] => {
+    const items: ActionMenuItem[] = [
+      {
+        key: "contracts",
+        label: t("viewContracts"),
+        icon: FileText,
+        onSelect: () => handleViewContracts(group),
+      },
+      {
+        key: "students",
+        label: t("viewStudents"),
+        icon: Users,
+        onSelect: () => handleViewStudents(group),
+      },
+      {
+        key: "export",
+        label: t("exportStudents"),
+        icon: Download,
+        onSelect: () => handleExportGroupStudents(group),
+      },
+    ];
+
+    if (canWrite("groups:edit")) {
+      items.push({
+        key: "edit",
+        label: t("editGroup"),
+        icon: Pencil,
+        onSelect: () => handleEditGroup(group),
+      });
+      items.push({
+        key: "delete",
+        label: t("deleteGroup"),
+        icon: Trash2,
+        destructive: true,
+        onSelect: () => handleDelete(group),
+      });
+    }
+
+    return items;
   };
 
   const getCoachName = (coachId: number) => {
@@ -274,9 +439,8 @@ export default function Groups() {
     setSearch("");
   };
 
-  const handleExportGroupStudents = async () => {
-    if (!selectedGroupForContracts) return;
-    const group = selectedGroupForContracts;
+  const handleExportGroupStudents = async (group: GroupRead | null) => {
+    if (!group) return;
 
     const toastId = toast.loading(t("exportingData") || "Exporting data...");
     try {
@@ -519,7 +683,9 @@ export default function Groups() {
                         key={group.id}
                         group={group}
                         coachName={getCoachName(group.coach_id)}
+                        actions={getGroupActions(group)}
                         onViewContracts={() => handleViewContracts(group)}
+                        t={t}
                       />
                     ))}
                   </div>
@@ -552,13 +718,119 @@ export default function Groups() {
       <GroupDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        group={null}
+        group={groupToEdit}
         onSuccess={() => {
           queryClient.invalidateQueries({
             queryKey: ["groups-grouped-by-year"],
           });
         }}
       />
+
+      {/* Students Dialog */}
+      <Dialog
+        open={isStudentsDialogOpen}
+        onOpenChange={setIsStudentsDialogOpen}
+      >
+        <DialogContent
+          className="max-w-5xl max-h-[80vh] overflow-y-auto"
+          onClose={() => setIsStudentsDialogOpen(false)}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              {selectedGroupForStudents?.name} - {t("groupStudents")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {isLoadingStudents ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("student") || "Talaba"}</TableHead>
+                      <TableHead>{t("phone") || "Telefon"}</TableHead>
+                      <TableHead>{t("birthYear")}</TableHead>
+                      <TableHead>{t("address")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {groupStudentsData && groupStudentsData.length > 0 ? (
+                      groupStudentsData.map((student: StudentRead) => (
+                        <TableRow
+                          key={student.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => {
+                            navigate(`/students/${student.id}`);
+                            setIsStudentsDialogOpen(false);
+                          }}
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+                                {student.first_name?.[0]}
+                                {student.last_name?.[0]}
+                              </div>
+                              <div>
+                                {formatNameParts(
+                                  student.last_name,
+                                  student.first_name,
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{student.phone}</TableCell>
+                          <TableCell>
+                            {student.date_of_birth
+                              ? new Date(student.date_of_birth).getFullYear()
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {student.address || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                student.status === "active"
+                                  ? "default"
+                                  : student.status === "inactive"
+                                    ? "secondary"
+                                    : "destructive"
+                              }
+                            >
+                              {student.status === "active"
+                                ? t("active")
+                                : student.status === "inactive"
+                                  ? t("inactive")
+                                  : t("archived")}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-center py-8 text-muted-foreground"
+                        >
+                          <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                          <p>
+                            {t("noStudentsInGroup") || "Guruhda talabalar yo'q"}
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Contracts Dialog */}
       <Dialog
@@ -576,15 +848,30 @@ export default function Groups() {
                 {selectedGroupForContracts?.name} - {t("contracts")}
               </DialogTitle>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportGroupStudents}
-              className="gap-2"
-            >
-              <Download className="w-4 h-4" />
-              {t("export") || "Export"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* The card itself carries no controls any more, so this is the
+                  way into editing a group. */}
+              {canWrite("groups:edit") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditGroup(selectedGroupForContracts)}
+                  className="gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  {t("edit")}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportGroupStudents(selectedGroupForContracts)}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                {t("export") || "Export"}
+              </Button>
+            </div>
           </DialogHeader>
 
           <div className="mt-4">

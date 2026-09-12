@@ -91,6 +91,7 @@ export function GroupDialog({
   const { t } = useLanguageStore();
   const queryClient = useQueryClient();
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const isEdit = Boolean(group);
 
   const {
     register,
@@ -188,6 +189,40 @@ export function GroupDialog({
   });
 
   const onSubmit = (data: GroupFormData) => {
+    if (!Number(data.coach_id)) {
+      toast.error(t("selectCoach"));
+      return;
+    }
+
+    if (group) {
+      // PATCH /groups/{id} is a partial update, and it rejects `identifier` and
+      // `birth_year` with a 400 because contract numbers are built from them.
+      // So send only the fields the user actually changed.
+      const scheduleDays = normalizeScheduleDays(data.schedule_days);
+      const changed: GroupUpdateRequest = {};
+
+      if (data.name !== group.name) changed.name = data.name;
+      if ((data.description ?? "") !== (group.description ?? ""))
+        changed.description = data.description;
+      if (scheduleDays !== normalizeScheduleDays(group.schedule_days ?? ""))
+        changed.schedule_days = scheduleDays;
+      if (data.schedule_time !== group.schedule_time)
+        changed.schedule_time = data.schedule_time;
+      if (Number(data.capacity) !== group.capacity)
+        changed.capacity = Number(data.capacity);
+      if (Number(data.coach_id) !== group.coach_id)
+        changed.coach_id = Number(data.coach_id);
+
+      if (Object.keys(changed).length === 0) {
+        toast(t("noChangesToSave"));
+        onOpenChange(false);
+        return;
+      }
+
+      mutation.mutate(changed);
+      return;
+    }
+
     const payload: GroupCreateRequest = {
       name: data.name,
       identifier: data.identifier,
@@ -198,11 +233,6 @@ export function GroupDialog({
       capacity: Number(data.capacity),
       coach_id: Number(data.coach_id),
     };
-
-    if (!payload.coach_id) {
-      toast.error(t("selectCoach"));
-      return;
-    }
 
     mutation.mutate(payload);
   };
@@ -234,9 +264,17 @@ export function GroupDialog({
               <Label htmlFor="identifier">
                 {t("identifier")} <span className="text-red-500">*</span>
               </Label>
+              {/* Frozen once the group exists: contract numbers are built from
+                  it, so the backend answers 400 on any change. */}
               <Input
                 id="identifier"
                 placeholder="B2"
+                readOnly={isEdit}
+                aria-readonly={isEdit}
+                tabIndex={isEdit ? -1 : undefined}
+                className={
+                  isEdit ? "bg-muted/50 cursor-not-allowed font-mono" : undefined
+                }
                 {...register("identifier", { required: t("identifierRequired") })}
               />
               {errors.identifier && (
@@ -250,10 +288,17 @@ export function GroupDialog({
               <Label htmlFor="birth_year">
                 {t("birthYear")} <span className="text-red-500">*</span>
               </Label>
+              {/* Frozen for the same reason as `identifier`. */}
               <Input
                 id="birth_year"
                 type="number"
                 placeholder="2015"
+                readOnly={isEdit}
+                aria-readonly={isEdit}
+                tabIndex={isEdit ? -1 : undefined}
+                className={
+                  isEdit ? "bg-muted/50 cursor-not-allowed font-mono" : undefined
+                }
                 {...register("birth_year", {
                   required: t("birthYearRequired"),
                   valueAsNumber: true,
@@ -273,15 +318,24 @@ export function GroupDialog({
               <Input
                 id="capacity"
                 type="number"
+                min={1}
+                max={50}
+                step={1}
                 placeholder="25"
                 {...register("capacity", {
                   required: t("capacityRequired"),
                   valueAsNumber: true,
+                  min: { value: 1, message: t("capacityRange") },
+                  max: { value: 50, message: t("capacityRange") },
                 })}
               />
-              {errors.capacity && (
+              {errors.capacity ? (
                 <p className="text-sm text-red-500">
                   {errors.capacity.message}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {t("capacityDisplayOnlyHint")}
                 </p>
               )}
             </div>

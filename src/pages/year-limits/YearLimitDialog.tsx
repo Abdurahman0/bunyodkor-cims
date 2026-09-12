@@ -11,11 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Info, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { yearLimitService } from "@/services/api.service";
 import type { YearLimitUsage } from "@/types/api";
 import { useLanguageStore } from "@/store/languageStore";
+import { extractErrorMessage } from "@/lib/error-utils";
 import { useYearLimit, invalidateYearLimits } from "@/hooks/useYearLimit";
 
 interface YearLimitDialogProps {
@@ -71,28 +72,30 @@ export function YearLimitDialog({
     });
   }, [limit, open, reset]);
 
-  const mutation = useMutation({
-    mutationFn: (data: YearLimitFormData) => {
-      const birthYear = Number(data.birth_year);
-      const maxStudents = Number(data.max_students);
+  // Whether the typed year already has a limit is the server's answer, not the
+  // dialog's mode: "New limit" + a year that is already limited must update it,
+  // not fail with a duplicate error.
+  const yearAlreadyLimited = Boolean(usage?.has_limit);
 
-      return isEdit
-        ? yearLimitService.updateYearLimit(birthYear, {
-            max_students: maxStudents,
-          })
-        : yearLimitService.createYearLimit({
-            birth_year: birthYear,
-            max_students: maxStudents,
-          });
-    },
+  const mutation = useMutation({
+    mutationFn: (data: YearLimitFormData) =>
+      yearLimitService.setYearLimit(
+        Number(data.birth_year),
+        Number(data.max_students),
+      ),
     onSuccess: () => {
       invalidateYearLimits(queryClient);
-      toast.success(isEdit ? t("yearLimitUpdated") : t("yearLimitCreated"));
+      toast.success(
+        yearAlreadyLimited ? t("yearLimitUpdated") : t("yearLimitCreated"),
+      );
       onOpenChange(false);
       onSuccess?.();
     },
-    // Errors (409 duplicate year, 404 missing year, 422 invalid value) already
-    // surface the backend `detail` through the global response interceptor.
+    onError: (error) => {
+      // 422 (negative limit, year outside 1900–2100) and 401/403 land here;
+      // 409/404 cannot, since setYearLimit picks the endpoint that fits.
+      toast.error(extractErrorMessage(error, t("anErrorOccurred")));
+    },
   });
 
   const onSubmit = (data: YearLimitFormData) => mutation.mutate(data);
@@ -103,6 +106,9 @@ export function YearLimitDialog({
     Boolean(usage) &&
     Number.isFinite(watchedMax) &&
     watchedMax < (usage?.current_count ?? 0);
+
+  // Opened as "New limit" on a year that turns out to be limited already.
+  const isUnexpectedUpdate = !isEdit && yearAlreadyLimited;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,10 +152,14 @@ export function YearLimitDialog({
               id="max_students"
               type="number"
               min={0}
+              step={1}
               placeholder="200"
               {...register("max_students", {
                 required: t("maxStudentsRequired"),
+                // The backend takes a non-negative integer; 0 closes the year.
                 min: { value: 0, message: t("maxStudentsInvalid") },
+                validate: (value) =>
+                  Number.isInteger(Number(value)) || t("maxStudentsInvalid"),
               })}
             />
             {errors.max_students ? (
@@ -184,6 +194,17 @@ export function YearLimitDialog({
             )}
           </div>
 
+          {isUnexpectedUpdate && (
+            <div className="flex items-start gap-2 rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                {t("yearLimitAlreadySet")
+                  .replace("{{year}}", String(usage?.birth_year ?? ""))
+                  .replace("{{max}}", String(usage?.max_students ?? ""))}
+              </span>
+            </div>
+          )}
+
           {isBelowCurrent && (
             <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -209,7 +230,7 @@ export function YearLimitDialog({
               {mutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              {isEdit ? t("save") : t("create")}
+              {yearAlreadyLimited ? t("save") : t("create")}
             </Button>
           </div>
         </form>
